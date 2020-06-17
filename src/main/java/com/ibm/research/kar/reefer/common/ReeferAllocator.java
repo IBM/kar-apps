@@ -44,7 +44,8 @@ public class ReeferAllocator {
                     double percentFreeCapacity = ((double)remainingCapacity/ maxCapacity) * 100;
                     // if reefer is 60%+ full, mark it as ALLOCATED. No additional product will be placed there
                     if ( percentFreeCapacity >= ReeferAppConfig.capacityThresholdFloor) {
-                        actorSetState(reefer, ReeferActor.ReeferAllocationStatusKey, Json.createValue(ReeferAllocationStatus.ALLOCATED.name()));
+                       // actorSetState(reefer, ReeferActor.ReeferAllocationStatusKey, Json.createValue(ReeferAllocationStatus.ALLOCATED.name()));
+                        changeReeferAllocationState(reefer,ReeferAllocationStatus.ALLOCATED);
                     }
 
                     break;  // product quantity fits in the current reefer
@@ -54,6 +55,7 @@ public class ReeferAllocator {
                     productQuantity -= remainingCapacity;
                     reefers.add(reefer);
                     actorSetState(reefer, ReeferActor.ReeferAvailCapacityKey,Json.createValue(0));
+                    changeReeferAllocationState(reefer,ReeferAllocationStatus.ALLOCATED);
                 }
             }
     
@@ -61,5 +63,8 @@ public class ReeferAllocator {
             e.printStackTrace();
         }
          return reefers;
+    }
+    private static void changeReeferAllocationState(ActorRef reefer, ReeferAllocationStatus allocationStatus) {
+        actorSetState(reefer, ReeferActor.ReeferAllocationStatusKey, Json.createValue(allocationStatus.name()));
     }
 }

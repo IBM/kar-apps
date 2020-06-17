@@ -1,4 +1,4 @@
-package com.ibm.research.kar.reefer.actors;
+package com.ibm.research.kar.reefer;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;

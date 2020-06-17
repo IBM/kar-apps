@@ -9,7 +9,7 @@ import com.ibm.research.kar.actor.ActorInstance;
  * a convenient, but not required, pattern is to share boilerplate code by
  * defining a common superclass for your Actor classes to extend.
  */
-public abstract class ActorBoilerplate implements ActorInstance {
+public abstract class BaseActor implements ActorInstance {
   protected String type;
   protected String id;
   protected String session;

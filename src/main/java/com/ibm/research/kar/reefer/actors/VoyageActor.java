@@ -11,6 +11,7 @@ import com.ibm.research.kar.actor.annotations.Deactivate;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.supervisor.ActorSupervisor;
 
 import javax.inject.Inject;
@@ -37,33 +38,27 @@ public class VoyageActor extends BaseActor {
 
     @Remote
     public JsonObject reserve(JsonObject message) {
-        String callerId = message.getString("callerId");
-       JsonObject order = message.getJsonObject("body");
-
+       Order order = new Order(message.getJsonObject(Order.OrderKey));
+ 
         System.out.println("VoyageActor.reserve() called "+message.toString());
         JsonObject params = Json.createObjectBuilder()
-				.add("callerId", String.valueOf(this.getId()))
-                //.add("session",  session)
-                .add("body",  order)
+                .add(Order.OrderKey,  order.getAsObject())
 			        .build();
         try {
-            //JsonValue reply = actorCall( reeferProvisioner, "bookReefers", order);
+            // Book reefers for this order thru the ReeferProvisioner
             JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"bookReefers", params);
-            System.out.println("VoyageActor.reserve()"+reply.toString());
-            JsonObject o = reply.asJsonObject();
-            JsonArray reeferIds = o.getJsonArray("reefers");
-             for (JsonString j : reeferIds.getValuesAs(JsonString.class)) {
-                System.out.println("VoyageActor.reserve() - reeferId:"+j.getString());
-            }
+            //System.out.println("VoyageActor.reserve()"+reply.toString());
+            // JsonObject o = reply.asJsonObject();
+            // JsonArray reeferIds = o.getJsonArray("reefers");
+            //  for (JsonString reeferId : reeferIds.getValuesAs(JsonString.class)) {
+            //     System.out.println("VoyageActor.reserve() - reeferId:"+reeferId.getString());
+            // }
             return Json.createObjectBuilder()
             .add("status", "OK")
-            .add("reefers",o.getJsonArray("reefers"))
-            .add("body",  order)
+            .add("reefers",  reply.asJsonObject().getJsonArray("reefers")) //o.getJsonArray("reefers"))
+            .add(Order.OrderKey,  order.getAsObject())
                 .build();
            
-            //return o;
-            // CompletionStage<JsonValue> cf = actorCallAsync(  actorRef("reefer-provisioner","33333"),"bookReefers", params);
-            // JsonValue reply = cf.toCompletableFuture().get();
         } catch( ActorMethodNotFoundException ee) {
             ee.printStackTrace();
             return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","INVALID_CALL").add("orderId", String.valueOf(this.getId())).build();

@@ -5,6 +5,8 @@ import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.model.Order;
+import com.ibm.research.kar.reefer.model.OrderStatus;
 import com.ibm.research.kar.actor.ActorRef;
 import static com.ibm.research.kar.Kar.*;
 
@@ -19,38 +21,31 @@ import javax.json.JsonValue;
 @Actor
 public class OrderActor extends BaseActor {
 
-    public enum OrderStatus {Pending, ReefersAllocated, VoyageBooked, Rejected, Delivered};
+    //public enum OrderStatus {Pending, ReefersAllocated, VoyageBooked, Rejected, Delivered};
      @Activate
     public void init() {
 
     }
 
     @Remote
-    public JsonObject createOrder(JsonObject order) {
+    public JsonObject createOrder(JsonObject message) {
         System.out.println(
-                "OrderActor.createOrder() called- Actor ID:" + this.getId() + " order id:" + order.getString("id"));
-   
+            "OrderActor.createOrder() called- Actor ID:" + this.getId()+" message:"+message.getJsonObject(Order.OrderKey));
+        Order order = new Order(message.getJsonObject(Order.OrderKey));
+       
         try {
             // voyageId is mandatory
-            if ( order.containsKey("voyageId") ) {
-                String voyageId = order.getString("voyageId");
+            if ( order.containsKey(Order.VoyageIdKey) ) {
+                String voyageId = order.getVoyageId();
+                JsonObject reply = bookVoyage(voyageId, order);
 
-                if (Optional.of(voyageId).isPresent()) {
-                    System.out.println(
-                        "OrderActor.createOrder() voyageId:"+voyageId);
-                    JsonObject reply = bookVoyage(voyageId, order);
-                    if ( reply.getString("status").equals("OK")) {
-                        System.out.println("OrderActor.createOrder() - Order Booked");
-                        return Json.createObjectBuilder().add("status", "OK").add("orderId", String.valueOf(this.getId())).add("body", reply).build();
-                    } else {
-                        return reply;
-                    }
+                if ( reply.getString("status").equals("OK")) {
+                    System.out.println("OrderActor.createOrder() - Order Booked");
+                    return Json.createObjectBuilder().add(Order.OrderBookingKey, reply).build();
                 } else {
-                    System.out.println(
-                        "OrderActor.createOrder() Failed - voyageId is null");
-                    return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","VOYAGE_ID_MISSING").add("orderId", String.valueOf(this.getId())).build();
+                    return reply;
                 }
-            } else {
+             } else {
                 System.out.println(
                     "OrderActor.createOrder() Failed - Missing voyageId");
                 return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","VOYAGE_ID_MISSING").add("orderId", String.valueOf(this.getId())).build();
@@ -66,21 +61,19 @@ public class OrderActor extends BaseActor {
  
     }
 
-    private JsonObject bookVoyage(String voyageId, JsonObject order) {
+    private JsonObject bookVoyage(String voyageId, Order order) {
         try {
-            JsonObject params = Json.createObjectBuilder().add("callerId", String.valueOf(this.getId()))
-                    .add("session", session).add("body", order).build();
+            JsonObject params = 
+                Json.createObjectBuilder().add(Order.OrderKey, order.getAsObject()).build();
             ActorRef voyageActor = actorRef(ReeferAppConfig.VoyageActorName, voyageId);
 
             JsonValue reply = actorCall(voyageActor, "reserve", params);
 
             return reply.asJsonObject();
-            // actorCallAsync( voyageActor, "reserve", params);
-            // JsonValue reply = cf.toCompletableFuture().get();
 
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-            return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","INVALID_CALL").add("orderId", String.valueOf(this.getId())).build();
+            return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
   
         }
     }

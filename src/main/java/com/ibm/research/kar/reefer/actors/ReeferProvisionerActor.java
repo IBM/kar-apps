@@ -6,6 +6,9 @@ import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.ReeferAllocator;
+import com.ibm.research.kar.reefer.common.packingalgo.PackingAlgo;
+import com.ibm.research.kar.reefer.common.packingalgo.SimplePackingAlgo;
+import com.ibm.research.kar.reefer.model.Order;
 
 import static com.ibm.research.kar.Kar.*;
 
@@ -25,10 +28,14 @@ import javax.json.JsonObject;
 @Actor
 public class ReeferProvisionerActor extends BaseActor {
 
-    Map<String,ActorRef> reeferInventory = new HashMap<>();
+    private Map<String,ActorRef> reeferInventory = new HashMap<>();
+    private PackingAlgo packingAlgo;
 
     @Activate
     public void init() {
+        if ( ReeferAppConfig.PackingAlgoStrategy.equals("simple")) {
+            packingAlgo = new SimplePackingAlgo();
+        }
         addReefers(100);
     }
     private void addReefers(int howMany) {
@@ -42,7 +49,6 @@ public class ReeferProvisionerActor extends BaseActor {
             try {
                 actorCall(reeferActor, "configure", params);
             } catch (ActorMethodNotFoundException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             System.out.println("ReeferProvisioner.addReefers() - created new reefer - ID:"+reeferActor.getId());
@@ -52,31 +58,27 @@ public class ReeferProvisionerActor extends BaseActor {
 
     @Remote
     public JsonObject bookReefers(JsonObject message) {
+        Order order = new Order(message.getJsonObject(Order.OrderKey));
         int qty = 0;
-        //JsonObject result = Json.createObjectBuilder().
-        String callerId = message.getString("callerId");
-        JsonObject order = message.getJsonObject("body");
-//        List<String> newReefers = new ArrayList<>();
-        System.out.println("ReeferProvisionerActor.bookReefers() called - callerId:"+callerId);
-//        ActorRef voyageActor =  actorRef("voyage",callerId);
-        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        if ( order.containsKey("productQty")) {
-            qty = order.getInt("productQty");
+         System.out.println("ReeferProvisionerActor.bookReefers() called ");//- callerId:"+callerId);
+       JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        if ( order.containsKey(Order.ProductQtyKey)) {
+            qty = order.getProductQty();
         } else {
 
         }
-        System.out.println("ReeferProvisionerActor.bookReefers() product qty:"+qty);
         List<ActorRef> allocatedReefers = 
-            ReeferAllocator.allocate(new ArrayList<ActorRef>(reeferInventory.values()), qty);
-            System.out.println("ReeferProvisionerActor.bookReefers() product qty:"+qty +" Allocated Reefers:"+allocatedReefers.size());
+            ReeferAllocator.allocate(packingAlgo, new ArrayList<ActorRef>(reeferInventory.values()), qty);
 
+        System.out.println("ReeferProvisionerActor.bookReefers() product qty:"+qty +" Allocated Reefers:"+allocatedReefers.size());
+        if ( allocatedReefers.size() == 0 ) {
+            return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","FailedToAllocateReefers").add("orderId", order.getId()).build();
+        }
         for( ActorRef reefer : allocatedReefers ) {
- //           String reeferId = UUID.randomUUID().toString();
- //           ActorRef reeferActor =  actorRef("reefer",reeferId);
- 
+
             JsonObject params = Json.createObjectBuilder()
             .add("reeferid",  reefer.getId())
-            .add("body", order )
+            .add(Order.OrderKey, order.getAsObject() )
                 .build();
             try {
                // CompletionStage<JsonValue> cf = actorCallAsync( reeferActor, "reserve", params);
@@ -91,27 +93,11 @@ public class ReeferProvisionerActor extends BaseActor {
         }
         JsonObject reply =  Json.createObjectBuilder()
               .add("reefers",  arrayBuilder)
-              .add("body", order )
+              .add(Order.OrderKey, order.getAsObject() )
                   .build();
         return reply;
                   
-        // try {
-            
-        //     JsonObject params = Json.createObjectBuilder()
-        //     .add("reefers",  arrayBuilder)
-        //     .add("body", order )
-        //         .build();
-        //     System.out.println("ReeferProvisionerActor.bookReefers() calling Voyage Actor - Reefer Booked");
-        //     actorCallAsync( voyageActor, "reeferBookingStatus", params);
-        //     //CompletionStage<JsonValue> cf = actorCallAsync( reeferActor, "reserve", params);
-        //       //  JsonValue reply = cf.toCompletableFuture().get();
-        //    // newReefers.add(reeferId);
-        // } catch( ActorMethodNotFoundException ee) {
-        //     ee.printStackTrace();
-        // } catch( Exception ee) {
-        //     ee.printStackTrace();
-        // }
-       
+ 
     }
     private List<ActorRef> createReefer(JsonObject order) {
         List<ActorRef> newReefers = new ArrayList<>();

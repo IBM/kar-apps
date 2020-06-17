@@ -16,6 +16,8 @@ public class ReeferAppConfig {
     public static final String OrderActorName="order";
 
     // If the reefer capacity is greater or equal 60, it is considered full (ie. ALLOCATED)
-    public static final int capacityThresholdFloor = 60;
+    public static final int CapacityThresholdFloor = 60;
+
+    public static final String PackingAlgoStrategy = "simple";
 
 }

@@ -7,6 +7,7 @@ import javax.json.Json;
 import javax.json.JsonNumber;
 import javax.json.JsonString;
 import javax.json.JsonValue;
+import javax.servlet.jsp.JspApplicationContext;
 
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.actors.ReeferActor;
@@ -26,6 +27,23 @@ public class ReeferState {
     }
     public String getId() {
         return reefer.getId();
+    }
+    public String getVoyageId() {
+        return ((JsonString)reeferState.get(ReeferActor.ReeferVoyageIdKey)).getString();
+    }
+    public void setVoyageId(String voyageId) {
+        if ( !reeferState.containsKey(ReeferActor.ReeferVoyageIdKey) ||
+             reeferState.get(ReeferActor.ReeferVoyageIdKey) == null ||
+             ((JsonString)reeferState.get(ReeferActor.ReeferVoyageIdKey)).getString().trim().length() == 0 ) {
+                reeferState.put(ReeferActor.ReeferVoyageIdKey, Json.createValue(voyageId));
+             }
+     
+    }
+    public boolean alreadyAllocated() {
+        return getAllocationStatus().equals(ReeferAllocationStatus.ALLOCATED);
+    }
+    public boolean partiallyAllocatedToAnotherVoyage(String voyageId) {
+        return !getAllocationStatus().equals(ReeferAllocationStatus.EMPTY) && !getVoyageId().equals(voyageId);
     }
     public ReeferAllocationStatus getAllocationStatus() {
         String allocation = ((JsonString)reeferState.get(ReeferActor.ReeferAllocationStatusKey)).getString();

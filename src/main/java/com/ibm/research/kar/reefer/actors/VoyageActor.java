@@ -1,10 +1,6 @@
 package com.ibm.research.kar.reefer.actors;
 
-import com.ibm.research.kar.actor.ActorRef;
 import static com.ibm.research.kar.Kar.*;
-
-import java.util.concurrent.CompletionStage;
-
 import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Deactivate;
@@ -15,11 +11,6 @@ import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.supervisor.ActorSupervisor;
 
 import javax.inject.Inject;
-/*
-import static com.ibm.research.kar.Kar.actorCall;
-import static com.ibm.research.kar.Kar.actorRef;
-import static com.ibm.research.kar.Kar.actorTell;
-*/
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -43,20 +34,14 @@ public class VoyageActor extends BaseActor {
         System.out.println("VoyageActor.reserve() called "+message.toString());
         JsonObject params = Json.createObjectBuilder()
                 .add(Order.OrderKey,  order.getAsObject())
-			        .build();
+			    .build();
         try {
             // Book reefers for this order thru the ReeferProvisioner
             JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"bookReefers", params);
-            //System.out.println("VoyageActor.reserve()"+reply.toString());
-            // JsonObject o = reply.asJsonObject();
-            // JsonArray reeferIds = o.getJsonArray("reefers");
-            //  for (JsonString reeferId : reeferIds.getValuesAs(JsonString.class)) {
-            //     System.out.println("VoyageActor.reserve() - reeferId:"+reeferId.getString());
-            // }
             return Json.createObjectBuilder()
-            .add("status", "OK")
-            .add("reefers",  reply.asJsonObject().getJsonArray("reefers")) //o.getJsonArray("reefers"))
-            .add(Order.OrderKey,  order.getAsObject())
+                .add("status", "OK")
+                .add("reefers",  reply.asJsonObject().getJsonArray("reefers")) 
+                .add(Order.OrderKey,  order.getAsObject())
                 .build();
            
         } catch( ActorMethodNotFoundException ee) {

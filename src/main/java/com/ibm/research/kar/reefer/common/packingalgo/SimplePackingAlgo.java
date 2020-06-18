@@ -6,7 +6,7 @@ import com.ibm.research.kar.reefer.common.ReeferState;
 
 public class SimplePackingAlgo implements PackingAlgo {
     
-    public int pack(ReeferState reeferState, int productQuantity) {
+    public int pack(ReeferState reeferState, int productQuantity, String voyageId) {
         int remainingCapacity = reeferState.getRemainingCapacity();
         int remainingProductQuantity = productQuantity;
         int maxCapacity = reeferState.getMaxCapacity();
@@ -24,6 +24,8 @@ public class SimplePackingAlgo implements PackingAlgo {
             if ( percentFreeCapacity >= ReeferAppConfig.CapacityThresholdFloor) {
                // actorSetState(reefer, ReeferActor.ReeferAllocationStatusKey, Json.createValue(ReeferAllocationStatus.ALLOCATED.name()));
                 reeferState.setAllocationStatus(ReeferAllocationStatus.ALLOCATED);
+            } else {
+                reeferState.setAllocationStatus(ReeferAllocationStatus.PARTIALLY_ALLOCATED);
             }
         } else {
             // split product into multiple reefers. Fill current reefer to the max capacity
@@ -34,6 +36,8 @@ public class SimplePackingAlgo implements PackingAlgo {
             reeferState.setRemainingCapacity(0);
             reeferState.setAllocationStatus(ReeferAllocationStatus.ALLOCATED);
         }
+        reeferState.setVoyageId(voyageId);
+
         return remainingProductQuantity;
     }
 }

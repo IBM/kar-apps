@@ -15,11 +15,12 @@ import javax.json.JsonValue;
 
 @Actor
 public class ReeferActor extends BaseActor {
-    public static final String ReeferMaxCapacityKey = "reefer-max-capacity";
-    public static final String ReeferAvailCapacityKey = "reefer-available-capacity";
-    public static final String ReeferAllocationStatusKey = "reefer-allocation-status";
-    public static final String ReeferConditionKey = "reefer-condition";
-
+    public static final String ReeferMaxCapacityKey = "reeferMaxCapacity";
+    public static final String ReeferAvailCapacityKey = "reeferAvailableCapacity";
+    public static final String ReeferAllocationStatusKey = "reeferAllocationStatus";
+    public static final String ReeferConditionKey = "reeferCondition";
+    public static final String ReeferVoyageIdKey = "reeferVoyageId";
+    
     public enum ReeferAllocationStatus {EMPTY, PARTIALLY_ALLOCATED, ALLOCATED};
     public enum ReeferCondition {NORMAL, FAILED, ON_MAINTENANCE};
   

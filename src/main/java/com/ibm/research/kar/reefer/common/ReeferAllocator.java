@@ -11,7 +11,7 @@ import com.ibm.research.kar.reefer.common.packingalgo.PackingAlgo;
 
 public class ReeferAllocator {
 
-    public static List<ActorRef> allocate( PackingAlgo packingStrategy, List<ActorRef> availableReefers, int productQuantity) {
+    public static List<ActorRef> allocate( PackingAlgo packingStrategy, List<ActorRef> availableReefers, int productQuantity, String voyageId) {
         int remainingProductQuantity = productQuantity;
 
         List<ActorRef>  reefers = new ArrayList<>();
@@ -20,12 +20,18 @@ public class ReeferAllocator {
         for( ActorRef reefer : availableReefers ) {
             try {
                 ReeferState reeferState = new ReeferState(reefer);
-                // skip full reefers
-                if ( reeferState.getAllocationStatus().equals(ReeferAllocationStatus.ALLOCATED)) {
-                    System.out.println("ReeferAllocator.allocate() - Reefer:"+reefer.getId()+" Already Allocated - Skipping");
+                // skip Allocated reefers and those partially allocated to another voyage
+                if ( reeferState.alreadyAllocated() ||
+                     reeferState.partiallyAllocatedToAnotherVoyage(voyageId)) {
+                    System.out.println("ReeferAllocator.allocate() - Reefer:"+
+                    reefer.getId()+
+                    " not avaialable. Allocated:"
+                    +reeferState.alreadyAllocated()
+                    +" Allocated to another voyage:"+reeferState.partiallyAllocatedToAnotherVoyage(voyageId)
+                    +"- Skipping");
                     continue;
                 }
-                remainingProductQuantity = packingStrategy.pack(reeferState, remainingProductQuantity);
+                remainingProductQuantity = packingStrategy.pack(reeferState, remainingProductQuantity, voyageId);
                 // save reefer state changes made in in the packing algo
                 reeferState.save();
                 reefers.add(reefer);

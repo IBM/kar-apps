@@ -26,7 +26,7 @@ public class SimplePackingAlgo implements PackingAlgo {
             } else {
                 reeferState.setAllocationStatus(ReeferAllocationStatus.PARTIALLY_ALLOCATED);
             }
-            System.out.println("SimplePackingAlgo.pack() - ReeferId:"+reeferState.getId()+" filled with "+productQuantity+" product units. Allocation status:"+reeferState.getAllocationStatus()+" Capacity(%):"+percentFull);
+            System.out.println("SimplePackingAlgo.pack() - ReeferId:"+reeferState.getId()+" filled with "+productQuantity+" product units. Allocation status:"+reeferState.getAllocationStatus()+" Capacity(%):"+percentFull+" full");
 
         } else {
             // split product into multiple reefers. Fill current reefer to the max capacity

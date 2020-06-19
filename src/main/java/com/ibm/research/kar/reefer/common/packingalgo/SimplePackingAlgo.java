@@ -13,28 +13,29 @@ public class SimplePackingAlgo implements PackingAlgo {
         // Trivial, one dimensional packing based on product quantity and fixed reefer capacity.
         //
         if ( remainingCapacity >= productQuantity ) {
-            System.out.println("SimplePackingAlgo.pack() - ReeferId:"+reeferState.getId()+" filled with "+productQuantity+" product units");
             remainingCapacity -= productQuantity;
             // all products fit in this reefer, nothing to split
             remainingProductQuantity = 0;
             reeferState.setRemainingCapacity(remainingCapacity);
             //actorSetState(reefer, ReeferActor.ReeferAvailCapacityKey, Json.createValue(remainingCapacity));
-            double percentFreeCapacity = ((double)remainingCapacity/ maxCapacity) * 100;
+            double percentFull = ((double)(maxCapacity-remainingCapacity)/ maxCapacity) * 100;
             // if reefer is 60%+ full, mark it as ALLOCATED. No additional product will be placed there
-            if ( percentFreeCapacity >= ReeferAppConfig.CapacityThresholdFloor) {
+            if ( percentFull >= ReeferAppConfig.CapacityThresholdFloor) {
                // actorSetState(reefer, ReeferActor.ReeferAllocationStatusKey, Json.createValue(ReeferAllocationStatus.ALLOCATED.name()));
                 reeferState.setAllocationStatus(ReeferAllocationStatus.ALLOCATED);
             } else {
                 reeferState.setAllocationStatus(ReeferAllocationStatus.PARTIALLY_ALLOCATED);
             }
+            System.out.println("SimplePackingAlgo.pack() - ReeferId:"+reeferState.getId()+" filled with "+productQuantity+" product units. Allocation status:"+reeferState.getAllocationStatus()+" Capacity(%):"+percentFull);
+
         } else {
             // split product into multiple reefers. Fill current reefer to the max capacity
             // and add remaining product to the next reefer
             remainingProductQuantity = productQuantity - remainingCapacity;
-            System.out.println("SimplePackingAlgo.pack() - ReeferId:"+reeferState.getId()+" filled with "+remainingCapacity+" product units");
             //actorSetState(reefer, ReeferActor.ReeferAvailCapacityKey,Json.createValue(0));
             reeferState.setRemainingCapacity(0);
             reeferState.setAllocationStatus(ReeferAllocationStatus.ALLOCATED);
+            System.out.println("SimplePackingAlgo.pack() - ReeferId:"+reeferState.getId()+" filled with "+remainingCapacity+" product units. Allocation status:"+reeferState.getAllocationStatus());
         }
         reeferState.setVoyageId(voyageId);
 

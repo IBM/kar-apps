@@ -8,6 +8,8 @@ public class Order {
     public static final String IdKey = "orderId";
     public static final String VoyageIdKey = "orderVoyageId";
     public static final String ProductQtyKey = "orderProductQty";
+    public static final String OriginPortKey = "originPort";
+    public static final String DestinationPortKey = "destinationPort";
     private JsonObject order;
 
     public Order(JsonObject order) {
@@ -23,6 +25,12 @@ public class Order {
     }
     public String getVoyageId() {
         return order.getString(VoyageIdKey);
+    }
+    public String getOriginPort() {
+        return order.getString(OriginPortKey);
+    }
+    public String getDestinationPort() {
+        return order.getString(DestinationPortKey);
     }
     public int getProductQty() {
         return order.getInt(ProductQtyKey);

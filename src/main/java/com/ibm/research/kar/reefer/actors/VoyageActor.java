@@ -13,6 +13,7 @@ import com.ibm.research.kar.reefer.supervisor.ActorSupervisor;
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
@@ -24,7 +25,8 @@ public class VoyageActor extends BaseActor {
     
     @Activate
     public void init() {
-
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        actorSetState(this, "reefers", arrayBuilder.build());
     }
 
     @Remote
@@ -38,6 +40,12 @@ public class VoyageActor extends BaseActor {
         try {
             // Book reefers for this order thru the ReeferProvisioner
             JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"bookReefers", params);
+
+            JsonValue v = actorGetState(this, "reefers");
+            JsonArray reefers = v.asJsonArray();
+            reefers.addAll(reefers.size(), reefers);
+            actorSetState(this, "reefers", reefers);
+
             return Json.createObjectBuilder()
                 .add("status", "OK")
                 .add("reefers",  reply.asJsonObject().getJsonArray("reefers")) 
@@ -58,13 +66,23 @@ public class VoyageActor extends BaseActor {
      public void reeferBookingStatus(JsonObject message) {
         
          System.out.println("VoyageActor.reeferBookingStatus() called");
-
+        JsonValue v = actorGetState(this, "reefers");
+        JsonArray reefers = v.asJsonArray();
+        
          JsonArray reeferIds = message.getJsonArray("reefers");
-         for (JsonString j : reeferIds.getValuesAs(JsonString.class)) {
-            System.out.println("VoyageActor.reeferBookingStatus() - reeferId:"+j.getString());
+         for (JsonString reeferId : reeferIds.getValuesAs(JsonString.class)) {
+            System.out.println("VoyageActor.reeferBookingStatus() - reeferId:"+reeferId.getString());
+            reefers.add(reeferId);
         }
+        actorSetState(this, "reefers", reefers);
  
       }
+
+    @Remote
+    public void completed(JsonObject message) {
+
+    }
+
     @Deactivate
     public void kill() {
         

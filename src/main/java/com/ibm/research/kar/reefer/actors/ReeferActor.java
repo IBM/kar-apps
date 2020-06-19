@@ -20,7 +20,7 @@ public class ReeferActor extends BaseActor {
     public static final String ReeferAllocationStatusKey = "reeferAllocationStatus";
     public static final String ReeferConditionKey = "reeferCondition";
     public static final String ReeferVoyageIdKey = "reeferVoyageId";
-    
+    public static final String ReeferLocationKey = "reeferLocation";
     public enum ReeferAllocationStatus {EMPTY, PARTIALLY_ALLOCATED, ALLOCATED};
     public enum ReeferCondition {NORMAL, FAILED, ON_MAINTENANCE};
   
@@ -59,5 +59,13 @@ public class ReeferActor extends BaseActor {
  
         //ActorRef voyageActor =  actorRef("voyage","444");
   
+    }
+    @Remote
+    public void changeLocation(JsonObject message) {
+        System.out.println("ReeferActor.changeLocation() called - Id:"+this.getId()+"\n"+message.toString());
+        String location = message.getString(ReeferLocationKey);
+        String allocationStatus = message.getString(ReeferAllocationStatusKey);
+        actorSetState(this, ReeferLocationKey, Json.createValue(location));
+        actorSetState(this, ReeferAllocationStatusKey, Json.createValue(allocationStatus));
     }
 }

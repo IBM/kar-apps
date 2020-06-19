@@ -1,4 +1,5 @@
 package com.ibm.research.kar.reefer.actors;
+ 
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
@@ -9,6 +10,7 @@ import com.ibm.research.kar.reefer.common.ReeferAllocator;
 import com.ibm.research.kar.reefer.common.packingalgo.PackingAlgo;
 import com.ibm.research.kar.reefer.common.packingalgo.SimplePackingAlgo;
 import com.ibm.research.kar.reefer.model.Order;
+import com.ibm.research.kar.reefer.model.Reefer;
 
 import static com.ibm.research.kar.Kar.*;
 
@@ -21,6 +23,7 @@ import java.util.UUID;
 //import java.util.concurrent.CompletionStage;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 //import javax.json.JsonString;
@@ -55,7 +58,29 @@ public class ReeferProvisionerActor extends BaseActor {
             reeferInventory.put(reeferId, reeferActor);
         }
     }
-    
+    @Remote
+    public JsonObject updateReeferLocation(JsonObject message) {
+        JsonArray reefers = message.getJsonArray("reefers");
+        String location = message.getString("location");
+        String allocationStatus = message.getString("allocationStatus");
+        reefers.forEach(reefer -> {
+            String reeferId = reefer.asJsonObject().toString();
+            JsonObject params = Json.createObjectBuilder()
+            .add("location",  location)
+            .add("allocationStatus", allocationStatus )
+                .build();
+            ActorRef reeferActor =  actorRef(ReeferAppConfig.ReeferActorName,reeferId);
+            try {
+                actorCall( reeferActor, "changeLocation", params);
+               
+            } catch( ActorMethodNotFoundException ee) {
+                ee.printStackTrace();
+            } catch( Exception ee) {
+                ee.printStackTrace();
+            }
+        });
+        return Json.createObjectBuilder().add("status", "OK").build();
+    }
     @Remote
     public JsonObject bookReefers(JsonObject message) {
         Order order = new Order(message.getJsonObject(Order.OrderKey));
@@ -74,6 +99,7 @@ public class ReeferProvisionerActor extends BaseActor {
             JsonArrayBuilder arrayBuilder = reserveReefers(allocatedReefers, order);
 
             JsonObject reply =  Json.createObjectBuilder()
+                .add("status", "OK")
                 .add("reefers",  arrayBuilder)
                 .add(Order.OrderKey, order.getAsObject() )
                     .build();

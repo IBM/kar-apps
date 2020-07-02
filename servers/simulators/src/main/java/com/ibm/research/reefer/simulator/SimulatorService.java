@@ -12,26 +12,26 @@ import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 
 public class SimulatorService {
 
-	public void setUnitPeriod(JsonValue value) {
+	public JsonValue setUnitPeriod(JsonValue value) {
 		ActorRef aref = actorRef("simhelper","simservice");
 		try {
-			actorCall(aref, "set", (JsonValue)Json.createValue("UnitPeriod"), value);
+			return actorCall(aref, "set", (JsonValue)Json.createValue("UnitPeriod"), value);
 		} catch (ActorMethodNotFoundException e) {
 			System.err.println("setUnitPeriod: actor "+aref.toString()+" not found");
 			e.printStackTrace();
+			return 	Json.createValue(-1);
 		}
 	}
 
 	public JsonNumber getUnitPeriod() {
-		JsonNumber unitPeriod = Json.createValue(-1);
 		ActorRef aref = actorRef("simhelper","simservice");
 		try {
-			unitPeriod = (JsonNumber) actorCall(aref, "get", (JsonValue)Json.createValue("UnitPeriod"));
+			return (JsonNumber) actorCall(aref, "get", (JsonValue)Json.createValue("UnitPeriod"));
 		} catch (ActorMethodNotFoundException e) {
 			System.err.println("getUnitPeriod: actor "+aref.toString()+" not found");
 			e.printStackTrace();
+			return 	Json.createValue(-1);
 		}
-		return unitPeriod;
 	}
 
 }

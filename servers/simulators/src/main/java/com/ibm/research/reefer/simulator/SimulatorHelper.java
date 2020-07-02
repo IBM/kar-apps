@@ -1,13 +1,13 @@
 package com.ibm.research.reefer.simulator;
 
-import static com.ibm.research.kar.Kar.*;
+import static com.ibm.research.kar.Kar.actorDeleteState;
+import static com.ibm.research.kar.Kar.actorGetAllState;
+import static com.ibm.research.kar.Kar.actorSetState;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.json.Json;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
 import javax.json.JsonValue;
@@ -46,21 +46,21 @@ public class SimulatorHelper extends BaseActor {
 	}
 
 	@Remote
-	public JsonNumber set(JsonValue key, JsonValue value) {
+	public JsonValue set(JsonValue key, JsonValue value) {
 		int n = actorSetState(this,((JsonString)key).getString(), value);
 		persistentData.put(((JsonString)key).getString(), value);
 		return Json.createValue(n);
 	}
 
 	@Remote
-	public JsonNumber del(JsonValue key) {
+	public JsonValue del(JsonValue key) {
 		int n = actorDeleteState(this, ((JsonString)key).getString());
 		persistentData.remove(((JsonString)key).getString());
 		return Json.createValue(n);
 	}
 
 	@Remote
-	public JsonObject showAllState() {
+	public JsonValue showAllState() {
 		Map<String,JsonValue> tempMap = new HashMap<String,JsonValue>();
 		tempMap.putAll(actorGetAllState(this));
 		

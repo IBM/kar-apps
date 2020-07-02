@@ -2,6 +2,7 @@ package com.ibm.research.reefer.simulator;
 
 import javax.json.Json;
 import javax.json.JsonNumber;
+import javax.json.JsonValue;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -23,16 +24,17 @@ public class SimulatorResource {
 	 */
 	@POST
 	@Path("/setunitperiod")
-	public void setunitperiod(JsonNumber num) {
-		if (num.intValue() < 0) {
+	public JsonValue setunitperiod(JsonValue num) {
+		if (((JsonNumber)num).intValue() < 0) {
 			num = Json.createValue(0);
 		}
 		try {
-			simService.setUnitPeriod(num);
+			return simService.setUnitPeriod(num);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 			System.err.println("help! from setunitperiod");
+			return Json.createValue(-1);
 		}
 	}
 
@@ -41,7 +43,7 @@ public class SimulatorResource {
 	 */
 	@GET
 	@Path("/getunitperiod")
-	public JsonNumber getunitperiod() {
+	public JsonValue getunitperiod() {
 		try {
 			return simService.getUnitPeriod();
 		}

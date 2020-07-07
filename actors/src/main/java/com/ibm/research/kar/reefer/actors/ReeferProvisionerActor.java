@@ -39,7 +39,9 @@ public class ReeferProvisionerActor extends BaseActor {
         if ( ReeferAppConfig.PackingAlgoStrategy.equals("simple")) {
             packingAlgo = new SimplePackingAlgo();
         }
-        addReefers(100);
+        System.out.println(
+            "ReeferProvisionerActor.init() called- Actor ID:" + this.getId());
+        addReefers(10);
     }
     private void addReefers(int howMany) {
         JsonObject params = Json.createObjectBuilder()

@@ -22,6 +22,7 @@ public class ScheduleService {
 
     @Value("classpath:routes.json")
     Resource resourceFile;
+
     private LinkedList<Voyage> sortedSchedule = new LinkedList<Voyage>();
 /*
     private List<ShippingSchedule> shippingSchedule = 
@@ -85,9 +86,7 @@ public class ScheduleService {
     public List<Voyage> get() {
         ShippingScheduler scheduler = new ShippingScheduler();
         try {
-            Path file = ResourceUtils.getFile("../src/main/resources/routes.json").toPath();
-            System.out.println(">>>>>>>>>>>>>> File: "+file.toString()+" Exists:"+resourceFile.exists());
-            scheduler.initialize(new File("/home/cwiklik/dev/ibm/data/routes.json")); //"src/main/resources/routes.json");
+            scheduler.initialize(resourceFile.getInputStream());
         } catch( Exception e) {
             e.printStackTrace();
         }

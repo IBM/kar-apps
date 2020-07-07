@@ -1,4 +1,5 @@
 package com.ibm.research.kar.reeferserver.controller;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -18,19 +19,12 @@ import com.ibm.research.kar.reeferserver.model.*;
 @CrossOrigin("*")
 public class ShipScheduleController {
 
-    @Autowired
-    private ScheduleService shipScheduleService;
-    
-  /*
-    @GetMapping("/schedules")
-	public List<ShippingSchedule>  get() {
-        System.out.println("ShipScheduleController.get()");
-		return shipScheduleService.get();
-    }
-    */
-    @GetMapping("/schedules")
-	public List<Voyage>  get() {
+  @Autowired
+  private ScheduleService shipScheduleService;
+
+  @GetMapping("/schedules")
+  public List<Voyage> get() {
     System.out.println("ShipScheduleController.get()");
-		return shipScheduleService.get();
-	}
+    return shipScheduleService.get();
+  }
 }

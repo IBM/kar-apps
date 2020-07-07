@@ -37,10 +37,10 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency-->
-        <!--dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency-->
+        </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -52,13 +52,33 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<!--dependency>
+		<dependency>
             <groupId>com.ibm.research.kar</groupId>
 	        <artifactId>kar</artifactId>
 	        <version>1.0-SNAPSHOT</version>
-		</dependency-->
-		 
-	
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-autoconfigure</artifactId>
+			<!--version>1.0.0.BUILD-SNAPSHOT</version-->
+				</dependency>
+		<dependency>
+           <groupId>org.springframework.boot</groupId>
+           <artifactId>spring-boot-starter-data-couchbase</artifactId>
+         </dependency> 
+		<dependency>
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+			<version>8.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.microprofile</groupId>
+			<artifactId>microprofile</artifactId>
+			<version>3.3</version>
+			<type>pom</type>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -67,6 +87,32 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
+			<!-- Enable Liberty Maven plugin -->
+			<plugin>
+				<groupId>io.openliberty.tools</groupId>
+				<artifactId>liberty-maven-plugin</artifactId>
+				<version>3.2</version>
+				<configuration>
+				<appsDirectory>apps</appsDirectory>
+				<installAppPackages>spring-boot-project</installAppPackages>
+				<include>minify,runnable</include>
+				<packageName>ReeferRestServiceApp</packageName>
+				</configuration>
+				<executions>
+				<execution>
+					<id>package-server</id>
+					<phase>package</phase>
+					<goals>
+					<goal>create</goal>
+					<goal>install-feature</goal>
+					<goal>deploy</goal>
+					<goal>package</goal>
+					</goals>
+				</execution>
+				</executions>
+			</plugin>
+			<!-- End of Liberty Maven plugin -->
 		</plugins>
 		<resources>     
         <resource>

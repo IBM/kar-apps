@@ -1,0 +1,35 @@
+[
+    {
+       "port":"Elizabeth, NJ","reeferInventoryCount":1000
+    },
+    {
+       "port":"London, GB","reeferInventoryCount":500
+    },
+    {
+       "port":"Oakland, CA","reeferInventoryCount":700
+    },
+    {
+       "port":"Shanghai, CN","reeferInventoryCount":1200
+    },
+    {
+       "port":"Miami, FL","reeferInventoryCount":800
+    },
+    {
+       "port":"Bremen, DE","reeferInventoryCount":900
+    },
+    {
+       "port":"Boston, MA","reeferInventoryCount":550
+    },
+    {
+       "port":"Hamburg, DE","reeferInventoryCount":950
+    },
+    {
+       "port":"New Orleans, LA","reeferInventoryCount":1000
+    },
+    {
+       "port":"Antwerp, BE","reeferInventoryCount":1000
+    },
+    {
+       "port":"New York, NY","reeferInventoryCount":1000
+    }
+  ]

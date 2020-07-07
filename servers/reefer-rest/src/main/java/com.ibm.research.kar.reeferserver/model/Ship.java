@@ -11,16 +11,18 @@ public class Ship {
     private String position;
     private int maxCapacity;
     private int freeCapacity;
-    private String status;
+    private String location;
     private List<Reefer> reefers = new ArrayList<>();
-    
-    public Ship(String name, String position, int maxCapacity, int freeCapacity, String status) {
+    public Ship() {
+        super();
+    }
+    public Ship(String name, String position, int maxCapacity, int freeCapacity, String location) {
         this.id = String.valueOf(idGen.addAndGet(1));
         this.name = name;
         this.position = position;
         this.maxCapacity = maxCapacity;
         this.freeCapacity = freeCapacity;
-        this.status = status;
+        this.location = location;
     }
 
     public static AtomicLong getIdGen() {
@@ -67,12 +69,12 @@ public class Ship {
         this.freeCapacity = freeCapacity;
     }
 
-    public String getStatus() {
-        return status;
+    public String getLocation() {
+        return location;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public List<Reefer> getReefers() {
@@ -84,5 +86,13 @@ public class Ship {
     }
     public void addReefer(Reefer reefer) {
         this.reefers.add(reefer);
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setReefers(List<Reefer> reefers) {
+        this.reefers = reefers;
     }
 }

@@ -3,11 +3,11 @@ package com.ibm.research.kar.reeferserver.model;
 public class ReeferSupply {
     
     String port;
-    int howMany;
+    int reeferInventoryCount;
 
     public ReeferSupply(String port, int howMany) {
         this.port = port;
-        this.howMany = howMany;
+        this.reeferInventoryCount = howMany;
     }
 
     public String getPort() {
@@ -18,11 +18,11 @@ public class ReeferSupply {
         this.port = port;
     }
 
-    public int getHowMany() {
-        return howMany;
+    public int getReeferInventoryCount() {
+        return reeferInventoryCount;
     }
 
-    public void setHowMany(int howMany) {
-        this.howMany = howMany;
+    public void setReeferInventoryCount(int howMany) {
+        this.reeferInventoryCount = howMany;
     }
 }

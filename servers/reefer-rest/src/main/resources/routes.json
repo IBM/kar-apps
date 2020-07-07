@@ -1,0 +1,37 @@
+[
+    {
+        "originPort":"Elizabeth, NJ","destinationPort":"London, GB","daysAtSea":14,"daysAtPort":2,
+        "vessel":
+              { "name":"Abyss","position":"","maxCapacity":500,"freeCapacity":500,"location":"AtPort"  }
+    },
+    {
+        "originPort":"Oakland, CA","destinationPort":"Shanghai, CN","daysAtSea":19,"daysAtPort":2,
+        "vessel":
+              { "name":"Atlantis","position":"","maxCapacity":200,"freeCapacity":200,"location":"AtPort"  }
+    },
+    {
+        "originPort":"Miami, FL","destinationPort":"Bremen, DE","daysAtSea":13,"daysAtPort":2,
+        "vessel":
+              { "name":"Black Pearl","position":"","maxCapacity":150,"freeCapacity":150,"location":"AtPort"  }
+    },
+    {
+        "originPort":"Boston, MA","destinationPort":"London, GB","daysAtSea":12,"daysAtPort":2,
+        "vessel":
+              { "name":"Santa Maria","position":"","maxCapacity":225,"freeCapacity":225,"location":"AtPort"  }
+    },
+    {
+        "originPort":"Boston, MA","destinationPort":"Hamburg, DE","daysAtSea":13,"daysAtPort":2,
+        "vessel":
+              { "name":"Andrea Gail","position":"","maxCapacity":250,"freeCapacity":250,"location":"AtPort"  }
+    },
+    {
+        "originPort":"New Orleans, LA","destinationPort":"Antwerp, BE","daysAtSea":15,"daysAtPort":2,
+        "vessel":
+              { "name":"Victoria","position":"","maxCapacity":550,"freeCapacity":550,"location":"AtPort"  }
+    },
+    {
+        "originPort":"New York, NY","destinationPort":"Antwerp, BE","daysAtSea":18,"daysAtPort":2,
+        "vessel":
+              { "name":"Victoria","position":"","maxCapacity":750,"freeCapacity":750,"location":"AtPort"  }
+    }
+]

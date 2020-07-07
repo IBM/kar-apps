@@ -36,10 +36,10 @@ public class ReeferController extends TimerTask {
 	}
     @PostMapping("/reefers")
 	public   List<Port>  addReefers(@RequestBody ReeferSupply reeferAdd) throws IOException {
-		System.out.println("addReefers() Called - port:"+reeferAdd.getPort()+" howMany:"+reeferAdd.getHowMany());
+		System.out.println("addReefers() Called - port:"+reeferAdd.getPort()+" howMany:"+reeferAdd.getReeferInventoryCount());
 		
-        reeferService.addPortReefers(reeferAdd.getPort(), reeferAdd.getHowMany());
-        portService.incrementReefersAtPort(reeferAdd.getPort(), reeferAdd.getHowMany());
+        reeferService.addPortReefers(reeferAdd.getPort(), reeferAdd.getReeferInventoryCount());
+        portService.incrementReefersAtPort(reeferAdd.getPort(), reeferAdd.getReeferInventoryCount());
 		return portService.getPorts();
 	}
 

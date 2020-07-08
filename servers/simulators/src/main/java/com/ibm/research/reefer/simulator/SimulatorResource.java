@@ -1,7 +1,6 @@
 package com.ibm.research.reefer.simulator;
 
 import javax.json.Json;
-import javax.json.JsonNumber;
 import javax.json.JsonValue;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -19,15 +18,16 @@ public class SimulatorResource {
 	SimulatorService simService = new SimulatorService();
 
 	/**
-	 * Sets the number of seconds between advancing a unit of time
-	 * Setting to 0 stops auto advance
+	 * Always starts Time, Order and Reefer updates in manual mode.
+	 * Has an entry point to resume last operational state.
+	 * Transition from manual to auto will start Time, Order or Reefer threads running.
+	 * Transition to manual will kill the associated thread.
+	 * Transition to auto will initialize unset parameters to their default values.
+	 * Period = 0 means manual mode
 	 */
 	@POST
 	@Path("/setunitperiod")
 	public JsonValue setunitperiod(JsonValue num) {
-		if (((JsonNumber)num).intValue() < 0) {
-			num = Json.createValue(0);
-		}
 		try {
 			return simService.setUnitPeriod(num);
 		}
@@ -39,7 +39,7 @@ public class SimulatorResource {
 	}
 
 	/**
-	 *
+	 * Gets the current setting for Unit Period
 	 */
 	@GET
 	@Path("/getunitperiod")

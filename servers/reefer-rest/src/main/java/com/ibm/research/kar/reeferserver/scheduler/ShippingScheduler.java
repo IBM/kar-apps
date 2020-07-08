@@ -58,7 +58,12 @@ public class ShippingScheduler {
         }
 
     }
-
+    public List<Route> getRoutes(InputStream routeConfigFile)  throws Exception {
+        if ( routes.isEmpty()) {
+            this.initialize(routeConfigFile);
+        }
+        return routes;
+    }
     public List<Voyage> generateSchedule() {
         return generateSchedule(ReeferServerApplication.getCurrentDate());
     }

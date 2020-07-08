@@ -23,8 +23,13 @@ public class ShipScheduleController {
   private ScheduleService shipScheduleService;
 
   @GetMapping("/schedules")
-  public List<Voyage> get() {
-    System.out.println("ShipScheduleController.get()");
+  public List<Voyage> getShippingSchedule() {
+    System.out.println("ShipScheduleController.getShippingSchedule()");
     return shipScheduleService.get();
+  }
+  @GetMapping("/routes")
+  public List<Route> getRoutes() {
+    System.out.println("ShipScheduleController.getRoutes()");
+    return shipScheduleService.getRoutes();
   }
 }

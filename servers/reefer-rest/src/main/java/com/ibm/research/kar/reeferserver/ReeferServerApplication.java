@@ -39,9 +39,10 @@ public class ReeferServerApplication {
 	public static Date getCurrentDate() {
 		return currentDate;
 	}
-	public static void advanceDate(int days) {
+	public static Date advanceDate(int days) {
         calendar.setTime(currentDate ); 
 		calendar.add(Calendar.DATE, days);
 		currentDate = calendar.getTime();
+		return currentDate;
 	}
 }

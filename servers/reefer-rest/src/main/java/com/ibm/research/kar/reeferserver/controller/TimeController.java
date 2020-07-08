@@ -37,8 +37,8 @@ public class TimeController {
         return date;
     }
     @PostMapping("/time/advance")
-	public void  nextDay() {
+	public Date  nextDay() {
         System.out.println("TimeController.nextDay()");
-        ReeferServerApplication.advanceDate(1);
+        return ReeferServerApplication.advanceDate(1);
 	}
 }

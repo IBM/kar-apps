@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.TimeZone;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,22 +26,9 @@ import com.ibm.research.kar.reeferserver.ReeferServerApplication;
 public class ShippingScheduler {
     private LinkedList<Voyage> sortedSchedule = new LinkedList<Voyage>();
     private List<Route> routes = new ArrayList<Route>();
-
-    /*
-     * private List<Route> routes = new ArrayList<Route>() { { add( new Route( new
-     * Ship("Abyss", ":", 500, 500, "AtPort"), "Elizabeth, NJ", "London, GB", 14, 2
-     * ) ); add( new Route( new Ship("Atlantis", ":", 200, 200, "AtPort"),
-     * "Oakland, CA", "Shanghai, CN", 19, 2 ) ); add( new Route( new
-     * Ship("Black Pearl", ":", 150, 150, "AtPort"), "Miami, FL", "Bremen, DE", 13,
-     * 2 ) ); add( new Route( new Ship("Santa Maria", ":", 225, 225,
-     * "AtPort"),"Boston, MA", "London, GB", 12, 2 ) ); add( new Route( new
-     * Ship("Andrea Gail", ":", 100, 100, "AtPort"),"Elizabeth, NJ", "London, GB",
-     * 14, 2) ); add( new Route( new Ship("Victoria", ":", 250, 250,
-     * "AtPort"),"Elizabeth, NJ", "London, GB", 12, 2 ) ); add( new Route( new
-     * Ship("Trinidad", ":", 500, 500, "AtPort"), "Elizabeth, NJ", "London, GB", 13,
-     * 2 ) ); } };
-     */
-    // public void initialize(File routeConfigFile) throws Exception {
+	private static TimeZone timeZone = TimeZone.getTimeZone("UTC");
+	private static Calendar calendar = Calendar.getInstance(timeZone);
+ 
     public void initialize(InputStream routeConfigFile) throws Exception {
 
         ObjectMapper mapper = new ObjectMapper();
@@ -64,11 +52,11 @@ public class ShippingScheduler {
         }
         return routes;
     }
-    public List<Voyage> generateSchedule() {
+    public LinkedList<Voyage> generateSchedule() {
         return generateSchedule(ReeferServerApplication.getCurrentDate());
     }
 
-    public List<Voyage> generateSchedule(Date departureDate) {
+    public LinkedList<Voyage> generateSchedule(Date departureDate) {
         // List<Route> schedule = new ArrayList<Route>();
 
         Date arrivalDate;
@@ -102,7 +90,8 @@ public class ShippingScheduler {
 
         }
         System.out.println("ScheduleGenerator - generated:" + sortedSchedule.size() + " Voyages");
-        return new ArrayList<Voyage>(sortedSchedule);
+//        return new ArrayList<Voyage>(sortedSchedule);
+        return sortedSchedule;
     }
 
     private void addVoyageToSchedule(Route route, Date departureDate, boolean returnVoyage) {
@@ -133,12 +122,10 @@ public class ShippingScheduler {
         return voyage;
     }
 
-    private static final Date getDate(Date date, int days) {
-
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        cal.add(Calendar.DATE, days);
-        return cal.getTime();
+    public static final Date getDate(Date date, int days) {
+        calendar.setTime(date);
+        calendar.add(Calendar.DATE, days);
+        return calendar.getTime();
     }
 
 }

@@ -27,6 +27,11 @@ public class ShipScheduleController {
     System.out.println("ShipScheduleController.getShippingSchedule()");
     return shipScheduleService.get();
   }
+  @GetMapping("/schedules/active")
+  public List<Voyage> getActiveVoyages() {
+    System.out.println("ShipScheduleController.getActiveVoyages()");
+    return shipScheduleService.get();
+  }
   @GetMapping("/routes")
   public List<Route> getRoutes() {
     System.out.println("ShipScheduleController.getRoutes()");

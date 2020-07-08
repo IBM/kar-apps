@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Ship {
-    private static transient AtomicLong idGen = new AtomicLong(1000);
     private String id;
     private String name;
     private String position;
@@ -17,20 +16,11 @@ public class Ship {
         super();
     }
     public Ship(String name, String position, int maxCapacity, int freeCapacity, String location) {
-        this.id = String.valueOf(idGen.addAndGet(1));
-        this.name = name;
+        this.id = this.name = name;
         this.position = position;
         this.maxCapacity = maxCapacity;
         this.freeCapacity = freeCapacity;
         this.location = location;
-    }
-
-    public static AtomicLong getIdGen() {
-        return idGen;
-    }
-
-    public static void setIdGen(AtomicLong idGen) {
-        Ship.idGen = idGen;
     }
 
     public String getId() {
@@ -42,7 +32,7 @@ public class Ship {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.id = this.name = name;
     }
 
     public String getPosition() {

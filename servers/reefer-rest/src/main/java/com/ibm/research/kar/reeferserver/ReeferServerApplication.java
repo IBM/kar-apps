@@ -19,14 +19,15 @@ public class ReeferServerApplication {
 	private static TimeZone timeZone = TimeZone.getTimeZone("UTC");
 	private static Calendar calendar = Calendar.getInstance(timeZone);
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		SpringApplication.run(ReeferServerApplication.class, args);
 		setTime();
 	}
+
 	private static void setTime() {
-//		TimeZone timeZone = TimeZone.getTimeZone("UTC");
-//        Calendar calendar = Calendar.getInstance(timeZone);
-    
+		// TimeZone timeZone = TimeZone.getTimeZone("UTC");
+		// Calendar calendar = Calendar.getInstance(timeZone);
+
 		simpleDateFormat.setTimeZone(timeZone);
 		currentDate = startDate = calendar.getTime();
 		System.out.println("UTC:     " + simpleDateFormat.format(startDate));
@@ -36,10 +37,12 @@ public class ReeferServerApplication {
 	public static Date getStartDate() {
 		return startDate;
 	}
+
 	public static Date getCurrentDate() {
 		return currentDate;
 	}
-	public static Date advanceDate(int days) {
+
+	public static Date advanceDate(final int days) {
         calendar.setTime(currentDate ); 
 		calendar.add(Calendar.DATE, days);
 		currentDate = calendar.getTime();

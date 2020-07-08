@@ -58,7 +58,7 @@ public class ReeferController extends TimerTask {
 	public void run(){
 		//toy implementation
 		
-		updateReefers();
+		//updateReefers();
 		//System.out.println("after change age is "+age);
   
 	  }
@@ -79,7 +79,7 @@ public class ReeferController extends TimerTask {
 			}
 			count++;
 			webSocket.sendReefersUpdate(reefers);
-			System.out.println("Websocket :: updating reefers");
+//			System.out.println("Websocket :: updating reefers");
 		}
 		
 	}

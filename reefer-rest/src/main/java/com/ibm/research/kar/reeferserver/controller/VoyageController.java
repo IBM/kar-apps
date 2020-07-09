@@ -27,7 +27,7 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
       System.out.println("VoyageController.getActiveVoyages()");
       return shipScheduleService.getActiveSchedule();
     } 
-    @GetMapping("/voyage/all")
+    @GetMapping("/voyage/upcoming")
     public List<Voyage> getShippingSchedule() {
       System.out.println("VoyageController.getShippingSchedule()");
       return shipScheduleService.get();

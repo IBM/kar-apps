@@ -1,12 +1,7 @@
 package com.ibm.research.kar.reeferserver.controller;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
-import com.ibm.research.kar.reeferserver.model.ShippingSchedule;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +22,7 @@ public class ShipScheduleController {
     System.out.println("ShipScheduleController.getShippingSchedule()");
     return shipScheduleService.get();
   }
-  @GetMapping("/schedules/active")
-  public List<Voyage> getActiveVoyages() {
-    System.out.println("ShipScheduleController.getActiveVoyages()");
-    return shipScheduleService.get();
-  }
+
   @GetMapping("/routes")
   public List<Route> getRoutes() {
     System.out.println("ShipScheduleController.getRoutes()");

@@ -1,6 +1,7 @@
 package com.ibm.research.kar.reeferserver;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -30,7 +31,7 @@ public class ReeferServerApplication {
 
 		simpleDateFormat.setTimeZone(timeZone);
 		currentDate = startDate = calendar.getTime();
-		System.out.println("UTC:     " + simpleDateFormat.format(startDate));
+		System.out.println("UTC:     " + Instant.now());
 
 	}
 
@@ -42,9 +43,9 @@ public class ReeferServerApplication {
 		return currentDate;
 	}
 
-	public static Date advanceDate(final int days) {
+	public static Date advanceDate(final int daysIntoTheFuture) {
         calendar.setTime(currentDate ); 
-		calendar.add(Calendar.DATE, days);
+		calendar.add(Calendar.DATE, daysIntoTheFuture);
 		currentDate = calendar.getTime();
 		return currentDate;
 	}

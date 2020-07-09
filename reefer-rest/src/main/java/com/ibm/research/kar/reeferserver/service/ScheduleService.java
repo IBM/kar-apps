@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
 import com.ibm.research.kar.reeferserver.model.*;
 import com.ibm.research.kar.reeferserver.scheduler.*;
 import org.springframework.stereotype.Component;
@@ -91,6 +92,14 @@ public class ScheduleService {
         }
         
         return new ArrayList<Voyage>(sortedSchedule);
+    }
+    public Voyage getVoyage(String voyageId) throws VoyageNotFoundException {
+        for( Voyage voyage : masterSchedule ) {
+            if ( voyage.getId().equals(voyageId)) {
+                return voyage;
+            }
+        }
+        throw new VoyageNotFoundException("Unable to find voyage with ID:"+voyageId);
     }
 
     

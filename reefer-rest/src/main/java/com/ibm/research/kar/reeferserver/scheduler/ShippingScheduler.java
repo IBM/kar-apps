@@ -43,7 +43,9 @@ public class ShippingScheduler {
     }
 
     public LinkedList<Voyage> generateSchedule() {
-        return generateSchedule(TimeUtils.getInstance().getCurrentDate());
+        // generate new schedule for one year ahead begining from next day
+        return generateSchedule(TimeUtils.getInstance().
+             futureDate(TimeUtils.getInstance().getCurrentDate(), 1));
     }
 
     public LinkedList<Voyage> generateSchedule(Instant departureDate) {

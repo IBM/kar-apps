@@ -1,44 +1,35 @@
 package com.ibm.research.kar.reeferserver.controller;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
+
+import java.time.Instant;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import com.ibm.research.kar.reeferserver.ReeferServerApplication;
+
+import com.ibm.research.kar.reefer.common.time.TimeUtils;
 @RestController
 @CrossOrigin("*")
 public class TimeController {
-    private transient final SimpleDateFormat dateFormat 
-       = new SimpleDateFormat("MM/dd/yyyy");
 
     @GetMapping("/time/startDate")
-	public Date  getStartDate() {
+	public Instant  getStartDate() {
         System.out.println("TimeController.getStartDate()");
-        Date date =  ReeferServerApplication.getStartDate();
+        Instant date =  TimeUtils.getInstance().getStartDate();
         System.out.println("TimeController.getStartDate() - Date:"+date.toString());
-
-//        Map env = System.getenv();
-//for (Iterator it=env.entrySet().iterator(); it.hasNext(); ) {
-//   Map.Entry entry = (Map.Entry)it.next();
-//   System.out.println(entry.getKey() + " = " + entry.getValue());
-//}
         return date;
     }
     @GetMapping("/time/currentDate")
-	public Date  getCurrentDate() {
+	public Instant  getCurrentDate() {
         System.out.println("TimeController.getCurrentDate()");
-        Date date =  ReeferServerApplication.getCurrentDate();
-        System.out.println("TimeController.getCurrentDate() - Date:"+date.toString());
+        Instant date =  TimeUtils.getInstance().getCurrentDate();
+       System.out.println("TimeController.getCurrentDate() - Date:"+date.toString());
 
         return date;
     }
     @PostMapping("/time/advance")
-	public Date  nextDay() {
+	public Instant  nextDay() {
         System.out.println("TimeController.nextDay()");
-        return ReeferServerApplication.advanceDate(1);
+        return TimeUtils.getInstance().advanceDate(1);
 	}
 }

@@ -28,7 +28,16 @@ public class VoyageActor extends BaseActor {
         JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
         actorSetState(this, "reefers", arrayBuilder.build());
     }
+    @Remote
+    public JsonObject changePosition(JsonObject message) {
+        System.out.println("VoyageActor.changePosition() called "+message.toString());
 
+        message.getInt("daysAtSea");
+        return Json.createObjectBuilder()
+          .add("status", "OK")
+          .build();
+
+    }
     @Remote
     public JsonObject reserve(JsonObject message) {
        Order order = new Order(message.getJsonObject(Order.OrderKey));

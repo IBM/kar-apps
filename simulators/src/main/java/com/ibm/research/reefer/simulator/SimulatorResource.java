@@ -1,5 +1,6 @@
 package com.ibm.research.reefer.simulator;
 
+
 import javax.json.Json;
 import javax.json.JsonValue;
 import javax.ws.rs.Consumes;
@@ -18,22 +19,22 @@ public class SimulatorResource {
 	SimulatorService simService = new SimulatorService();
 
 	/**
-	 * Always starts Time, Order and Reefer updates in manual mode.
-	 * Has an entry point to resume last operational state.
-	 * Transition from manual to auto will start Time, Order or Reefer threads running.
+	 * Simulator cold start goes into manual mode.
+	 *           warm start resumes last operational state.
+	 * Transition from manual to auto will start associated Time, Order or Reefer thread running.
 	 * Transition to manual will kill the associated thread.
 	 * Transition to auto will initialize unset parameters to their default values.
-	 * Period = 0 means manual mode
+	 * Delay = 0 means manual mode
 	 */
 	@POST
-	@Path("/setunitperiod")
-	public JsonValue setunitperiod(JsonValue num) {
+	@Path("/setunitdelay")
+	public JsonValue setunitdelay(JsonValue num) {
 		try {
-			return simService.setUnitPeriod(num);
+			return simService.setUnitDelay(num);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			System.err.println("help! from setunitperiod");
+			System.err.println("help! from setunitdelay");
 			return Json.createValue(-1);
 		}
 	}
@@ -42,14 +43,30 @@ public class SimulatorResource {
 	 * Gets the current setting for Unit Period
 	 */
 	@GET
-	@Path("/getunitperiod")
-	public JsonValue getunitperiod() {
+	@Path("/getunitdelay")
+	public JsonValue getunitdelay() {
 		try {
-			return simService.getUnitPeriod();
+			return simService.getUnitDelay();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			System.err.println("help! from getunitperiod");
+			System.err.println("help! from getunitdelay");
+			return Json.createValue(-1);
+		}
+	}
+
+	/**
+	 * Gets the current setting for Unit Period
+	 */
+	@GET
+	@Path("/advancetime")
+	public JsonValue advancetime() {
+		try {
+			return simService.advanceTime();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("help! from advancetime");
 			return Json.createValue(-1);
 		}
 	}

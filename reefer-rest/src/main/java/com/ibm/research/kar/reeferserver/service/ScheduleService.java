@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
 import com.ibm.research.kar.reeferserver.model.*;
 import com.ibm.research.kar.reeferserver.scheduler.*;
@@ -16,15 +19,16 @@ import com.ibm.research.kar.reefer.common.time.TimeUtils;
 @Component
 public class ScheduleService {
     @Value("classpath:routes.json")
-    Resource resourceFile;
-    ShippingScheduler scheduler = new ShippingScheduler();
+    private Resource routesJsonResource;
+    @Autowired
+    private ShippingScheduler scheduler; // = new ShippingScheduler();
     
     private LinkedList<Voyage> masterSchedule = new LinkedList<Voyage>();
 
     public List<Route> getRoutes() {
         List<Route> routes = new ArrayList<>();
         try {
-            routes = scheduler.getRoutes(resourceFile.getInputStream());
+            routes = scheduler.getRoutes(routesJsonResource.getInputStream());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -41,7 +45,7 @@ public class ScheduleService {
         List<Voyage> activeSchedule = new ArrayList<>();
         if ( masterSchedule.isEmpty() ) {
             try {
-                scheduler.initialize(resourceFile.getInputStream());
+                scheduler.initialize(routesJsonResource.getInputStream());
                 masterSchedule =scheduler.generateSchedule();
             } catch( Exception e) {
                 // !!!!!!!!!!!!!!!!!!!!!! HANDLE THIS
@@ -73,7 +77,7 @@ public class ScheduleService {
 
     public List<Voyage> get() {
          try {
-            scheduler.initialize(resourceFile.getInputStream());
+            scheduler.initialize(routesJsonResource.getInputStream());
         } catch (Exception e) {
             e.printStackTrace();
         }

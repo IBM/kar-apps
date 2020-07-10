@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -33,10 +34,14 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
       return shipScheduleService.get();
     }
     @GetMapping("/voyage/state/{id}")
-    @ResponseBody
     public Voyage getVoyageState(@PathVariable("id") String id) throws VoyageNotFoundException{
       System.out.println("VoyageController.getVoyageState()");
       return shipScheduleService.getVoyage(id);
+    } 
+    @PostMapping("/voyage/update/{id}")
+    public void updateVoyageState(@PathVariable("id") String id) throws VoyageNotFoundException{
+      System.out.println("VoyageController.updateVoyageState()");
+      Voyage voyage = shipScheduleService.getVoyage(id);
     } 
     @GetMapping("/voyage/routes")
     public List<Route> getRoutes() {

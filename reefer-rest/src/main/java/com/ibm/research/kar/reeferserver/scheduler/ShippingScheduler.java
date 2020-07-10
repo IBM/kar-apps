@@ -11,8 +11,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import com.ibm.research.kar.reeferserver.model.*;
-import com.ibm.research.kar.reefer.common.time.TimeUtils;
 
+import org.springframework.stereotype.Component;
+
+import com.ibm.research.kar.reefer.common.time.TimeUtils;
+@Component
 public class ShippingScheduler {
     private final LinkedList<Voyage> sortedSchedule = new LinkedList<Voyage>();
     private List<Route> routes = new ArrayList<Route>();

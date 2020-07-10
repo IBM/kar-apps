@@ -13,6 +13,7 @@
 		<feature>cdi-2.0</feature>
 		<feature>concurrent-1.0</feature>
 		<feature>mpOpenTracing-1.3</feature>
+        <feature>websocket-1.1</feature>
     </featureManager>
 
     <httpEndpoint id="defaultHttpEndpoint"

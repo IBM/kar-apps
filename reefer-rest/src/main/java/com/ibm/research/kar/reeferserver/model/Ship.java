@@ -2,7 +2,6 @@ package com.ibm.research.kar.reeferserver.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Ship {
     private String id;

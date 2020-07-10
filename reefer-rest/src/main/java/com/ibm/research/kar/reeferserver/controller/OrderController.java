@@ -69,13 +69,6 @@ public class OrderController {
 	@GetMapping("/orders")
 	public List<Order>  getAllOrders() {
 		System.out.println("getAllOrders() - Got New Request");
-
-		//webSocket.send("DUDE HELLO");
-
-
-
-
-
 		
 		return orderService.getOrders();
 	}

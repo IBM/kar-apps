@@ -1,22 +1,18 @@
 package com.ibm.research.kar.reeferserver.model;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.concurrent.atomic.AtomicLong;
+import java.time.Instant;
 
 public class Voyage {
-    private transient final SimpleDateFormat dateFormat 
-        = new SimpleDateFormat("MM/dd/yyyy");
-   private String id;
+    private String id;
     private Route route;
 
-    private transient Date sailDateObject;
+    private Instant sailDateObject;
     private String sailDate;
     
-    public Voyage(Route route, Date sailDateObject) {
+    public Voyage(Route route, Instant sailDateObject) {
         this.route = route;
         this.sailDateObject = sailDateObject;
-        this.sailDate = dateFormat.format(sailDateObject);
+        this.sailDate = sailDateObject.toString();
         this.id = String.format("%s-%s",route.getVessel().getName(),this.sailDate).replaceAll("/","-");
     }
     public String getId() {
@@ -25,7 +21,7 @@ public class Voyage {
     public Route getRoute() {
         return route;
     }
-    public Date getSailDate() {
+    public Instant getSailDate() {
         return sailDateObject;
     }
     

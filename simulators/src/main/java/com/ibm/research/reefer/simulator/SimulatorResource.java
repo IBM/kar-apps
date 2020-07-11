@@ -9,16 +9,30 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.annotation.PreDestroy;
+import javax.ejb.Singleton; 
 
 
-@Path("/simulator")
+@Singleton @Path("/simulator")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class SimulatorResource {
 
-	SimulatorService simService = new SimulatorService();
+	private static SimulatorService simService;
+	public SimulatorResource() {
+		if (null == simService) {
+			simService = new SimulatorService();
+		}
+	}
 
-	/**
+@PreDestroy
+public void reset() {
+	System.out.println("predestroy");
+	simService = null;
+}
+
+
+    /**
 	 * Simulator cold start goes into manual mode.
 	 *           warm start resumes last operational state.
 	 * Transition from manual to auto will start associated Time, Order or Reefer thread running.
@@ -69,6 +83,13 @@ public class SimulatorResource {
 			System.err.println("help! from advancetime");
 			return Json.createValue(-1);
 		}
+	}
+
+	@POST
+	@Path("/gimme")
+	public JsonValue gimme(JsonValue val) {
+		System.out.println("val type="+val.getValueType()+"  val.tostring="+val.toString());
+		return val;
 	}
 
 }

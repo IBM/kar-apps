@@ -28,10 +28,15 @@ public class ShippingScheduler {
 
         try {
             routes = mapper.readValue(routeConfigFile, typeReference);
-            for (final Route route : routes) {
-                System.out.println("................Origin Port: " + route.getOriginPort() + " Ship:"
-                        + route.getVessel().getName() + " Ship Capacity:" + route.getVessel().getMaxCapacity());
-            }
+            routes.forEach(route ->
+               System.out.println("................Origin Port: " + route.getOriginPort() + " Ship:"
+                + route.getVessel().getName() + " Ship Capacity:" + route.getVessel().getMaxCapacity())
+
+            );
+   //        for (final Route route : routes) {
+    //            System.out.println("................Origin Port: " + route.getOriginPort() + " Ship:"
+    //                    + route.getVessel().getName() + " Ship Capacity:" + route.getVessel().getMaxCapacity());
+    //        }
         } catch (final IOException e) {
             System.out.println("Unable to save users: " + e.getMessage());
         }

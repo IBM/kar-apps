@@ -6,20 +6,21 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 @RestController
 @CrossOrigin("*")
 public class TimeController {
 
-    @GetMapping("/time/startDate")
+    @PostMapping("/time/startDate")
 	public Instant  getStartDate() {
         System.out.println("TimeController.getStartDate()");
         Instant date =  TimeUtils.getInstance().getStartDate();
         System.out.println("TimeController.getStartDate() - Date:"+date.toString());
         return date;
     }
-    @GetMapping("/time/currentDate")
+    @PostMapping("/time/currentDate")
 	public Instant  getCurrentDate() {
         System.out.println("TimeController.getCurrentDate()");
         Instant date =  TimeUtils.getInstance().getCurrentDate();

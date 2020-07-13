@@ -18,7 +18,7 @@
 	<httpEndpoint httpPort="${default.http.port}"
 		httpsPort="${default.https.port}" id="defaultHttpEndpoint" host="*" />
 
-	<webApplication location="kar-reefer-actor-server.war"
+	<webApplication location="reefer-kar-actor-server.war"
 		contextRoot="/">
 		<classloader apiTypeVisibility="+third-party" />
 	</webApplication>

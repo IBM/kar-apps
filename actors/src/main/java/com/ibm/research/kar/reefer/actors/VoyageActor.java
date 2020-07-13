@@ -1,6 +1,8 @@
 package com.ibm.research.kar.reefer.actors;
 
 import static com.ibm.research.kar.Kar.*;
+
+import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Deactivate;
@@ -29,10 +31,23 @@ public class VoyageActor extends BaseActor {
         actorSetState(this, "reefers", arrayBuilder.build());
     }
     @Remote
-    public JsonObject changePosition(JsonObject message) {
+    public JsonValue changePosition(JsonObject message) {
         System.out.println("VoyageActor.changePosition() called "+message.toString());
 
-        message.getInt("daysAtSea");
+        int daysAtSea = message.getInt("daysAtSea");
+        JsonObject params = Json.createObjectBuilder()
+        .add("id",getId())
+        .add("daysAtSea",daysAtSea)
+        .build();
+        try {
+ 
+           return (JsonValue) call("reeferserver","/voyage/update", params);
+         //  return (JsonValue) call("reeferserver","/voyage/update", Json.createValue(10));
+         //   return (JsonValue) Kar.call("reeferserver", "time/advance", Json.createValue(0));
+        } catch( Exception e) {
+            e.printStackTrace();
+        }
+ 
         return Json.createObjectBuilder()
           .add("status", "OK")
           .build();

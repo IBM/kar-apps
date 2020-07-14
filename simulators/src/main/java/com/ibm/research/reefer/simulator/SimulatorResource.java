@@ -9,35 +9,20 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.annotation.PreDestroy;
-import javax.ejb.Singleton; 
 
-
-@Singleton @Path("/simulator")
+@Path("/simulator")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class SimulatorResource {
 
-	private static SimulatorService simService;
-	public SimulatorResource() {
-		if (null == simService) {
-			simService = new SimulatorService();
-		}
-	}
-
-@PreDestroy
-public void reset() {
-	System.out.println("predestroy");
-	simService = null;
-}
-
+	private static SimulatorService simService = new SimulatorService();
 
     /**
 	 * Simulator cold start goes into manual mode.
 	 *           warm start resumes last operational state.
 	 * Transition from manual to auto will start associated Time, Order or Reefer thread running.
-	 * Transition to manual will kill the associated thread.
-	 * Transition to auto will initialize unset parameters to their default values.
+	 * Transition to manual will kill the associated thread when it is sleeping.
+	 * Transition to auto will initialize any required but unset parameters to their default values.
 	 * Delay = 0 means manual mode
 	 */
 	@POST
@@ -72,7 +57,7 @@ public void reset() {
 	/**
 	 * Gets the current setting for Unit Period
 	 */
-	@GET
+	@POST
 	@Path("/advancetime")
 	public JsonValue advancetime() {
 		try {
@@ -85,11 +70,29 @@ public void reset() {
 		}
 	}
 
+	/**
+	 * Toggle connection with reefer-rest server
+	 */
 	@POST
-	@Path("/gimme")
-	public JsonValue gimme(JsonValue val) {
-		System.out.println("val type="+val.getValueType()+"  val.tostring="+val.toString());
+	@Path("/togglereeferrest")
+	public JsonValue togglereeferrest() {
+		return simService.toggleReeferRest(); 
+	}
+
+
+// Temporary for testing
+	@POST
+	@Path("/gimmepost")
+	public JsonValue gimmepost(JsonValue val) {
+		System.out.println("gimmepost: "+val.toString());
 		return val;
+	}
+
+	@GET
+	@Path("/gimmeget")
+	public JsonValue gimmeget() {
+		System.out.println("gimmeget called");
+		return Json.createValue("GOT");
 	}
 
 }

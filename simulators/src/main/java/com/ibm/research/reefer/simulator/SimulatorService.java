@@ -6,6 +6,7 @@ import static com.ibm.research.kar.Kar.actorRef;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.json.Json;
@@ -13,7 +14,9 @@ import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
+import javax.ws.rs.core.Response;
 
+import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 
@@ -23,22 +26,19 @@ public class SimulatorService {
 	private ActorRef aref = actorRef("simhelper","simservice");
 	private final static AtomicInteger unitdelay = new AtomicInteger(0);
 	private final static AtomicInteger shipthreadcount = new AtomicInteger(0);
+	private final static AtomicBoolean reeferRestRunning = new AtomicBoolean(false);
+	private Thread shipthread;
 
 	// constructor
 	public SimulatorService () {
 		System.out.println("SimulatorService constructor!");
 		persistentData = new HashMap<String,JsonValue>();
 		persistentData.putAll((JsonObject)actorCall(aref, "getAll"));
+	}
 
-// attempt to clean up running threads on a hot method replace
-// but hot method replace is not working with singleton SimulatorResource
-//		Set<Thread> threadset = Thread.getAllStackTraces().keySet();
-//		for(Thread thread : threadset){
-//		    if (thread.getName().equals("shipthread")) {
-//		    	System.out.println("killing leftover ship threadid="+thread.getId());
-//		        thread.interrupt();
-//		    }
-//		}
+	public JsonValue toggleReeferRest() {
+		reeferRestRunning.set(! reeferRestRunning.get());
+		return Json.createValue(reeferRestRunning.toString());
 	}
 
 	// local utility to retrieve cached value
@@ -72,9 +72,14 @@ public class SimulatorService {
 		JsonNumber newval = (((JsonNumber)value).intValue() > 0) ? (JsonNumber)value : (JsonNumber)Json.createValue(0);
 		synchronized (unitdelay) {
 			// if unitdelay > 0 then Ship thread is running.
-			// if newval == 0 then will not start thread.
-			// So, just update value.
+			// if running and newval == 0 then interrupt thread
 			if (0 < unitdelay.intValue() || 0 == newval.intValue()) {
+				if (0 < unitdelay.intValue() && 0 == newval.intValue()) {
+					if (null != shipthread) {
+						shipthread.interrupt();
+						shipthread = null;
+					}
+				}
 				unitdelay.set(newval.intValue());
 				return Json.createValue("accepted");
 			}
@@ -88,15 +93,14 @@ public class SimulatorService {
 
 			// save new delay
 			unitdelay.set(newval.intValue());
-
 			// start the Ship thread
-			(new ShipThread()).start();
+			(shipthread = new ShipThread()).start();
 
 			return Json.createValue("accepted");
 		}
 	}
 
-	// Only runs when unitdelay == 0
+	// Manual oneshot. Runs only when unitdelay == 0
 	public JsonValue advanceTime() {
     	synchronized (unitdelay) {
     		if (0 == unitdelay.intValue() && 0 == shipthreadcount.get()) {
@@ -131,19 +135,29 @@ public class SimulatorService {
 
 			Thread.currentThread().setName("shipthread");
 			shipthreadcount.incrementAndGet();
-        	System.out.println("started thread #"+shipthreadcount.get()+" with threadid="+Thread.currentThread().getId()+" ... LOUD HORN");
+        	System.out.println("started threadid="+Thread.currentThread().getId()+" ... LOUD HORN");
 	        while (running) {
-	        	if (oneshot) {
-		        	System.out.println("shipthread: oneshot");
-	        	}
-	        	else {
-	        		System.out.println("shipthread: running "+ ++loopcnt);
+	        	if (!oneshot) {
+	        		System.out.println("shipthread "+Thread.currentThread().getId()+": running "+ ++loopcnt);
 	        	}
 
-	        	//TODO tell REST to advance time
-	        	//TODO fetch all active voyages from REST
-	        	//TODO send ship positions to all active voyages
-	        	//TODO tell order simulator the new time
+	        	if (!reeferRestRunning.get()) {
+	        		System.out.println("reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
+	        	}
+	        	else {
+		        	// tell REST to advance time
+	        		Response response = Kar.restPost("reeferservice", "time/advance", Json.createValue(0));
+	        		JsonValue currentTime = response.readEntity(JsonValue.class);
+	        		System.out.println("New time = "+currentTime.toString());
+
+	        		// fetch all active voyages from REST
+	        		response = Kar.restGet("reeferservice", "voyage/active");
+	        		JsonValue activeVoyages = response.readEntity(JsonValue.class);
+	        		System.out.println("Active voyages = "+activeVoyages.toString());
+
+	        		//TODO send ship positions to all active voyages
+	        		//TODO tell order simulator the new time
+	        	}
 
 	        	try {
 	        		Thread.sleep(1000*unitdelay.intValue());
@@ -155,12 +169,18 @@ public class SimulatorService {
 	        	// check if auto mode turned off
 	        	synchronized (unitdelay) {
 	        		if (0 == unitdelay.intValue() || interrupted || oneshot) {
-	        			if (0 < shipthreadcount.decrementAndGet()) {
-	        				System.err.println("we have an extra ship thread running!");
-	        			}
 	        			unitdelay.set(0);
 	        			System.out.println("Stopping Ship Thread "+Thread.currentThread().getId()+" LOUD HORN");
 	        			running = false;
+
+	        			// check for threads leftover from a hot method replace
+	        			Set<Thread> threadset = Thread.getAllStackTraces().keySet();
+	        			for(Thread thread : threadset){
+	        				if (thread.getName().equals("shipthread") && thread.getId() != Thread.currentThread().getId()) {
+	        					System.out.println("shipthread: killing leftover ship threadid="+thread.getId());
+	        					thread.interrupt();
+	        				}
+	        			}
 	        		}
 	        	}
 	        }

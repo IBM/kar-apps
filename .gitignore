@@ -13,8 +13,9 @@ hs_err_pid*
 .project
 .settings
 
-# emacs lock files
+# emacs lock and backup files
 .#* 
+*~
 ##############################
 ## Maven
 ##############################

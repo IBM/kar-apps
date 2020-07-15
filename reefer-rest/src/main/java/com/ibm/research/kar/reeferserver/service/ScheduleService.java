@@ -1,6 +1,7 @@
 package com.ibm.research.kar.reeferserver.service;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
-import com.ibm.research.kar.reeferserver.model.*;
+import com.ibm.research.kar.reefer.model.*;
 import com.ibm.research.kar.reeferserver.scheduler.*;
 import org.springframework.stereotype.Component;
 import org.springframework.core.io.Resource;
@@ -21,7 +22,7 @@ public class ScheduleService {
     @Value("classpath:routes.json")
     private Resource routesJsonResource;
     @Autowired
-    private ShippingScheduler scheduler; // = new ShippingScheduler();
+    private ShippingScheduler scheduler;
     
     private LinkedList<Voyage> masterSchedule = new LinkedList<Voyage>();
 
@@ -69,6 +70,11 @@ public class ScheduleService {
             if (TimeUtils.getInstance().isSameDay(voyage.getSailDate(), currentDate) ||
                 (voyage.getSailDate().isBefore(currentDate) &&
                 arrivalDate.isAfter(currentDate) ) ) {
+                    long noOfDaysBetween = ChronoUnit.DAYS.between(voyage.getSailDate(), currentDate);
+
+                    voyage.getRoute().getVessel().setPosition(noOfDaysBetween);
+                    int progress = Math.round((noOfDaysBetween/(float)voyage.getRoute().getDaysAtSea())*100);
+                    voyage.getRoute().getVessel().setProgress(progress);
                 activeSchedule.add(voyage);
             }
         }

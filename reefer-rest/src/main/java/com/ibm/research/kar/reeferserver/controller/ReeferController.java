@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.ibm.research.kar.reeferserver.model.Port;
-import com.ibm.research.kar.reeferserver.model.Reefer;
+import com.ibm.research.kar.reefer.model.*;
+
 import com.ibm.research.kar.reeferserver.model.ReeferSupply;
 import com.ibm.research.kar.reeferserver.service.PortService;
 import com.ibm.research.kar.reeferserver.service.ReeferService;

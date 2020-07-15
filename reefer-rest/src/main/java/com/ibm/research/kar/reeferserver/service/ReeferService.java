@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ibm.research.kar.reeferserver.model.Reefer;
+import com.ibm.research.kar.reefer.model.Reefer;
 
 import org.springframework.stereotype.Component;
 @Component

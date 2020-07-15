@@ -2,7 +2,7 @@ package com.ibm.research.kar.reeferserver.controller;
 
 import java.util.List;
 
-import com.ibm.research.kar.reeferserver.model.Reefer;
+import com.ibm.research.kar.reefer.model.Reefer;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

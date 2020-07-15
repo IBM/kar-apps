@@ -34,20 +34,29 @@ public class VoyageActor extends BaseActor {
     public JsonValue changePosition(JsonObject message) {
         System.out.println("VoyageActor.changePosition() called "+message.toString());
 
-        int daysAtSea = message.getInt("daysAtSea");
+        int daysOutAtSea = message.getInt("daysOutAtSea");
+        String currentDate = message.getString("currentDate");
+        
         JsonObject params = Json.createObjectBuilder()
         .add("id",getId())
-        .add("daysAtSea",daysAtSea)
+        .add("daysOutAtSea",daysOutAtSea)
+
         .build();
         try {
  
-           return (JsonValue) call("reeferserver","/voyage/update", params);
-         //  return (JsonValue) call("reeferserver","/voyage/update", Json.createValue(10));
-         //   return (JsonValue) Kar.call("reeferserver", "time/advance", Json.createValue(0));
+            call("reeferserver","/voyage/update", params);
         } catch( Exception e) {
             e.printStackTrace();
         }
- 
+        /*
+        try {
+            System.out.println("VoyageActor.changePosition() calling advance");
+            restPost("reeferserver","/time/currentDate",Json.createObjectBuilder().build());
+
+         } catch( Exception e) {
+             e.printStackTrace();
+         }
+         */
         return Json.createObjectBuilder()
           .add("status", "OK")
           .build();

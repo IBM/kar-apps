@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.ibm.research.kar.reeferserver.model.Port;
+import com.ibm.research.kar.reefer.model.Port;
 
 import org.springframework.stereotype.Component;
 @Component

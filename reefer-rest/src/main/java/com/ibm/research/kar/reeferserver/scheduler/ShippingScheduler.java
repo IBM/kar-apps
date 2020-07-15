@@ -15,6 +15,8 @@ import com.ibm.research.kar.reeferserver.model.*;
 import org.springframework.stereotype.Component;
 
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
+import com.ibm.research.kar.reefer.model.Route;
+import com.ibm.research.kar.reefer.model.Voyage;
 @Component
 public class ShippingScheduler {
     private final LinkedList<Voyage> sortedSchedule = new LinkedList<Voyage>();

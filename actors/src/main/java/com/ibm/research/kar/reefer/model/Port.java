@@ -1,4 +1,4 @@
-package com.ibm.research.kar.reeferserver.model;
+package com.ibm.research.kar.reefer.model;
 
 public class Port {
     String name;

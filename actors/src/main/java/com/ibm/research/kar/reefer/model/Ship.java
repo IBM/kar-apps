@@ -1,4 +1,4 @@
-package com.ibm.research.kar.reeferserver.model;
+package com.ibm.research.kar.reefer.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,8 @@ import java.util.List;
 public class Ship {
     private String id;
     private String name;
-    private String position;
+    private long position;
+    private int progress;
     private int maxCapacity;
     private int freeCapacity;
     private String location;
@@ -14,7 +15,7 @@ public class Ship {
     public Ship() {
         super();
     }
-    public Ship(String name, String position, int maxCapacity, int freeCapacity, String location) {
+    public Ship(String name, long position, int maxCapacity, int freeCapacity, String location) {
         this.id = this.name = name;
         this.position = position;
         this.maxCapacity = maxCapacity;
@@ -31,17 +32,24 @@ public class Ship {
     }
 
     public void setName(String name) {
-        this.id = this.name = name;
+        this.name = name;
+        this.id = name;
     }
 
-    public String getPosition() {
+    public long getPosition() {
         return position;
     }
 
-    public void setPosition(String position) {
+    public void setPosition(long position) {
         this.position = position;
     }
+    public int getProgress() {
+        return progress;
+    }
 
+    public void setProgress(int progress) {
+        this.progress = progress;
+    }
     public int getMaxCapacity() {
         return maxCapacity;
     }

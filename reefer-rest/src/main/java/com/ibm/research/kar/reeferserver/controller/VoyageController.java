@@ -23,7 +23,7 @@ import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
-import com.ibm.research.kar.reeferserver.model.*;
+import com.ibm.research.kar.reefer.model.*;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 
 @RestController

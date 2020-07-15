@@ -32,5 +32,6 @@ public class TimeController {
 	public Instant  nextDay() {
         System.out.println("TimeController.nextDay()");
         return TimeUtils.getInstance().advanceDate(1);
-	}
+    }
+   
 }

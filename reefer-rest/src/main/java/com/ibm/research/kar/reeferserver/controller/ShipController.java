@@ -1,7 +1,7 @@
 package com.ibm.research.kar.reeferserver.controller;
 import java.util.List;
 
-import com.ibm.research.kar.reeferserver.model.Fleet;
+import com.ibm.research.kar.reefer.model.Fleet;
 import com.ibm.research.kar.reeferserver.service.FleetService;
 
 

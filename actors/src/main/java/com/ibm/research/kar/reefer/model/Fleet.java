@@ -1,4 +1,4 @@
-package com.ibm.research.kar.reeferserver.model;
+package com.ibm.research.kar.reefer.model;
 
 import java.util.List;
 

@@ -56,7 +56,8 @@ public class SimulatorService {
 		try {
 			JsonValue jv = actorCall(aref, "get", (JsonValue)Json.createValue("UnitDelay"));
 			if (jv.toString().equals("null") ) {
-				return Json.createValue(-2);
+				jv = actorCall(aref, "set", (JsonValue)Json.createValue("UnitDelay"), (JsonValue)Json.createValue(0));
+				return Json.createValue(0);
 			}
 			else {
 				return (JsonNumber) jv;
@@ -146,16 +147,29 @@ public class SimulatorService {
 	        	}
 	        	else {
 		        	// tell REST to advance time
-	        		Response response = Kar.restPost("reeferservice", "time/advance", Json.createValue(0));
+	        		Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
 	        		JsonValue currentTime = response.readEntity(JsonValue.class);
 	        		System.out.println("New time = "+currentTime.toString());
 
 	        		// fetch all active voyages from REST
 	        		response = Kar.restGet("reeferservice", "voyage/active");
 	        		JsonValue activeVoyages = response.readEntity(JsonValue.class);
-	        		System.out.println("Active voyages = "+activeVoyages.toString());
 
-	        		//TODO send ship positions to all active voyages
+	        		// send ship positions to all active voyages
+	        		int nv = 0;
+	        		for (JsonValue v : activeVoyages.asJsonArray()) {
+	        			String id = v.asJsonObject().getString("id");
+	        			int daysAtSea = v.asJsonObject().get("route").asJsonObject().getInt("daysAtSea");
+	        			JsonObject message = Json.createObjectBuilder()
+	        					.add("daysAtSea", daysAtSea)
+//	        					.add("currentDate", currentTime)
+	        					.build();
+	        			System.out.println("shipthread updates voyageid: "+id+ " with "+message.toString());
+	        			Kar.actorCall(actorRef("voyage",id), "changePosition", message);
+	        			nv++;
+	        		}
+	        		System.out.println("shipthread updated "+nv+" active voyages");
+
 	        		//TODO tell order simulator the new time
 	        	}
 
@@ -172,6 +186,10 @@ public class SimulatorService {
 	        			unitdelay.set(0);
 	        			System.out.println("Stopping Ship Thread "+Thread.currentThread().getId()+" LOUD HORN");
 	        			running = false;
+
+	        			if (0 < shipthreadcount.decrementAndGet()) {
+	        				System.err.println("we have an extra ship thread running!");
+	        			}
 
 	        			// check for threads leftover from a hot method replace
 	        			Set<Thread> threadset = Thread.getAllStackTraces().keySet();

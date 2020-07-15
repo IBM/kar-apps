@@ -161,11 +161,12 @@ public class SimulatorService {
 	        			String id = v.asJsonObject().getString("id");
 	        			int daysAtSea = v.asJsonObject().get("route").asJsonObject().getInt("daysAtSea");
 	        			JsonObject message = Json.createObjectBuilder()
-	        					.add("daysAtSea", daysAtSea)
-//	        					.add("currentDate", currentTime)
+	        					.add("daysOutAtSea", daysAtSea)
+	        					.add("currentDate", currentTime)
 	        					.build();
 	        			System.out.println("shipthread updates voyageid: "+id+ " with "+message.toString());
-	        			Kar.actorCall(actorRef("voyage",id), "changePosition", message);
+	        			JsonValue rc = Kar.actorCall(actorRef("voyage",id), "changePosition", message);
+	        			System.out.println("rc="+rc.toString());
 	        			nv++;
 	        		}
 	        		System.out.println("shipthread updated "+nv+" active voyages");

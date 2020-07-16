@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.json.Json;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
@@ -49,22 +50,24 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
     @PostMapping("/voyage/update")
       public void updateVoyageState(  @RequestBody String state) throws VoyageNotFoundException{
           System.out.println("VoyageController.updateVoyageState() "+state);
+          String voyageId=null;
+          int daysAtSea=0;
+
           try (JsonReader jsonReader = Json.createReader(new StringReader(state))) {
              
             JsonObject req = jsonReader.readObject();
-            
-            req.forEach( (key, value) -> {
-            
-              if ( key.equals("daysAtSea") ) {
+            voyageId = req.getString("voyageId");
+            if ( req.containsKey("daysAtSea")) {
+              System.out.println("VoyageController.updateVoyageState() daysAtSea="+req.getInt("daysAtSea"));
+              shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
+            } else if ( req.containsKey("freeCapacity") ) {
 
-              } else if ( key.equals("freeCapacity") ) {
+            } else if ( req.containsKey("reefers") ) {
+              
+            }
 
-              } else if ( key.equals("reefers") ) {
-
-              }
-
-            System.out.println("VoyageController.updateVoyageState Key:"+key+" value:"+value );
-            });
+          //  System.out.println("VoyageController.updateVoyageState Key:"+key+" value:"+value );
+          //  });
          //   System.out.println("VoyageController.updateVoyageState+"+req.toString()+" ID:"+req.getString("id")+" DaysAtSea:"+req.getInt("daysAtSea"));
             
             //JsonParser parser = new JsonParser();

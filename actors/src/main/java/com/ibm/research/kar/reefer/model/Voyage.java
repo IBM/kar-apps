@@ -8,10 +8,12 @@ public class Voyage {
 
     private Instant sailDateObject;
     private String sailDate;
+    private String arrivalDate;
     
-    public Voyage(Route route, Instant sailDateObject) {
+    public Voyage(Route route, Instant sailDateObject, String arrivalDate) {
         this.route = route;
         this.sailDateObject = sailDateObject;
+        this.arrivalDate = arrivalDate;
         this.sailDate = sailDateObject.toString().substring(0,10);
         System.out.println("Voyage.ctor() - sailDate:"+sailDate);
         this.id = String.format("%s-%s",route.getVessel().getName(),this.sailDateObject.toString()).replaceAll("/","-");
@@ -22,12 +24,14 @@ public class Voyage {
     public Route getRoute() {
         return route;
     }
-    public Instant getSailDate() {
-        return sailDateObject;
-    }
-    
-    public String getSailDateAsString() {
+    public String getSailDate() {
         return sailDate;
+    }
+    public String getArrivalDate() {
+        return arrivalDate;
+    }
+    public Instant getSailDateObject() {
+        return sailDateObject;
     }
  
     

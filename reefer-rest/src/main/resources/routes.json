@@ -27,7 +27,7 @@
     {
         "originPort":"New Orleans, LA","destinationPort":"Antwerp, BE","daysAtSea":15,"daysAtPort":2,
         "vessel":
-              { "name":"Victoria","position":0,"maxCapacity":550,"freeCapacity":550,"location":"AtPort"  }
+              { "name":"MOL Triumph","position":0,"maxCapacity":550,"freeCapacity":550,"location":"AtPort"  }
     },
     {
         "originPort":"New York, NY","destinationPort":"Antwerp, BE","daysAtSea":18,"daysAtPort":2,

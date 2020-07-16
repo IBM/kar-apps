@@ -96,7 +96,7 @@ public class ShippingScheduler {
         int next = 0;
         while (next < sortedSchedule.size()) {
             final Voyage voyage = sortedSchedule.get(next);
-            if (voyage.getSailDate().isBefore(departureDate)) {
+            if (voyage.getSailDateObject().isBefore(departureDate)) {
                 next++;
             } else {
                 break;
@@ -107,13 +107,16 @@ public class ShippingScheduler {
 
     private Voyage newScheduledVoyage(final Route route, final Instant departureDate, final boolean returnVoyage) {
         Voyage voyage;
+        Instant arrivalDate = 
+            TimeUtils.getInstance().futureDate(departureDate,route.getDaysAtSea() );
 
         if (returnVoyage) {
             // for return voyage reverse origin and destination ports
             voyage = new Voyage(new Route(route.getVessel(), route.getDestinationPort(), route.getOriginPort(),
-                    route.getDaysAtSea(), route.getDaysAtPort()), departureDate);
+                    route.getDaysAtSea(), route.getDaysAtPort()), departureDate, arrivalDate.toString().substring(1,10));
         } else {
-            voyage = new Voyage(route, departureDate);
+             
+            voyage = new Voyage(route, departureDate, arrivalDate.toString().substring(0,10));
         }
         return voyage;
     }

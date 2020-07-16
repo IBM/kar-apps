@@ -37,7 +37,16 @@ public class ScheduleService {
         return routes;
 
     }
-
+    public void updateDaysAtSea(String voyageId, int daysOutAtSea) {
+        for( Voyage voyage : masterSchedule ) {
+            if ( voyage.getId().equals(voyageId)) {
+                voyage.getRoute().getVessel().setPosition(daysOutAtSea);
+                int progress = Math.round((daysOutAtSea/(float)voyage.getRoute().getDaysAtSea())*100);
+                voyage.getRoute().getVessel().setProgress(progress);
+                break;
+            }
+        }
+    }
     /*
         Returns voyages with ships currently at sea.
     */
@@ -55,11 +64,11 @@ public class ScheduleService {
         }
         for( Voyage voyage : masterSchedule ) {
             Instant arrivalDate = 
-              TimeUtils.getInstance().futureDate(voyage.getSailDate(), voyage.getRoute().getDaysAtSea()+voyage.getRoute().getDaysAtPort());
+              TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), voyage.getRoute().getDaysAtSea()+voyage.getRoute().getDaysAtPort());
             System.out.println("getActiveSchedule() - CurrentDate: "+currentDate.toString()+ " Voyage "+voyage.getId()+
             " SailDate: "+
-            voyage.getSailDateAsString()+" ArrivalDate: "+arrivalDate.toString()); 
-            if ( voyage.getSailDate().isAfter(currentDate) ) {
+            voyage.getSailDate()+" ArrivalDate: "+arrivalDate.toString()); 
+            if ( voyage.getSailDateObject().isAfter(currentDate) ) {
                 // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate
                 // we just stop iterating since all voyagaes sail in the future.
                 break;
@@ -67,14 +76,14 @@ public class ScheduleService {
 
             // find active voyage which is one that started before current date and
             // has not yet completed
-            if (TimeUtils.getInstance().isSameDay(voyage.getSailDate(), currentDate) ||
-                (voyage.getSailDate().isBefore(currentDate) &&
+            if (TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate) ||
+                (voyage.getSailDateObject().isBefore(currentDate) &&
                 arrivalDate.isAfter(currentDate) ) ) {
-                    long noOfDaysBetween = ChronoUnit.DAYS.between(voyage.getSailDate(), currentDate);
+                //    long noOfDaysBetween = ChronoUnit.DAYS.between(voyage.getSailDateObject(), currentDate);
 
-                    voyage.getRoute().getVessel().setPosition(noOfDaysBetween);
-                    int progress = Math.round((noOfDaysBetween/(float)voyage.getRoute().getDaysAtSea())*100);
-                    voyage.getRoute().getVessel().setProgress(progress);
+                //    voyage.getRoute().getVessel().setPosition(noOfDaysBetween);
+                //    int progress = Math.round((noOfDaysBetween/(float)voyage.getRoute().getDaysAtSea())*100);
+                //    voyage.getRoute().getVessel().setProgress(progress);
                 activeSchedule.add(voyage);
             }
         }
@@ -95,7 +104,7 @@ public class ScheduleService {
             Voyage lastVoyageFromMasterSchedule = masterSchedule.getLast();
             
             for ( Voyage voyage : sortedSchedule ) {
-                if ( voyage.getSailDate().isAfter(lastVoyageFromMasterSchedule.getSailDate())) {
+                if ( voyage.getSailDateObject().isAfter(lastVoyageFromMasterSchedule.getSailDateObject())) {
                     masterSchedule.add(voyage);
                 }
             }

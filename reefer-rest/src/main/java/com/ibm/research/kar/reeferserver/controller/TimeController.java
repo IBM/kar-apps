@@ -2,6 +2,7 @@ package com.ibm.research.kar.reeferserver.controller;
 
 import java.time.Instant;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,9 +10,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
+import com.ibm.research.kar.reeferserver.service.VoyageService;
 @RestController
 @CrossOrigin("*")
 public class TimeController {
+    @Autowired
+    private VoyageService voyageService;
 
     @PostMapping("/time/startDate")
 	public Instant  getStartDate() {
@@ -28,10 +32,19 @@ public class TimeController {
 
         return date;
     }
-    @PostMapping("/time/advance")
-	public Instant  nextDay() {
+    @PostMapping("/time/nextDay")
+	public void  nextDay() {
         System.out.println("TimeController.nextDay()");
-        return TimeUtils.getInstance().advanceDate(1);
+    
+        voyageService.nextDay();
+    }
+    @PostMapping("/time/advance")
+	public Instant  advance() {
+        System.out.println("TimeController.advance()");
+        Instant time = 
+            TimeUtils.getInstance().advanceDate(1);
+    //    voyageService.advanceTime();
+        return time;
     }
    
 }

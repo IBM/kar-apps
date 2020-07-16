@@ -43,6 +43,9 @@ public class ScheduleService {
                 voyage.getRoute().getVessel().setPosition(daysOutAtSea);
                 int progress = Math.round((daysOutAtSea/(float)voyage.getRoute().getDaysAtSea())*100);
                 voyage.getRoute().getVessel().setProgress(progress);
+                System.out.println("ScheduleService.updateDaysAtSea() - daysOutAtSea:"+
+                voyage.getRoute().getVessel().getPosition()+" Progress:"+
+                voyage.getRoute().getVessel().getProgress());
                 break;
             }
         }

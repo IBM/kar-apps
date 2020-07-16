@@ -38,7 +38,7 @@ public class VoyageActor extends BaseActor {
         String currentDate = message.getString("currentDate");
 
         JsonObject params = Json.createObjectBuilder()
-        .add("id",getId())
+        .add("voyageId",getId())
         .add("daysAtSea",daysAtSea)
         .build();
         try {

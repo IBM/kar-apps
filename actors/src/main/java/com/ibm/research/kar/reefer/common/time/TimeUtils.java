@@ -43,4 +43,10 @@ public class TimeUtils {
         // return date 365 days from now
         return date.plus(365, ChronoUnit.DAYS);
     }
+    public long getDaysBetween(String startDate, String endDate) {
+        Instant sd = Instant.parse(startDate);
+        Instant ed = Instant.parse(endDate);
+        return ChronoUnit.DAYS.between(sd,ed);
+       
+    }
 }

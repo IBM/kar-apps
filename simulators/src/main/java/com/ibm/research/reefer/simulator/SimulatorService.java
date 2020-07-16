@@ -175,6 +175,9 @@ public class SimulatorService {
 	        		}
 	        		System.out.println("shipthread updated "+nv+" active voyages");
 
+	        		// tell GUI to update active voyages
+	        		Kar.restPost("reeferservice", "voyage/updateGui", JsonValue.NULL);
+
 	        		//TODO tell order simulator the new time
 	        	}
 

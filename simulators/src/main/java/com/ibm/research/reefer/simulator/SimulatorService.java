@@ -161,7 +161,7 @@ public class SimulatorService {
 	        			String id = v.asJsonObject().getString("id");
 	        			int daysAtSea = v.asJsonObject().get("route").asJsonObject().getInt("daysAtSea");
 	        			JsonObject message = Json.createObjectBuilder()
-	        					.add("daysOutAtSea", daysAtSea)
+	        					.add("daysAtSea", daysAtSea)
 	        					.add("currentDate", currentTime)
 	        					.build();
 	        			System.out.println("shipthread updates voyageid: "+id+ " with "+message.toString());

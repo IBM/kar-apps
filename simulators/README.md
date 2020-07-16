@@ -13,7 +13,7 @@ To advance time in manual mode...
 ... from command line:  
 curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/advancetime  
 ... from another reeferapp service:  
-Kar.restPost("simservice", "simulator/advancetime", Json.NULL);
+Kar.restPost("simservice", "simulator/advancetime", JsonValue.NULL);
 
 To enable/disable simulator connection to reefer-rest server from command line,  
 can be done anytime, with the thread in auto or manual mode:  

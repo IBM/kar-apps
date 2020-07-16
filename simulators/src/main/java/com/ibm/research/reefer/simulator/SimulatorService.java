@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import javax.json.Json;
 import javax.json.JsonNumber;
@@ -148,25 +150,27 @@ public class SimulatorService {
 	        	else {
 		        	// tell REST to advance time
 	        		Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
-	        		JsonValue currentTime = response.readEntity(JsonValue.class);
-	        		System.out.println("New time = "+currentTime.toString());
+	        		JsonValue currentDate = response.readEntity(JsonValue.class);
+	        		System.out.println("New time = "+currentDate.toString());
 
 	        		// fetch all active voyages from REST
 	        		response = Kar.restGet("reeferservice", "voyage/active");
 	        		JsonValue activeVoyages = response.readEntity(JsonValue.class);
+	        		System.out.println("shipthread received "+activeVoyages.asJsonArray().size()+" active voyages");
 
 	        		// send ship positions to all active voyages
 	        		int nv = 0;
+	                Instant ed = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
 	        		for (JsonValue v : activeVoyages.asJsonArray()) {
 	        			String id = v.asJsonObject().getString("id");
-	        			int daysAtSea = v.asJsonObject().get("route").asJsonObject().getInt("daysAtSea");
+		                Instant sd = Instant.parse(v.asJsonObject().getString("sailDateObject").replaceAll("^\"|\"$", ""));
+		                long daysout = ChronoUnit.DAYS.between(sd,ed);
 	        			JsonObject message = Json.createObjectBuilder()
-	        					.add("daysAtSea", daysAtSea)
-	        					.add("currentDate", currentTime)
+	        					.add("daysAtSea", daysout)
+	        					.add("currentDate", currentDate)
 	        					.build();
 	        			System.out.println("shipthread updates voyageid: "+id+ " with "+message.toString());
-	        			JsonValue rc = Kar.actorCall(actorRef("voyage",id), "changePosition", message);
-	        			System.out.println("rc="+rc.toString());
+	        			Kar.actorCall(actorRef("voyage",id), "changePosition", message);
 	        			nv++;
 	        		}
 	        		System.out.println("shipthread updated "+nv+" active voyages");

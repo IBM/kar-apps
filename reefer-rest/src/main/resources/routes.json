@@ -1,6 +1,6 @@
 [
     {
-        "originPort":"Elizabeth, NJ","destinationPort":"London, GB","daysAtSea":14,"daysAtPort":2,
+        "originPort":"Elizabeth, NJ","destinationPort":"London, GB","daysAtSea":15,"daysAtPort":2,
         "vessel":
               { "name":"Abyss","position":0,"maxCapacity":500,"freeCapacity":500,"location":"AtPort"  }
     },

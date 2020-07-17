@@ -111,7 +111,7 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
       return shipScheduleService.getRoutes();
     }
     @PostMapping("/voyage/updateGui")
-    public void updateGui( ) {
+    public void updateGui(@RequestBody String currentDate ) {
       System.out.println("VoyageController.updateGui() - updating GUI with active schedule");
       webSocket.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule());
       System.out.println("VoyageController.updateGui() - Done");

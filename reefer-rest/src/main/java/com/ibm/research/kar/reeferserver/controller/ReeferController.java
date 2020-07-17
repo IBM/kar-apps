@@ -31,8 +31,8 @@ public class ReeferController extends TimerTask {
 	private int count=1;
 
 	public ReeferController() {
-		Timer timer = new Timer();
-		timer.scheduleAtFixedRate(this, new Date(), 5000);
+	//	Timer timer = new Timer();
+	//	timer.scheduleAtFixedRate(this, new Date(), 5000);
 	}
     @PostMapping("/reefers")
 	public   List<Port>  addReefers(@RequestBody ReeferSupply reeferAdd) throws IOException {

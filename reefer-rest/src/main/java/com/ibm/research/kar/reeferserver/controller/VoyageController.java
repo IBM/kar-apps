@@ -31,7 +31,9 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
 @CrossOrigin("*")public class VoyageController {
     @Autowired
     private ScheduleService shipScheduleService;
-
+    @Autowired
+    private NotificationController webSocket;
+  
     @GetMapping("/voyage/active")
     public List<Voyage> getActiveVoyages() {
       System.out.println("VoyageController.getActiveVoyages()");
@@ -58,6 +60,8 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
             JsonObject req = jsonReader.readObject();
             voyageId = req.getString("voyageId");
             if ( req.containsKey("daysAtSea")) {
+              daysAtSea = req.getInt("daysAtSea");
+
               System.out.println("VoyageController.updateVoyageState() daysAtSea="+req.getInt("daysAtSea"));
               shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
             } else if ( req.containsKey("freeCapacity") ) {
@@ -105,5 +109,11 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
     public List<Route> getRoutes() {
       System.out.println("VoyageController.getRoutes()");
       return shipScheduleService.getRoutes();
+    }
+    @PostMapping("/voyage/updateGui")
+    public void updateGui( ) {
+      System.out.println("VoyageController.updateGui() - updating GUI with active schedule");
+      webSocket.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule());
+      System.out.println("VoyageController.updateGui() - Done");
     }
 }

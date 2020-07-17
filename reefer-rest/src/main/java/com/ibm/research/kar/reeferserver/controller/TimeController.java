@@ -33,10 +33,19 @@ public class TimeController {
         return date;
     }
     @PostMapping("/time/nextDay")
-	public void  nextDay() {
+	public Instant  nextDay() {
         System.out.println("TimeController.nextDay()");
     
         voyageService.nextDay();
+        String date = "";
+        try {
+            date = TimeUtils.getInstance().getCurrentDate().toString().substring(0,10);
+            System.out.println("nextDay() - Returning Date >>>>>>>"+date);
+        } catch( Exception e) {
+            e.printStackTrace();
+        }
+            
+       return TimeUtils.getInstance().getCurrentDate();
     }
     @PostMapping("/time/advance")
 	public Instant  advance() {

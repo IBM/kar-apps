@@ -3,6 +3,7 @@ package com.ibm.research.kar.reeferserver.controller;
 import java.util.List;
 
 import com.ibm.research.kar.reefer.model.Reefer;
+import com.ibm.research.kar.reefer.model.Voyage;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -36,5 +37,8 @@ public class NotificationController {
 
     public void sendReefersUpdate(List<Reefer> reefers) {
         template.convertAndSend("/topic/reefers", reefers);
+    }
+    public void sendActiveVoyageUpdate(List<Voyage> voyages) {
+        template.convertAndSend("/topic/voyages", voyages);
     }
 }

@@ -39,11 +39,12 @@ public class ScheduleService {
     }
     public void updateDaysAtSea(String voyageId, int daysOutAtSea) {
         for( Voyage voyage : masterSchedule ) {
+           // System.out.println("ScheduleService.updateDaysAtSea() - daysOutAtSea:"+daysOutAtSea);
             if ( voyage.getId().equals(voyageId)) {
                 voyage.getRoute().getVessel().setPosition(daysOutAtSea);
                 int progress = Math.round((daysOutAtSea/(float)voyage.getRoute().getDaysAtSea())*100);
                 voyage.getRoute().getVessel().setProgress(progress);
-                System.out.println("ScheduleService.updateDaysAtSea() - daysOutAtSea:"+
+                System.out.println("ScheduleService.updateDaysAtSea() - voyage:"+voyage.getId()+"daysOutAtSea:"+
                 voyage.getRoute().getVessel().getPosition()+" Progress:"+
                 voyage.getRoute().getVessel().getProgress());
                 break;
@@ -67,16 +68,16 @@ public class ScheduleService {
         }
         for( Voyage voyage : masterSchedule ) {
             Instant arrivalDate = 
-              TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), voyage.getRoute().getDaysAtSea()+voyage.getRoute().getDaysAtPort());
-            System.out.println("getActiveSchedule() - CurrentDate: "+currentDate.toString()+ " Voyage "+voyage.getId()+
-            " SailDate: "+
-            voyage.getSailDate()+" ArrivalDate: "+arrivalDate.toString()); 
+              TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), voyage.getRoute().getDaysAtSea());
+
             if ( voyage.getSailDateObject().isAfter(currentDate) ) {
                 // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate
                 // we just stop iterating since all voyagaes sail in the future.
                 break;
             }
-
+            System.out.println("getActiveSchedule() - CurrentDate: "+currentDate.toString()+ " Voyage "+voyage.getId()+
+            " SailDate: "+
+            voyage.getSailDate()+" ArrivalDate: "+arrivalDate.toString()); 
             // find active voyage which is one that started before current date and
             // has not yet completed
             if (TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate) ||

@@ -115,6 +115,8 @@ public class SimulatorService {
     	}
 	}
 
+
+//TODO move ship thread to a separate class. Order and Reefer threads will each have their own thread classes
 //	The Ship Simulator thread
 //	  1. tell REST to update world time
 //	  2. request from REST information about all active voyages
@@ -176,7 +178,7 @@ public class SimulatorService {
 	        		System.out.println("shipthread updated "+nv+" active voyages");
 
 	        		// tell GUI to update active voyages
-	        		Kar.restPost("reeferservice", "voyage/updateGui", JsonValue.NULL);
+	        		Kar.restPost("reeferservice", "voyage/updateGui", currentDate);
 
 	        		//TODO tell order simulator the new time
 	        	}

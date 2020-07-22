@@ -1,0 +1,213 @@
+<mat-card class="example-card" [style.backgroundColor]="'gainsboro'">
+  <mat-card-content >
+<div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
+    <mat-card fxFlex="22">
+      <mat-card-header [style.backgroundColor]="'gainsboro'">
+        <mat-card-title>Select Product</mat-card-title>
+        <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
+     </mat-card-header>
+
+    <mat-card-content>
+
+      <div class="example-container">
+
+
+        <mat-form-field style="width:130px !important" appearance="fill">
+          <!--mat-label>Select me</mat-label--->
+          <mat-select [(ngModel)]="selectedProduct" [style.fontSize.px]="'20'">
+
+              <mat-option *ngFor="let product of products" [value]="product.name">
+                {{product.name}}
+              </mat-option>
+          </mat-select>
+          <mat-hint align="end">Choose product to ship ^</mat-hint>
+        </mat-form-field>
+        <mat-form-field style="width:100px !important; background-color: lightgrey">
+          <input matInput [style.fontSize.px]="'20'" placeholder="Quantity" value="1000">
+          <mat-hint align="end">Enter product quantity ^</mat-hint>
+        </mat-form-field>
+      </div>
+
+</mat-card-content>
+<!--app-widget-card label="Select Product" total="12k" percentage="50" [data]="cards"></app-widget-card -->
+        <!--app-widget-card label="Select Product" total="12k" percentage="50" [data]="cards"></app-widget-card -->
+    </mat-card>
+    <mat-card fxFlex="22">
+      <mat-card-header [style.backgroundColor]="'gainsboro'">
+        <mat-card-title>Origin Port</mat-card-title>
+        <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
+     </mat-card-header>
+        <!--app-widget-card label="Origin Port" total="10k" percentage="40" [data]="cards"></app-widget-card-->
+        <mat-card-content>
+
+          <div class="example-container">
+
+
+            <mat-form-field appearance="fill">
+ 
+              <mat-select [(ngModel)]="selectedOriginPort" [style.fontSize.px]="'20'" (selectionChange)="adjustDestinationPorts($event)">
+                <mat-option *ngFor="let origin of originPorts" [value]="origin">
+                <!--mat-option *ngFor="let origin of originPorts" [value]="origin.name"-->
+                  {{origin}}
+                </mat-option>
+              </mat-select>
+              <mat-hint align="end">Click to choose port of Origin ^</mat-hint>
+            </mat-form-field>
+          </div>
+
+    </mat-card-content>
+    </mat-card>
+    <mat-card fxFlex="22">
+        <!--app-widget-card label="Destination Port" total="8k" percentage="30" [data]="cards"></app-widget-card-->
+        <mat-card-header [style.backgroundColor]="'gainsboro'">
+          <mat-card-title>Destination Port</mat-card-title>
+          <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
+       </mat-card-header>
+          <!--app-widget-card label="Origin Port" total="10k" percentage="40" [data]="cards"></app-widget-card-->
+          <mat-card-content>
+
+            <div class="example-container">
+
+
+              <mat-form-field appearance="fill" >
+                <!--mat-label>Select me</mat-label--->
+                <!--mat-select [formControl]="toppings" [style.fontSize.px]="'20'">
+                  <mat-option value="option">Shanghai, CN</mat-option>
+                  <mat-option value="option">London, GB</mat-option>
+                  <mat-option value="option">Bremen, DE</mat-option>
+                  <mat-option value="option">Antwerp, BG</mat-option>
+
+                </mat-select -->
+                <mat-select [(ngModel)]="selectedDestinationPort" [style.fontSize.px]="'20'" required  (selectionChange)="adjustOriginPorts($event)">
+                <mat-option *ngFor="let destination of destinationPorts" [value]="destination">
+                <!--mat-option *ngFor="let destination of destinationPorts" [value]="destination.name"-->
+                    {{destination}}
+                  </mat-option>
+                </mat-select>
+                <mat-hint align="end">Click to choose Destination port ^</mat-hint>
+              </mat-form-field>
+            </div>
+
+      </mat-card-content>
+    </mat-card>
+    <mat-card fxFlex="20">
+        <!--app-widget-card label="Departure Date" total="6k" percentage="20" [data]="cards"></app-widget-card-->
+        <mat-card-header [style.backgroundColor]="'gainsboro'">
+          <mat-card-title>Departure Date</mat-card-title>
+          <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
+       </mat-card-header>
+          <!--app-widget-card label="Origin Port" total="10k" percentage="40" [data]="cards"></app-widget-card-->
+          <mat-card-content>
+            <mat-form-field >
+              <input matInput [style.fontSize.px]="'20'" [matDatepicker]="picker1" placeholder="" [style.height]="'2em'" [style.backgroundColor]="'gainsboro'">
+
+              <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+              <mat-datepicker #picker1></mat-datepicker>
+              <mat-hint align="end">Click to choose Departure Date ^</mat-hint>
+            </mat-form-field>
+
+
+
+
+              <!--mat-form-field>
+                <mat-label>Choose a date</mat-label>
+                <input matInput [matDatepicker]="picker" placeholder="date">
+                [formControl]="date">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field-->
+
+
+      </mat-card-content>
+    </mat-card>
+    <mat-card fxFlex="14" >
+         <mat-card-content color="primary" >
+
+          <button (click)="search()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'75'" [style.fontSize.px]="'17'">SEARCH</button>
+
+    </mat-card-content>
+    <mat-hint align="end" [style.fontSize.px]="'10'">Find Matching Voyages ^</mat-hint>
+  </mat-card>
+</div>
+</mat-card-content>
+</mat-card>
+<br>
+
+<mat-divider></mat-divider>
+
+<br>
+
+<div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="20px">
+    <div fxFlex="100">
+        <div class="mat-elevation-z8">
+          <div class="col m12 s12 mat-elevation-z8" style="margin-top:-10px;border-radius:4px; background: linear-gradient(60deg,#6d6fc0,#50649c); padding:5px">
+            <h2 class="white-text">Shipping Schedule </h2>
+            <!--h6 class="white-text">Here is a subtitle for this table </h6-->
+          </div>
+            <table mat-table [dataSource]="dataSource">
+
+             <ng-container matColumnDef="select">
+     <th mat-header-cell *matHeaderCellDef>
+       <mat-checkbox (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
+         [indeterminate]="selection.hasValue() && !isAllSelected()">
+       </mat-checkbox>
+     </th>
+     <td mat-cell *matCellDef="let row">
+       <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? selectedVoyage($event, row) : null"  (change)="$event ? selection.toggle(row) : null"
+         [checked]="selection.isSelected(row)">
+       </mat-checkbox>
+     </td>
+   </ng-container>
+                <!-- Position Column -->
+                <ng-container matColumnDef="voyageId">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Voyage Id </th>
+                    <td mat-cell *matCellDef="let element"> {{element.voyageId}} </td>
+                </ng-container>
+
+                <!-- Name Column -->
+                <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Ship Name </th>
+                    <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+                </ng-container>
+
+                <!-- Weight Column -->
+                <ng-container matColumnDef="origin">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Origin Port </th>
+                    <td mat-cell *matCellDef="let element"> {{element.origin}} </td>
+                </ng-container>
+
+                <!-- Symbol Column -->
+                <ng-container matColumnDef="destination">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Destination Port </th>
+                    <td mat-cell *matCellDef="let element"> {{element.destination}} </td>
+                </ng-container>
+                 <!-- Symbol Column -->
+                 <ng-container matColumnDef="sailDate">
+                  <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Departure Date </th>
+                  <td mat-cell *matCellDef="let element"> {{element.sailDate}} </td>
+              </ng-container>
+               <!-- Symbol Column -->
+               <ng-container matColumnDef="transitTime">
+                <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Transit Time (Days) </th>
+                <td mat-cell *matCellDef="let element"> {{element.transitTime}} </td>
+              </ng-container>
+               <!-- Symbol Column -->
+              <ng-container matColumnDef="freeCapacity">
+                <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Free Capacity (Containers)</th>
+                <td mat-cell *matCellDef="let element"> {{element.freeCapacity}} </td>
+              </ng-container>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"  ></tr>
+                <!--tr mat-row *matRowDef="let row; columns: displayedColumns;" (click) = "rowClicked(row)"></tr -->
+            </table>
+
+            <mat-paginator [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+<br>
+<br>

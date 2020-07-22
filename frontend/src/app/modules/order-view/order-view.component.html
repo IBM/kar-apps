@@ -1,0 +1,89 @@
+<mat-divider></mat-divider>
+
+<br><br><br><br>
+
+<div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="20px">
+    <div fxFlex="100">
+        <div class="mat-elevation-z8">
+          <div class="col m12 s12 mat-elevation-z8" style="margin-top:-10px;border-radius:4px; background: linear-gradient(60deg,#6d6fc0,#50649c); padding:5px">
+            <h2 class="white-text"> Orders </h2>
+            <!--h6 class="white-text">Here is a subtitle for this table </h6-->
+          </div>
+            <table mat-table [dataSource]="dataSource" multiTemplateDataRows matSort class="mat-elevation-z8">
+
+             <ng-container matColumnDef="select">
+                <th mat-header-cell *matHeaderCellDef>
+                  <mat-checkbox (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
+                    [indeterminate]="selection.hasValue() && !isAllSelected()">
+                  </mat-checkbox>
+                </th>
+                <td mat-cell *matCellDef="let row">
+                  <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? selectedOrder($event, row) : null"  (change)="$event ? selection.toggle(row) : null"
+                    [checked]="selection.isSelected(row)">
+                  </mat-checkbox>
+                </td>
+              </ng-container>
+                <!-- Position Column -->
+                <ng-container matColumnDef="orderId">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Order ID </th>
+                    <td mat-cell *matCellDef="let element"> {{element.orderId}} </td>
+                </ng-container>
+                <!-- Position Column -->
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Status </th>
+                  <td mat-cell *matCellDef="let element"> {{element.status}} </td>
+                </ng-container>
+
+                <!-- Position Column -->
+                <ng-container matColumnDef="product">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Product </th>
+                    <td mat-cell *matCellDef="let element"> {{element.product}} </td>
+                </ng-container>
+                <!-- Name Column -->
+                <ng-container matColumnDef="productQty">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Product Qty </th>
+                    <td mat-cell *matCellDef="let element"> {{element.productQty}} </td>
+                </ng-container>
+
+
+                <!--ng-container matColumnDef="origin">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix" > Origin Port </th>
+                    <td mat-cell *matCellDef="let element"> {{element.origin}} </td>
+                </ng-container>
+
+
+                <ng-container matColumnDef="destination">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Destination Port </th>
+                    <td mat-cell *matCellDef="let element"> {{element.destination}} </td>
+                </ng-container>
+
+                 <ng-container matColumnDef="sailDate">
+                  <th mat-header-cell *matHeaderCellDef class="table-head-fix" > Departure Date </th>
+                  <td mat-cell *matCellDef="let element"> {{element.sailDate}} </td>
+              </ng-container>
+
+               <ng-container matColumnDef="transitTime">
+                <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Transit Time (Days) </th>
+                <td mat-cell *matCellDef="let element"> {{element.transitTime}} </td>
+              </ng-container-->
+
+              <ng-container matColumnDef="voyageId">
+                <th mat-header-cell *matHeaderCellDef class="table-head-fix"  mat-sort-header> Voyage ID </th>
+                <td mat-cell *matCellDef="let element"> {{element.voyageId}}
+
+                </td>
+              </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"  ></tr>
+
+
+            </table>
+
+            <mat-paginator [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,33 @@
+/* You can add global styles to this file, and also import other style files */
+//@import url('https://fonts.googleapis.com/css?family=Roboto&display=swap');
+/* Font Family */
+//html, body {
+//font-family: 'Roboto', sans-serif;
+//}
+.mat-row:hover {
+  background-color: rgb(199, 200, 243);
+}
+// .mat-row:nth-child(even){
+//   background-color: #e4f0ec;
+// }
+
+// .mat-row:nth-child(odd){
+//   background-color:#ffffff;
+// }
+.stats-cards {
+  .mat-card {
+    overflow: hidden;
+  }
+}
+
+table {
+  width: 100%;
+}
+
+.table-head-fix{
+  font-size:16px;
+  color: #131197;
+}
+.white-text {
+  color: #f5f5f8
+}

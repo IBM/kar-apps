@@ -1,0 +1,89 @@
+<h2 mat-dialog-title>{{description}}</h2>
+
+
+<mat-dialog-content [formGroup]="form">
+
+    <!--mat-form-field>
+
+        <input matInput
+                placeholder="Course Description"
+               formControlName="description">
+
+    </mat-form-field-->
+
+  <div class="form-container" fxLayout="column" fxLayoutAlign="center stretch" fxLayoutGap="5px">
+    <mat-form-field>
+      <input matInput
+      placeholder="Product"
+      readonly
+     formControlName="product">
+
+    </mat-form-field>
+
+    <mat-form-field>
+
+      <input matInput
+      placeholder="Product Quantity"
+      readonly
+     formControlName="productQty">
+
+    </mat-form-field>
+
+    <mat-form-field>
+
+      <input matInput
+      placeholder="Origin Port"
+      readonly
+     formControlName="originPort">
+
+    </mat-form-field>
+
+    <mat-form-field>
+
+      <input matInput
+      placeholder="Destination Port"
+      readonly
+     formControlName="destinationPort">
+
+    </mat-form-field>
+  </div>
+    <mat-form-field>
+
+      <input matInput
+      placeholder="Voyage ID"
+      readonly
+     formControlName="voyageId">
+
+    </mat-form-field>
+
+    <mat-form-field>
+
+      <input matInput
+      placeholder="Ship"
+      readonly
+     formControlName="shipName">
+
+    </mat-form-field>
+    <mat-form-field>
+
+      <input matInput
+      placeholder="Departure Date"
+      readonly
+     formControlName="departure">
+
+    </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+
+    <button class="mat-raised-button"
+            (click)="close()">
+        Cancel
+    </button>
+
+    <button class="mat-raised-button mat-primary"
+            (click)="save()">
+        Submit Order
+    </button>
+
+</mat-dialog-actions>

@@ -1,0 +1,50 @@
+.stats-cards {
+  .mat-card {
+    overflow: hidden;
+  }
+}
+.mat-row:hover {
+  background-color: rgb(199, 200, 243);
+}
+table {
+  width: 100%;
+}
+
+.table-head-fix{
+  font-size:16px;
+  color: #131197;
+}
+.white-text {
+  color: #f5f5f8
+}
+
+.mat-column-port {
+  word-wrap: break-word !important;
+  white-space: unset !important;
+  flex: 0 0 20% !important;
+  width: 20% !important;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+
+  word-break: break-word;
+
+  -ms-hyphens: auto;
+  -moz-hyphens: auto;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+.mat-column-reeferId {
+  word-wrap: break-word !important;
+  white-space: unset !important;
+  flex: 0 0 10% !important;
+  width: 10% !important;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+
+  word-break: break-word;
+
+  -ms-hyphens: auto;
+  -moz-hyphens: auto;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}

@@ -1,0 +1,48 @@
+
+
+table {
+  width: 100%;
+}
+
+.table-head-fix{
+  font-size:16px;
+  color: #131197;
+}
+.white-text {
+  color: #f5f5f8
+}
+
+
+tr.example-detail-row {
+  height: 0;
+}
+
+tr.example-element-row:not(.example-expanded-row):hover {
+  background: whitesmoke;
+}
+
+tr.example-element-row:not(.example-expanded-row):active {
+  background: #efefef;
+}
+
+.example-element-row td {
+  border-bottom-width: 0;
+}
+
+.example-element-detail {
+  overflow: hidden;
+  display: flex;
+}
+
+.mat-card-1 {
+  overflow: hidden;
+  color: #c5c4db;
+
+}
+.mat-card-2 {
+  overflow: hidden;
+  color: #131197;
+}
+
+
+

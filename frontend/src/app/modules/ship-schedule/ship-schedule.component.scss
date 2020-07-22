@@ -1,0 +1,41 @@
+mat-cell, .mat-cell {
+   min-height:auto; // overrides the 'inherit' that set the min height of the row
+    padding: 2px 6px 2px 0;
+ 
+}
+.mat-header-cell {    text-align: center;    }
+.custom.mat-card{
+    margin: 0px;
+    padding: 1px;
+}
+.progress.mat-card{
+    margin: 1px;
+    padding: 5px;
+}
+mat-card-header{
+    background: #12121212;
+    padding: 1px;
+    
+    color:rgb(75, 66, 66);
+  }
+
+
+  .progress.mat-card-content{
+    padding: 4px;
+    font-size: 20px;
+  }
+  .advance.mat-card-content{
+    padding: 8px;
+    font-size: 30px;
+  }
+  mat-card{
+    padding:0;
+  }
+
+  md-card-subtitle > span {
+     font-size: 20px;
+  
+}
+.mat-progress-bar {
+    height: 20px;
+  }

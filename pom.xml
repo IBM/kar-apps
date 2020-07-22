@@ -15,5 +15,6 @@
         <module>actors</module>
         <module>reefer-rest</module>
         <module>simulators</module>
+        <module>frontend</module>
     </modules>
 </project>

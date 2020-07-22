@@ -1,0 +1,171 @@
+<mat-card class="example-card" [style.backgroundColor]="'gainsboro'">
+    <mat-card-content >
+        <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
+            <mat-card fxFlex="50">
+                <mat-card-header [style.backgroundColor]="'gainsboro'">
+                    <mat-card-title>Simulated Delay</mat-card-title>
+                    <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
+                </mat-card-header>
+  
+                <mat-card-content>
+                    <div class="example-container">
+                        <mat-form-field  style="width:330px !important" [style.width]="'40%'" appearance="fill">
+                            <input matInput step="10" ngStep="10" (change)="delayChange($event)" name="rate" [(ngModel)]="rate" name="rate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                            <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
+                            <mat-hint align="end">Choose rate of advance - 0 = Manual, >0 = Auto ^</mat-hint>
+                        </mat-form-field>
+                        <button [disabled]="rate === 0"  fxLayoutGap="2px" align="end" (click)="toggleStartStop($event)" mat-raised-button  color="primary" [style.width]="'20%'" [style.height.px]="'45'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button>
+
+                    </div>
+
+                </mat-card-content>
+            </mat-card>
+
+            <mat-card fxFlex="50" >
+                <mat-card-content class="advance" color="primary" >
+
+                    <button [disabled]="rate > 0" (click)="nextDay()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'65'" [style.fontSize.px]="'17'">{{date}}</button>
+
+                </mat-card-content>
+                <mat-card [style.backgroundColor]="'gainsboro'" [style.fontSize.px]="'20'">{{date}}</mat-card>
+                <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
+            </mat-card>
+        </div>
+    </mat-card-content>
+</mat-card>
+
+<mat-divider></mat-divider>
+<br>
+
+<div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
+    <div fxFlex="100">
+        <div class="mat-elevation-z8" >
+       
+            <div class="col m12 s12 mat-elevation-z8" style="margin-top:-10px;border-radius:4px; background: linear-gradient(60deg,#6d6fc0,#50649c); padding:5px">
+                <h2 class="white-text"> Active Voyages </h2>
+    
+            </div>
+    
+            <table [style.width]="'100%'" mat-table [dataSource]="voyageDataSource" multiTemplateDataRows matSort class="mat-elevation-z8">
+            
+                <ng-container matColumnDef="vessel">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header width ="15%" style="font-size: 16px;"> Vessel</th>
+                    <td mat-cell *matCellDef="let element" style="font-size: 20px;font-style: italic;"> {{element.route.vessel.name}} </td>
+                </ng-container>
+                <ng-container  matColumnDef="progress">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix" style="font-size: 16px;">   Origin -------------------------------------------------------> Voyage Progress  -------------------------------------------------------> Destination </th>
+                    <td mat-cell *matCellDef="let element"> 
+                    <div>
+                        <mat-card class="custom" fxFlex="25" [style.backgroundColor]="'#c5c4db'">
+                            <!--mat-card-header style="margin: 0px;text-align: center;justify-content: center"-->
+                                <!--mat-card-title>Simulated Delay</mat-card-title-->
+                                <!--mat-card-subtitle>Origin</mat-card-subtitle-->
+                            <!--/mat-card-header-->
+                            <mat-card-content class="progress"  style="margin:0 auto;text-align: center;justify-content: center">
+                                {{element.route.originPort}}<br><p style="font-size: 15px;">{{element.sailDate}}</p>
+                            </mat-card-content>
+                            
+                        </mat-card>
+                        <mat-card class="progress" fxFlex="50"  >
+
+                            <mat-card-content style="justify-content:center;align-items:center;" >
+                                <!--div fxLayout="row" fxLayoutGap="15px" fxLayoutAlign="start center" --> 
+                                <mat-progress-bar fxFlex value="{{element.route.vessel.progress}}">{{element.route.daysAtSea}}</mat-progress-bar>
+                                <!--mat-progress-bar mode="determinate" [value]="calculateProgress(element.route.vessel.position, element.route.daysAtSea)"></mat-progress-bar-->
+                                <!--/div-->
+                                
+                            </mat-card-content>
+                        </mat-card>
+                        <mat-card class="custom" fxFlex="25" [style.backgroundColor]="'#c5c4db'" >
+                            <!--mat-card-header  style="margin:0 auto;text-align: center;justify-content: center">
+    
+                                <mat-card-subtitle>Destination</mat-card-subtitle>
+                            </mat-card-header-->
+ 
+                            <mat-card-content class="progress"  style="text-align: center;align-items: center;">
+                                {{element.route.destinationPort}}<br><p style="font-size: 15px;">{{element.arrivalDate}}</p>
+                            </mat-card-content>
+                        </mat-card>
+
+
+
+                    </div>    
+                    
+                    
+                    </td>
+                </ng-container>
+    
+                <!--ng-container matColumnDef="progress">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Origin Port </th>
+                    <td mat-cell *matCellDef="let element"> {{element.route.originPort}} </td>
+                </ng-container-->
+                <!--ng-container matColumnDef="destination">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Destination Port </th>
+                    <td mat-cell *matCellDef="let element">{{element.route.destinationPort}}</td>
+                </ng-container-->
+    
+                <ng-container  matColumnDef="maxCapacity">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header width ="10%" style="font-size: 16px;"> Max Capacity </th>
+                    <td mat-cell *matCellDef="let element" style="font-size: 16px; text-align: center;"> {{element.route.vessel.maxCapacity}} </td>
+                </ng-container>    
+                <ng-container  matColumnDef="freeCapacity">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header width ="10%" style="font-size: 16px;"> Free Capacity </th>
+                    <td mat-cell *matCellDef="let element" style="font-size: 16px; text-align: center;"> {{element.route.vessel.freeCapacity}} </td>
+                </ng-container>
+                <!--ng-container matColumnDef="location">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Location</th>
+                    <td mat-cell *matCellDef="let element"> {{element.route.vessel.location}} </td>
+                </ng-container-->
+    
+                <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
+                <!--ng-container matColumnDef="expandedDetail">
+                    <td mat-cell *matCellDef="let element" [attr.colspan]="shipTableColumns.length" >
+                        <div class="example-element-detail"
+                            [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'" >
+                            <mat-card  fxFlex="10" [style.backgroundColor]="'#c5c4db'">
+    
+                                <mat-card-content   style="text-align: center;justify-content: center">
+                                    {{element.route.originPort}}
+                                </mat-card-content>
+                            </mat-card>
+                            <mat-card fxFlex="70">
+    
+                                <mat-card-content>
+                                    <mat-progress-bar [value]="calculateProgress(element.route.vessel.position, element.route.daysAtSea)"></mat-progress-bar>
+ 
+                                </mat-card-content>
+                            </mat-card>
+                            <mat-card fxFlex="10"[style.backgroundColor]="'#c5c4db'" >
+    
+                                <mat-card-content  style="text-align: center;align-items: center;display:inline-block; ">
+                                    {{element.route.destinationPort}}
+                                </mat-card-content>
+                            </mat-card>
+                            <mat-card fxFlex="10">
+    
+                                <mat-card-content>
+                                    <button mat-button color="primary"  (click)="resetShipPosition($event)" >Reset</button >
+                                </mat-card-content>
+                            </mat-card>
+                        </div>
+                    </td>
+                </ng-container-->
+                <!--tr mat-header-row *matHeaderRowDef="shipTableColumns"></tr-->
+                <tr mat-header-row *matHeaderRowDef="shipTableColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: shipTableColumns;"  ></tr>
+
+                <!--tr mat-row *matRowDef="let element; columns: shipTableColumns;"
+                    class="example-element-row"
+                    [class.example-expanded-row]="expandedElement === element"
+                    (click)="expandedElement = expandedElement === element ? null : element">
+                </tr>
+                <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="example-detail-row"></tr-->
+            </table>
+            <mat-paginator [pageSizeOptions]="[ 10, 15, 20]"></mat-paginator>
+        </div>
+    </div>
+</div>
+    
+
+
+

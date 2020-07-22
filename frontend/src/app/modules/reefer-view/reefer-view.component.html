@@ -1,0 +1,123 @@
+<!--div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
+  <div fxFlex="100">
+    <div class="mat-elevation-z8">
+      <div class="col m12 s12 mat-elevation-z8" style="margin-top:-10px;border-radius:4px; background: linear-gradient(60deg,#6d6fc0,#50649c); padding:5px">
+        <h2 class="white-text">Ports</h2>
+      </div>
+      <table mat-table [dataSource]="portsDataSource">
+
+        <ng-container matColumnDef="port">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Port </th>
+          <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+        </ng-container>
+        <ng-container matColumnDef="position">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Geo Location </th>
+          <td mat-cell *matCellDef="let element"> {{element.position}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="reeferCnt">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Available Reefers </th>
+          <td mat-cell *matCellDef="let element">{{element.availableReefers}}</td>
+        </ng-container>
+
+
+        <ng-container matColumnDef="onMaintenance">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Reefers on Maintenance </th>
+          <td mat-cell *matCellDef="let element"> {{element.reefersOnMaintenance}} </td>
+        </ng-container>
+
+
+        <ng-container matColumnDef="add">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Add</th>
+          <td mat-cell *matCellDef="let element" (click)="$event.stopPropagation()">
+            <button mat-icon-button color="warn" (click)="addPortReefers(element)">
+              <mat-icon class="mat-18">addchart</mat-icon>
+            </button>
+        </td>
+        </ng-container>
+
+
+        <tr mat-header-row *matHeaderRowDef="portTableColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: portTableColumns;" (click) = "onRowClicked(row)" ></tr>
+
+      </table>
+
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+    </div>
+  </div>
+</div-->
+
+<mat-divider></mat-divider>
+<br>
+
+<div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
+  <div fxFlex="100">
+    <div class="mat-elevation-z8">
+      <!--div>
+        <mat-form-field *ngFor="let filter of filterSelectObj" style="margin-left: 15px;">
+          <mat-label>Filter {{filter.name}}</mat-label>
+          <select matNativeControl name="{{filter.columnProp}}" [(ngModel)]="filter.modelValue"
+            (change)="filterChange(filter,$event)">
+            <option value="">-- Select {{filter.name}} --</option>
+            <option [value]="item" *ngFor="let item of filter.options">{{item}}</option>
+          </select>
+        </mat-form-field>
+        &nbsp;
+        <button mat-flat-button color="warn" (click)="resetFilters()">Reset</button>
+      </div-->
+
+      <div fxLayout fxLayoutAlign="center center">
+        <mat-form-field fxFlex="40%">
+          <input matInput type="text" (keyup)="doFilter($event.target.value)" placeholder="Filter">
+        </mat-form-field>
+      </div>
+      <div class="col m12 s12 mat-elevation-z8" style="margin-top:-10px;border-radius:4px; background: linear-gradient(60deg,#6d6fc0,#50649c); padding:5px">
+        <h2 class="white-text">{{selectedPort}} Reefer Container Inventory</h2>
+
+      </div>
+
+      <table mat-table [dataSource]="reeferDataSource" matSort>
+        <ng-container matColumnDef="port">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Port </th>
+          <td mat-cell *matCellDef="let element">  {{element.port}} </td>
+        </ng-container>
+        <ng-container matColumnDef="reeferId">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Reefer ID </th>
+          <td mat-cell *matCellDef="let element"> {{element.reeferId}} </td>
+        </ng-container>
+        <ng-container matColumnDef="position">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Geo Location </th>
+          <td mat-cell *matCellDef="let element"> {{element.position}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="maxCapacity">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Maximum Capacity </th>
+          <td mat-cell *matCellDef="let element">{{element.maxCapacity}}</td>
+        </ng-container>
+
+
+        <ng-container matColumnDef="freeCapacity">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Free Capacity </th>
+          <td mat-cell *matCellDef="let element"> {{element.freeCapacity}} </td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Status</th>
+          <td mat-cell *matCellDef="let element"> {{element.status}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="loadingStatus">
+          <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Loading Status </th>
+          <td mat-cell *matCellDef="let element"> {{element.loadingStatus}} </td>
+        </ng-container>
+
+
+        <tr mat-header-row *matHeaderRowDef="reeferTableColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: reeferTableColumns;" (click) = "onRowClicked(row)" ></tr>
+
+      </table>
+      <mat-paginator [pageSizeOptions]="[ 10, 15, 20]"></mat-paginator>
+    </div>
+  </div>
+</div>
+
+

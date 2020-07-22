@@ -1,6 +1,7 @@
 package com.ibm.research.kar.reeferserver.controller;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -24,6 +25,7 @@ import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
+import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.*;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 
@@ -34,6 +36,10 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
     @Autowired
     private NotificationController webSocket;
   
+
+
+
+
     @GetMapping("/voyage/active")
     public List<Voyage> getActiveVoyages() {
       System.out.println("VoyageController.getActiveVoyages()");
@@ -112,8 +118,9 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
     }
     @PostMapping("/voyage/updateGui")
     public void updateGui(@RequestBody String currentDate ) {
-      System.out.println("VoyageController.updateGui() - updating GUI with active schedule");
+      System.out.println("VoyageController.updateGui() - updating GUI with active schedule - currentDate:"+currentDate);
       webSocket.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule());
       System.out.println("VoyageController.updateGui() - Done");
     }
+
 }

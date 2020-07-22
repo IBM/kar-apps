@@ -43,4 +43,20 @@ public class VoyageService {
 			ee.printStackTrace();
 		} 
     }
+
+    public void changeDelay(int delay) {
+        System.out.println("VoyageService.changeDelay()");
+        try {
+            Response response =  Kar.restPost("simservice", "simulator/setunitdelay", Json.createValue(delay));
+            JsonValue respValue = response.readEntity(JsonValue.class);
+            System.out.println("Response = "+respValue);
+ 
+        } catch (ActorMethodNotFoundException ee) {
+            ee.printStackTrace();
+        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
+  
+        } catch( Exception ee) {
+			ee.printStackTrace();
+		} 
+    }
 }

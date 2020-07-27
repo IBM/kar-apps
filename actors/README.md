@@ -1,6 +1,6 @@
-# reefer-app
+# Reefer Actor Service
 
-To launch Reefer App server run:
+To launch Reefer Actor service run:
 
 kar --app reefer -service kcontainer -actors order,reefer,voyage,reefer-provisioner mvn liberty:run
 

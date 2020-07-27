@@ -7,14 +7,14 @@ To build the project, run mvn clean install
 By default, the Reefer front end uses port 9088. If this port is taken, edit src/main/liberty/config/serve/xml
 and change the value of http port in the following xml element:
 
-<httpEndpoint httpPort="9088" httpsPort="8443" id="defaultHttpEndpoint" host="*" />
+`<httpEndpoint httpPort="9088" httpsPort="8443" id="defaultHttpEndpoint" host="*" />`
 
 The Reefer front end communicates with the REST service using a URL defined in dist/reefer/index.html
-  <script type="text/javascript">
+ ` <script type="text/javascript">`
      var reeferRestApiBaseUrl="http://localhost:9080";
 
      window.reeferRestApiBaseUrl = reeferRestApiBaseUrl;
-  </script>
+  `</script>`
 
 Change the value of reeferRestApiBaseUrl to match the host and port of your REST service.
 

@@ -1,27 +1,25 @@
-# Reefer
+# Reefer Front End
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 9.1.6.
 
-## Development server
+To build the project, run mvn clean install
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+By default, the Reefer front end uses port 9088. If this port is taken, edit src/main/liberty/config/serve/xml
+and change the value of http port in the following xml element:
 
-## Code scaffolding
+<httpEndpoint httpPort="9088" httpsPort="8443" id="defaultHttpEndpoint" host="*" />
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+The Reefer front end communicates with the REST service using a URL defined in dist/reefer/index.html
+  <script type="text/javascript">
+     var reeferRestApiBaseUrl="http://localhost:9080";
 
-## Build
+     window.reeferRestApiBaseUrl = reeferRestApiBaseUrl;
+  </script>
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+Change the value of reeferRestApiBaseUrl to match the host and port of your REST service.
 
-## Running unit tests
+To launch the Reefer front end using Liberty maven plugin, run
+  mvn liberty:run
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Point your browser to: http://localhost:9088 to launch the Reefer user interface.
 
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).

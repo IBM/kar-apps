@@ -3,27 +3,59 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>com.ibm.research.kar.reefer</groupId>
+    <parent>   
+       <groupId>com.ibm.research.reefer</groupId>
+       <artifactId>reeferapp</artifactId>
+       <version>1.0-SNAPSHOT</version>
+    </parent>
+    <groupId>com.ibm.research.reefer</groupId>
     <artifactId>reefer-frontend</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <build>
+
+
+ <finalName>${project.artifactId}</finalName>
         <plugins>
+
+
+      <plugin>
+	      <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-clean-plugin</artifactId>
+		          <version>3.0.0</version>
+			        <configuration>
+				          <failOnError>false</failOnError>
+					          <filesets>
+						              <fileset>
+								            <directory>.</directory>
+									                <includes>
+											                <include>src/main/webapp/**/*.*</include>
+											</includes>
+											            <followSymlinks>false</followSymlinks>
+							      </fileset>
+						  </filesets>
+				</configuration>
+      </plugin>
+
 
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <warName>reefer</warName>
+                    <!--warName>${project.artifactId}</warName-->
                     <webResources>
                         <resource>
                             <directory>dist/reefer</directory>
                         </resource>
+                        <resource>
+                            <directory>src/main/liberty/config</directory>
+                        </resource>
+
                     </webResources>
                 </configuration>
+
             </plugin>
             <plugin>
                 <groupId>com.github.eirslett</groupId>
@@ -97,6 +129,51 @@
               </executions>
             </plugin-->
 
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-resources-plugin</artifactId>
+              <version>2.4.2</version>
+              <executions>
+                <execution>
+                  <id>default-copy-resources</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <overwrite>true</overwrite>
+                    <outputDirectory>${project.basedir}/src/main/webapp</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${project.basedir}/dist/reefer</directory>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
+			<plugin>
+				<groupId>io.openliberty.tools</groupId>
+				<artifactId>liberty-maven-plugin</artifactId>
+				<version>3.2</version>
+				<configuration>
+				
+				<serverName>frontEndServer</serverName>
+
+
+				  <runtimeArtifact>
+				    <groupId>io.openliberty</groupId>
+				    <artifactId>openliberty-runtime</artifactId>
+				    <type>zip</type>
+				  </runtimeArtifact>
+
+
+
+
+				</configuration>
+
+			</plugin>
 
 
 

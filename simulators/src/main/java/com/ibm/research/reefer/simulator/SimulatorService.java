@@ -72,7 +72,14 @@ public class SimulatorService {
 	}
 
 	public JsonValue setUnitDelay(JsonValue value) {
-		JsonNumber newval = (((JsonNumber)value).intValue() > 0) ? (JsonNumber)value : (JsonNumber)Json.createValue(0);
+		JsonNumber newval;
+		if (JsonValue.ValueType.OBJECT == value.getValueType()) {
+			newval = ((JsonObject)value).getJsonNumber("value");
+		}
+		else {
+			newval = Json.createValue(((JsonNumber)value).intValue());
+		}
+		newval = newval.intValue() > 0 ? newval : (JsonNumber)Json.createValue(0);
 		synchronized (unitdelay) {
 			// if unitdelay > 0 then Ship thread is running.
 			// if running and newval == 0 then interrupt thread

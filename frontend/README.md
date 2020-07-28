@@ -16,7 +16,7 @@ The Reefer front end communicates with the REST service using a URL defined in d
 
 Change the value of reeferRestApiBaseUrl to match the host and port of your REST service.
 
-__Before launching Reefer front end make sure that Reefer REST, Reefer Actors, and Reefer Simulator processes are running. Also when the Reefer Simulator starts, run curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/togglereeferrest__
+__Before launching Reefer front end make sure that Reefer REST, Reefer Actors, and Reefer Simulator processes are running. When ready, each of theses processes should show _The defaultServer server is ready to run a smarter planet. The defaultServer server started in <N> seconds_. Also when the Reefer Simulator starts, run curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/togglereeferrest__
 
 To launch the Reefer front end using Liberty maven plugin, run
   mvn liberty:run

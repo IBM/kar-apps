@@ -1,41 +1,81 @@
 package com.ibm.research.kar.reefer.model;
 
-import javax.json.JsonObject;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+//import java.util.concurrent.atomic.AtomicLong;
 
 public class Order {
-    public static final String OrderKey = "order";
-    public static final String OrderBookingKey = "booking";
-    public static final String IdKey = "orderId";
-    public static final String VoyageIdKey = "orderVoyageId";
-    public static final String ProductQtyKey = "orderProductQty";
-    public static final String OriginPortKey = "originPort";
-    public static final String DestinationPortKey = "destinationPort";
-    private JsonObject order;
+   // private static final AtomicLong idGenerator = new AtomicLong();
+    String id;
+    String product;
+    int productQty;
+    String voyageId;
+    String status;
+    List<String> reeferIds;
 
-    public Order(JsonObject order) {
-        this.order = order; 
+    public Order(OrderProperties orderProperties) {
+        this.id = generateId(); //String.valueOf(idGenerator.addAndGet(1));
+        this.product = orderProperties.getProduct();
+        this.productQty = orderProperties.getProductQty();
+        this.voyageId = orderProperties.getVoyageId();
+        this.status = "Pending";
+        reeferIds = new ArrayList<>();
     }
 
+//    public Order(String orderId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
+    public Order( String product, int productQty, String voyageId, String status, List<String> reeferIds) {
+        this.id = generateId();
+        this.product = product;
+        this.productQty = productQty;
+        this.voyageId = voyageId;
+        this.status = status;
+        this.reeferIds = reeferIds;
+    }
+    private String generateId() {
+        return String.valueOf(Instant.now().toEpochMilli());
+    }
     public String getId() {
-        return order.getString(IdKey);
+        return id;
     }
 
-    public boolean containsKey(String key) {
-        return order.containsKey(key);
+    public String getProduct() {
+        return product;
     }
-    public String getVoyageId() {
-        return order.getString(VoyageIdKey);
+
+    public void setProduct(String product) {
+        this.product = product;
     }
-    public String getOriginPort() {
-        return order.getString(OriginPortKey);
-    }
-    public String getDestinationPort() {
-        return order.getString(DestinationPortKey);
-    }
+
     public int getProductQty() {
-        return order.getInt(ProductQtyKey);
+        return productQty;
     }
-    public JsonObject getAsObject() {
-        return order;
+
+    public void setProductQty(int productQty) {
+        this.productQty = productQty;
+    }
+
+    public String getVoyageId() {
+        return voyageId;
+    }
+
+    public void setVoyageId(String voyageId) {
+        this.voyageId = voyageId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public List<String> getReeferIds() {
+        return reeferIds;
+    }
+
+    public void setReeferIds(List<String> reeferIds) {
+        this.reeferIds.addAll(reeferIds);
     }
 }

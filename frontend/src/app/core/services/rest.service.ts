@@ -142,22 +142,24 @@ addReefers( inPort: string)  {
   return this.httpClient.post<Port[]>(this.REST_API_SERVER+'/reefers', body, options).pipe(retry(3), catchError(this.handleError));
 
 }
-setAutoMode(delayTime: number) {
+setSimulatorDelay(delayTime: number) {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
   const body : Delay = {
     delay: delayTime
 
   }
-  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/automode',body, options).pipe(retry(3), catchError(this.handleError));
+  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/delay',body, options).pipe(retry(3), catchError(this.handleError));
 
 }
+/*
 setManualMode() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
   return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/manualmode', options).pipe(retry(3), catchError(this.handleError));
 
 }
+*/
 advanceDateByOneDay() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};

@@ -25,16 +25,16 @@ public class SimulatorController {
     @Autowired
     private VoyageService voyageService;
     
-    @PostMapping("/simulator/automode")
-	public Instant  autoMode(@RequestBody String delay) {
-        System.out.println("TimeConSimulatorControllertroller.autoMode() - delay "+delay);
+  @PostMapping("/simulator/delay")
+//    @PostMapping("/simulator/automode")
+	public Instant  shipSimulatorDelay(@RequestBody String delay) {
+        System.out.println("TimeConSimulatorControllertroller.shipSimulatorDelay() - delay "+delay);
         int delayTime=0;
         try (JsonReader jsonReader = Json.createReader(new StringReader(delay))) {
              
             JsonObject req = jsonReader.readObject();
-            //delayTime = Integer.parseInt(req.getString("delay"));
             delayTime = req.getInt("delay");
-            System.out.println("TimeConSimulatorControllertroller.autoMode() - delayTime "+delayTime);
+            System.out.println("TimeConSimulatorControllertroller.shipSimulatorDelay() - delayTime "+delayTime);
 
           } catch( Exception e) {
             e.printStackTrace();
@@ -42,11 +42,17 @@ public class SimulatorController {
         voyageService.changeDelay(delayTime);
         return TimeUtils.getInstance().getCurrentDate();
     }
-
+/*
     @PostMapping("/simulator/manualmode")
 	public Instant  manualMode() {
         System.out.println("TimeConSimulatorControllertroller.manualMode()");
-        voyageService.changeDelay(0);
+        try {
+          voyageService.changeDelay(0);
+        } catch( Exception e) {
+          e.printStackTrace();
+        }
+       
         return TimeUtils.getInstance().getCurrentDate();
     }
+    */
 }

@@ -8,6 +8,8 @@ import { RestService } from 'src/app/core/services/rest.service';
 import { RouteConfigLoadEnd } from '@angular/router';
 import { Route } from '@angular/compiler/src/core';
 import { SocketService } from 'src/app/core/services/socket.service';
+import { Console } from 'console';
+import { ActiveSchedule } from 'src/app/core/models/active-schedule';
 
 @Component({
 //  animations: [appModuleAnimation()],
@@ -39,7 +41,12 @@ export class ShipScheduleComponent implements OnInit {
   // Subscribe to notification topic
         stompClient.subscribe('/topic/voyages', (event:any) => {
           if ( event.body) {
-            this.voyages = JSON.parse(event.body);
+            let schedule: ActiveSchedule;
+            schedule = JSON.parse(event.body);
+
+            //this.voyages = JSON.parse(event.body);
+            this.voyages = schedule.voyages;
+            this.date = schedule.currentDate.substr(1,10);
             console.log('::::::'+this.voyages);
             this.voyageDataSource.data = this.voyages;
 
@@ -50,9 +57,10 @@ export class ShipScheduleComponent implements OnInit {
 
   }
   delayChange(event: any) {
-    console.log("Delay Change:"+event.target.value);//console.log(event.target.value);
+ 
     let value = event.target.value;
     this.rate = Math.ceil(value/10)*10;
+    console.log("Delay Change:"+this.rate);
   }
   ngOnInit(): void {
     this.restService.currentDate().subscribe((data) => {
@@ -67,15 +75,17 @@ export class ShipScheduleComponent implements OnInit {
     console.log("Click "+event);
     if ( this.autoSimButtonLabel == "START") {
       this.autoSimButtonLabel = "STOP";
-      this.restService.setAutoMode(10).subscribe((data) => {
-        console.log(data);
-      });
+//      this.restService.setAutoMode(10).subscribe((data) => {
+//        console.log(data);
+//      });
     } else if ( this.autoSimButtonLabel == "STOP") {
       this.autoSimButtonLabel = "START";
-      this.restService.setManualMode().subscribe((data) => {
-        console.log(data);
-      });
+      this.rate = 0;
+      console.log("............ Stopping Ship Simulator - delay:"+this.rate);
     }
+    this.restService.setSimulatorDelay(this.rate).subscribe((data) => {
+      console.log(data);
+    });
   }
 
   getActiveVoyages() {

@@ -2,6 +2,8 @@ package com.ibm.research.kar.reefer.actors;
 
 import static com.ibm.research.kar.Kar.*;
 
+import java.util.Map;
+
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
@@ -9,6 +11,7 @@ import com.ibm.research.kar.actor.annotations.Deactivate;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.supervisor.ActorSupervisor;
 
@@ -19,6 +22,7 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
+import javax.ws.rs.core.Response;
 
 @Actor
 public class VoyageActor extends BaseActor {
@@ -59,28 +63,59 @@ public class VoyageActor extends BaseActor {
      
 
     }
+
+    private boolean shipSecured() {
+        JsonObject params = Json.createObjectBuilder()
+        .add("voyageId",getId())
+        .build();
+        try {
+ 
+            Response response = restPost("reeferservice","/voyage/bookship", params);
+            //return Json.createObjectBuilder()
+            //.add("status", "OK")
+            //.build();
+        } catch( Exception e) {
+            e.printStackTrace();
+            //return Json.createObjectBuilder()
+            //.add("status", "Failed")
+            //.add("error",e.getMessage())
+            //.build();
+        }
+
+        return true;
+    }
     @Remote
     public JsonObject reserve(JsonObject message) {
-       Order order = new Order(message.getJsonObject(Order.OrderKey));
+       JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
  
         System.out.println("VoyageActor.reserve() called "+message.toString());
+
+        Map<String, JsonValue> stateMap = actorGetAllState(this);
+        
+        if ( shipSecured() ) {
+
+        }
         JsonObject params = Json.createObjectBuilder()
-                .add(Order.OrderKey,  order.getAsObject())
+                .add(JsonOrder.OrderKey,  order.getAsObject())
 			    .build();
         try {
             // Book reefers for this order thru the ReeferProvisioner
             JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"bookReefers", params);
-
-            JsonValue v = actorGetState(this, "reefers");
-            JsonArray reefers = v.asJsonArray();
-            reefers.addAll(reefers.size(), reefers);
-            actorSetState(this, "reefers", reefers);
-
-            return Json.createObjectBuilder()
+            if ( reply.asJsonObject().getString("status").equals("OK") ) {
+                return Json.createObjectBuilder()
                 .add("status", "OK")
                 .add("reefers",  reply.asJsonObject().getJsonArray("reefers")) 
-                .add(Order.OrderKey,  order.getAsObject())
+                .add(JsonOrder.OrderKey,  order.getAsObject())
                 .build();
+            } else {
+                return reply.asJsonObject();
+            }
+        //    JsonValue v = actorGetState(this, "reefers");
+        //    JsonArray reefers = v.asJsonArray();
+         //   reefers.addAll(reefers.size(), reefers);
+        //    actorSetState(this, "reefers", reefers);
+
+
            
         } catch( ActorMethodNotFoundException ee) {
             ee.printStackTrace();

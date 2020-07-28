@@ -51,6 +51,31 @@ public class ScheduleService {
             }
         }
     }
+
+    public List<Voyage> getMatchingSchedule(String origin, String destination, Instant date) {
+        List<Voyage> schedule = new ArrayList<>();
+        if ( masterSchedule.isEmpty() ) {
+            try {
+                scheduler.initialize(routesJsonResource.getInputStream());
+                masterSchedule =scheduler.generateSchedule();
+            } catch( Exception e) {
+                // !!!!!!!!!!!!!!!!!!!!!! HANDLE THIS
+                e.printStackTrace();
+            }
+        }
+        for( Voyage voyage : masterSchedule ) {
+ 
+            if ( (voyage.getSailDateObject().equals(date) ||
+                 voyage.getSailDateObject().isAfter(date)) &&
+                 voyage.getRoute().getOriginPort().equals(origin) &&
+                 voyage.getRoute().getDestinationPort().equals(destination) ) {
+                    schedule.add(voyage);
+            }
+
+        }
+
+        return schedule;
+    }
     /*
         Returns voyages with ships currently at sea.
     */

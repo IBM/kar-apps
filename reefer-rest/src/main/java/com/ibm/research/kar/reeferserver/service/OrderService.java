@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.ibm.research.kar.reeferserver.model.Order;
+import com.ibm.research.kar.reefer.model.OrderProperties;
+import com.ibm.research.kar.reefer.model.Order;
+
 
 import org.springframework.stereotype.Component;
 @Component
@@ -17,6 +19,15 @@ public class OrderService {
     }
 
     public void saveOrder(Order order) {
-        orders.put(order.getOrderId(), order);
+        orders.put(order.getId(), order);
     }
+    public Order creatOrder(OrderProperties orderProperties) {
+        Order order = 
+            new Order(orderProperties);
+
+        orders.put(order.getId(), order);
+        return order;
+    }
+
+
 }

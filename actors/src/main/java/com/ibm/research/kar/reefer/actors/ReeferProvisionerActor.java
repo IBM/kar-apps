@@ -9,6 +9,7 @@ import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.ReeferAllocator;
 import com.ibm.research.kar.reefer.common.packingalgo.PackingAlgo;
 import com.ibm.research.kar.reefer.common.packingalgo.SimplePackingAlgo;
+import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Reefer;
 
@@ -85,39 +86,39 @@ public class ReeferProvisionerActor extends BaseActor {
     }
     @Remote
     public JsonObject bookReefers(JsonObject message) {
-        Order order = new Order(message.getJsonObject(Order.OrderKey));
+        JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
      
         System.out.println("ReeferProvisionerActor.bookReefers() called ");
        // JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        if ( order.containsKey(Order.ProductQtyKey)) {
+        if ( order.containsKey(JsonOrder.ProductQtyKey)) {
             int qty = order.getProductQty();
             List<ActorRef> allocatedReefers = 
                 ReeferAllocator.allocate(packingAlgo, new ArrayList<ActorRef>(reeferInventory.values()), qty, order.getVoyageId());
 
             System.out.println("ReeferProvisionerActor.bookReefers() product qty:"+qty +" Allocated Reefers:"+allocatedReefers.size());
             if ( allocatedReefers.size() == 0 ) {
-                return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","FailedToAllocateReefers").add(Order.IdKey, order.getId()).build();
+                return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","FailedToAllocateReefers").add(JsonOrder.IdKey, order.getId()).build();
             }
             JsonArrayBuilder arrayBuilder = reserveReefers(allocatedReefers, order);
 
             JsonObject reply =  Json.createObjectBuilder()
                 .add("status", "OK")
                 .add("reefers",  arrayBuilder)
-                .add(Order.OrderKey, order.getAsObject() )
+                .add(JsonOrder.OrderKey, order.getAsObject() )
                     .build();
             return reply;
 
         } else {
-            return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","ProductQuantityMissing").add(Order.IdKey, order.getId()).build();
+            return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","ProductQuantityMissing").add(JsonOrder.IdKey, order.getId()).build();
         }
     }
-    private JsonArrayBuilder reserveReefers(List<ActorRef> allocatedReefers, Order order ) {
+    private JsonArrayBuilder reserveReefers(List<ActorRef> allocatedReefers, JsonOrder order ) {
         JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
         for( ActorRef reefer : allocatedReefers ) {
 
             JsonObject params = Json.createObjectBuilder()
             .add("reeferid",  reefer.getId())
-            .add(Order.OrderKey, order.getAsObject() )
+            .add(JsonOrder.OrderKey, order.getAsObject() )
                 .build();
             try {
                 actorCall( reefer, "reserve", params);

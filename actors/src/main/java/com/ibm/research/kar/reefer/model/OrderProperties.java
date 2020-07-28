@@ -1,4 +1,4 @@
-package com.ibm.research.kar.reeferserver.model;
+package com.ibm.research.kar.reefer.model;
 
 public class OrderProperties {
     String orderId;  

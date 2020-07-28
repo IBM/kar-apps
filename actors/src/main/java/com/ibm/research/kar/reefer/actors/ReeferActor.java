@@ -2,6 +2,7 @@ package com.ibm.research.kar.reefer.actors;
 import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
+import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
 
 import static com.ibm.research.kar.Kar.*;
@@ -55,7 +56,7 @@ public class ReeferActor extends BaseActor {
     public void reserve(JsonObject message) {
         //JsonObject result = Json.createObjectBuilder().
         System.out.println("ReeferActor.reserve() called - Id:"+this.getId());
-        Order order = new Order(message.getJsonObject(Order.OrderKey));
+        JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
  
         //ActorRef voyageActor =  actorRef("voyage","444");
   

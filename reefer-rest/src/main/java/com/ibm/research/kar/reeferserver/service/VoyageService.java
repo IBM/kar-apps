@@ -45,9 +45,11 @@ public class VoyageService {
     }
 
     public void changeDelay(int delay) {
-        System.out.println("VoyageService.changeDelay()");
+        System.out.println("VoyageService.changeDelay() - delay:"+delay);
         try {
-            Response response =  Kar.restPost("simservice", "simulator/setunitdelay", Json.createValue(delay));
+            JsonObject delayArg = 
+                Json.createObjectBuilder().add("value", delay).build();
+            Response response =  Kar.restPost("simservice", "simulator/setunitdelay",delayArg); //Json.createValue(delay));
             JsonValue respValue = response.readEntity(JsonValue.class);
             System.out.println("Response = "+respValue);
  

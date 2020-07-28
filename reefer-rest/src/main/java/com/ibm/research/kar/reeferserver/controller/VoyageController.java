@@ -35,8 +35,27 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
     private ScheduleService shipScheduleService;
     @Autowired
     private NotificationController webSocket;
-  
 
+    @PostMapping("/voyage/matching")
+    public List<Voyage> getMatchingVoyages(@RequestBody String body) {
+      System.out.println("VoyageController.getMatchingVoyages()");
+      String originPort="";
+      String destinationPort="";
+      Instant date=null;
+
+        try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
+             
+          JsonObject req = jsonReader.readObject();
+          originPort = req.getString("origin");
+          destinationPort = req.getString("destination");
+          String departureDate = req.getString("departureDate");
+          date = Instant.parse(departureDate);
+          System.out.println("VoyageController.getMatchingVoyages() - origin:"+originPort+" destination:"+destinationPort+" date:"+departureDate);
+        } catch( Exception e) {
+          e.printStackTrace();
+        }
+      return shipScheduleService.getMatchingSchedule(originPort, destinationPort, date);
+    } 
 
 
 
@@ -119,7 +138,7 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
     @PostMapping("/voyage/updateGui")
     public void updateGui(@RequestBody String currentDate ) {
       System.out.println("VoyageController.updateGui() - updating GUI with active schedule - currentDate:"+currentDate);
-      webSocket.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule());
+      webSocket.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule(), currentDate);
       System.out.println("VoyageController.updateGui() - Done");
     }
 

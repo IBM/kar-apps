@@ -3,9 +3,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import com.ibm.research.kar.reeferserver.model.Order;
-import com.ibm.research.kar.reeferserver.model.OrderProperties;
-import com.ibm.research.kar.reeferserver.service.OrderService;
+import com.ibm.research.kar.reefer.model.Order;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -15,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
+import com.ibm.research.kar.reefer.model.OrderProperties;
+import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.actor.ActorRef;
 import static com.ibm.research.kar.Kar.*;
 
@@ -37,19 +37,23 @@ public class OrderController {
     @PostMapping("/orders")
 	public OrderProperties bookOrder(@RequestBody OrderProperties orderProperties) throws IOException {
 		System.out.println("bookOrder() Called - Saving Order=> Product:"+orderProperties.getProduct());
-		Order order = new Order(orderProperties);
-		orderService.saveOrder(order);
+
+		Order order = orderService.creatOrder(orderProperties); 
+		
 
         try {
 
 			JsonObjectBuilder ordersProps = Json.createObjectBuilder();
 		
-			ordersProps.add("number", 10).add("orderId","3333").add("orderVoyageId", "5555").add("orderProductQty",1000);
+			ordersProps.add("orderId",order.getId()).
+				add("orderVoyageId", orderProperties.getVoyageId()).
+				add("orderProductQty",orderProperties.getProductQty());
+
 			JsonObjectBuilder orderObject = Json.createObjectBuilder();
 			orderObject.add("order", ordersProps.build());
 			JsonObject params = orderObject.build();
 
-            ActorRef orderActor = actorRef("order", "1111");
+            ActorRef orderActor = actorRef("order", order.getId());
 
             JsonValue reply = actorCall(orderActor, "createOrder", params);
 			System.out.println("Order Actor reply:"+reply);
@@ -63,7 +67,7 @@ public class OrderController {
 			ee.printStackTrace();
 		}
 
-		orderProperties.setOrderId(order.getOrderId());
+		orderProperties.setOrderId(order.getId());
 		return orderProperties;
 	}
 	@GetMapping("/orders")

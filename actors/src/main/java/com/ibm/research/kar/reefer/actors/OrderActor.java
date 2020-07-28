@@ -5,11 +5,13 @@ import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.OrderStatus;
 import com.ibm.research.kar.actor.ActorRef;
 import static com.ibm.research.kar.Kar.*;
 
+import java.util.Map;
 import java.util.Optional;
 //import java.util.concurrent.CompletionStage;
 //import javax.inject.Inject;
@@ -30,18 +32,18 @@ public class OrderActor extends BaseActor {
     @Remote
     public JsonObject createOrder(JsonObject message) {
         System.out.println(
-            "OrderActor.createOrder() called- Actor ID:" + this.getId()+" message:"+message.getJsonObject(Order.OrderKey));
-        Order order = new Order(message.getJsonObject(Order.OrderKey));
+            "OrderActor.createOrder() called- Actor ID:" + this.getId()+" message:"+message.getJsonObject(JsonOrder.OrderKey));
+        JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
        
         try {
             // voyageId is mandatory
-            if ( order.containsKey(Order.VoyageIdKey) ) {
+            if ( order.containsKey(JsonOrder.VoyageIdKey) ) {
                 String voyageId = order.getVoyageId();
                 JsonObject reply = bookVoyage(voyageId, order);
 
                 if ( reply.getString("status").equals("OK")) {
                     System.out.println("OrderActor.createOrder() - Order Booked");
-                    return Json.createObjectBuilder().add(Order.OrderBookingKey, reply).build();
+                    return Json.createObjectBuilder().add(JsonOrder.OrderBookingKey, reply).build();
                 } else {
                     return reply;
                 }
@@ -61,10 +63,16 @@ public class OrderActor extends BaseActor {
  
     }
 
-    private JsonObject bookVoyage(String voyageId, Order order) {
+    private JsonObject bookVoyage(String voyageId, JsonOrder order) {
+        return Json.createObjectBuilder().add("status", "OK").build();
+
+       /*
         try {
             JsonObject params = 
-                Json.createObjectBuilder().add(Order.OrderKey, order.getAsObject()).build();
+                Json.createObjectBuilder().add(JsonOrder.OrderKey, order.getAsObject()).build();
+            
+            Map<String, JsonValue> stateMap = actorGetAllState(this);
+            
             ActorRef voyageActor = actorRef(ReeferAppConfig.VoyageActorName, voyageId);
 
             JsonValue reply = actorCall(voyageActor, "reserve", params);
@@ -73,8 +81,9 @@ public class OrderActor extends BaseActor {
 
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-            return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
+            return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(JsonOrder.IdKey, order.getId()).build();
   
         }
+        */
     }
 }

@@ -8,6 +8,8 @@ public class OrderProperties {
   String destinationPort;
   String voyageId;
 
+  public OrderProperties() {}
+  
   public OrderProperties(String product, int productQty, String voyageId) {
       this.product = product;
       this.productQty = productQty;

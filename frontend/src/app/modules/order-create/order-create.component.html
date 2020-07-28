@@ -99,7 +99,7 @@
           <!--app-widget-card label="Origin Port" total="10k" percentage="40" [data]="cards"></app-widget-card-->
           <mat-card-content>
             <mat-form-field >
-              <input matInput [style.fontSize.px]="'20'" [matDatepicker]="picker1" placeholder="" [style.height]="'2em'" [style.backgroundColor]="'gainsboro'">
+              <input matInput [style.fontSize.px]="'20'" [matDatepicker]="picker1" (dateChange)="departureDateChangeEvent($event)" placeholder="" [style.height]="'2em'" [style.backgroundColor]="'gainsboro'">
 
               <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
               <mat-datepicker #picker1></mat-datepicker>
@@ -158,28 +158,28 @@
        </mat-checkbox>
      </td>
    </ng-container>
-                <!-- Position Column -->
+                <!-- VoyageID Column - this is hidden via [style.display]="'none'"-->
                 <ng-container matColumnDef="voyageId">
-                    <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Voyage Id </th>
-                    <td mat-cell *matCellDef="let element"> {{element.voyageId}} </td>
+                    <th mat-header-cell *matHeaderCellDef [style.display]="'none'" class="table-head-fix"> Voyage Id </th>
+                    <td mat-cell *matCellDef="let element" [style.display]="'none'"> {{element.id}} </td>
                 </ng-container>
 
                 <!-- Name Column -->
-                <ng-container matColumnDef="name">
+                <ng-container matColumnDef="vessel">
                     <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Ship Name </th>
-                    <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+                    <td mat-cell *matCellDef="let element"> {{element.route.vessel.name}} </td>
                 </ng-container>
 
                 <!-- Weight Column -->
                 <ng-container matColumnDef="origin">
                     <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Origin Port </th>
-                    <td mat-cell *matCellDef="let element"> {{element.origin}} </td>
+                    <td mat-cell *matCellDef="let element"> {{element.route.originPort}} </td>
                 </ng-container>
 
                 <!-- Symbol Column -->
                 <ng-container matColumnDef="destination">
                     <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Destination Port </th>
-                    <td mat-cell *matCellDef="let element"> {{element.destination}} </td>
+                    <td mat-cell *matCellDef="let element"> {{element.route.destinationPort}} </td>
                 </ng-container>
                  <!-- Symbol Column -->
                  <ng-container matColumnDef="sailDate">
@@ -189,12 +189,12 @@
                <!-- Symbol Column -->
                <ng-container matColumnDef="transitTime">
                 <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Transit Time (Days) </th>
-                <td mat-cell *matCellDef="let element"> {{element.transitTime}} </td>
+                <td mat-cell *matCellDef="let element"> {{element.route.daysAtSea}} </td>
               </ng-container>
                <!-- Symbol Column -->
               <ng-container matColumnDef="freeCapacity">
                 <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Free Capacity (Containers)</th>
-                <td mat-cell *matCellDef="let element"> {{element.freeCapacity}} </td>
+                <td mat-cell *matCellDef="let element"> {{element.route.vessel.freeCapacity}} </td>
               </ng-container>
                 <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"  ></tr>

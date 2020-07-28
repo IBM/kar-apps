@@ -16,6 +16,7 @@ import {MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogConfig} from '@angula
 import { SubmitOrderComponent } from './dialogs/submit-order/submit-order.component';
 import { OrderProperties } from 'src/app/core/models/order-properties';
 import { OrderBookedDialogComponent } from './dialogs/order-booked-dialog/order-booked-dialog.component';
+import { Voyage } from 'src/app/core/models/voyage';
 
 @Component({
   selector: 'app-order-create',
@@ -34,7 +35,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
     { name: 'Apples'},
     { name: 'Coca-Cola'},
   ];
-
+  departureDate: Date;
   allRoutes: any[] = [];
   originPorts: string[] = [];
   destinationPorts: string[] = [];
@@ -43,10 +44,12 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   selectedOriginPort : string;
   selectedDestinationPort : string;
   selectedProduct: string;
-  shippingSchedule: ShipSchedule[] = []; //this.shipSchedule.getShippingSchedule();
-  dataSource = new MatTableDataSource(this.shippingSchedule);
-
-  selection = new SelectionModel<ShipSchedule>(false, []);
+  //shippingSchedule: ShipSchedule[] = []; //this.shipSchedule.getShippingSchedule();
+  voyages: Voyage[];
+  //dataSource = new MatTableDataSource(this.shippingSchedule);
+  dataSource = new MatTableDataSource(this.voyages);
+  //selection = new SelectionModel<ShipSchedule>(false, []);
+  selection = new SelectionModel<Voyage>(false, []);
 
 /*
   transactions$ = this.dataService.messages$.pipe(
@@ -66,7 +69,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   isConnected = false;
   date  =  new  FormControl(new  Date());
 
-  displayedColumns: string[] = ['select', 'voyageId', 'name', 'origin', 'destination','sailDate', 'transitTime', 'freeCapacity'];
+  displayedColumns: string[] = ['select', 'voyageId', 'vessel', 'origin', 'destination','sailDate', 'transitTime', 'freeCapacity'];
   //dataSource = new MatTableDataSource<ShipSchedule>(SHIPPING_SCHEDULE);
 
   messages: Subject<any>;
@@ -111,7 +114,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
     */
     //this.dataService.connect();
   }
-  saveOrder(product: string, qty: number, origin: string, destination: string, row: ShipSchedule) {
+  saveOrder(product: string, qty: number, origin: string, destination: string, row: Voyage) {
     const dialogConfig = new MatDialogConfig();
 
     dialogConfig.disableClose = true;
@@ -124,8 +127,8 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
         productQty:qty,
         originPort: origin,
         destinationPort:destination,
-        voyageId: row.voyageId,
-        shipName: row.name,
+        voyageId: row.id,
+        shipName: "",
         departure: row.sailDate
     };
 
@@ -271,7 +274,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
  //   });
   };
 
-  selectedVoyage($event, row?: ShipSchedule) {
+  selectedVoyage($event, row?: Voyage) {
     const numSelected = this.selection.selected.length;
     if ($event.checked) {
       console.log(row);
@@ -296,28 +299,35 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
     }
 
     /** The label for the checkbox on the passed row */
-    checkboxLabel(row?: ShipSchedule): string {
+    checkboxLabel(row?: Voyage): string {
 
       if (!row) {
         return `${this.isAllSelected() ? 'select' : 'deselect'} all`;
       }
 
-      return `${this.selection.isSelected(row) ? 'deselect' : 'select'} all'; //row ${row.position + 1}`;
+      return `${this.selection.isSelected(row) ? 'deselect' : 'select'} all`; //row ${row.position + 1}`;
     }
+
+    departureDateChangeEvent(event) {
+      this.departureDate = event.value;
+      console.log("Departure Date Changed:"+this.departureDate+" UTC:"+this.departureDate.toISOString());
+    }
+
   search() {
     console.log('search called - Origin:'+this.selectedOriginPort+' Destination:'+this.selectedDestinationPort);
    // dataSource.set
    // const data = this.dataSource.data;
   // this.shippingSchedule = this.restService.getSchedule();
     //this.dataSource.data = data;
-    this.restService.getSchedule().subscribe((data) => {
+    this.restService.getMatchingVoyages(this.selectedOriginPort, this.selectedDestinationPort,this.departureDate.toISOString()).subscribe((data) => {
       console.log(data);
-     // this.dataSource.data = data;
+      this.dataSource.data = data;
      // this.dataSource.filter =this.selectedOriginPort && this.selectedDestinationPort;
+     /*
       this.dataSource.data = data.filter( ss => {
         return ss.origin === this.selectedOriginPort && ss.destination === this.selectedDestinationPort;
       })
-
+*/
     }
 
     );

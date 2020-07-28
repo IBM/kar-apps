@@ -14,6 +14,7 @@ import { Fleet } from '../models/fleet';
 import { GlobalConstants } from 'src/app/shared/global-constants';
 import { Voyage } from '../models/voyage';
 import { Delay } from '../models/delay';
+import { VoyagesQuery } from '../models/voyages-query';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -86,6 +87,7 @@ export class RestService {
 saveOrder( order: OrderProperties)  {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams({}) };
+  console.log("rest.service.ts - saveOrder()");
   return this.httpClient.post<OrderProperties>(this.REST_API_SERVER+'/orders',order,options).pipe(retry(3), catchError(this.handleError));
 }
 getSchedule()  {
@@ -109,6 +111,18 @@ getActiveVoyages()  {
   return this.httpClient.get<Voyage[]>(this.REST_API_SERVER+'/voyage/active', options).pipe(retry(3), catchError(this.handleError));
 
 }
+getMatchingVoyages(originPort: string, destinationPort: string, date: string) {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+  const body : VoyagesQuery = {
+    origin : originPort,
+    destination : destinationPort,
+    departureDate : date
+  }
+  return this.httpClient.post<Voyage[]>(this.REST_API_SERVER+'/voyage/matching',body, options).pipe(retry(3), catchError(this.handleError));
+
+}
+
 getAllOrders()  {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams() };

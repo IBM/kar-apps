@@ -1,5 +1,6 @@
 package com.ibm.research.kar.reeferserver.controller;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
 //import javax.json.JsonString;
 import javax.json.JsonValue;
 @RestController
@@ -35,9 +37,26 @@ public class OrderController {
 	private NotificationController webSocket;
 
     @PostMapping("/orders")
-	public OrderProperties bookOrder(@RequestBody OrderProperties orderProperties) throws IOException {
-		System.out.println("bookOrder() Called - Saving Order=> Product:"+orderProperties.getProduct());
-
+	//public OrderProperties bookOrder(@RequestBody OrderProperties orderProperties) throws IOException {
+	public OrderProperties bookOrder(@RequestBody String op) throws IOException {
+			//System.out.println("bookOrder() Called - Saving Order=> Product:"+orderProperties.getProduct());
+			System.out.println("bookOrder() Called -"+op);
+			OrderProperties orderProperties = new OrderProperties();
+			
+			
+			try (JsonReader jsonReader = Json.createReader(new StringReader(op))) {
+             
+				JsonObject req = jsonReader.readObject();
+				orderProperties.setProduct(req.getString("product"));
+				orderProperties.setProductQty(req.getInt("productQty"));
+				orderProperties.setVoyageId(req.getString("voyageId"));
+				orderProperties.setOriginPort(req.getString("originPort"));
+				orderProperties.setDestinationPort(req.getString("destinationPort"));
+	
+			  } catch( Exception e) {
+				e.printStackTrace();
+			  }
+		
 		Order order = orderService.creatOrder(orderProperties); 
 		
 
@@ -68,7 +87,11 @@ public class OrderController {
 		}
 
 		orderProperties.setOrderId(order.getId());
+		
 		return orderProperties;
+
+//		return new OrderProperties();
+	
 	}
 	@GetMapping("/orders")
 	public List<Order>  getAllOrders() {

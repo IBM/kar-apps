@@ -36,7 +36,7 @@ public class ShipThread extends Thread {
 
 		Thread.currentThread().setName("shipthread");
 		SimulatorService.shipthreadcount.incrementAndGet();
-    	System.out.println("started threadid="+Thread.currentThread().getId()+" ... LOUD HORN");
+    	System.out.println("started Ship threadid="+Thread.currentThread().getId()+" ... LOUD HORN");
         while (running) {
         	if (!oneshot) {
         		System.out.println("shipthread "+Thread.currentThread().getId()+": running "+ ++loopcnt);
@@ -49,6 +49,7 @@ public class ShipThread extends Thread {
 	        	// tell REST to advance time
         		Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
         		JsonValue currentDate = response.readEntity(JsonValue.class);
+        		SimulatorService.currentDate.set(currentDate);
         		System.out.println("New time = "+currentDate.toString());
 
         		// fetch all active voyages from REST

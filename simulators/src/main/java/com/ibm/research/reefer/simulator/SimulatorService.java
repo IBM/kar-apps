@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -29,9 +30,12 @@ public class SimulatorService {
 	public final static AtomicInteger unitdelay = new AtomicInteger(0);
 	public final static AtomicInteger shipthreadcount = new AtomicInteger(0);
 	public final static AtomicBoolean reeferRestRunning = new AtomicBoolean(false);
-	public final static AtomicInteger orderdelay = new AtomicInteger(0);
+	public final static AtomicInteger ordertarget = new AtomicInteger(0);
 	public final static AtomicInteger orderthreadcount = new AtomicInteger(0);
+	public final static AtomicReference<JsonValue> currentDate = new AtomicReference<JsonValue>();
+	public final static Map<String,FutureVoyage> voyageFreeCap = new HashMap<String,FutureVoyage>();
 	private Thread shipthread;
+	private Thread orderthread;
 
 	// constructor
 	public SimulatorService () {
@@ -55,6 +59,8 @@ public class SimulatorService {
 		persistentData.put(((JsonString)key).getString(), value);
 		return actorCall(aref, "set", key, value);
 	}
+
+	// -------------------------------- Ship Thread Controller --------------------------------
 
 	public JsonNumber getUnitDelay() {
 		try {
@@ -120,6 +126,78 @@ public class SimulatorService {
     			return Json.createValue("accepted");
     		}
     		System.out.println("advanceTime rejected: unitdelay="+unitdelay.get()+" shipthreadcount="+shipthreadcount.get());
+    		return Json.createValue("rejected");
+    	}
+	}
+
+
+	// -------------------------------- Order Thread Controller --------------------------------
+
+	public JsonNumber getOrderTarget() {
+		try {
+			JsonValue jv = actorCall(aref, "get", (JsonValue)Json.createValue("OrderTarget"));
+			if (jv.toString().equals("null") ) {
+				jv = actorCall(aref, "set", (JsonValue)Json.createValue("OrderTarget"), (JsonValue)Json.createValue(0));
+				return Json.createValue(0);
+			}
+			else {
+				return (JsonNumber) jv;
+			}
+		} catch (ActorMethodNotFoundException e) {
+			System.err.println("SimulatorService: actor "+aref.toString()+" not found");
+			e.printStackTrace();
+			return 	Json.createValue(-1);
+		}
+	}
+
+	public JsonValue setOrderTarget(JsonValue value) {
+		JsonNumber newval;
+		if (JsonValue.ValueType.OBJECT == value.getValueType()) {
+			newval = ((JsonObject)value).getJsonNumber("value");
+		}
+		else {
+			newval = Json.createValue(((JsonNumber)value).intValue());
+		}
+		newval = newval.intValue() > 0 ? newval : (JsonNumber)Json.createValue(0);
+		newval = newval.intValue() < 85 ? newval : (JsonNumber)Json.createValue(85);
+		synchronized (ordertarget) {
+			// if ordertarget > 0 then Order thread is running.
+			// if running and newval == 0 then interrupt thread
+			if (0 < ordertarget.intValue() || 0 == newval.intValue()) {
+				if (0 < ordertarget.intValue() && 0 == newval.intValue()) {
+					if (null != orderthread) {
+						orderthread.interrupt();
+						orderthread = null;
+					}
+				}
+				ordertarget.set(newval.intValue());
+				return Json.createValue("accepted");
+			}
+
+			// this is a request to start auto mode
+			// is a thread already running?
+			if (0 < orderthreadcount.get()) {
+				return Json.createValue("rejected");
+			}
+			//TODO set any null but required config values to their defaults");
+
+			// save new Target
+			ordertarget.set(newval.intValue());
+			// start the Order thread
+			(orderthread = new OrderThread()).start();
+
+			return Json.createValue("accepted");
+		}
+	}
+
+	// Manual oneshot. Runs only when ordertarget == 0
+	public JsonValue createOrder() {
+    	synchronized (ordertarget) {
+    		if (0 == ordertarget.intValue() && 0 == orderthreadcount.get()) {
+    			(new OrderThread()).start();
+    			return Json.createValue("accepted");
+    		}
+    		System.out.println("advanceTime rejected: ordertarget="+ordertarget.get()+" orderthreadcount="+orderthreadcount.get());
     		return Json.createValue("rejected");
     	}
 	}

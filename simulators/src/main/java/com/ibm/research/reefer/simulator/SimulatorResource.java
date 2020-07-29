@@ -70,6 +70,51 @@ public class SimulatorResource {
 		}
 	}
 
+	@POST
+	@Path("/setordertarget")
+	public JsonValue setorderdelay(JsonValue num) {
+		try {
+			return simService.setOrderTarget(num);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("help! from setordertarget");
+			return Json.createValue(-1);
+		}
+	}
+
+	/**
+	 * Gets the current setting for Unit Period
+	 */
+	@GET
+	@Path("/getordertarget")
+	public JsonValue getorderdelay() {
+		try {
+			return simService.getOrderTarget();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("help! from getordertarget");
+			return Json.createValue(-1);
+		}
+	}
+
+	/**
+	 * One-shot advance of time
+	 */
+	@POST
+	@Path("/createorder")
+	public JsonValue createorder() {
+		try {
+			return simService.createOrder();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("help! from advancetime");
+			return Json.createValue(-1);
+		}
+	}
+
 	/**
 	 * Update voyage capacity
 	 */

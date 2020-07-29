@@ -31,9 +31,20 @@
 	      <includes>
 		<include>src/main/webapp/*.*</include>
 		<!--include>src/main/webapp/**/*.*</include-->
-	      </includes>
+`	      </includes>
 	      <followSymlinks>false</followSymlinks>
 	    </fileset>
+
+	    <fileset>
+	      <directory>.</directory>
+	      <includes>
+		<include>dist/reefer/*.*</include>
+		<!--include>src/main/webapp/**/*.*</include-->
+`	      </includes>
+	      <followSymlinks>false</followSymlinks>
+	    </fileset>
+
+
 	  </filesets>
 	</configuration>
       </plugin>

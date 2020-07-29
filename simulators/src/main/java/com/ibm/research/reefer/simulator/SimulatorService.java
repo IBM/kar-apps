@@ -26,9 +26,11 @@ public class SimulatorService {
 
 	private Map<String,JsonValue> persistentData;
 	private ActorRef aref = actorRef("simhelper","simservice");
-	private final static AtomicInteger unitdelay = new AtomicInteger(0);
-	private final static AtomicInteger shipthreadcount = new AtomicInteger(0);
-	private final static AtomicBoolean reeferRestRunning = new AtomicBoolean(false);
+	public final static AtomicInteger unitdelay = new AtomicInteger(0);
+	public final static AtomicInteger shipthreadcount = new AtomicInteger(0);
+	public final static AtomicBoolean reeferRestRunning = new AtomicBoolean(false);
+	public final static AtomicInteger orderdelay = new AtomicInteger(0);
+	public final static AtomicInteger orderthreadcount = new AtomicInteger(0);
 	private Thread shipthread;
 
 	// constructor
@@ -122,103 +124,10 @@ public class SimulatorService {
     	}
 	}
 
-
-//TODO move ship thread to a separate class. Order and Reefer threads will each have their own thread classes
-//	The Ship Simulator thread
-//	  1. tell REST to update world time
-//	  2. request from REST information about all active voyages
-//	  3. send ship position to all active voyage actors
-//    4. tell order simulator the new time
-//    5. sleep for UnitDelay seconds
-//    6. check auto mode enabled
-
-	public class ShipThread extends Thread {
-		boolean running = true;
-		boolean interrupted = false;
-		boolean oneshot = false;
-		int loopcnt = 0;
-
-		public void run() {
-			synchronized (unitdelay) {
-        		if (0 == unitdelay.intValue()) {
-        			oneshot = true;
-        		}
-			}
-
-			Thread.currentThread().setName("shipthread");
-			shipthreadcount.incrementAndGet();
-        	System.out.println("started threadid="+Thread.currentThread().getId()+" ... LOUD HORN");
-	        while (running) {
-	        	if (!oneshot) {
-	        		System.out.println("shipthread "+Thread.currentThread().getId()+": running "+ ++loopcnt);
-	        	}
-
-	        	if (!reeferRestRunning.get()) {
-	        		System.out.println("reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
-	        	}
-	        	else {
-		        	// tell REST to advance time
-	        		Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
-	        		JsonValue currentDate = response.readEntity(JsonValue.class);
-	        		System.out.println("New time = "+currentDate.toString());
-
-	        		// fetch all active voyages from REST
-	        		response = Kar.restGet("reeferservice", "voyage/active");
-	        		JsonValue activeVoyages = response.readEntity(JsonValue.class);
-	        		System.out.println("shipthread received "+activeVoyages.asJsonArray().size()+" active voyages");
-
-	        		// send ship positions to all active voyages
-	        		int nv = 0;
-	                Instant ed = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
-	        		for (JsonValue v : activeVoyages.asJsonArray()) {
-	        			String id = v.asJsonObject().getString("id");
-		                Instant sd = Instant.parse(v.asJsonObject().getString("sailDateObject").replaceAll("^\"|\"$", ""));
-		                long daysout = ChronoUnit.DAYS.between(sd,ed);
-	        			JsonObject message = Json.createObjectBuilder()
-	        					.add("daysAtSea", daysout)
-	        					.add("currentDate", currentDate)
-	        					.build();
-	        			System.out.println("shipthread updates voyageid: "+id+ " with "+message.toString());
-	        			Kar.actorCall(actorRef("voyage",id), "changePosition", message);
-	        			nv++;
-	        		}
-	        		System.out.println("shipthread updated "+nv+" active voyages");
-
-	        		// tell GUI to update active voyages
-	        		Kar.restPost("reeferservice", "voyage/updateGui", currentDate);
-
-	        		//TODO tell order simulator the new time
-	        	}
-
-	        	try {
-	        		Thread.sleep(1000*unitdelay.intValue());
-	        	} catch (InterruptedException e) {
-	        		System.out.println("Interrupted Ship Thread "+Thread.currentThread().getId());
-	        	    interrupted = true;
-	        	}
-
-	        	// check if auto mode turned off
-	        	synchronized (unitdelay) {
-	        		if (0 == unitdelay.intValue() || interrupted || oneshot) {
-	        			unitdelay.set(0);
-	        			System.out.println("Stopping Ship Thread "+Thread.currentThread().getId()+" LOUD HORN");
-	        			running = false;
-
-	        			if (0 < shipthreadcount.decrementAndGet()) {
-	        				System.err.println("we have an extra ship thread running!");
-	        			}
-
-	        			// check for threads leftover from a hot method replace
-	        			Set<Thread> threadset = Thread.getAllStackTraces().keySet();
-	        			for(Thread thread : threadset){
-	        				if (thread.getName().equals("shipthread") && thread.getId() != Thread.currentThread().getId()) {
-	        					System.out.println("shipthread: killing leftover ship threadid="+thread.getId());
-	        					thread.interrupt();
-	        				}
-	        			}
-	        		}
-	        	}
-	        }
-	    }
+	// Update voyage capacity
+	public void updateVoyageCapacity(JsonValue capacity) {
+		String vid = capacity.asJsonObject().getString("voyageId");
+		int freecap = capacity.asJsonObject().getInt("freeCapacity");
 	}
+
 }

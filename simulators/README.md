@@ -19,17 +19,18 @@ To enable/disable simulator connection to reefer-rest server from command line,
 can be done anytime, with the thread in auto or manual mode:  
 curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/togglereeferrest
 
-To put shipthread in auto mode with 10 second delay between updates...  
+To put shipthread in auto mode with N second delay between updates...  
 ... from command line:  
-curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setunitdelay -d 10  
-... from another reeferapp service:  
-Kar.restPost("simservice", "simulator/setunitdelay", Json.createValue(10);
+curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setunitdelay -d N  
+Note:
+   The above command only works for values of N greater than one digit due to a liberty bug.
+   To work around this for all values of N, use:
+curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setunitdelay -d '{"value":N}'  
 
-To put shipthread into manual mode...  
-... from command line:  
-curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setunitdelay -d 00  
-... from another reeferapp service:  
-Kar.restPost("simservice", "simulator/setunitdelay", Json.createValue(0);
+... to change the unit delay from another reeferapp service:  
+Kar.restPost("simservice", "simulator/setunitdelay", Json.createObjectBuilder().add("value", N).build());
+
+To put shipthread into manual mode, POST N=0 to simulator/setunitdelay.
 
 To see all persistent simulator configuration data from command line:  
 kar -app reeferapp -invoke simhelper simservice getAll

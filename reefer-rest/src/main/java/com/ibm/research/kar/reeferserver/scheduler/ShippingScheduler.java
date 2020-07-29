@@ -112,7 +112,7 @@ public class ShippingScheduler {
 
         if (returnVoyage) {
             // for return voyage reverse origin and destination ports
-            voyage = new Voyage(new Route(route.getVessel(), route.getDestinationPort(), route.getOriginPort(),
+            voyage = new Voyage(new Route(route.getVessel().clone(), route.getDestinationPort(), route.getOriginPort(),
                     route.getDaysAtSea(), route.getDaysAtPort()), departureDate, arrivalDate.toString().substring(1,10));
         } else {
              

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 @Component
 public class ScheduleService {
@@ -37,6 +38,7 @@ public class ScheduleService {
         return routes;
 
     }
+    
     public void updateDaysAtSea(String voyageId, int daysOutAtSea) {
         for( Voyage voyage : masterSchedule ) {
            // System.out.println("ScheduleService.updateDaysAtSea() - daysOutAtSea:"+daysOutAtSea);
@@ -51,7 +53,26 @@ public class ScheduleService {
             }
         }
     }
+    public List<Voyage> getMatchingSchedule( Instant startDate, Instant endDate) {
+        List<Voyage> schedule = new ArrayList<>();
+        if ( masterSchedule.isEmpty() ) {
+            try {
+                scheduler.initialize(routesJsonResource.getInputStream());
+                masterSchedule =scheduler.generateSchedule();
+            } catch( Exception e) {
+                // !!!!!!!!!!!!!!!!!!!!!! HANDLE THIS
+                e.printStackTrace();
+            }
+        }
+        for( Voyage voyage : masterSchedule ) {
+            if ( (voyage.getSailDateObject().equals(startDate) || voyage.getSailDateObject().isAfter(startDate)) &&
+                 (voyage.getSailDateObject().equals(endDate)  || voyage.getSailDateObject().isBefore(endDate) ) ) {
+                    schedule.add(voyage);
+            }
+        }
 
+        return schedule;
+    }
     public List<Voyage> getMatchingSchedule(String origin, String destination, Instant date) {
         List<Voyage> schedule = new ArrayList<>();
         if ( masterSchedule.isEmpty() ) {
@@ -150,5 +171,13 @@ public class ScheduleService {
         throw new VoyageNotFoundException("Unable to find voyage with ID:"+voyageId);
     }
 
+    public int updateFreeCapacity(String voyageId, int reeferCount) throws VoyageNotFoundException, ShipCapacityExceeded {
+        Voyage voyage = getVoyage(voyageId);
+        if ( voyage.getRoute().getVessel().getFreeCapacity() - reeferCount >= 0 ) {
+            voyage.getRoute().getVessel().setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity()- reeferCount);
+            return voyage.getRoute().getVessel().getFreeCapacity();
+        }
+        throw new ShipCapacityExceeded("VoyageID:"+voyageId+" Unable to book ship due to lack of capacity. Current capacity:"+voyage.getRoute().getVessel().getFreeCapacity()+" Order reefer count:"+reeferCount);
+    }
     
 }

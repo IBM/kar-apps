@@ -18,6 +18,8 @@ public class Route {
         this.daysAtSea = daysAtSea;
         this.daysAtPort = daysAtPort;
     }
+
+
     public Ship getVessel() {
         return vessel;
     }

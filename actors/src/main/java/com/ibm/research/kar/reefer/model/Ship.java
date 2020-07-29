@@ -22,7 +22,9 @@ public class Ship {
         this.freeCapacity = freeCapacity;
         this.location = location;
     }
-
+    public Ship clone() {
+        return new Ship(name, position, maxCapacity, freeCapacity, location);
+    }
     public String getId() {
         return id;
     }

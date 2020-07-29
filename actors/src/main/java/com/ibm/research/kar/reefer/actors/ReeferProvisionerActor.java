@@ -99,7 +99,18 @@ public class ReeferProvisionerActor extends BaseActor {
             if ( allocatedReefers.size() == 0 ) {
                 return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","FailedToAllocateReefers").add(JsonOrder.IdKey, order.getId()).build();
             }
-            JsonArrayBuilder arrayBuilder = reserveReefers(allocatedReefers, order);
+
+            JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+
+            for( ActorRef reefer : allocatedReefers ) {
+                arrayBuilder.add(reefer.getId());
+            }
+
+            // BELOW IS TEMPORARY. REPLENISH REEFER INVENTORY.REMOVE WHEN THE USE IS FULLY IMPLEMENTED
+            addReefers(allocatedReefers.size());
+
+            // Uncomment below when supporting reefers
+            //JsonArrayBuilder arrayBuilder = reserveReefers(allocatedReefers, order);
 
             JsonObject reply =  Json.createObjectBuilder()
                 .add("status", "OK")

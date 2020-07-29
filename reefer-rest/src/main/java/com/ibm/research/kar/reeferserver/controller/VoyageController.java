@@ -2,6 +2,7 @@ package com.ibm.research.kar.reeferserver.controller;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -57,7 +58,25 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
       return shipScheduleService.getMatchingSchedule(originPort, destinationPort, date);
     } 
 
+    @PostMapping("/voyage/inrange")
+    public List<Voyage> getVoyagesInRange(@RequestBody String body) {
+      System.out.println("VoyageController.getVoyagesInRange()");
 
+      Instant startDate;
+      Instant endDate;
+
+        try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
+             
+          JsonObject req = jsonReader.readObject();
+          startDate = Instant.parse(req.getString("startDate"));
+          endDate = Instant.parse(req.getString("endDate"));
+          System.out.println("VoyageController.getVoyagesInRange() - startDate:"+startDate.toString()+" endDate:"+endDate.toString());
+        } catch( Exception e) {
+          e.printStackTrace();
+          return new ArrayList<Voyage>();
+        }
+      return shipScheduleService.getMatchingSchedule(startDate, endDate);
+    } 
 
     @GetMapping("/voyage/active")
     public List<Voyage> getActiveVoyages() {
@@ -89,7 +108,13 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
 
               System.out.println("VoyageController.updateVoyageState() daysAtSea="+req.getInt("daysAtSea"));
               shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
-            } else if ( req.containsKey("freeCapacity") ) {
+            } else if ( req.containsKey("reeferCount") ) {
+              int reeferCount = req.getInt("reeferCount");
+              System.out.println("VoyageController.updateVoyageState() reeferCount="+reeferCount);
+
+              int shipFreeCapacity =
+                shipScheduleService.updateFreeCapacity(voyageId, reeferCount);
+              System.out.println("VoyageController.updateVoyageState() - Ship booked - Ship free capacity:"+shipFreeCapacity);
 
             } else if ( req.containsKey("reefers") ) {
               

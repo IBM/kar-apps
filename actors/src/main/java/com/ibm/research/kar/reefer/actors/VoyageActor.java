@@ -90,11 +90,12 @@ public class VoyageActor extends BaseActor {
  
         System.out.println("VoyageActor.reserve() called "+message.toString());
 
-        Map<String, JsonValue> stateMap = actorGetAllState(this);
-        
+//        Map<String, JsonValue> stateMap = actorGetAllState(this);
+/*        
         if ( shipSecured() ) {
 
         }
+*/  
         JsonObject params = Json.createObjectBuilder()
                 .add(JsonOrder.OrderKey,  order.getAsObject())
 			    .build();
@@ -102,11 +103,37 @@ public class VoyageActor extends BaseActor {
             // Book reefers for this order thru the ReeferProvisioner
             JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"bookReefers", params);
             if ( reply.asJsonObject().getString("status").equals("OK") ) {
-                return Json.createObjectBuilder()
-                .add("status", "OK")
-                .add("reefers",  reply.asJsonObject().getJsonArray("reefers")) 
-                .add(JsonOrder.OrderKey,  order.getAsObject())
+
+                JsonArray reefers = reply.asJsonObject().getJsonArray("reefers");
+
+                JsonObject params2 = Json.createObjectBuilder()
+                .add("voyageId",getId())
+                .add("reeferCount",reefers.size())
                 .build();
+                try {
+         
+                    Response response = restPost("reeferservice","/voyage/update", params2);
+//                    return Json.createObjectBuilder()
+//                    .add("status", "OK")
+//                    .build();
+                    return Json.createObjectBuilder()
+                    .add("status", "OK")
+                    .add("reefers",  reply.asJsonObject().getJsonArray("reefers")) 
+                    .add(JsonOrder.OrderKey,  order.getAsObject())
+                    .build();
+                } catch( Exception e) {
+                    e.printStackTrace();
+                    return Json.createObjectBuilder()
+                    .add("status", "Failed")
+                    .add("error",e.getMessage())
+                    .build();
+                }
+
+
+
+
+
+
             } else {
                 return reply.asJsonObject();
             }
@@ -114,7 +141,29 @@ public class VoyageActor extends BaseActor {
         //    JsonArray reefers = v.asJsonArray();
          //   reefers.addAll(reefers.size(), reefers);
         //    actorSetState(this, "reefers", reefers);
+ //       System.out.println("VoyageActor.changePosition() called "+message.toString());
 
+//        int daysAtSea = message.getInt("daysAtSea");
+ //       String currentDate = message.getString("currentDate");
+/*
+        JsonObject params = Json.createObjectBuilder()
+        .add("voyageId",getId())
+        .add("daysAtSea",daysAtSea)
+        .build();
+        try {
+ 
+            restPost("reeferservice","/voyage/update", params);
+            return Json.createObjectBuilder()
+            .add("status", "OK")
+            .build();
+        } catch( Exception e) {
+            e.printStackTrace();
+            return Json.createObjectBuilder()
+            .add("status", "Failed")
+            .add("error",e.getMessage())
+            .build();
+        }
+        */
 
            
         } catch( ActorMethodNotFoundException ee) {
@@ -126,6 +175,7 @@ public class VoyageActor extends BaseActor {
             return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","Exception").add("orderId", String.valueOf(this.getId())).build();
 
         }
+ 
      }
      @Remote
      public void reeferBookingStatus(JsonObject message) {

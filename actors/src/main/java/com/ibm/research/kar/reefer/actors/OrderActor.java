@@ -64,9 +64,9 @@ public class OrderActor extends BaseActor {
     }
 
     private JsonObject bookVoyage(String voyageId, JsonOrder order) {
-        return Json.createObjectBuilder().add("status", "OK").build();
+    //    return Json.createObjectBuilder().add("status", "OK").build();
 
-       /*
+       
         try {
             JsonObject params = 
                 Json.createObjectBuilder().add(JsonOrder.OrderKey, order.getAsObject()).build();
@@ -84,6 +84,6 @@ public class OrderActor extends BaseActor {
             return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(JsonOrder.IdKey, order.getId()).build();
   
         }
-        */
+        
     }
 }

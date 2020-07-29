@@ -55,7 +55,7 @@ public class SimulatorResource {
 	}
 
 	/**
-	 * Gets the current setting for Unit Period
+	 * One-shot advance of time
 	 */
 	@POST
 	@Path("/advancetime")
@@ -67,6 +67,21 @@ public class SimulatorResource {
 			e.printStackTrace();
 			System.err.println("help! from advancetime");
 			return Json.createValue(-1);
+		}
+	}
+
+	/**
+	 * Update voyage capacity
+	 */
+	@POST
+	@Path("/updatevoyagecapacity")
+	public void updatevoyagecapacity(JsonValue capacity) {
+		try {
+			simService.updateVoyageCapacity(capacity);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("help! from updatevoyagecapacity");
 		}
 	}
 

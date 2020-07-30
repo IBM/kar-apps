@@ -47,6 +47,7 @@ buildNumber.properties
 /integration/bazel/bazel-*
 *.log
 node_modules
+/frontend/src/main/webapp
 
 # Include when developing application packages.
 pubspec.lock

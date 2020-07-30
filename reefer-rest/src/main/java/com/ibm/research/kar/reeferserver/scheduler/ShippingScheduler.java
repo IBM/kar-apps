@@ -19,7 +19,7 @@ import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
 @Component
 public class ShippingScheduler {
-    private final LinkedList<Voyage> sortedSchedule = new LinkedList<Voyage>();
+//    private final LinkedList<Voyage> sortedSchedule = new LinkedList<Voyage>();
     private List<Route> routes = new ArrayList<Route>();
 
     public void initialize(final InputStream routeConfigFile) throws Exception {
@@ -63,7 +63,7 @@ public class ShippingScheduler {
 
         final Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(departureDate);
         int staggerInitialShipDepartures = 0;
-
+        LinkedList<Voyage> sortedSchedule = new LinkedList<>();
         for (final Route route : routes) {
             System.out.println("ScheduleGenerator new route - from:" + route.getOriginPort() + " To:"
                     + route.getDestinationPort());
@@ -72,11 +72,11 @@ public class ShippingScheduler {
                 // get the ship arrival date at destination port (departureDate+transitTime)
                 arrivalDate = TimeUtils.getInstance().futureDate(departureDate, route.getDaysAtSea());
                 // add voyage to a sorted (by departure date) schedule
-                addVoyageToSchedule(route, departureDate, false);
+                addVoyageToSchedule(sortedSchedule, route, departureDate, false);
                 // the ship returns back to origin port after it is unloaded and loaded up again
                 departureDate = TimeUtils.getInstance().futureDate(arrivalDate, route.getDaysAtPort());
                 // add return voyage to a sorted (by departure date) schedule
-                addVoyageToSchedule(route, departureDate, true);
+                addVoyageToSchedule(sortedSchedule, route, departureDate, true);
                 // calculate departure date for next voyage from origin to destination
                 departureDate = TimeUtils.getInstance().futureDate(departureDate,
                         route.getDaysAtSea() + route.getDaysAtPort());
@@ -92,7 +92,7 @@ public class ShippingScheduler {
         return sortedSchedule;
     }
 
-    private void addVoyageToSchedule(final Route route, final Instant departureDate, final boolean returnVoyage) {
+    private void addVoyageToSchedule(LinkedList<Voyage> sortedSchedule, final Route route, final Instant departureDate, final boolean returnVoyage) {
         int next = 0;
         while (next < sortedSchedule.size()) {
             final Voyage voyage = sortedSchedule.get(next);

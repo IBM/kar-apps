@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.model.OrderProperties;
+import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.service.OrderService;
+import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import com.ibm.research.kar.actor.ActorRef;
 import static com.ibm.research.kar.Kar.*;
 
@@ -35,6 +37,9 @@ public class OrderController {
 	private OrderService orderService;
 
 	@Autowired
+	private ScheduleService scheduleService;
+	
+	@Autowired
 	private NotificationController webSocket;
 
     @PostMapping("/orders")
@@ -51,9 +56,11 @@ public class OrderController {
 				orderProperties.setProduct(req.getString("product"));
 				orderProperties.setProductQty(req.getInt("productQty"));
 				
+				Voyage voyage = scheduleService.getVoyage(req.getString("voyageId"));
+				
 				orderProperties.setVoyageId(req.getString("voyageId"));
-				orderProperties.setOriginPort(req.getString("originPort"));
-				orderProperties.setDestinationPort(req.getString("destinationPort"));
+				orderProperties.setOriginPort(voyage.getRoute().getOriginPort());
+				orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
 	
 			  } catch( Exception e) {
 				e.printStackTrace();

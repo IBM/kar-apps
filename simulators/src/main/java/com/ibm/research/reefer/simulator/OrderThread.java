@@ -68,8 +68,9 @@ public class OrderThread extends Thread {
         	    	JsonValue currentDate = (JsonValue) SimulatorService.currentDate.get();
         	    	today = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
         	    	Instant tomorrow = today.plus(1, ChronoUnit.DAYS);
-        	    	//TODO make 21 a control variable
-        	    	Instant endday = tomorrow.plus(21, ChronoUnit.DAYS);
+        	    	//TODO make window size a control variable
+        	    	int windowsize = 7;
+        	    	Instant endday = tomorrow.plus(windowsize, ChronoUnit.DAYS);
         	    	JsonObject message = Json.createObjectBuilder()
         					.add("startDate", tomorrow.toString())
         					.add("endDate", endday.toString())

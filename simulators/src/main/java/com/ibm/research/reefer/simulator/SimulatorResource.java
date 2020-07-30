@@ -139,6 +139,15 @@ public class SimulatorResource {
 		return simService.toggleReeferRest(); 
 	}
 
+	/**
+	 * Toggle connection with reefer-rest server
+	 */
+	@POST
+	@Path("/newdayfororders")
+	public void newdayfororders() {
+		simService.newDayForOrders(); 
+	}
+
 
 // Temporary for testing
 	@POST

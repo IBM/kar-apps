@@ -202,10 +202,28 @@ public class SimulatorService {
     	}
 	}
 
+	// wake up order thread if sleeping
+	public void newDayForOrders() {
+		if (null != orderthread) {
+			orderthread.interrupt();
+		}
+	}
+
 	// Update voyage capacity
 	public void updateVoyageCapacity(JsonValue capacity) {
 		String vid = capacity.asJsonObject().getString("voyageId");
 		int freecap = capacity.asJsonObject().getInt("freeCapacity");
+		synchronized (SimulatorService.voyageFreeCap) {
+			if (voyageFreeCap.containsKey(vid)) {
+				voyageFreeCap.get(vid).setFreeCapacity(freecap);
+			}
+			else {
+				// The other values will be set later in the order thread,
+				// if this voyage is within the simulator's time window
+				voyageFreeCap.put(vid, new FutureVoyage(0, 0, freecap, 0));
+			}
+		}
+		System.out.println("simulator: updated freeCapacity to "+freecap+" for voyage "+vid);
 	}
 
 }

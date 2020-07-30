@@ -7,9 +7,10 @@ public class OrderProperties {
   String originPort;
   String destinationPort;
   String voyageId;
+  String date;
 
   public OrderProperties() {}
-  
+
   public OrderProperties(String product, int productQty, String voyageId) {
       this.product = product;
       this.productQty = productQty;
@@ -62,5 +63,13 @@ public class OrderProperties {
 
   public void setOrderId(String orderId) {
       this.orderId = orderId;
+  }
+
+  public String getDate() {
+      return date;
+  }
+
+  public void setDate(String date) {
+      this.date = date;
   }
 }

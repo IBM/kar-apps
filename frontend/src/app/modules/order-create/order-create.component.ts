@@ -153,7 +153,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
         productQty: val.productQty,
         originPort: val.originPort,
         destinationPort: val.destinationPort,
-        voyageId: val.voyageId
+        voyageId: val.voyageId,
     };
     this.restService.saveOrder(order).subscribe((data) => {
 

@@ -109,16 +109,28 @@ public class ShippingScheduler {
         Voyage voyage;
         Instant arrivalDate = 
             TimeUtils.getInstance().futureDate(departureDate,route.getDaysAtSea() );
+        String originPort = route.getOriginPort();
+        String destinationPort = route.getDestinationPort();
 
         if (returnVoyage) {
+            // swap for return trip
+            originPort = route.getDestinationPort();
+            destinationPort = route.getOriginPort();
             // for return voyage reverse origin and destination ports
-            voyage = new Voyage(new Route(route.getVessel().clone(), route.getDestinationPort(), route.getOriginPort(),
-                    route.getDaysAtSea(), route.getDaysAtPort()), departureDate, arrivalDate.toString().substring(1,10));
-        } else {
+ //           voyage = new Voyage(new Route(route.getVessel().clone(), route.getDestinationPort(), route.getOriginPort(),
+ //                   route.getDaysAtSea(), route.getDaysAtPort()), departureDate, arrivalDate.toString().substring(1,10));
+        } 
+        /*
+        else {
              
-            voyage = new Voyage(route, departureDate, arrivalDate.toString().substring(0,10));
+            voyage = new Voyage(new Route(route.getVessel().clone(),route.getOriginPort(),route.getDestinationPort(), 
+            route.getDaysAtSea(), route.getDaysAtPort() ), departureDate, arrivalDate.toString().substring(0,10));
         }
-        return voyage;
+        */
+       // return voyage;
+                   // for return voyage reverse origin and destination ports
+        return new Voyage(new Route(route.getVessel().clone(), originPort, destinationPort,
+                   route.getDaysAtSea(), route.getDaysAtPort()), departureDate, arrivalDate.toString().substring(1,10));
     }
 
 }

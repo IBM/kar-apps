@@ -23,7 +23,7 @@
           <mat-hint align="end">Choose product to ship ^</mat-hint>
         </mat-form-field>
         <mat-form-field style="width:100px !important; background-color: lightgrey">
-          <input matInput [style.fontSize.px]="'20'" placeholder="Quantity" value="1000">
+          <input matInput [style.fontSize.px]="'20'" placeholder="Quantity" [(ngModel)]="productQty" type="number" value="1000">
           <mat-hint align="end">Enter product quantity ^</mat-hint>
         </mat-form-field>
       </div>

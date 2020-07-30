@@ -77,6 +77,7 @@ public class ScheduleService {
         List<Voyage> schedule = new ArrayList<>();
         if ( masterSchedule.isEmpty() ) {
             try {
+                System.out.println("getMatchingSchedule - Master Schedule is empty, generating new one");
                 scheduler.initialize(routesJsonResource.getInputStream());
                 masterSchedule =scheduler.generateSchedule();
             } catch( Exception e) {
@@ -91,6 +92,7 @@ public class ScheduleService {
                  voyage.getRoute().getOriginPort().equals(origin) &&
                  voyage.getRoute().getDestinationPort().equals(destination) ) {
                     schedule.add(voyage);
+                    System.out.println("getMatchingSchedule - Found voyage id:"+voyage.getId()+" Free Capacity:"+voyage.getRoute().getVessel().getFreeCapacity());
             }
 
         }

@@ -24,8 +24,10 @@ import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
+import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
+import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.*;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
@@ -93,6 +95,22 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
       System.out.println("VoyageController.getVoyageState()");
       return shipScheduleService.getVoyage(id);
     } 
+
+    private void updateSimulator(String voyageId, int freeCapacity) {
+      JsonObject params = Json.createObjectBuilder()
+      .add("voyageId",voyageId)
+      .add("freeCapacity",freeCapacity)
+      .build();
+      try {
+
+          Response response = Kar.restPost("simservice","/simulator/updatevoyagecapacity", params);
+
+      } catch( Exception e) {
+          e.printStackTrace();
+          
+      }
+
+    }
     @PostMapping("/voyage/update")
       public void updateVoyageState(  @RequestBody String state) throws VoyageNotFoundException{
           System.out.println("VoyageController.updateVoyageState() "+state);
@@ -114,6 +132,8 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
 
               int shipFreeCapacity =
                 shipScheduleService.updateFreeCapacity(voyageId, reeferCount);
+                updateSimulator(voyageId, shipFreeCapacity);
+
               System.out.println("VoyageController.updateVoyageState() - Ship booked - Ship free capacity:"+shipFreeCapacity);
 
             } else if ( req.containsKey("reefers") ) {

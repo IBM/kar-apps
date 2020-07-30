@@ -26,6 +26,7 @@ import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 //import javax.json.JsonString;
 import javax.json.JsonValue;
+import javax.json.JsonValue.ValueType;
 @RestController
 @CrossOrigin("*")
 public class OrderController {
@@ -49,6 +50,7 @@ public class OrderController {
 				JsonObject req = jsonReader.readObject();
 				orderProperties.setProduct(req.getString("product"));
 				orderProperties.setProductQty(req.getInt("productQty"));
+				
 				orderProperties.setVoyageId(req.getString("voyageId"));
 				orderProperties.setOriginPort(req.getString("originPort"));
 				orderProperties.setDestinationPort(req.getString("destinationPort"));

@@ -17,6 +17,7 @@ import { SubmitOrderComponent } from './dialogs/submit-order/submit-order.compon
 import { OrderProperties } from 'src/app/core/models/order-properties';
 import { OrderBookedDialogComponent } from './dialogs/order-booked-dialog/order-booked-dialog.component';
 import { Voyage } from 'src/app/core/models/voyage';
+import { clear } from 'console';
 
 @Component({
   selector: 'app-order-create',
@@ -44,6 +45,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   selectedOriginPort : string;
   selectedDestinationPort : string;
   selectedProduct: string;
+  productQty: number = 1000;
   //shippingSchedule: ShipSchedule[] = []; //this.shipSchedule.getShippingSchedule();
   voyages: Voyage[];
   //dataSource = new MatTableDataSource(this.shippingSchedule);
@@ -154,8 +156,16 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
         voyageId: val.voyageId
     };
     this.restService.saveOrder(order).subscribe((data) => {
+
+      this.resetVoyages();
       this.showOrderIdDialog(data.orderId );
       })
+  }
+  resetVoyages() {
+    this.selectedOriginPort="";
+    this.selectedDestinationPort="";
+    this.departureDate = new Date();
+    this.dataSource.data = [];
   }
   showOrderIdDialog(orderId: string) {
     const dialogConfig = new MatDialogConfig();
@@ -278,7 +288,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
     const numSelected = this.selection.selected.length;
     if ($event.checked) {
       console.log(row);
-      this.saveOrder(this.selectedProduct, 1000, this.selectedOriginPort, this.selectedDestinationPort,row);
+      this.saveOrder(this.selectedProduct, this.productQty, this.selectedOriginPort, this.selectedDestinationPort,row);
     }
 
   }

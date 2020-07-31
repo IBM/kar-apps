@@ -5,21 +5,16 @@ import static com.ibm.research.kar.Kar.actorRef;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 import javax.json.Json;
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
-import javax.ws.rs.core.Response;
 
-import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 
@@ -40,8 +35,6 @@ public class SimulatorService {
 	// constructor
 	public SimulatorService () {
 		System.out.println("SimulatorService constructor!");
-		persistentData = new HashMap<String,JsonValue>();
-		persistentData.putAll((JsonObject)actorCall(aref, "getAll"));
 	}
 
 	public JsonValue toggleReeferRest() {
@@ -51,11 +44,19 @@ public class SimulatorService {
 
 	// local utility to retrieve cached value
 	private JsonValue get(JsonValue key) {
+		if (null == persistentData) {
+			persistentData = new HashMap<String,JsonValue>();
+			persistentData.putAll((JsonObject)actorCall(aref, "getAll"));
+		}
 		return persistentData.get(((JsonString)key).getString());
 	}
 
 	// local utility to update local cache and persistent state
 	private JsonValue set(JsonValue key, JsonValue value) {
+		if (null == persistentData) {
+			persistentData = new HashMap<String,JsonValue>();
+			persistentData.putAll((JsonObject)actorCall(aref, "getAll"));
+		}
 		persistentData.put(((JsonString)key).getString(), value);
 		return actorCall(aref, "set", key, value);
 	}

@@ -72,7 +72,7 @@ public class SimulatorResource {
 
 	@POST
 	@Path("/setordertarget")
-	public JsonValue setorderdelay(JsonValue num) {
+	public JsonValue setordertarget(JsonValue num) {
 		try {
 			return simService.setOrderTarget(num);
 		}
@@ -88,7 +88,7 @@ public class SimulatorResource {
 	 */
 	@GET
 	@Path("/getordertarget")
-	public JsonValue getorderdelay() {
+	public JsonValue getordertarget() {
 		try {
 			return simService.getOrderTarget();
 		}

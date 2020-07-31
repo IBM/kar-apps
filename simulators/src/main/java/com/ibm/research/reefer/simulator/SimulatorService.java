@@ -34,7 +34,7 @@ public class SimulatorService {
 
 	// constructor
 	public SimulatorService () {
-		System.out.println("SimulatorService constructor!");
+//		System.out.println("SimulatorService constructor!");
 	}
 
 	public JsonValue toggleReeferRest() {
@@ -63,22 +63,25 @@ public class SimulatorService {
 
 	// -------------------------------- Ship Thread Controller --------------------------------
 
+//	public JsonNumber getUnitDelay() {
+//		try {
+//			JsonValue jv = actorCall(aref, "get", (JsonValue)Json.createValue("UnitDelay"));
+//			if (jv.toString().equals("null") ) {
+//				jv = actorCall(aref, "set", (JsonValue)Json.createValue("UnitDelay"), (JsonValue)Json.createValue(0));
+//				return Json.createValue(0);
+//			}
+//			else {
+//				return (JsonNumber) jv;
+//			}
+//		} catch (ActorMethodNotFoundException e) {
+//			System.err.println("SimulatorService: actor "+aref.toString()+" not found");
+//			e.printStackTrace();
+//			return 	Json.createValue(-1);
+//		}
+//	}
 	public JsonNumber getUnitDelay() {
-		try {
-			JsonValue jv = actorCall(aref, "get", (JsonValue)Json.createValue("UnitDelay"));
-			if (jv.toString().equals("null") ) {
-				jv = actorCall(aref, "set", (JsonValue)Json.createValue("UnitDelay"), (JsonValue)Json.createValue(0));
-				return Json.createValue(0);
-			}
-			else {
-				return (JsonNumber) jv;
-			}
-		} catch (ActorMethodNotFoundException e) {
-			System.err.println("SimulatorService: actor "+aref.toString()+" not found");
-			e.printStackTrace();
-			return 	Json.createValue(-1);
-		}
-	}
+		return Json.createValue(unitdelay.get());
+	} 
 
 	public JsonValue setUnitDelay(JsonValue value) {
 		JsonNumber newval;
@@ -98,6 +101,10 @@ public class SimulatorService {
 						shipthread.interrupt();
 						shipthread = null;
 					}
+					if (null != orderthread) {
+						orderthread.interrupt();
+						orderthread = null;
+					}
 				}
 				unitdelay.set(newval.intValue());
 				return Json.createValue("accepted");
@@ -115,6 +122,16 @@ public class SimulatorService {
 			// start the Ship thread
 			(shipthread = new ShipThread()).start();
 
+			// if auto order enabled, start that thread too
+			if (0 < ordertarget.intValue()) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				(orderthread = new OrderThread()).start();
+			}
+
 			return Json.createValue("accepted");
 		}
 	}
@@ -124,6 +141,15 @@ public class SimulatorService {
     	synchronized (unitdelay) {
     		if (0 == unitdelay.intValue() && 0 == shipthreadcount.get()) {
     			(new ShipThread()).start();
+    			if (0 < ordertarget.intValue()) {
+    				// call order oneshot as well
+    				try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+    				(new OrderThread()).start();
+    			}
     			return Json.createValue("accepted");
     		}
     		System.out.println("advanceTime rejected: unitdelay="+unitdelay.get()+" shipthreadcount="+shipthreadcount.get());
@@ -134,21 +160,24 @@ public class SimulatorService {
 
 	// -------------------------------- Order Thread Controller --------------------------------
 
+//	public JsonNumber getOrderTarget() {
+//		try {
+//			JsonValue jv = actorCall(aref, "get", (JsonValue)Json.createValue("OrderTarget"));
+//			if (jv.toString().equals("null") ) {
+//				jv = actorCall(aref, "set", (JsonValue)Json.createValue("OrderTarget"), (JsonValue)Json.createValue(0));
+//				return Json.createValue(0);
+//			}
+//			else {
+//				return (JsonNumber) jv;
+//			}
+//		} catch (ActorMethodNotFoundException e) {
+//			System.err.println("SimulatorService: actor "+aref.toString()+" not found");
+//			e.printStackTrace();
+//			return 	Json.createValue(-1);
+//		}
+//	}
 	public JsonNumber getOrderTarget() {
-		try {
-			JsonValue jv = actorCall(aref, "get", (JsonValue)Json.createValue("OrderTarget"));
-			if (jv.toString().equals("null") ) {
-				jv = actorCall(aref, "set", (JsonValue)Json.createValue("OrderTarget"), (JsonValue)Json.createValue(0));
-				return Json.createValue(0);
-			}
-			else {
-				return (JsonNumber) jv;
-			}
-		} catch (ActorMethodNotFoundException e) {
-			System.err.println("SimulatorService: actor "+aref.toString()+" not found");
-			e.printStackTrace();
-			return 	Json.createValue(-1);
-		}
+		return Json.createValue(ordertarget.get());
 	}
 
 	public JsonValue setOrderTarget(JsonValue value) {
@@ -162,7 +191,7 @@ public class SimulatorService {
 		newval = newval.intValue() > 0 ? newval : (JsonNumber)Json.createValue(0);
 		newval = newval.intValue() < 85 ? newval : (JsonNumber)Json.createValue(85);
 		synchronized (ordertarget) {
-			// if ordertarget > 0 then Order thread is running.
+			// if ordertarget > 0 then Order thread is enabled
 			// if running and newval == 0 then interrupt thread
 			if (0 < ordertarget.intValue() || 0 == newval.intValue()) {
 				if (0 < ordertarget.intValue() && 0 == newval.intValue()) {
@@ -172,20 +201,22 @@ public class SimulatorService {
 					}
 				}
 				ordertarget.set(newval.intValue());
+				System.out.println("simulator: ordertarget set="+newval.intValue());
 				return Json.createValue("accepted");
 			}
 
-			// this is a request to start auto mode
-			// is a thread already running?
-			if (0 < orderthreadcount.get()) {
-				return Json.createValue("rejected");
-			}
-			//TODO set any null but required config values to their defaults");
-
+			// this is a request to start auto order mode
 			// save new Target
 			ordertarget.set(newval.intValue());
-			// start the Order thread
-			(orderthread = new OrderThread()).start();
+
+			// start the Order thread if no thread already running and unitdelay>0
+			if (0 == orderthreadcount.get() && 0 < unitdelay.intValue()) {
+				(orderthread = new OrderThread()).start();
+			}
+			else {
+				System.out.println("simulator: ordertarget set="+ordertarget.get()+" but thread not started. orderthreadcount="+
+						orderthreadcount.get()+" unitdelay="+unitdelay.intValue());
+			}
 
 			return Json.createValue("accepted");
 		}
@@ -195,7 +226,7 @@ public class SimulatorService {
 	public JsonValue createOrder() {
     	synchronized (ordertarget) {
     		if (0 == ordertarget.intValue() && 0 == orderthreadcount.get()) {
-    			(new OrderThread()).start();
+    			(orderthread = new OrderThread()).start();
     			return Json.createValue("accepted");
     		}
     		System.out.println("advanceTime rejected: ordertarget="+ordertarget.get()+" orderthreadcount="+orderthreadcount.get());

@@ -28,11 +28,11 @@ public class ShipThread extends Thread {
 	int loopcnt = 0;
 
 	public void run() {
-		synchronized (SimulatorService.unitdelay) {
+//		synchronized (SimulatorService.unitdelay) {
     		if (0 == SimulatorService.unitdelay.intValue()) {
     			oneshot = true;
     		}
-		}
+//		}
 
 		Thread.currentThread().setName("shipthread");
 		SimulatorService.shipthreadcount.incrementAndGet();

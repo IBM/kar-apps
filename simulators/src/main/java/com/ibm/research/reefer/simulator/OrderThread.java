@@ -91,7 +91,7 @@ public class OrderThread extends Thread {
         	                		.asJsonObject().getInt("maxCapacity");
         	                int freecap = v.asJsonObject().get("route").asJsonObject().get("vessel")
         	                		.asJsonObject().getInt("freeCapacity");
-        	                int utilization = (maxcap-freecap)*100/maxcap;
+//        	                int utilization = (maxcap-freecap)*100/maxcap;
         	                int ordertarget = 85;
         	                if (!oneshot) {
         	                	ordertarget = SimulatorService.ordertarget.intValue(); 
@@ -118,34 +118,39 @@ public class OrderThread extends Thread {
         		// create one order for every voyage below threshold
         		for (Entry<String, FutureVoyage> entry : SimulatorService.voyageFreeCap.entrySet()) {
         		    //System.out.println(entry.getKey() + "/" + entry.getValue());
-        		    int freeTarget = entry.getValue().maxCapacity*(100-SimulatorService.ordertarget.intValue())/100;
+        		    int freeTarget = entry.getValue().maxCapacity*(100-ordertarget)/100;
         		    if (entry.getValue().freeCapacity <= freeTarget) {
                 		// divide orderCap into specified number of orders per day
         		    	int ordersize = (entry.getValue().orderCapacity*1000)/ordersPerDay;
-        		    	System.out.println("orderthread create order size="+ordersize+" for "+entry.getKey());
+        		    	System.out.println("orderthread create order size="+ordersize+" for "+entry.getKey()+" freeTarget="+freeTarget);
         		    	JsonObject order = Json.createObjectBuilder()
             					.add("voyageId", entry.getKey())
             					.add("product", "Bananas")
             					.add("productQty", ordersize)
             					.build();
         		    	Response response = Kar.restPost("reeferservice", "orders", order);
-//        		    	System.out.println("orderthread order reponse: " + response.toString());
+        		    	//TODO check response for errors?
+        		    }
+        		    else {
+        		    	System.out.println("orderthread no order for "+entry.getKey()+" freeTarget="+freeTarget);
         		    }
         		}
         	}
 
-    		//TODO interrupt this thread when UnitDelay changes or on a new day
-        	try {
-        		// finish orders in 1/2 day
-        		Thread.sleep(1000*SimulatorService.unitdelay.intValue()/(2*ordersPerDay));
-        	} catch (InterruptedException e) {
-        		System.out.println("Interrupted Order Thread "+Thread.currentThread().getId());
-        	    interrupted = true;
-        	}
+        	// sleep if not a oneshot order command
+    		if (! oneshot) {
+            	try {
+            		// finish orders in 1/2 day
+            		Thread.sleep(1000*SimulatorService.unitdelay.intValue()/(2*ordersPerDay));
+            	} catch (InterruptedException e) {
+            		System.out.println("Interrupted Order Thread "+Thread.currentThread().getId());
+            	    interrupted = true;
+            	}
+    		}
 
-        	// check if auto mode turned off
+        	// check if auto mode should be turned off
         	synchronized (SimulatorService.ordertarget) {
-        		if (0 == SimulatorService.ordertarget.intValue() || oneshot) {
+        		if (0 == SimulatorService.ordertarget.intValue() || 0 == SimulatorService.unitdelay.intValue() || oneshot) {
         			System.out.println("Stopping Order Thread "+Thread.currentThread().getId()+" LOUD HORN");
         			running = false;
 

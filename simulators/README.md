@@ -3,36 +3,48 @@
 To launch simular-server:  
 kar -app_port 7080 -app reefer -service simservice -actors simhelper mvn liberty:run
 
-As of now a running simulator server supports hot method replace.  
-**Best to stop auto mode before activating**  
-Simulator threads left running in auto from before replace are killed by advancetime or start/stop auto mode.
+
+The simulator state on server start is:
+ - time AND order updates in manual modes (unitdelay=0)
+ - order updates in manual-order mode (ordertarget=0)  (ordertarget will become persistent soon)
+ - connection to reefer-rest enabled (true)
+
 
 Useful simulator commands below. Monitor service console for status.
 
-To advance time in manual mode...  
+
+To enable/disable simulator connection to reefer-rest server from command line, done anytime: 
+curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/togglereeferrest
+
+
+To advance time in manual-time mode...  
 ... from command line:  
 curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/advancetime  
 ... from another reeferapp service:  
 Kar.restPost("simservice", "simulator/advancetime", JsonValue.NULL);
 
-To enable/disable simulator connection to reefer-rest server from command line,  
-can be done anytime, with the thread in auto or manual mode:  
-curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/togglereeferrest
 
-To put shipthread in auto mode with N second delay between updates...  
+To put shipthread in auto-time mode with N second delay between updates, or back into manual-time mode with N=0, ...  
 ... from command line:  
-curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setunitdelay -d N  
-Note:
-   The above command only works for values of N greater than one digit due to a liberty bug.
-   To work around this for all values of N, use:
 curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setunitdelay -d '{"value":N}'  
-
-... to change the unit delay from another reeferapp service:  
+... from another reeferapp service:  
 Kar.restPost("simservice", "simulator/setunitdelay", Json.createObjectBuilder().add("value", N).build());
 
-To put shipthread into manual mode, POST N=0 to simulator/setunitdelay.
 
-To see all persistent simulator configuration data from command line:  
-kar -app reeferapp -invoke simhelper simservice getAll
+To create one order for needy voyages when in manual-time or manual-order modes ...
+curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/createorder  
+... from another reeferapp service:  
+Kar.restPost("simservice", "simulator/createorder", JsonValue.NULL);
 
 
+To put orderthread in auto-order mode with ordertarget percent = T, or back into manual-order mode with T=0, ...  
+... from command line:  
+curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setordertarget -d '{"value":T}'  
+... from another reeferapp service:  
+Kar.restPost("simservice", "simulator/setordertarget", Json.createObjectBuilder().add("value", T).build());
+
+
+Note for simulator developers:
+As of now a running simulator server supports hot method replace.  
+**Best to stop auto mode before activating by updating simulator class files with service running**  
+Simulator threads left running in auto from before replace are killed by advancetime or start/stop auto mode.

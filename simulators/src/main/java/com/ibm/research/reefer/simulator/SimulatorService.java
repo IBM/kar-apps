@@ -24,7 +24,7 @@ public class SimulatorService {
 	private ActorRef aref = actorRef("simhelper","simservice");
 	public final static AtomicInteger unitdelay = new AtomicInteger(0);
 	public final static AtomicInteger shipthreadcount = new AtomicInteger(0);
-	public final static AtomicBoolean reeferRestRunning = new AtomicBoolean(false);
+	public final static AtomicBoolean reeferRestRunning = new AtomicBoolean(true);
 	public final static AtomicInteger ordertarget = new AtomicInteger(0);
 	public final static AtomicInteger orderthreadcount = new AtomicInteger(0);
 	public final static AtomicReference<JsonValue> currentDate = new AtomicReference<JsonValue>();

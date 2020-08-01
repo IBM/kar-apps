@@ -36,26 +36,26 @@ public class ShipThread extends Thread {
 
 		Thread.currentThread().setName("shipthread");
 		SimulatorService.shipthreadcount.incrementAndGet();
-    	System.out.println("started Ship threadid="+Thread.currentThread().getId()+" ... LOUD HORN");
+    	System.out.println("shipthread: started threadid="+Thread.currentThread().getId()+" ... LOUD HORN");
         while (running) {
         	if (!oneshot) {
-        		System.out.println("shipthread "+Thread.currentThread().getId()+": running "+ ++loopcnt);
+        		System.out.println("shipthread: "+Thread.currentThread().getId()+": running "+ ++loopcnt);
         	}
 
         	if (! SimulatorService.reeferRestRunning.get()) {
-        		System.out.println("reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
+        		System.out.println("shipthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
         	}
         	else {
 	        	// tell REST to advance time
         		Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
         		JsonValue currentDate = response.readEntity(JsonValue.class);
         		SimulatorService.currentDate.set(currentDate);
-        		System.out.println("New time = "+currentDate.toString());
+        		System.out.println("shipthread: New time = "+currentDate.toString());
 
         		// fetch all active voyages from REST
         		response = Kar.restGet("reeferservice", "voyage/active");
         		JsonValue activeVoyages = response.readEntity(JsonValue.class);
-        		System.out.println("shipthread received "+activeVoyages.asJsonArray().size()+" active voyages");
+        		System.out.println("shipthread: received "+activeVoyages.asJsonArray().size()+" active voyages");
 
         		// send ship positions to all active voyages
         		int nv = 0;
@@ -68,11 +68,11 @@ public class ShipThread extends Thread {
         					.add("daysAtSea", daysout)
         					.add("currentDate", currentDate)
         					.build();
-        			System.out.println("shipthread updates voyageid: "+id+ " with "+message.toString());
+        			System.out.println("shipthread: updates voyageid: "+id+ " with "+message.toString());
         			Kar.actorCall(actorRef("voyage",id), "changePosition", message);
         			nv++;
         		}
-        		System.out.println("shipthread updated "+nv+" active voyages");
+        		System.out.println("shipthread: updated "+nv+" active voyages");
 
         		// tell GUI to update active voyages
         		Kar.restPost("reeferservice", "voyage/updateGui", currentDate);
@@ -83,7 +83,7 @@ public class ShipThread extends Thread {
         	try {
         		Thread.sleep(1000*SimulatorService.unitdelay.intValue());
         	} catch (InterruptedException e) {
-        		System.out.println("Interrupted Ship Thread "+Thread.currentThread().getId());
+        		System.out.println("shipthread: Interrupted Thread "+Thread.currentThread().getId());
         	    interrupted = true;
         	}
 
@@ -91,18 +91,18 @@ public class ShipThread extends Thread {
         	synchronized (SimulatorService.unitdelay) {
         		if (0 == SimulatorService.unitdelay.intValue() || interrupted || oneshot) {
         			SimulatorService.unitdelay.set(0);
-        			System.out.println("Stopping Ship Thread "+Thread.currentThread().getId()+" LOUD HORN");
+        			System.out.println("shipthread: Stopping Thread "+Thread.currentThread().getId()+" LOUD HORN");
         			running = false;
 
         			if (0 < SimulatorService.shipthreadcount.decrementAndGet()) {
-        				System.err.println("we have an extra ship thread running!");
+        				System.err.println("shipthread: we have an extra thread running!");
         			}
 
         			// check for threads leftover from a hot method replace
         			Set<Thread> threadset = Thread.getAllStackTraces().keySet();
         			for(Thread thread : threadset){
         				if (thread.getName().equals("shipthread") && thread.getId() != Thread.currentThread().getId()) {
-        					System.out.println("shipthread: killing leftover ship threadid="+thread.getId());
+        					System.out.println("shipthread: killing leftover threadid="+thread.getId());
         					thread.interrupt();
         				}
         			}

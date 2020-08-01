@@ -152,7 +152,7 @@ public class SimulatorService {
     			}
     			return Json.createValue("accepted");
     		}
-    		System.out.println("advanceTime rejected: unitdelay="+unitdelay.get()+" shipthreadcount="+shipthreadcount.get());
+    		System.out.println("simulator: advanceTime rejected: unitdelay="+unitdelay.get()+" shipthreadcount="+shipthreadcount.get());
     		return Json.createValue("rejected");
     	}
 	}
@@ -229,7 +229,7 @@ public class SimulatorService {
     			(orderthread = new OrderThread()).start();
     			return Json.createValue("accepted");
     		}
-    		System.out.println("advanceTime rejected: ordertarget="+ordertarget.get()+" orderthreadcount="+orderthreadcount.get());
+    		System.out.println("simulator: advanceTime rejected: ordertarget="+ordertarget.get()+" orderthreadcount="+orderthreadcount.get());
     		return Json.createValue("rejected");
     	}
 	}
@@ -252,7 +252,7 @@ public class SimulatorService {
 			else {
 				// The other values will be set later in the order thread,
 				// if this voyage is within the simulator's time window
-				voyageFreeCap.put(vid, new FutureVoyage(0, 0, freecap, 0));
+				voyageFreeCap.put(vid, new FutureVoyage(0, 0, freecap, 0, 0));
 			}
 		}
 		System.out.println("simulator: updated freeCapacity to "+freecap+" for voyage "+vid);

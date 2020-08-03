@@ -38,11 +38,11 @@ public class OrderThread extends Thread {
 
     	while (running) {
         	if (!oneshot) {
-        		System.out.println("orderthread: "+Thread.currentThread().getId()+": running "+ ++threadloops);
+//        		System.out.println("orderthread: "+Thread.currentThread().getId()+": running "+ ++threadloops);
         	}
 
         	if (! SimulatorService.reeferRestRunning.get()) {
-        		System.out.println("orderthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
+//        		System.out.println("orderthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
         	}
         	else {
         		// Make sure currentDate is set
@@ -146,7 +146,7 @@ public class OrderThread extends Thread {
             		// finish orders in 1/2 day
             		Thread.sleep(1000*SimulatorService.unitdelay.intValue()/(2*ordersPerDay));
             	} catch (InterruptedException e) {
-            		System.out.println("orderthread: Interrupted Thread "+Thread.currentThread().getId());
+//            		System.out.println("orderthread: Interrupted Thread "+Thread.currentThread().getId());
             	    interrupted = true;
             	}
     		}

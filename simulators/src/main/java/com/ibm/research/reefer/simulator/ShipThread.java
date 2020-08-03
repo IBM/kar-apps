@@ -28,11 +28,9 @@ public class ShipThread extends Thread {
 	int loopcnt = 0;
 
 	public void run() {
-//		synchronized (SimulatorService.unitdelay) {
-    		if (0 == SimulatorService.unitdelay.intValue()) {
-    			oneshot = true;
-    		}
-//		}
+		if (0 == SimulatorService.unitdelay.intValue()) {
+			oneshot = true;
+		}
 
 		Thread.currentThread().setName("shipthread");
 		SimulatorService.shipthreadcount.incrementAndGet();
@@ -77,13 +75,14 @@ public class ShipThread extends Thread {
         		// tell GUI to update active voyages
         		Kar.restPost("reeferservice", "voyage/updateGui", currentDate);
 
-        		//TODO tell order simulator the new time
+        		// tell order thread to wake up and make some orders
+        		Kar.restPost("simservice", "simulator/newdayfororders", JsonValue.NULL);
         	}
 
         	try {
         		Thread.sleep(1000*SimulatorService.unitdelay.intValue());
         	} catch (InterruptedException e) {
-        		System.out.println("shipthread: Interrupted Thread "+Thread.currentThread().getId());
+//        		System.out.println("shipthread: Interrupted Thread "+Thread.currentThread().getId());
         	    interrupted = true;
         	}
 

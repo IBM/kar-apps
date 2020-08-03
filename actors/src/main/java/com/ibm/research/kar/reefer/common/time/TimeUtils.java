@@ -46,7 +46,12 @@ public class TimeUtils {
     public long getDaysBetween(String startDate, String endDate) {
         Instant sd = Instant.parse(startDate);
         Instant ed = Instant.parse(endDate);
-        return ChronoUnit.DAYS.between(sd,ed);
+        return getDaysBetween(sd, ed) ;
+       
+    }
+    public long getDaysBetween(Instant startDate, Instant endDate) {
+    
+        return ChronoUnit.DAYS.between(startDate,endDate);
        
     }
 }

@@ -1,6 +1,64 @@
-<mat-divider></mat-divider>
+<mat-card class="example-card" [style.backgroundColor]="'gainsboro'">
+  <mat-card-content >
+      <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
+          <mat-card fxFlex="40">
+              <mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'35'">
+                  <mat-card-title>Order Simulator</mat-card-title>
+                  <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
+              </mat-card-header>
 
-<br><br><br><br>
+              <mat-card-content>
+                  <div class="example-container">
+                      <mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill">
+                          <input matInput min="0" max="100" step="10" ngStep="10" (change)="orderTargetChange($event)" name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                          <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
+                          <mat-hint align="front">Choose rate of advance - 0 = Manual, >0 = Auto ^</mat-hint>
+                      </mat-form-field>
+                      <button [disabled]="orderTarget === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleEnableDisable($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button>
+
+                  </div>
+
+              </mat-card-content>
+          </mat-card>
+          <!--mat-card fxFlex="1"> </mat-card-->
+          <mat-card fxFlex="59" >
+              <mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'35'">
+                  <mat-card-title style="margin-top:5px;">Advance Time</mat-card-title>
+                  <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
+              </mat-card-header>
+              <mat-card-content class="advance" color="primary" >
+                  <div fxLayout="row" fxLayoutAlign="start center">
+                      <app-personaldetails fxFlex="50%">
+                          <button [disabled]="orderTarget > 0" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Order</button>
+
+                      </app-personaldetails>
+                      <app-personaldetails fxFlex="3%">
+
+                      </app-personaldetails>
+                      <app-contactdetails fxFlex="47%">
+                          <mat-card [style.backgroundColor]="'gainsboro'" [style.fontSize.px]="'20'" [style.height.px]="'55'" style="border: 1px solid;">
+                              
+                              <mat-card-header [style.backgroundColor]="'gainsboro'" style="padding: 1px;margin:0 auto;text-align: center;justify-content: center" >
+                                      <mat-card-title >Current Date</mat-card-title>
+                                  <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
+                              </mat-card-header>
+                              <mat-card-content class="advance" color="primary" [style.fontSize.px]="'18'"  style="padding: 1px;margin:0 auto;text-align: center;justify-content: center;  ">
+                              </mat-card-content>
+                          </mat-card>
+                      </app-contactdetails>
+                   </div>
+
+              </mat-card-content>
+
+              <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
+          </mat-card>
+      </div>
+  </mat-card-content>
+</mat-card>
+
+<mat-divider></mat-divider>
+<br>
+
 
 <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="20px">
     <div fxFlex="100">
@@ -26,7 +84,7 @@
                 <!-- Position Column -->
                 <ng-container matColumnDef="orderId">
                     <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header> Order ID </th>
-                    <td mat-cell *matCellDef="let element"> {{element.orderId}} </td>
+                    <td mat-cell *matCellDef="let element"> {{element.id}} </td>
                 </ng-container>
                 <!-- Position Column -->
                 <ng-container matColumnDef="status">

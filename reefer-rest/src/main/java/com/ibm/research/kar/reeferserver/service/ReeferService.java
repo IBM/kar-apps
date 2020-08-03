@@ -14,22 +14,25 @@ public class ReeferService {
     private Map<String, List<Reefer>> portReeferMap = new HashMap<>();
 
     {
-        addPortReefers("Elizabeth, NJ", 20);
+        addPortReefers("Elizabeth, NJ", 10);
 		addPortReefers("Oakland, CA", 10);
-		addPortReefers("Miami, FL", 15);
+		addPortReefers("Miami, FL", 10);
 		addPortReefers("Boston, MA", 10);
-		addPortReefers("London, GB", 11);
-		addPortReefers("Shanghai, CN", 13);
-		addPortReefers("Antwerp, BE", 13);
-		addPortReefers("Bremen, DE", 20);
+		addPortReefers("London, GB", 10);
+		addPortReefers("Shanghai, CN", 10);
+		addPortReefers("Antwerp, BE", 10);
+		addPortReefers("Bremen, DE", 100);
+		addPortReefers("Hamburg, DE", 10);
+		addPortReefers("New Orleans, LA", 10);
+		addPortReefers("New York, NY", 10);
     }
 
     public void addPortReefers(String port, int howMany) {
 		for( int i=0; i < howMany; i++ ) {
-			Reefer reefer = new Reefer(port, 1000,1000,"Empty","OnDock","3.140:5.8944");
+			Reefer reefer = new Reefer(port, 1000,1000,"Empty","OnDock","");
 			List<Reefer> reefers;
 			if ( (reefers = portReeferMap.get(port) ) == null ) {
-				reefers = new ArrayList<Reefer>();
+				reefers = new ArrayList<>();
 				portReeferMap.put(port, reefers);
 			}
 			reefers.add(reefer);
@@ -39,7 +42,7 @@ public class ReeferService {
 		
     }
     public List<Reefer> getReefers() {
-        List<Reefer> reefers = new ArrayList<Reefer>();
+        List<Reefer> reefers = new ArrayList<>();
 		for( Entry<String, List<Reefer>> r : portReeferMap.entrySet()) {
 			reefers.addAll(r.getValue());
 		}
@@ -50,7 +53,7 @@ public class ReeferService {
         if ( portReeferMap.containsKey(port)) {
             reefers = portReeferMap.get(port);
         } else {
-            reefers = new ArrayList<Reefer>();
+            reefers = new ArrayList<>();
         }
 		
         return reefers;

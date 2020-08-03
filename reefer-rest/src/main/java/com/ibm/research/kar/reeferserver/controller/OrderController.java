@@ -85,7 +85,8 @@ public class OrderController {
 
             JsonValue reply = actorCall(orderActor, "createOrder", params);
 			System.out.println("Order Actor reply:"+reply);
-            
+			order.setStatus("Booked");
+			webSocket.sendOrderUpdate(order);
 
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();

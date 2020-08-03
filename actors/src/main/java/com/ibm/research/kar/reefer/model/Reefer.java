@@ -1,9 +1,10 @@
 package com.ibm.research.kar.reefer.model;
 
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Reefer {
-    private static final AtomicLong idGen = new AtomicLong(5555);
+    //private static final AtomicLong idGen = new AtomicLong(5555);
     private String reeferId;
     private String port;
     private int maxCapacity;
@@ -14,7 +15,7 @@ public class Reefer {
 
     public Reefer(String port, int maxCapacity, int freeCapacity, String status, String loadingStatus, String position) {
         this.port = port;
-        this.reeferId = String.valueOf(idGen.addAndGet(1));
+        this.reeferId = UUID.randomUUID().toString(); //String.valueOf(idGen.addAndGet(1));
         this.maxCapacity = maxCapacity;
         this.freeCapacity = freeCapacity;
         this.status = status;

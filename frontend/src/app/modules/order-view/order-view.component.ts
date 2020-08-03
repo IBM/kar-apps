@@ -7,6 +7,7 @@ import { RestService } from 'src/app/core/services/rest.service';
 import { MatTableDataSource, MatTable } from '@angular/material/table';
 import {MatSort, MatSortable} from '@angular/material/sort';
 import { animate, state, style, transition, trigger } from '@angular/animations';
+import { SocketService } from 'src/app/core/services/socket.service';
 //import {CdkDetailRowDirective } from 'src/app/shared/components/cdk-detail-row.directive';
 
 
@@ -26,6 +27,8 @@ export class OrderViewComponent implements OnInit {
   selection = new SelectionModel<Order>(false, []);
   displayedColumns: string[] = ['select',  'orderId', 'status','product', 'productQty', 'voyageId'];//, 'origin', 'destination','sailDate', 'transitTime', 'voyageId', 'reeferIds'];
   orders: Order[] = [];
+  orderTarget : number = 85;
+  autoSimButtonLabel: string = "ENABLE";
   dataSource = new MatTableDataSource(this.orders);
  // isExpansionDetailRow = (i: number, row: Object) => row.hasOwnProperty('detailRow');
   public currentExpandedRow: any;
@@ -38,7 +41,28 @@ export class OrderViewComponent implements OnInit {
 
   //@Input() sorting: MatSortable;
 
-  constructor(private dialog: MatDialog, private restService: RestService) { }
+  constructor(private dialog: MatDialog, private restService: RestService, private webSocketService : SocketService) { 
+    let stompClient = this.webSocketService.connect();
+    console.log('OrderView - connected socket');
+    stompClient.connect({}, frame => {
+      console.log('OrderView - connected stompClient');
+  // Subscribe to notification topic
+        stompClient.subscribe('/topic/orders', (event:any) => {
+          if ( event.body) {
+            let order: Order;
+            order = JSON.parse(event.body);
+
+            const currentData = this.dataSource.data;
+            currentData.unshift(order);
+            console.log('::::::'+order);
+            this.dataSource.data = currentData;
+
+          }
+
+        })
+    });
+
+  }
 
   isExpansionDetailRow = (_, row: any) => row.hasOwnProperty('detailRow');
   explansionDetialRowCollection = new Array<any>();
@@ -63,7 +87,7 @@ export class OrderViewComponent implements OnInit {
       console.log(data);
       this.dataSource.data = data;
     //this.dataSource =  new MatTableDataSource(data);
-
+    this.dataSource.paginator = this.paginator;
      }
 
 
@@ -73,6 +97,37 @@ export class OrderViewComponent implements OnInit {
 
   }
 
+  toggleEnableDisable(event: Event) {
+    console.log("Click "+event);
+    if ( this.autoSimButtonLabel == "ENABLE") {
+      this.autoSimButtonLabel = "DISABLE";
+//      this.restService.setAutoMode(10).subscribe((data) => {
+//        console.log(data);
+//      });
+    } else if ( this.autoSimButtonLabel == "DISABLE") {
+      this.autoSimButtonLabel = "ENABLE";
+      this.orderTarget = 85;
+      console.log("............ Disable Order Simulator - target:"+this.orderTarget);
+    }
+    
+    this.restService.setOrderTarget(this.orderTarget).subscribe((data) => {
+      console.log(data);
+    });
+    
+  }
+  nextOrder() {
+    console.log('>>>>>>>>>>>>>nextOrder called');
+    
+    this.restService.createOrder().subscribe((data) => {
+      console.log(data);
+      //this.date = data.substr(0,10);
+    });
+    
+   // this.getActiveVoyages();
+  }
+  orderTargetChange(event: any ) {
+    this.orderTarget = event.target.value;
+  }
   selectedOrder($event, row?: Order) {
   //  const numSelected = this.selection.selected.length;
   //  if ($event.checked) {

@@ -10,12 +10,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
+import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
 @RestController
 @CrossOrigin("*")
 public class TimeController {
     @Autowired
     private VoyageService voyageService;
+    @Autowired
+    private ScheduleService schduleService;
 
     @PostMapping("/time/startDate")
 	public Instant  getStartDate() {
@@ -52,7 +55,7 @@ public class TimeController {
         System.out.println("TimeController.advance()");
         Instant time = 
             TimeUtils.getInstance().advanceDate(1);
-    //    voyageService.advanceTime();
+        schduleService.generateNextSchedule(time);
         return time;
     }
    

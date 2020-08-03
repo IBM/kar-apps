@@ -2,6 +2,7 @@ package com.ibm.research.kar.reeferserver.controller;
 
 import java.util.List;
 
+import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Reefer;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.model.ShippingSchedule;
@@ -42,5 +43,9 @@ public class NotificationController {
     public void sendActiveVoyageUpdate(List<Voyage> voyages, String currentDate) {
         ShippingSchedule schedule = new ShippingSchedule(voyages, currentDate);
         template.convertAndSend("/topic/voyages", schedule); //voyages);
+    }
+    public void sendOrderUpdate(Order order) {
+        
+        template.convertAndSend("/topic/orders", order); //voyages);
     }
 }

@@ -15,6 +15,7 @@ import { GlobalConstants } from 'src/app/shared/global-constants';
 import { Voyage } from '../models/voyage';
 import { Delay } from '../models/delay';
 import { VoyagesQuery } from '../models/voyages-query';
+import { OrderTarget } from '../models/order-target';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -89,6 +90,23 @@ saveOrder( order: OrderProperties)  {
   const options = { header: headers, params: new HttpParams({}) };
   console.log("rest.service.ts - saveOrder()");
   return this.httpClient.post<OrderProperties>(this.REST_API_SERVER+'/orders',order,options).pipe(retry(3), catchError(this.handleError));
+}
+setOrderTarget(orderTarget: number) {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+  const body : OrderTarget = {
+    target: orderTarget
+
+  }
+  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/ordertarget',body, options).pipe(retry(3), catchError(this.handleError));
+
+}
+createOrder() {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+
+  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/createorder',options).pipe(retry(3), catchError(this.handleError));
+
 }
 getSchedule()  {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

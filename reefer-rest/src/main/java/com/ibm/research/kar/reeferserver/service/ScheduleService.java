@@ -3,9 +3,10 @@ package com.ibm.research.kar.reeferserver.service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
+import java.util.ListIterator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -16,19 +17,25 @@ import org.springframework.stereotype.Component;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.ibm.research.kar.reefer.common.error.RouteNotFoundException;
 import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 @Component
 public class ScheduleService {
+
+    private static final int THRESHOLD_IN_DAYS = 100;
+
     @Value("classpath:routes.json")
     private Resource routesJsonResource;
+
     @Autowired
     private ShippingScheduler scheduler;
     
-    private LinkedList<Voyage> masterSchedule = new LinkedList<Voyage>();
+    private LinkedList<Voyage> masterSchedule = new LinkedList<>();
+    private List<Route> routes = new ArrayList<>();
 
     public List<Route> getRoutes() {
-        List<Route> routes = new ArrayList<>();
+    
         try {
             routes = scheduler.getRoutes(routesJsonResource.getInputStream());
         } catch (Exception e) {
@@ -38,7 +45,42 @@ public class ScheduleService {
         return routes;
 
     }
-    
+    public void generateNextSchedule(Instant date) {
+        System.out.println("ScheduleService() - generateNextSchedule() ");
+        // generate future schedule if number of days from a given date and the last voyage in the
+        // current master schedule is less than a threshold. 
+        try {
+            if ( routes.isEmpty()) {
+                getRoutes();
+            }
+            Instant routeLastArrivalDate = getLastVoyageDateForRoute(routes.get(0));
+            System.out.println("ScheduleService() - generateNextSchedule() routeLastArrivalDate="+routeLastArrivalDate.toString());
+            if ( TimeUtils.getInstance().getDaysBetween(date, routeLastArrivalDate) < THRESHOLD_IN_DAYS ) {
+                System.out.println("ScheduleService() - generateNextSchedule()  !!!!!!!!!!!! Replenishing Master Schedule with new voyages");
+                // generate new schedule for the next year starting at routeLastArrivalDate
+                masterSchedule.addAll(scheduler.generateSchedule(routeLastArrivalDate));
+            }
+        } catch( RouteNotFoundException e) {
+            e.printStackTrace();
+        }catch( Exception e) {
+            e.printStackTrace();
+        }
+ 
+    }
+    public Instant getLastVoyageDateForRoute(Route route)  throws RouteNotFoundException {
+        
+        ListIterator<Voyage> it = masterSchedule.listIterator(masterSchedule.size());
+        Instant lastVoyageArrivalDate;
+        while (it.hasPrevious()) {
+            Voyage voyage = it.previous();
+            // Find the last return trip for a given route
+            if ( voyage.getRoute().getVessel().getName().equals(route.getVessel().getName())) {
+                lastVoyageArrivalDate = Instant.parse(voyage.getArrivalDate());
+                return TimeUtils.getInstance().futureDate(lastVoyageArrivalDate, route.getDaysAtPort());
+            }
+        }
+        throw new RouteNotFoundException("Unable to find the last voyage for vessel:"+route.getVessel().getName());
+    }
     public void updateDaysAtSea(String voyageId, int daysOutAtSea) {
         for( Voyage voyage : masterSchedule ) {
            // System.out.println("ScheduleService.updateDaysAtSea() - daysOutAtSea:"+daysOutAtSea);

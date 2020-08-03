@@ -57,6 +57,7 @@ public class ShippingScheduler {
         return generateSchedule(TimeUtils.getInstance().getCurrentDate()); //.
     }
 
+    
     public LinkedList<Voyage> generateSchedule(Instant departureDate) {
         Instant arrivalDate;
         // the shipping schedule is generated for one year from now
@@ -130,7 +131,7 @@ public class ShippingScheduler {
        // return voyage;
                    // for return voyage reverse origin and destination ports
         return new Voyage(new Route(route.getVessel().clone(), originPort, destinationPort,
-                   route.getDaysAtSea(), route.getDaysAtPort()), departureDate, arrivalDate.toString().substring(1,10));
+                   route.getDaysAtSea(), route.getDaysAtPort()), departureDate, arrivalDate.toString());//.substring(0,10));
     }
 
 }

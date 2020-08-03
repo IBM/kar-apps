@@ -62,22 +62,6 @@ public class SimulatorService {
 
 	// -------------------------------- Ship Thread Controller --------------------------------
 
-//	public JsonNumber getUnitDelay() {
-//		try {
-//			JsonValue jv = actorCall(aref, "get", (JsonValue)Json.createValue("UnitDelay"));
-//			if (jv.toString().equals("null") ) {
-//				jv = actorCall(aref, "set", (JsonValue)Json.createValue("UnitDelay"), (JsonValue)Json.createValue(0));
-//				return Json.createValue(0);
-//			}
-//			else {
-//				return (JsonNumber) jv;
-//			}
-//		} catch (ActorMethodNotFoundException e) {
-//			System.err.println("SimulatorService: actor "+aref.toString()+" not found");
-//			e.printStackTrace();
-//			return 	Json.createValue(-1);
-//		}
-//	}
 	public JsonNumber getUnitDelay() {
 		return Json.createValue(unitdelay.get());
 	} 
@@ -114,7 +98,6 @@ public class SimulatorService {
 			if (0 < shipthreadcount.get()) {
 				return Json.createValue("rejected");
 			}
-			//TODO set any null but required config values to their defaults");
 
 			// save new delay
 			unitdelay.set(newval.intValue());
@@ -165,24 +148,13 @@ public class SimulatorService {
 
 	// -------------------------------- Order Thread Controller --------------------------------
 
-//	public JsonNumber getOrderTarget() {
-//		try {
-//			JsonValue jv = actorCall(aref, "get", (JsonValue)Json.createValue("OrderTarget"));
-//			if (jv.toString().equals("null") ) {
-//				jv = actorCall(aref, "set", (JsonValue)Json.createValue("OrderTarget"), (JsonValue)Json.createValue(0));
-//				return Json.createValue(0);
-//			}
-//			else {
-//				return (JsonNumber) jv;
-//			}
-//		} catch (ActorMethodNotFoundException e) {
-//			System.err.println("SimulatorService: actor "+aref.toString()+" not found");
-//			e.printStackTrace();
-//			return 	Json.createValue(-1);
-//		}
-//	}
 	public JsonNumber getOrderTarget() {
 		JsonNumber ot = (JsonNumber)this.get(Json.createValue("ordertarget"));
+		if (ot == null) {
+			this.set(Json.createValue("ordertarget"), (JsonValue)Json.createValue(0));
+			ordertarget.set(0); 
+			return Json.createValue(0);
+		}
 		ordertarget.set(ot.intValue()); 
 		return Json.createValue(ordertarget.get());
 	}

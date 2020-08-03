@@ -142,6 +142,9 @@ public class SimulatorService {
 	public JsonValue advanceTime() {
     	synchronized (unitdelay) {
     		if (0 == unitdelay.intValue() && 0 == shipthreadcount.get()) {
+    			// get persistent value of ordertarget
+    			JsonNumber ot = (JsonNumber)this.get(Json.createValue("ordertarget"));
+    			ordertarget.set(ot.intValue()); 
     			(new ShipThread()).start();
     			if (0 < ordertarget.intValue()) {
     				// call order oneshot as well

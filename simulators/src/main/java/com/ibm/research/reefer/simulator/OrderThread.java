@@ -26,11 +26,9 @@ public class OrderThread extends Thread {
 	int ordersDoneToday = 0;
 
 	public void run() {
-//		synchronized (SimulatorService.ordertarget) {
-    		if (0 == SimulatorService.ordertarget.intValue()) {
-    			oneshot = true;
-    		}
-//		}
+		if (0 == SimulatorService.unitdelay.intValue()) {
+			oneshot = true;
+		}
 
 		Thread.currentThread().setName("orderthread");
 		SimulatorService.orderthreadcount.incrementAndGet();
@@ -66,12 +64,11 @@ public class OrderThread extends Thread {
             		// ... fetch all future voyages leaving in the next N days
         	    	currentDate = (JsonValue) SimulatorService.currentDate.get();
         	    	today = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
-        	    	Instant tomorrow = today.plus(1, ChronoUnit.DAYS);
         	    	//TODO make window size a control variable
         	    	int windowsize = 7;
-        	    	Instant endday = tomorrow.plus(windowsize, ChronoUnit.DAYS);
+        	    	Instant endday = today.plus(windowsize, ChronoUnit.DAYS);
         	    	JsonObject message = Json.createObjectBuilder()
-        					.add("startDate", tomorrow.toString())
+        					.add("startDate", today.toString())
         					.add("endDate", endday.toString())
         					.build();
 
@@ -93,12 +90,13 @@ public class OrderThread extends Thread {
         	                int utilization = (maxcap-freecap)*100/maxcap;
 
         	                // set target utilization threshold
-        	                int ordertarget = 85;
-        	                if (!oneshot) {
-        	                	ordertarget = SimulatorService.ordertarget.intValue(); 
-        	                }
+        	                int ordertarget = SimulatorService.ordertarget.intValue() > 0 ? SimulatorService.ordertarget.intValue() : 85; 
+
         	                // compute ordercap for the day
-    	                	double d_ordercap = (ordertarget*maxcap/100.0-(maxcap-freecap))/daysbefore;
+        	                double d_ordercap = 0;
+        	                if (daysbefore > 0) {
+        	                	d_ordercap = (ordertarget*maxcap/100.0-(maxcap-freecap))/daysbefore;
+        	                }
         	                int ordercap = (int) Math.ceil(d_ordercap);
         	                ordersDoneToday = 0;
 
@@ -123,11 +121,10 @@ public class OrderThread extends Thread {
             		// create one order for every voyage below threshold
             		for (Entry<String, FutureVoyage> entry : SimulatorService.voyageFreeCap.entrySet()) {
             		    //System.out.println(entry.getKey() + "/" + entry.getValue());
-            		    int freeTarget = entry.getValue().maxCapacity*(100-ordertarget)/100;
-            		    if (entry.getValue().freeCapacity <= freeTarget) {
+            		    if (entry.getValue().orderCapacity > 0) {
                     		// divide orderCap into specified number of orders per day
             		    	int ordersize = (entry.getValue().orderCapacity*1000)/ordersPerDay;
-            		    	System.out.println("orderthread: create order size="+ordersize+" for "+entry.getKey()+" freeTarget="+freeTarget);
+            		    	System.out.println("orderthread: create order size="+ordersize+" for "+entry.getKey());
             		    	JsonObject order = Json.createObjectBuilder()
                 					.add("voyageId", entry.getKey())
                 					.add("product", "Bananas")
@@ -136,9 +133,9 @@ public class OrderThread extends Thread {
             		    	Response response = Kar.restPost("reeferservice", "orders", order);
             		    	//TODO check response for errors?
             		    }
-            		    else {
-            		    	System.out.println("orderthread: no order for "+entry.getKey()+" freeTarget="+freeTarget);
-            		    }
+//            		    else {
+//            		    	System.out.println("orderthread: no order for "+entry.getKey());
+//            		    }
             		}
         		}
         	}

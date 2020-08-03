@@ -6,7 +6,7 @@ kar -app_port 7080 -app reefer -service simservice -actors simhelper mvn liberty
 
 The simulator state on server start is:
  - time AND order updates in manual modes (unitdelay=0)
- - order updates in manual-order mode (ordertarget=0)  (ordertarget will become persistent soon)
+ - order updates in manual-order mode if ordertarget==0 (ordertarget value is persistent)
  - connection to reefer-rest enabled (true)
 
 

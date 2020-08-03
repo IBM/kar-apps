@@ -16,7 +16,6 @@ import javax.json.JsonString;
 import javax.json.JsonValue;
 
 import com.ibm.research.kar.actor.ActorRef;
-import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 
 public class SimulatorService {
 
@@ -119,6 +118,9 @@ public class SimulatorService {
 
 			// save new delay
 			unitdelay.set(newval.intValue());
+			// get persistent value of ordertarget
+			JsonNumber ot = (JsonNumber)this.get(Json.createValue("ordertarget"));
+			ordertarget.set(ot.intValue()); 
 			// start the Ship thread
 			(shipthread = new ShipThread()).start();
 
@@ -177,6 +179,8 @@ public class SimulatorService {
 //		}
 //	}
 	public JsonNumber getOrderTarget() {
+		JsonNumber ot = (JsonNumber)this.get(Json.createValue("ordertarget"));
+		ordertarget.set(ot.intValue()); 
 		return Json.createValue(ordertarget.get());
 	}
 
@@ -208,6 +212,7 @@ public class SimulatorService {
 			// this is a request to start auto order mode
 			// save new Target
 			ordertarget.set(newval.intValue());
+			this.set(Json.createValue("ordertarget"), newval);
 
 			// start the Order thread if no thread already running and unitdelay>0
 			if (0 == orderthreadcount.get() && 0 < unitdelay.intValue()) {

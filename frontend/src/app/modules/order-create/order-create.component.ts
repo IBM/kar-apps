@@ -42,6 +42,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   destinationPorts: string[] = [];
   allPorts: string[] = [];
 
+  customerId: string;
   selectedOriginPort : string;
   selectedDestinationPort : string;
   selectedProduct: string;
@@ -124,7 +125,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
     console.log(">>>>>"+product+" "+ qty+" "+  origin+" "+  destination);
 
     dialogConfig.data = {
-
+      customerId:this.customerId,
         product:product,
         productQty:qty,
         originPort: origin,
@@ -146,9 +147,9 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
 
   }
   bookOrder(val: any) {
-    //console.log("bookOrder() - Dialog output:", val);
-    const order:  OrderProperties = {
+   const order:  OrderProperties = {
         orderId:'',
+        customerId:val.customerId,
         product: val.product,
         productQty: val.productQty,
         originPort: val.originPort,

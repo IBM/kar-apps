@@ -81,7 +81,7 @@ public class ScheduleService {
         }
         throw new RouteNotFoundException("Unable to find the last voyage for vessel:"+route.getVessel().getName());
     }
-    public void updateDaysAtSea(String voyageId, int daysOutAtSea) {
+    public Voyage updateDaysAtSea(String voyageId, int daysOutAtSea) throws VoyageNotFoundException {
         for( Voyage voyage : masterSchedule ) {
            // System.out.println("ScheduleService.updateDaysAtSea() - daysOutAtSea:"+daysOutAtSea);
             if ( voyage.getId().equals(voyageId)) {
@@ -91,9 +91,10 @@ public class ScheduleService {
                 System.out.println("ScheduleService.updateDaysAtSea() - voyage:"+voyage.getId()+"daysOutAtSea:"+
                 voyage.getRoute().getVessel().getPosition()+" Progress:"+
                 voyage.getRoute().getVessel().getProgress());
-                break;
+                return voyage;
             }
         }
+        throw new VoyageNotFoundException("Voyage "+voyageId + " Not Found");
     }
     public List<Voyage> getMatchingSchedule( Instant startDate, Instant endDate) {
         List<Voyage> schedule = new ArrayList<>();
@@ -158,7 +159,8 @@ public class ScheduleService {
         }
         for( Voyage voyage : masterSchedule ) {
             Instant arrivalDate = 
-              TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), voyage.getRoute().getDaysAtSea());
+              TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), 
+              voyage.getRoute().getDaysAtSea()+voyage.getRoute().getDaysAtPort());
 
             if ( voyage.getSailDateObject().isAfter(currentDate) ) {
                 // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate
@@ -172,8 +174,9 @@ public class ScheduleService {
             // has not yet completed
             if (TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate) ||
                 (voyage.getSailDateObject().isBefore(currentDate) &&
-                arrivalDate.isAfter(currentDate) ) ) {
-                //    long noOfDaysBetween = ChronoUnit.DAYS.between(voyage.getSailDateObject(), currentDate);
+                arrivalDate.isAfter(currentDate))) { //TimeUtils.getInstance().futureDate(currentDate, voyage.getRoute().getDaysAtPort())) ) ) {
+//                    arrivalDate.isAfter(currentDate) ) ) {
+                        //    long noOfDaysBetween = ChronoUnit.DAYS.between(voyage.getSailDateObject(), currentDate);
 
                 //    voyage.getRoute().getVessel().setPosition(noOfDaysBetween);
                 //    int progress = Math.round((noOfDaysBetween/(float)voyage.getRoute().getDaysAtSea())*100);

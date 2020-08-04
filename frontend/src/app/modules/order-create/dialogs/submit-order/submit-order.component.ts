@@ -22,6 +22,7 @@ export class SubmitOrderComponent implements OnInit {
 
 
     this.form = fb.group({
+      customerId: [data.customerId, Validators.required],
       product: [data.product, Validators.required],
      productQty: [data.productQty, Validators.required],
      originPort: [data.originPort, Validators.required],

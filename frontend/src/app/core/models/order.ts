@@ -1,5 +1,6 @@
 export interface Order {
   id: string,
+  customerId: string;
   product: string,
   productQty: number,
   origin: string,

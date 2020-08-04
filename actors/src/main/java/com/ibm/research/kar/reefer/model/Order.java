@@ -6,8 +6,24 @@ import java.util.List;
 //import java.util.concurrent.atomic.AtomicLong;
 
 public class Order {
-   // private static final AtomicLong idGenerator = new AtomicLong();
+    public enum OrderStatus { 
+        PENDING("Pending"),
+        BOOKED("Booked"), 
+        INTRANSIT("InTransit"), 
+        DELIVERED("Delivered");
+    
+        private final String label;
+        OrderStatus(String label) {
+            this.label = label;
+        }
+        public String getLabel() {
+            return label;
+        }
+    
+    };
+
     String id;
+    String customerId;
     String product;
     int productQty;
     String voyageId;
@@ -15,17 +31,14 @@ public class Order {
     List<String> reeferIds;
 
     public Order(OrderProperties orderProperties) {
-        this.id = generateId(); //String.valueOf(idGenerator.addAndGet(1));
-        this.product = orderProperties.getProduct();
-        this.productQty = orderProperties.getProductQty();
-        this.voyageId = orderProperties.getVoyageId();
-        this.status = "Pending";
-        reeferIds = new ArrayList<>();
+        this(orderProperties.getCustomerId(),orderProperties.getProduct(),
+            orderProperties.getProductQty(),orderProperties.getVoyageId(),
+            OrderStatus.PENDING.getLabel(),new ArrayList<>());
     }
 
-//    public Order(String orderId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
-    public Order( String product, int productQty, String voyageId, String status, List<String> reeferIds) {
+    public Order( String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
         this.id = generateId();
+        this.customerId = customerId;
         this.product = product;
         this.productQty = productQty;
         this.voyageId = voyageId;
@@ -77,5 +90,13 @@ public class Order {
 
     public void setReeferIds(List<String> reeferIds) {
         this.reeferIds.addAll(reeferIds);
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
     }
 }

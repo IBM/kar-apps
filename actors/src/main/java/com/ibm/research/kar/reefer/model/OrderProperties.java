@@ -2,6 +2,7 @@ package com.ibm.research.kar.reefer.model;
 
 public class OrderProperties {
     String orderId;  
+    String customerId;
   String product;
   int productQty;
   String originPort;
@@ -71,5 +72,13 @@ public class OrderProperties {
 
   public void setDate(String date) {
       this.date = date;
+  }
+
+  public String getCustomerId() {
+      return customerId;
+  }
+
+  public void setCustomerId(String customerId) {
+      this.customerId = customerId;
   }
 }

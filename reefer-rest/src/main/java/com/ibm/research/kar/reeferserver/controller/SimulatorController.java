@@ -31,13 +31,13 @@ public class SimulatorController {
   @PostMapping("/simulator/delay")
 //    @PostMapping("/simulator/automode")
 	public Instant  shipSimulatorDelay(@RequestBody String delay) {
-        System.out.println("TimeConSimulatorControllertroller.shipSimulatorDelay() - delay "+delay);
+        System.out.println("SimulatorController.shipSimulatorDelay() - delay "+delay);
         int delayTime=0;
         try (JsonReader jsonReader = Json.createReader(new StringReader(delay))) {
              
             JsonObject req = jsonReader.readObject();
             delayTime = req.getInt("delay");
-            System.out.println("TimeConSimulatorControllertroller.shipSimulatorDelay() - delayTime "+delayTime);
+            System.out.println("SimulatorController.shipSimulatorDelay() - delayTime "+delayTime);
 
           } catch( Exception e) {
             e.printStackTrace();
@@ -45,61 +45,34 @@ public class SimulatorController {
         voyageService.changeDelay(delayTime);
         return TimeUtils.getInstance().getCurrentDate();
     }
-    @PostMapping("/simulator/ordertarget")
-    //    @PostMapping("/simulator/automode")
-      public void  orderTarget(@RequestBody String body) {
-            System.out.println("SimulatorController.orderTarget() - target "+body);
+    @PostMapping("/simulator/getsimordertarget")
+    public int  getSimOrderTarget() {
+      System.out.println("SimulatorControllertroller.getSimOrderTarget() ");
 
-           
-            /*
-            int delayTime=0;
-            try (JsonReader jsonReader = Json.createReader(new StringReader(delay))) {
+      return orderService.getSimOrderTarget();
+  }
+    @PostMapping("/simulator/setsimordertarget")
+      public void  setSimOrderTarget(@RequestBody String body) {
+            System.out.println("SimulatorController.setSimOrderTarget() - target "+body);
+
+            int orderTarget=0;
+            try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
                  
                 JsonObject req = jsonReader.readObject();
-                delayTime = req.getInt("delay");
-                System.out.println("TimeConSimulatorControllertroller.shipSimulatorDelay() - delayTime "+delayTime);
-    
+                orderTarget = req.getJsonNumber("target").intValue();
+                System.out.println("TimeConSimulatorControllertroller.setSimOrderTarget() - orderTarget "+orderTarget);
+                orderService.setSimOrderTarget(orderTarget);
               } catch( Exception e) {
                 e.printStackTrace();
               }
-            voyageService.changeDelay(delayTime);
-            return TimeUtils.getInstance().getCurrentDate();
-            */
-            
         }
 
 
         @PostMapping("/simulator/createorder")
           public void  createOrder() {
-                System.out.println("TimeConSimulatorControllertroller.createOrder()");
+                System.out.println("SimulatorController.createOrder()");
                 orderService.createSimOrder();
-                /*
-                int delayTime=0;
-                try (JsonReader jsonReader = Json.createReader(new StringReader(delay))) {
-                     
-                    JsonObject req = jsonReader.readObject();
-                    delayTime = req.getInt("delay");
-                    System.out.println("TimeConSimulatorControllertroller.shipSimulatorDelay() - delayTime "+delayTime);
-        
-                  } catch( Exception e) {
-                    e.printStackTrace();
-                  }
-                voyageService.changeDelay(delayTime);
-                return TimeUtils.getInstance().getCurrentDate();
-                */
-                
+               
             }
-/*
-    @PostMapping("/simulator/manualmode")
-	public Instant  manualMode() {
-        System.out.println("TimeConSimulatorControllertroller.manualMode()");
-        try {
-          voyageService.changeDelay(0);
-        } catch( Exception e) {
-          e.printStackTrace();
-        }
-       
-        return TimeUtils.getInstance().getCurrentDate();
-    }
-    */
+
 }

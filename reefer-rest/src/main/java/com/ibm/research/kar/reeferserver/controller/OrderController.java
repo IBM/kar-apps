@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.model.OrderProperties;
 import com.ibm.research.kar.reefer.model.Voyage;
+import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import com.ibm.research.kar.actor.ActorRef;
@@ -55,7 +56,11 @@ public class OrderController {
 				JsonObject req = jsonReader.readObject();
 				orderProperties.setProduct(req.getString("product"));
 				orderProperties.setProductQty(req.getInt("productQty"));
-				
+				String customerId = "N/A";
+				if ( req.containsKey("customerId")) {
+					customerId = req.getString("customerId");
+				}
+				orderProperties.setCustomerId(customerId);
 				Voyage voyage = scheduleService.getVoyage(req.getString("voyageId"));
 				
 				orderProperties.setVoyageId(req.getString("voyageId"));
@@ -85,7 +90,7 @@ public class OrderController {
 
             JsonValue reply = actorCall(orderActor, "createOrder", params);
 			System.out.println("Order Actor reply:"+reply);
-			order.setStatus("Booked");
+			order.setStatus(OrderStatus.BOOKED.getLabel());
 			webSocket.sendOrderUpdate(order);
 
         } catch (ActorMethodNotFoundException ee) {
@@ -100,8 +105,7 @@ public class OrderController {
 		
 		return orderProperties;
 
-//		return new OrderProperties();
-	
+
 	}
 	@GetMapping("/orders")
 	public List<Order>  getAllOrders() {
@@ -109,7 +113,6 @@ public class OrderController {
 		
 		return orderService.getOrders();
 	}
-
 
 
 }

@@ -30,12 +30,16 @@ import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.*;
+import com.ibm.research.kar.reefer.model.Order.OrderStatus;
+import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 
 @RestController
 @CrossOrigin("*")public class VoyageController {
     @Autowired
     private ScheduleService shipScheduleService;
+    @Autowired
+    private OrderService orderService;
     @Autowired
     private NotificationController webSocket;
 
@@ -125,7 +129,16 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
               daysAtSea = req.getInt("daysAtSea");
 
               System.out.println("VoyageController.updateVoyageState() daysAtSea="+req.getInt("daysAtSea"));
-              shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
+            
+              Voyage voyage = shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
+              Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysAtSea);
+              if ( shipCurrentDate.equals(Instant.parse(voyage.getArrivalDate()) )  ||
+                   shipCurrentDate.isAfter(Instant.parse(voyage.getArrivalDate()))) {
+                orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED);
+              } else {
+                orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT);
+              }
+              
             } else if ( req.containsKey("reeferCount") ) {
               int reeferCount = req.getInt("reeferCount");
               System.out.println("VoyageController.updateVoyageState() reeferCount="+reeferCount);

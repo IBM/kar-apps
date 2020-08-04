@@ -98,7 +98,14 @@ setOrderTarget(orderTarget: number) {
     target: orderTarget
 
   }
-  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/ordertarget',body, options).pipe(retry(3), catchError(this.handleError));
+  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/setsimordertarget',body, options).pipe(retry(3), catchError(this.handleError));
+
+}
+getOrderTarget() {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+  
+  return this.httpClient.post<number>(this.REST_API_SERVER+'/simulator/getsimordertarget', options).pipe(retry(3), catchError(this.handleError));
 
 }
 createOrder() {

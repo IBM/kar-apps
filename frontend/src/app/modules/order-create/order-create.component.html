@@ -1,10 +1,34 @@
+
+
 <mat-card class="example-card" [style.backgroundColor]="'gainsboro'">
   <mat-card-content >
 <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
-    <mat-card fxFlex="22">
+
+  <mat-card fxFlex="16">
+    <mat-card-header [style.backgroundColor]="'gainsboro'">
+      <mat-card-title>Customer ID</mat-card-title>
+  
+   </mat-card-header>
+  
+      <mat-card-content>
+  
+        <div class="example-container">
+  
+  
+          <mat-form-field appearance="fill">
+            <input type="text" matInput placeholder="" [(ngModel)]="customerId" required>
+            
+
+            <mat-hint align="end">Enter Customer Id ^</mat-hint>
+          </mat-form-field>
+        </div>
+  
+  </mat-card-content>
+  </mat-card>
+
+    <mat-card fxFlex="16">
       <mat-card-header [style.backgroundColor]="'gainsboro'">
         <mat-card-title>Select Product</mat-card-title>
-        <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
      </mat-card-header>
 
     <mat-card-content>
@@ -14,7 +38,7 @@
 
         <mat-form-field style="width:130px !important" appearance="fill">
           <!--mat-label>Select me</mat-label--->
-          <mat-select [(ngModel)]="selectedProduct" [style.fontSize.px]="'20'">
+          <mat-select [(ngModel)]="selectedProduct" [style.fontSize.px]="'20'" required>
 
               <mat-option *ngFor="let product of products" [value]="product.name">
                 {{product.name}}
@@ -22,9 +46,9 @@
           </mat-select>
           <mat-hint align="end">Choose product to ship ^</mat-hint>
         </mat-form-field>
-        <mat-form-field style="width:100px !important; background-color: lightgrey">
+        <mat-form-field style="width:70px !important; background-color: lightgrey">
           <input matInput [style.fontSize.px]="'20'" placeholder="Quantity" [(ngModel)]="productQty" type="number" value="1000">
-          <mat-hint align="end">Enter product quantity ^</mat-hint>
+          <!--mat-hint align="end">Enter product quantity ^</mat-hint-->
         </mat-form-field>
       </div>
 
@@ -32,7 +56,7 @@
 <!--app-widget-card label="Select Product" total="12k" percentage="50" [data]="cards"></app-widget-card -->
         <!--app-widget-card label="Select Product" total="12k" percentage="50" [data]="cards"></app-widget-card -->
     </mat-card>
-    <mat-card fxFlex="22">
+    <mat-card fxFlex="16">
       <mat-card-header [style.backgroundColor]="'gainsboro'">
         <mat-card-title>Origin Port</mat-card-title>
         <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
@@ -45,7 +69,7 @@
 
             <mat-form-field appearance="fill">
  
-              <mat-select [(ngModel)]="selectedOriginPort" [style.fontSize.px]="'20'" (selectionChange)="adjustDestinationPorts($event)">
+              <mat-select [(ngModel)]="selectedOriginPort" [style.fontSize.px]="'20'" (selectionChange)="adjustDestinationPorts($event)" required>
                 <mat-option *ngFor="let origin of originPorts" [value]="origin">
                 <!--mat-option *ngFor="let origin of originPorts" [value]="origin.name"-->
                   {{origin}}
@@ -57,7 +81,7 @@
 
     </mat-card-content>
     </mat-card>
-    <mat-card fxFlex="22">
+    <mat-card fxFlex="16">
         <!--app-widget-card label="Destination Port" total="8k" percentage="30" [data]="cards"></app-widget-card-->
         <mat-card-header [style.backgroundColor]="'gainsboro'">
           <mat-card-title>Destination Port</mat-card-title>
@@ -90,7 +114,7 @@
 
       </mat-card-content>
     </mat-card>
-    <mat-card fxFlex="20">
+    <mat-card fxFlex="16">
         <!--app-widget-card label="Departure Date" total="6k" percentage="20" [data]="cards"></app-widget-card-->
         <mat-card-header [style.backgroundColor]="'gainsboro'">
           <mat-card-title>Departure Date</mat-card-title>

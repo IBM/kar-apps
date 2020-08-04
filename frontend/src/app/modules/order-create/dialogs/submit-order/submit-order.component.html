@@ -3,15 +3,16 @@
 
 <mat-dialog-content [formGroup]="form">
 
-    <!--mat-form-field>
-
-        <input matInput
-                placeholder="Course Description"
-               formControlName="description">
-
-    </mat-form-field-->
 
   <div class="form-container" fxLayout="column" fxLayoutAlign="center stretch" fxLayoutGap="5px">
+    <mat-form-field>
+      <input matInput
+      placeholder="CustomerId"
+      readonly
+     formControlName="customerId">
+
+    </mat-form-field>
+
     <mat-form-field>
       <input matInput
       placeholder="Product"
@@ -19,6 +20,7 @@
      formControlName="product">
 
     </mat-form-field>
+
 
     <mat-form-field>
 

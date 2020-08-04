@@ -99,7 +99,7 @@
           <!--app-widget-card label="Origin Port" total="10k" percentage="40" [data]="cards"></app-widget-card-->
           <mat-card-content>
             <mat-form-field >
-              <input matInput [style.fontSize.px]="'20'" [matDatepicker]="picker1" (dateChange)="departureDateChangeEvent($event)" placeholder="" [style.height]="'2em'" [style.backgroundColor]="'gainsboro'">
+              <input matInput [style.fontSize.px]="'20'" [min]="date" [matDatepicker]="picker1" (dateChange)="departureDateChangeEvent($event)" placeholder="" [style.height]="'2em'" [style.backgroundColor]="'gainsboro'">
 
               <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
               <mat-datepicker #picker1></mat-datepicker>

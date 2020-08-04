@@ -69,7 +69,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   //shippingSchedule: ShipSchedule;
   connected: Subscription;
   isConnected = false;
-  date  =  new  FormControl(new  Date());
+  date : Date;//  =  new  FormControl(new  Date());
 
   displayedColumns: string[] = ['select', 'voyageId', 'vessel', 'origin', 'destination','sailDate', 'transitTime', 'freeCapacity'];
   //dataSource = new MatTableDataSource<ShipSchedule>(SHIPPING_SCHEDULE);
@@ -344,6 +344,10 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.restService.currentDate().subscribe((data) => {
+      console.log("nextDay() - Current Date:" + data.substr(0,10));
+      this.date = new Date(data.toString());
+    });
    // this.dataService.initializeWebSocketConnection();
     this.dataSource.paginator = this.paginator;
    this.send();

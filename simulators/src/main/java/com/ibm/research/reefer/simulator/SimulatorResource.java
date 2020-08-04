@@ -140,28 +140,12 @@ public class SimulatorResource {
 	}
 
 	/**
-	 * Toggle connection with reefer-rest server
+	 * Used by the shipthread to wake up orderthread
 	 */
 	@POST
 	@Path("/newdayfororders")
 	public void newdayfororders() {
 		simService.newDayForOrders(); 
-	}
-
-
-// Temporary for testing
-	@POST
-	@Path("/gimmepost")
-	public JsonValue gimmepost(JsonValue val) {
-		System.out.println("gimmepost: "+val.toString());
-		return val;
-	}
-
-	@GET
-	@Path("/gimmeget")
-	public JsonValue gimmeget() {
-		System.out.println("gimmeget called");
-		return Json.createValue("GOT");
 	}
 
 }

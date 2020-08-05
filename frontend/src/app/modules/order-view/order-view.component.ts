@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, AfterViewInit, Input, ContentChild } from '@angular/core';
 import { Order } from 'src/app/core/models/order';
 import { SelectionModel } from '@angular/cdk/collections';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
 import { RestService } from 'src/app/core/services/rest.service';
 import { MatTableDataSource, MatTable } from '@angular/material/table';
@@ -27,9 +27,12 @@ export class OrderViewComponent implements OnInit {
   selection = new SelectionModel<Order>(false, []);
   displayedColumns: string[] = ['select',  'id', 'customerId','status','product', 'productQty', 'voyageId'];//, 'origin', 'destination','sailDate', 'transitTime', 'voyageId', 'reeferIds'];
   orders: Order[] = [];
-  orderTarget : number = 85;
+  orderTarget : number = 0;
   filterValues = {};
   filterSelectObj = [];
+  totalElements: number = 0;
+  loading: boolean;
+  createOrderManually: boolean;
 
   autoSimButtonLabel: string = "Update";
   dataSource = new MatTableDataSource(this.orders);
@@ -54,15 +57,25 @@ export class OrderViewComponent implements OnInit {
         stompClient.subscribe('/topic/orders', (event:any) => {
           if ( event.body) {
             let order: Order;
-            order = JSON.parse(event.body);
+            console.log("-------- Paginator Index:"+this.paginator.pageIndex);
 
-            //this.dataSource.data.forEach
-            const currentData = this.dataSource.data;
+            this.dataSource.data.forEach(row => console.log(row.id));
+            // Add the order to the HEAD only when we are on the 
+            // first page of orders else just ignore this update
+            if ( this.paginator.pageIndex == 0) {
 
-            currentData.unshift(order);
-            console.log('::::::'+order);
-            this.dataSource.data = currentData;
-            this.dataSource.sort = this.sort;
+              order = JSON.parse(event.body);
+
+              // The following two lines of code are required
+              // to add new order to the HEAD of the list
+              const currentData = this.dataSource.data;
+              currentData.unshift(order);
+
+              //console.log('::::::'+order);
+              this.dataSource.data = currentData;
+              this.dataSource.sort = this.sort;
+            }
+
           }
 
         })
@@ -88,13 +101,21 @@ export class OrderViewComponent implements OnInit {
   }
   */
   ngOnInit(): void {
-     this.restService.getOrderTarget().subscribe((data) => {
-      console.log(data);
-      if ( data < 0 ) {
-        data = 0;
+   
+     this.restService.getOrderTargetAndSimDelay().subscribe((data) => {
+      console.log(">>>> Order Target from the Simulator delay:"+data.delay+" target:"+data.target);
+     
+      if ( data.target > 0 || data.delay > 0 ) {
+        this.createOrderManually = true;
+        console.log("++++++++++++++ Enable CreateOrder Button");
+      }else {
+        this.createOrderManually = false;
+        console.log("++++++++++++++ Disable CreateOrder Button");
       }
-      this.orderTarget = data;
+      this.orderTarget = data.target;
     });
+
+
     this.restService.getAllOrders().subscribe((data) => {
       console.log(data);
       this.dataSource.data = data;
@@ -111,11 +132,18 @@ export class OrderViewComponent implements OnInit {
 
   }
 
-  toggleEnableDisable(event: Event) {
-    console.log("Click "+event);
-
-    this.restService.setOrderTarget(this.orderTarget).subscribe((data) => {
+  updateOrderTarget(event: Event) {
+    console.log("Click >>>>>"+event +" Order Target:"+this.orderTarget);
+    const request = {};
+    request['target'] = this.orderTarget.toString();
+  
+    this.restService.setOrderTarget(request).subscribe((data) => {
       console.log(data);
+      if ( this.orderTarget == 0 ) {
+        this.createOrderManually = true;
+      } else {
+        this.createOrderManually = false;
+      }
     });
     
   }
@@ -129,6 +157,7 @@ export class OrderViewComponent implements OnInit {
     
    // this.getActiveVoyages();
   }
+  /*
   orderTargetChange(event: any ) {
     this.orderTarget = event.target.value;
     if (this.orderTarget == 0 ) {
@@ -137,6 +166,7 @@ export class OrderViewComponent implements OnInit {
       });
     }
   }
+  */
   selectedOrder($event, row?: Order) {
   //  const numSelected = this.selection.selected.length;
   //  if ($event.checked) {
@@ -234,5 +264,28 @@ this.filterSelectObj.forEach((value, key) => {
 })
 this.dataSource.filter = "";
 }
-
+  private getTodos(request) {
+    /*
+    this.loading = true;
+    this.todoService.listTodos(request)
+      .subscribe(data => {
+        this.todos = data['content'];
+        this.totalElements = data['totalElements'];
+        this.loading = false;
+      }, error => {
+        this.loading = false;
+      });
+      */
+  }
+ 
+  nextPage(event: PageEvent) {
+    const request = {};
+    console.log("PageEvent pageIndex:"+event.pageIndex.toString()+" Size:"+event.pageSize.toString()+" Paginator Index:"+      this.paginator.pageIndex);
+    request['page'] = event.pageIndex.toString();
+    request['size'] = event.pageSize.toString();
+    this.restService.nextPage(request).subscribe((data) => {
+      console.log(data);
+      //this.date = data.substr(0,10);
+    });
+  }
 }

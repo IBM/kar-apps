@@ -3,20 +3,27 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.ibm.research.kar.reefer.model.Order;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.model.OrderProperties;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
+import com.ibm.research.kar.reefer.model.OrderDTO;
+import com.ibm.research.kar.reeferserver.repository.OrderRepository;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import com.ibm.research.kar.actor.ActorRef;
@@ -33,7 +40,9 @@ import javax.json.JsonValue.ValueType;
 @RestController
 @CrossOrigin("*")
 public class OrderController {
-    
+//	@Autowired
+//	private OrderRepository orderRepository;
+
 	@Autowired
 	private OrderService orderService;
 
@@ -71,7 +80,7 @@ public class OrderController {
 				e.printStackTrace();
 			  }
 		
-		Order order = orderService.creatOrder(orderProperties); 
+		Order order = orderService.createOrder(orderProperties); 
 		
 
         try {
@@ -114,5 +123,22 @@ public class OrderController {
 		return orderService.getOrders();
 	}
 
-
+	@PostMapping("/orders/nextpage")
+	public void nextPage(@RequestParam(name = "page", defaultValue = "0") int page,
+								@RequestParam(name = "size", defaultValue = "10") int size) {
+		System.out.println("OrderController.nextPage() - Page:"+page+" Size:"+size);
+	 // return "OK";
+   
+	}
+	/*
+	public Page<Order> nextPage(@RequestParam(name = "page", defaultValue = "0") int page,
+								@RequestParam(name = "size", defaultValue = "10") int size) {
+	  PageRequest pageRequest = PageRequest.of(page, size);
+	  Page<OrderDTO> pageResult = orderRepository.findAll(pageRequest);
+	  List<Order> orders = pageResult.stream().map(Order::new).collect(Collectors.toList());
+   
+	  return new PageImpl<>(orders, pageRequest, pageResult.getTotalElements());
+   
+	}
+	*/
 }

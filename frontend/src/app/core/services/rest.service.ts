@@ -16,6 +16,7 @@ import { Voyage } from '../models/voyage';
 import { Delay } from '../models/delay';
 import { VoyagesQuery } from '../models/voyages-query';
 import { OrderTarget } from '../models/order-target';
+import { DelayTarget } from '../models/delay-target';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -91,23 +92,8 @@ saveOrder( order: OrderProperties)  {
   console.log("rest.service.ts - saveOrder()");
   return this.httpClient.post<OrderProperties>(this.REST_API_SERVER+'/orders',order,options).pipe(retry(3), catchError(this.handleError));
 }
-setOrderTarget(orderTarget: number) {
-  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  const options = { header: headers, params: new HttpParams()};
-  const body : OrderTarget = {
-    target: orderTarget
 
-  }
-  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/setsimordertarget',body, options).pipe(retry(3), catchError(this.handleError));
 
-}
-getOrderTarget() {
-  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  const options = { header: headers, params: new HttpParams()};
-  
-  return this.httpClient.post<number>(this.REST_API_SERVER+'/simulator/getsimordertarget', options).pipe(retry(3), catchError(this.handleError));
-
-}
 createOrder() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
@@ -181,16 +167,7 @@ addReefers( inPort: string)  {
   return this.httpClient.post<Port[]>(this.REST_API_SERVER+'/reefers', body, options).pipe(retry(3), catchError(this.handleError));
 
 }
-setSimulatorDelay(delayTime: number) {
-  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  const options = { header: headers, params: new HttpParams()};
-  const body : Delay = {
-    delay: delayTime
 
-  }
-  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/delay',body, options).pipe(retry(3), catchError(this.handleError));
-
-}
 /*
 setManualMode() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -224,6 +201,67 @@ getFleets()  {
   return this.httpClient.get<Fleet[]>(this.REST_API_SERVER+'/fleets', options).pipe(retry(3), catchError(this.handleError));
 
 }
+setOrderTarget(request) {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  //const options = { header: headers, params: new HttpParams()};
+ // const body : OrderTarget = {
+  //  target: orderTarget
+
+ // }
+  const params = request;
+  return this.httpClient.post<String>(this.REST_API_SERVER+'/simulator/setsimordertarget',params).pipe(retry(3), catchError(this.handleError));
+
+}
+getOrderTargetAndSimDelay() {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+  
+  return this.httpClient.get<DelayTarget>(this.REST_API_SERVER+'/simulator/getdelayandtarget', options).pipe(retry(3), catchError(this.handleError));
+
+}
+getOrderTarget() {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+  
+  return this.httpClient.post<number>(this.REST_API_SERVER+'/simulator/getsimordertarget', options).pipe(retry(3), catchError(this.handleError));
+
+}
+getSimulatorDelay() {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+
+  return this.httpClient.post<number>(this.REST_API_SERVER+'/simulator/getdelay', options).pipe(retry(3), catchError(this.handleError));
+
+}
+setSimulatorDelay(delayTime: number) {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+  const body : Delay = {
+    delay: delayTime
+
+  }
+  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/delay',body, options).pipe(retry(3), catchError(this.handleError));
+
+}
+/*
+setOrderTarget(orderTarget: number) {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+  const body : OrderTarget = {
+    target: orderTarget
+
+  }
+  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/setsimordertarget',body, options).pipe(retry(3), catchError(this.handleError));
+
+}
+*/
+nextPage(request) {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  //const options = { header: headers, params: new HttpParams() };
+  const params = request;
+  return this.httpClient.post<String>(this.REST_API_SERVER+'/orders/nextpage', params).pipe(retry(3), catchError(this.handleError));
+
+}
     handleError(error: HttpErrorResponse) {
     let errorMessage = 'Unknown error!';
     if (error.error instanceof ErrorEvent) {
@@ -237,4 +275,5 @@ getFleets()  {
     window.alert(errorMessage);
     return throwError(errorMessage);
   }
+
 }

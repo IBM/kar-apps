@@ -51,7 +51,7 @@ public class VoyageService {
                 Json.createObjectBuilder().add("value", delay).build();
             Response response =  Kar.restPost("simservice", "simulator/setunitdelay",delayArg); //Json.createValue(delay));
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("Response = "+respValue);
+            System.out.println("VoyageService.getDelay() Sim Response = "+respValue);
  
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
@@ -60,5 +60,15 @@ public class VoyageService {
         } catch( Exception ee) {
 			ee.printStackTrace();
 		} 
+    }
+    public int getDelay() throws Exception {
+        System.out.println("VoyageService.getDelay()");
+             Response response =  Kar.restGet("simservice", "simulator/getunitdelay"); //Json.createValue(delay));
+            JsonValue respValue = response.readEntity(JsonValue.class);
+            System.out.println("VoyageService.getDelay() Sim Response = "+respValue);
+
+            return Integer.parseInt(respValue.toString());
+ 
+
     }
 }

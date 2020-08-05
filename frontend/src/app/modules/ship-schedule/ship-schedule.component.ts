@@ -67,7 +67,15 @@ export class ShipScheduleComponent implements OnInit {
       console.log("nextDay() - Current Date:" + data.substr(0,10));
       this.date = data.substr(0,10);
     });
-
+    this.restService.getSimulatorDelay().subscribe((data) => {
+      console.log(data);
+      this.rate = data;
+      if ( this.rate > 0 ) {
+        this.autoSimButtonLabel = "STOP";
+      } else {
+        this.autoSimButtonLabel = "START";
+      }
+    });
     this.getActiveVoyages();
   }
   

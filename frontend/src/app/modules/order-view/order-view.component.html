@@ -10,11 +10,13 @@
               <mat-card-content>
                   <div class="example-container">
                       <mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill">
-                          <input matInput min="0" max="100" step="10" ngStep="10" (change)="orderTargetChange($event)" name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                          <input matInput min="0" max="100" step="10" ngStep="10"  name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                          <!--input matInput min="0" max="100" step="10" ngStep="10" (change)="orderTargetChange($event)" name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required-->
                           <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
                           <!--mat-hint align="front">Choose target utilization^</mat-hint-->
                       </mat-form-field>
-                      <button [disabled]="orderTarget === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleEnableDisable($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button>
+                      <button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateOrderTarget($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button>
+                      <!--button [disabled]="orderTarget === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleEnableDisable($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button-->
 
                   </div>
 
@@ -22,31 +24,30 @@
           </mat-card>
           <!--mat-card fxFlex="1"> </mat-card-->
           <mat-card fxFlex="59" >
-              <mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'35'">
-                  <mat-card-title >Advance Time</mat-card-title>
-                  <!--mat-card-title style="margin-top:5px;">Advance Time</mat-card-title-->
-                  <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
-              </mat-card-header>
+              <!--mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'35'">
+                  <mat-card-title ></mat-card-title>
+              </mat-card-header-->
               <mat-card-content class="advance" color="primary" >
                   <div fxLayout="row" fxLayoutAlign="start center">
                       <app-personaldetails fxFlex="50%">
-                          <button [disabled]="orderTarget > 0" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Order</button>
+                          <button [disabled]="createOrderManually === false" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Order</button>
+                          <!--button [disabled]="orderTarget > 0" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Order</button-->
 
                       </app-personaldetails>
                       <app-personaldetails fxFlex="3%">
 
                       </app-personaldetails>
-                      <app-contactdetails fxFlex="47%">
+                      <!--app-contactdetails fxFlex="47%">
                           <mat-card [style.backgroundColor]="'gainsboro'" [style.fontSize.px]="'20'" [style.height.px]="'22'" style="border: 1px solid;">
                               
                               <mat-card-header [style.backgroundColor]="'gainsboro'" style="padding: 1px;margin:0 auto;text-align: center;justify-content: center" >
                                       <mat-card-title >Current Date</mat-card-title>
-                                  <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
+                                 
                               </mat-card-header>
                               <mat-card-content class="advance" color="primary" [style.fontSize.px]="'18'"  style="padding: 1px;margin:0 auto;text-align: center;justify-content: center;  ">
                               </mat-card-content>
                           </mat-card>
-                      </app-contactdetails>
+                      </app-contactdetails-->
                    </div>
 
               </mat-card-content>
@@ -127,7 +128,8 @@
 
             </table>
 
-            <mat-paginator [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+            <mat-paginator [pageSizeOptions]="[5, 10, 20]" [pageSize]="10" [length]="totalElements"
+            (page)="nextPage($event)"></mat-paginator>
         </div>
 
     </div>

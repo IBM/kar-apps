@@ -35,9 +35,16 @@ public class Order {
             orderProperties.getProductQty(),orderProperties.getVoyageId(),
             OrderStatus.PENDING.getLabel(),new ArrayList<>());
     }
-
+    public Order(OrderDTO dto) {
+        this(dto.getId(), dto.getCustomerId(), dto.getProduct(), 
+        dto.getProductQty(), dto.getVoyageId(), dto.getStatus(), new ArrayList<String>());
+    }
     public Order( String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
-        this.id = generateId();
+
+        this(String.valueOf(Instant.now().toEpochMilli()), customerId, product, productQty, voyageId, status,reeferIds);
+    }
+    public Order( String id, String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
+        this.id = id;
         this.customerId = customerId;
         this.product = product;
         this.productQty = productQty;
@@ -45,9 +52,7 @@ public class Order {
         this.status = status;
         this.reeferIds = reeferIds;
     }
-    private String generateId() {
-        return String.valueOf(Instant.now().toEpochMilli());
-    }
+ 
     public String getId() {
         return id;
     }

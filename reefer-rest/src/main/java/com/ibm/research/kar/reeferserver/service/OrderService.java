@@ -13,14 +13,21 @@ import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.reefer.model.OrderProperties;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
+import com.ibm.research.kar.reeferserver.repository.OrderRepository;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.model.Order;
+import com.ibm.research.kar.reefer.model.OrderDTO;
 
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-@Component
+import org.springframework.stereotype.Service;
+@Service
 public class OrderService {
+//	@Autowired
+//	private OrderRepository orderRepository;
+
+
     private Map<String, Order> orders = new HashMap<>();
 
     public List<Order> getOrders() {
@@ -30,11 +37,13 @@ public class OrderService {
     public void saveOrder(Order order) {
         orders.put(order.getId(), order);
     }
-    public Order creatOrder(OrderProperties orderProperties) {
+    public Order createOrder(OrderProperties orderProperties) {
         Order order = 
             new Order(orderProperties);
 
         orders.put(order.getId(), order);
+
+     //   orderRepository.save(new OrderDTO(order.getId(), order.getCustomerId(), order.getVoyageId(), order.getStatus(), order.getProduct(), order.getProductQty()));
         return order;
     }
     public void updateOrderStatus(String voyageId, OrderStatus status) {
@@ -98,7 +107,7 @@ public class OrderService {
         try {
             Response response = Kar.restGet("simservice", "simulator/getordertarget");
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("Response = "+respValue);
+            System.out.println("OrderService.getSimOrderTarget() Sim Response = "+respValue);
             orderTarget = Integer.parseInt(respValue.toString());
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();

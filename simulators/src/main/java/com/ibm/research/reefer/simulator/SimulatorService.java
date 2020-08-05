@@ -180,6 +180,7 @@ public class SimulatorService {
 					}
 				}
 				ordertarget.set(newval.intValue());
+				this.set(Json.createValue("ordertarget"), newval);
 				System.out.println("simulator: ordertarget set="+newval.intValue());
 				return Json.createValue("accepted");
 			}

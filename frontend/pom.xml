@@ -29,7 +29,7 @@
 	    <fileset>
 	      <directory>.</directory>
 	      <includes>
-		<include>src/main/webapp/*.*</include>
+		      <include>src/main/webapp/*.*</include>
 		<!--include>src/main/webapp/**/*.*</include-->
 `	      </includes>
 	      <followSymlinks>false</followSymlinks>
@@ -38,7 +38,7 @@
 	    <fileset>
 	      <directory>.</directory>
 	      <includes>
-		<include>dist/reefer/*.*</include>
+		       <include>dist/reefer/*.*</include>
 		<!--include>src/main/webapp/**/*.*</include-->
 `	      </includes>
 	      <followSymlinks>false</followSymlinks>
@@ -157,6 +157,9 @@
                     <resources>
                       <resource>
                         <directory>${project.basedir}/dist/reefer</directory>
+                      </resource>
+                      <resource>
+                        <directory>${project.basedir}/src/main/webapp/WEB-INF</directory>
                       </resource>
                     </resources>
                   </configuration>

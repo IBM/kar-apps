@@ -14,6 +14,7 @@ public class ReeferService {
     private Map<String, List<Reefer>> portReeferMap = new HashMap<>();
 
     {
+		/*
         addPortReefers("Elizabeth, NJ", 10);
 		addPortReefers("Oakland, CA", 10);
 		addPortReefers("Miami, FL", 10);
@@ -25,6 +26,7 @@ public class ReeferService {
 		addPortReefers("Hamburg, DE", 10);
 		addPortReefers("New Orleans, LA", 10);
 		addPortReefers("New York, NY", 10);
+		*/
     }
 
     public void addPortReefers(String port, int howMany) {

@@ -46,7 +46,7 @@ public class ScheduleService {
 
     }
     public void generateNextSchedule(Instant date) {
-        System.out.println("ScheduleService() - generateNextSchedule() ");
+        System.out.println("ScheduleService() - generateNextSchedule() ============================================ ");
         // generate future schedule if number of days from a given date and the last voyage in the
         // current master schedule is less than a threshold. 
         try {
@@ -83,7 +83,6 @@ public class ScheduleService {
     }
     public Voyage updateDaysAtSea(String voyageId, int daysOutAtSea) throws VoyageNotFoundException {
         for( Voyage voyage : masterSchedule ) {
-           // System.out.println("ScheduleService.updateDaysAtSea() - daysOutAtSea:"+daysOutAtSea);
             if ( voyage.getId().equals(voyageId)) {
                 voyage.getRoute().getVessel().setPosition(daysOutAtSea);
                 int progress = Math.round((daysOutAtSea/(float)voyage.getRoute().getDaysAtSea())*100);
@@ -174,16 +173,17 @@ public class ScheduleService {
             // has not yet completed
             if (TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate) ||
                 (voyage.getSailDateObject().isBefore(currentDate) &&
-                arrivalDate.isAfter(currentDate))) { //TimeUtils.getInstance().futureDate(currentDate, voyage.getRoute().getDaysAtPort())) ) ) {
-//                    arrivalDate.isAfter(currentDate) ) ) {
-                        //    long noOfDaysBetween = ChronoUnit.DAYS.between(voyage.getSailDateObject(), currentDate);
-
-                //    voyage.getRoute().getVessel().setPosition(noOfDaysBetween);
-                //    int progress = Math.round((noOfDaysBetween/(float)voyage.getRoute().getDaysAtSea())*100);
-                //    voyage.getRoute().getVessel().setProgress(progress);
+                arrivalDate.isAfter(currentDate))) { 
                 activeSchedule.add(voyage);
             }
         }
+
+
+        // DELETE THIS WHEN DONE TESTING
+        //generateNextSchedule(TimeUtils.getInstance().advanceDate(280));
+
+
+
         return activeSchedule;
    }
 

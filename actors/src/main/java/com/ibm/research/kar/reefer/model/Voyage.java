@@ -15,8 +15,9 @@ public class Voyage {
         this.sailDateObject = sailDateObject;
         this.arrivalDate = arrivalDate;
         this.sailDate = sailDateObject.toString().substring(0,10);
-        System.out.println("Voyage.ctor() - sailDate:"+sailDate);
         this.id = String.format("%s-%s",route.getVessel().getName(),this.sailDateObject.toString()).replaceAll("/","-");
+        System.out.println("Voyage.ctor() - voyage:"+id+" From:"+route.getOriginPort()+" To:"+route.getDestinationPort()+" SailDate:"+sailDate+" ArrivalDate:"+arrivalDate+" DaysAtSea:"+route.getDaysAtSea());
+
     }
     public String getId() {
         return id;

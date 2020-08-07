@@ -1,6 +1,7 @@
 package com.ibm.research.kar.reefer.common.time;
 
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 
 public class TimeUtils {
@@ -42,6 +43,10 @@ public class TimeUtils {
     public Instant getDateYearFrom(Instant date) {
         // return date 365 days from now
         return date.plus(365, ChronoUnit.DAYS);
+    }
+    public Instant getDateNyearsFromNow(Instant now, int years) {
+        // return date 365 days from now
+        return now.atOffset(ZoneOffset.UTC).plus(years, ChronoUnit.YEARS).toInstant();
     }
     public long getDaysBetween(String startDate, String endDate) {
         Instant sd = Instant.parse(startDate);

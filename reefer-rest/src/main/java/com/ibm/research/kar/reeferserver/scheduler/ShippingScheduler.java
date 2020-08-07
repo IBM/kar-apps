@@ -60,14 +60,15 @@ public class ShippingScheduler {
     
     public LinkedList<Voyage> generateSchedule(Instant departureDate) {
         Instant arrivalDate;
+        // generate schedule for the next 100 years
+        //final Instant lastVoyageDate = TimeUtils.getInstance().getDateNyearsFromNow(departureDate,20);
         // the shipping schedule is generated for one year from now
-
-        final Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(departureDate);
+         final Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(departureDate);
         int staggerInitialShipDepartures = 0;
         LinkedList<Voyage> sortedSchedule = new LinkedList<>();
         for (final Route route : routes) {
-            System.out.println("ScheduleGenerator new route - from:" + route.getOriginPort() + " To:"
-                    + route.getDestinationPort());
+//            System.out.println("ScheduleGenerator new route - from:" + route.getOriginPort() + " To:"
+//                    + route.getDestinationPort());
             // generate current ship schedule for the whole year
             while (departureDate.isBefore(yearFromNow)) {
                 // get the ship arrival date at destination port (departureDate+transitTime)
@@ -89,7 +90,11 @@ public class ShippingScheduler {
             departureDate = TimeUtils.getInstance().futureDate(Instant.now(), staggerInitialShipDepartures);
 
         }
-        System.out.println("ScheduleGenerator - generated:" + sortedSchedule.size() + " Voyages");
+//        System.out.println("ScheduleGenerator - generated:" + sortedSchedule.size() + " Voyages");
+//        System.out.println("ScheduleGenerator ------------------------------------------------------------------------------");
+//        sortedSchedule.forEach(voyage -> {
+//            System.out.println("Id:"+voyage.getId()+" Sail Date:"+voyage.getSailDate()+" ArrivalDate:"+voyage.getArrivalDate()+" DaysAtSea:"+voyage.getRoute().getDaysAtSea());
+//        });
         return sortedSchedule;
     }
 
@@ -107,7 +112,6 @@ public class ShippingScheduler {
     }
 
     private Voyage newScheduledVoyage(final Route route, final Instant departureDate, final boolean returnVoyage) {
-        Voyage voyage;
         Instant arrivalDate = 
             TimeUtils.getInstance().futureDate(departureDate,route.getDaysAtSea() );
         String originPort = route.getOriginPort();
@@ -117,21 +121,11 @@ public class ShippingScheduler {
             // swap for return trip
             originPort = route.getDestinationPort();
             destinationPort = route.getOriginPort();
-            // for return voyage reverse origin and destination ports
- //           voyage = new Voyage(new Route(route.getVessel().clone(), route.getDestinationPort(), route.getOriginPort(),
- //                   route.getDaysAtSea(), route.getDaysAtPort()), departureDate, arrivalDate.toString().substring(1,10));
         } 
-        /*
-        else {
-             
-            voyage = new Voyage(new Route(route.getVessel().clone(),route.getOriginPort(),route.getDestinationPort(), 
-            route.getDaysAtSea(), route.getDaysAtPort() ), departureDate, arrivalDate.toString().substring(0,10));
-        }
-        */
-       // return voyage;
-                   // for return voyage reverse origin and destination ports
+
+        // for return voyage reverse origin and destination ports
         return new Voyage(new Route(route.getVessel().clone(), originPort, destinationPort,
-                   route.getDaysAtSea(), route.getDaysAtPort()), departureDate, arrivalDate.toString());//.substring(0,10));
+                   route.getDaysAtSea(), route.getDaysAtPort()), departureDate, arrivalDate.toString());
     }
 
 }

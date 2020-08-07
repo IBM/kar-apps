@@ -18,7 +18,6 @@ import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Deactivate;
 import com.ibm.research.kar.actor.annotations.Remote;
 
-
 /**
  * An actor that implements a persistent Map
  */
@@ -40,39 +39,39 @@ public class SimulatorHelper extends BaseActor {
 //		}
 //	}
 
-	@Activate
-	public void initState() {
-	}
+  @Activate
+  public void initState() {
+  }
 
-	@Deactivate
-	public void saveState() {
-	}
+  @Deactivate
+  public void saveState() {
+  }
 
-	@Remote
-	public JsonValue get(JsonValue key) {
-		JsonValue value = actorGetState(this,((JsonString)key).getString());
-		return value;
-	}
+  @Remote
+  public JsonValue get(JsonValue key) {
+    JsonValue value = actorGetState(this, ((JsonString) key).getString());
+    return value;
+  }
 
-	@Remote
-	public JsonValue set(JsonValue key, JsonValue value) {
-		int n = actorSetState(this,((JsonString)key).getString(), value);
-		return Json.createValue(n);
-	}
+  @Remote
+  public JsonValue set(JsonValue key, JsonValue value) {
+    int n = actorSetState(this, ((JsonString) key).getString(), value);
+    return Json.createValue(n);
+  }
 
-	@Remote
-	public JsonValue del(JsonValue key) {
-		int n = actorDeleteState(this, ((JsonString)key).getString());
-		return Json.createValue(n);
-	}
+  @Remote
+  public JsonValue del(JsonValue key) {
+    int n = actorDeleteState(this, ((JsonString) key).getString());
+    return Json.createValue(n);
+  }
 
-	@Remote
-	public JsonValue getAll() {
-		Map<String,JsonValue> tempMap = new HashMap<String,JsonValue>();
-		tempMap.putAll(actorGetAllState(this));
-		
-		JsonObjectBuilder builder = Json.createObjectBuilder();
-		tempMap.forEach(builder::add);
-		return builder.build();
-	}
+  @Remote
+  public JsonValue getAll() {
+    Map<String, JsonValue> tempMap = new HashMap<String, JsonValue>();
+    tempMap.putAll(actorGetAllState(this));
+
+    JsonObjectBuilder builder = Json.createObjectBuilder();
+    tempMap.forEach(builder::add);
+    return builder.build();
+  }
 }

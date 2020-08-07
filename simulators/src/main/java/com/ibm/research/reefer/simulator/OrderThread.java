@@ -26,7 +26,7 @@ public class OrderThread extends Thread {
 	int ordersDoneToday = 0;
 
 	public void run() {
-		if (0 == SimulatorService.unitdelay.intValue()) {
+		if (0 == SimulatorService.unitdelay.intValue() || 0 == SimulatorService.ordertarget.intValue()) {
 			oneshot = true;
 		}
 

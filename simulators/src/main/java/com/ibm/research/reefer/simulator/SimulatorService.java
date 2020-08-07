@@ -203,17 +203,17 @@ public class SimulatorService {
 		}
 	}
 
-	// Manual oneshot. Runs only when ordertarget == 0
+	// Manual oneshot. Runs only when orderthreadcount == 0
 	public JsonValue createOrder() {
-    	synchronized (ordertarget) {
-    		if (0 == ordertarget.intValue() && 0 == orderthreadcount.get()) {
+//    	synchronized (ordertarget) {
+    		if (0 == orderthreadcount.get()) {
     			(orderthread = new OrderThread()).start();
     			return Json.createValue("accepted");
     		}
-    		System.out.println("simulator: advanceTime rejected: ordertarget="+ordertarget.get()+" orderthreadcount="+orderthreadcount.get());
+    		System.out.println("simulator: createOrder rejected: orderthreadcount="+orderthreadcount.get());
     		return Json.createValue("rejected");
     	}
-	}
+//	}
 
 	// wake up order thread if sleeping
 	public void newDayForOrders() {

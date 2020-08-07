@@ -158,36 +158,40 @@
                       <resource>
                         <directory>${project.basedir}/dist/reefer</directory>
                       </resource>
-                      <resource>
+                      <!--resource>
                         <directory>${project.basedir}/src/main/webapp/WEB-INF</directory>
+                      </resource-->
+                       <resource>
+                        <directory>${project.basedir}/src/main/WEB-INF</directory>
                       </resource>
+
                     </resources>
                   </configuration>
                 </execution>
               </executions>
             </plugin>
 
-			<plugin>
-				<groupId>io.openliberty.tools</groupId>
-				<artifactId>liberty-maven-plugin</artifactId>
-				<version>3.2</version>
-				<configuration>
-				
-				<serverName>frontEndServer</serverName>
+	<plugin>
+		<groupId>io.openliberty.tools</groupId>
+		<artifactId>liberty-maven-plugin</artifactId>
+		<version>3.2</version>
+		<configuration>
+		
+		  <serverName>frontEndServer</serverName>
 
 
-				  <runtimeArtifact>
+		     <runtimeArtifact>
 				    <groupId>io.openliberty</groupId>
 				    <artifactId>openliberty-runtime</artifactId>
 				    <type>zip</type>
-				  </runtimeArtifact>
+		     </runtimeArtifact>
 
 
 
 
-				</configuration>
+		</configuration>
 
-			</plugin>
+	</plugin>
 
 
 

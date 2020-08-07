@@ -127,7 +127,8 @@ public class OrderThread extends Thread {
             		    	System.out.println("orderthread: create order size="+ordersize+" for "+entry.getKey());
             		    	JsonObject order = Json.createObjectBuilder()
                 					.add("voyageId", entry.getKey())
-                					.add("product", "Bananas")
+                					.add("customerId","simulator")
+                					.add("product", "pseudoBanana")
                 					.add("productQty", ordersize)
                 					.build();
             		    	Response response = Kar.restPost("reeferservice", "orders", order);

@@ -1,200 +1,160 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.ibm.research.reefer</groupId>
-    <artifactId>reefer-frontend</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
+  <groupId>com.ibm.research.reefer</groupId>
+  <artifactId>reefer-frontend</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>war</packaging>
 
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-    <build>
+  <build>
 
 
     <finalName>${project.artifactId}</finalName>
+
     <plugins>
       <plugin>
-	<groupId>org.apache.maven.plugins</groupId>
-	<artifactId>maven-clean-plugin</artifactId>
-	<version>3.0.0</version>
-	<configuration>
-	  <failOnError>false</failOnError>
-	  <filesets>
-	    <fileset>
-	      <directory>.</directory>
-	      <includes>
-		      <include>src/main/webapp/*.*</include>
-		<!--include>src/main/webapp/**/*.*</include-->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.0.0</version>
+        <configuration>
+          <failOnError>false</failOnError>
+          <filesets>
+            <fileset>
+              <directory>.</directory>
+              <includes>
+                <include>src/main/webapp/*.*</include>
+                <include>src/main/webapp/WEB-INF/*</include>
+`	      
+              </includes>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+
+            <fileset>
+              <directory>.</directory>
+              <includes>
+                <include>dist/reefer/*.*</include>
+                <!--include>src/main/webapp/**/*.*</include-->
 `	      </includes>
-	      <followSymlinks>false</followSymlinks>
-	    </fileset>
-
-	    <fileset>
-	      <directory>.</directory>
-	      <includes>
-		       <include>dist/reefer/*.*</include>
-		<!--include>src/main/webapp/**/*.*</include-->
-`	      </includes>
-	      <followSymlinks>false</followSymlinks>
-	    </fileset>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
 
 
-	  </filesets>
-	</configuration>
+          </filesets>
+        </configuration>
       </plugin>
 
 
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
         <version>2.4</version>
-                <configuration>
-                    <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <!--warName>${project.artifactId}</warName-->
-                    <webResources>
-                        <resource>
-                            <directory>dist/reefer</directory>
-                        </resource>
-                        <resource>
-                            <directory>src/main/liberty/config</directory>
-                        </resource>
+        <configuration>
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+          <!--warName>${project.artifactId}</warName-->
+          <webResources>
+            <resource>
+              <directory>dist/reefer</directory>
+            </resource>
+            <resource>
+              <directory>src/main/liberty/config</directory>
+            </resource>
 
-                    </webResources>
-                </configuration>
+          </webResources>
+        </configuration>
 
-            </plugin>
-            <plugin>
-                <groupId>com.github.eirslett</groupId>
-                <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.10.0</version>
-                <configuration>
-                    <workingDirectory>./</workingDirectory>
-                    <nodeVersion>v12.18.2</nodeVersion>
-                    <!--nodeVersion>${node.version}</nodeVersion-->
-                    <npmVersion>6.14.5</npmVersion>
-                    <!--npmVersion>${npm.version}</npmVersion-->
-                    <nodeDownloadRoot>http://nodejs.org/dist/</nodeDownloadRoot>
-                    <npmDownloadRoot>http://registry.npmjs.org/npm/-/</npmDownloadRoot>
-                    <installDirectory>./</installDirectory>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>install node and npm</id>
-                        <goals>
-                            <goal>install-node-and-npm</goal>
-                        </goals>
-                        <phase>generate-resources</phase>
-                    </execution>
-                    <execution>
-                        <id>npm install</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <phase>generate-resources</phase>
-                        <configuration>
-                            <arguments>ci --loglevel=error</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm build-prod</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>run build</arguments>
-                            <!--arguments>run-script build-dev</arguments-->
-                        </configuration>
-                    </execution>
+      </plugin>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <version>1.10.0</version>
+        <configuration>
+          <workingDirectory>./</workingDirectory>
+          <nodeVersion>v12.18.2</nodeVersion>
+          <!--nodeVersion>${node.version}</nodeVersion-->
+          <npmVersion>6.14.5</npmVersion>
+          <!--npmVersion>${npm.version}</npmVersion-->
+          <nodeDownloadRoot>http://nodejs.org/dist/</nodeDownloadRoot>
+          <npmDownloadRoot>http://registry.npmjs.org/npm/-/</npmDownloadRoot>
+          <installDirectory>./</installDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>install node and npm</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+            <phase>generate-resources</phase>
+          </execution>
+          <execution>
+            <id>npm install</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <phase>generate-resources</phase>
+            <configuration>
+              <arguments>ci --loglevel=error</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>npm build-prod</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+              <!--arguments>run-script build-dev</arguments-->
+            </configuration>
+          </execution>
 
-                </executions>
-            </plugin>
+        </executions>
+      </plugin>
 
-            <!-- Plugin to copy the content of /angular/dist/ directory to output directory (ie/ /target/transactionManager-1.0/) -->
-            <!--plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-resources-plugin</artifactId>
-              <version>2.4.2</version>
-              <executions>
-                <execution>
-                  <id>default-copy-resources</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                    <goal>copy-resources</goal>
-                  </goals>
-                  <configuration>
-                    <overwrite>true</overwrite>
-                    <outputDirectory>${project.build.directory}/${project.artifactId}-${project.version}/</outputDirectory>
-                    <resources>
-                      <resource>
-                        <directory>${project.basedir}/dist</directory>
-                      </resource>
-                    </resources>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copyruntime</id>
+            <phase>install</phase>
+            <configuration>
+              <tasks>
+                <mkdir dir="${project.basedir}/src/main/webapp/WEB-INF"/>
+                <copy todir="${project.basedir}/src/main/webapp">
+                  <fileset dir="${project.basedir}/dist/reefer"/>
+                </copy>
+                <copy todir="${project.basedir}/src/main/webapp/WEB-INF">
+                  <fileset dir="${project.basedir}/src/main/WEB-INF"/>
+                </copy>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-resources-plugin</artifactId>
-              <version>2.4.2</version>
-              <executions>
-                <execution>
-                  <id>default-copy-resources</id>
-                  <phase>install</phase>
-                  <goals>
-                    <goal>copy-resources</goal>
-                  </goals>
-                  <configuration>
-                    <overwrite>true</overwrite>
-                    <outputDirectory>${project.basedir}/src/main/webapp</outputDirectory>
-                    <resources>
-                      <resource>
-                        <directory>${project.basedir}/dist/reefer</directory>
-                      </resource>
-                      <!--resource>
-                        <directory>${project.basedir}/src/main/webapp/WEB-INF</directory>
-                      </resource-->
-                       <resource>
-                        <directory>${project.basedir}/src/main/WEB-INF</directory>
-                      </resource>
+      <plugin>
+        <groupId>io.openliberty.tools</groupId>
+        <artifactId>liberty-maven-plugin</artifactId>
+        <version>3.2</version>
+        <configuration>
+          <serverName>frontEndServer</serverName>
+          <runtimeArtifact>
+            <groupId>io.openliberty</groupId>
+            <artifactId>openliberty-runtime</artifactId>
+            <type>zip</type>
+          </runtimeArtifact>
+        </configuration>
+      </plugin>
 
-                    </resources>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
-
-	<plugin>
-		<groupId>io.openliberty.tools</groupId>
-		<artifactId>liberty-maven-plugin</artifactId>
-		<version>3.2</version>
-		<configuration>
-		
-		  <serverName>frontEndServer</serverName>
-
-
-		     <runtimeArtifact>
-				    <groupId>io.openliberty</groupId>
-				    <artifactId>openliberty-runtime</artifactId>
-				    <type>zip</type>
-		     </runtimeArtifact>
-
-
-
-
-		</configuration>
-
-	</plugin>
-
-
-
-        </plugins>
-    </build>
+    </plugins>
+  </build>
 </project>

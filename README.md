@@ -17,4 +17,88 @@ Its main responsibility is to implement business logic for Reefer App use cases.
 Its main responsibility is to provide drivers for Reefer App use cases. Currently supported use case are:
    * Advance time to move ships from origin to destination
    * Create shipping orders and assigned them to ships
-   * Generate reefer container events   
+
+## Reefer Deployment
+
+### Prereqs
+- maven - version 3.6.2+
+- KAR framework
+- Kind - version 0.8.1+. 
+ 
+
+### Quick Start
+```
+# build KAR java SDK in [KAR install dir]/sdk/java/kar-java
+mvn clean install
+
+# deploy kind by running 
+[KAR install dir]/scripts/setup-kind-kar-macos.sh
+
+# export Kafka and Redis specific env vars by running
+[KAR install dir]/scripts/kar-kind-env.sh
+
+# clone Reefer application
+clone https://github.ibm.com/cwiklik/reefer-app.git
+
+# build Reefer application. This step takes awhile since it involves a download
+# of node and npm, and builds Angular GUI runtime artifacts.
+mvn clean install
+```
+Launch Reefer server processes:
+```
+# Reefer GUI Server in [reefer install dir]/frontend dir run:
+mvn liberty:run
+
+# Reefer Actor Server in [reefer install dir]/actors dir run:
+kar -app reefer -actors order,reefer,voyage,reefer-provisioner mvn liberty:run
+
+# Reefer REST Server in [reefer install dir]/reefer-rest dir run:
+kar -app_port 9080 -app reefer -service reeferservice  mvn liberty:run
+
+# Reefer Simulator Server in [reefer install dir]/simulators dir run:
+kar -app_port 7080 -app reefer -service simservice -actors simhelper mvn liberty:run
+```
+
+To access the Reefer Web Application point your browser to:
+```
+http:\\localhost:9088
+```
+### GUI
+
+The Reefer Application implements SPA (Single Page Application) design where all 
+HTML, Javascript, and CSS code is fetched by the browser in a single page load to
+improve user experience. The application offers five distinct views 
+
+1. Order Create View 
+- Manually create and submit an order
+
+2. Orders View
+- Shows existing orders and starts/stops the Order Simulator
+
+3. Active Voyage View
+- Shows active voyages and starts/stops the Ship Simulator
+
+4. Reefers View (partially implemented)
+
+5. Ships View (partially implemented)
+
+### Simulators
+
+Current implementation of the Reefer Application provides two simulators. The Ship
+Simulator which advances time and causes ships to move from an origin port
+to a destination port. To start the Ship Simulator, navigate to the Active Voyage View and 
+change the value in a field directly under the **Simulated Delay** label. This value represents
+the desired time compression (in secs). For example, the value of 10 means that 
+each day is 10 secs long, 20 makes a day 20 secs, etc. The default value is 0, which disables 
+the Ship Simulator. The minimum (and recommended) compression factor for the Ship Simulator is 10secs. 
+Once the value is greater than zero, the **Start** button is activated. Press it to start the simulator.
+This is a modal button which will toggle **Start** and **Stop**. When the Ship Simulator is running
+the voyages begin to appear and the progress updated at the chosen rate.
+
+With the Ship Simulator running you can start the Order Simulator by navigating to the Orders View. 
+Change the value directly under the **Order Simulator** label to a number greater than zero. This value
+represents the max percentage the orders will fill each ship. For example, the value of 80 
+means that the ship will be filled with orders up to 80% of the maximum capacity. After choosing the 
+desired percentage, press **Update** button to start the Order Simulator. Orders begin to appear, with 
+the newest shown on top.
+

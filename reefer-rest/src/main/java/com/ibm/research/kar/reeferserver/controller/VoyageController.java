@@ -1,38 +1,30 @@
 package com.ibm.research.kar.reeferserver.controller;
 import java.io.StringReader;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.json.Json;
-import javax.json.JsonNumber;
 import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import javax.ws.rs.core.Response;
 
-import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
-import com.ibm.research.kar.reefer.model.*;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
+import com.ibm.research.kar.reefer.model.Route;
+import com.ibm.research.kar.reefer.model.Voyage;
+import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @CrossOrigin("*")public class VoyageController {
@@ -61,7 +53,7 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
         } catch( Exception e) {
           e.printStackTrace();
         }
-      return shipScheduleService.getMatchingSchedule(originPort, destinationPort, date);
+        return shipScheduleService.getMatchingSchedule(originPort, destinationPort, date);
     } 
 
     @PostMapping("/voyage/inrange")
@@ -71,16 +63,16 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
       Instant startDate;
       Instant endDate;
 
-        try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
-             
-          JsonObject req = jsonReader.readObject();
-          startDate = Instant.parse(req.getString("startDate"));
-          endDate = Instant.parse(req.getString("endDate"));
-          System.out.println("VoyageController.getVoyagesInRange() - startDate:"+startDate.toString()+" endDate:"+endDate.toString());
-        } catch( Exception e) {
-          e.printStackTrace();
-          return new ArrayList<Voyage>();
-        }
+      try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
+            
+        JsonObject req = jsonReader.readObject();
+        startDate = Instant.parse(req.getString("startDate"));
+        endDate = Instant.parse(req.getString("endDate"));
+        System.out.println("VoyageController.getVoyagesInRange() - startDate:"+startDate.toString()+" endDate:"+endDate.toString());
+      } catch( Exception e) {
+        e.printStackTrace();
+        return new ArrayList<Voyage>();
+      }
       return shipScheduleService.getMatchingSchedule(startDate, endDate);
     } 
 
@@ -117,76 +109,45 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
     }
     @PostMapping("/voyage/update")
       public void updateVoyageState(  @RequestBody String state) throws VoyageNotFoundException{
-          System.out.println("VoyageController.updateVoyageState() "+state);
-          String voyageId=null;
-          int daysAtSea=0;
+        System.out.println("VoyageController.updateVoyageState() "+state);
+        String voyageId=null;
+        int daysAtSea=0;
 
-          try (JsonReader jsonReader = Json.createReader(new StringReader(state))) {
-             
-            JsonObject req = jsonReader.readObject();
-            voyageId = req.getString("voyageId");
-            if ( req.containsKey("daysAtSea")) {
-              daysAtSea = req.getInt("daysAtSea");
-
-              System.out.println("VoyageController.updateVoyageState() daysAtSea="+req.getInt("daysAtSea"));
+        try (JsonReader jsonReader = Json.createReader(new StringReader(state))) {
             
-              Voyage voyage = shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
-              Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysAtSea);
-              if ( shipCurrentDate.equals(Instant.parse(voyage.getArrivalDate()) )  ||
-                   shipCurrentDate.isAfter(Instant.parse(voyage.getArrivalDate()))) {
-                orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED);
-              } else {
-                orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT);
-              }
-              
-            } else if ( req.containsKey("reeferCount") ) {
-              int reeferCount = req.getInt("reeferCount");
-              System.out.println("VoyageController.updateVoyageState() reeferCount="+reeferCount);
-
-              int shipFreeCapacity =
-                shipScheduleService.updateFreeCapacity(voyageId, reeferCount);
-                updateSimulator(voyageId, shipFreeCapacity);
-
-              System.out.println("VoyageController.updateVoyageState() - Ship booked - Ship free capacity:"+shipFreeCapacity);
-
-            } else if ( req.containsKey("reefers") ) {
-              
-            }
-
-          //  System.out.println("VoyageController.updateVoyageState Key:"+key+" value:"+value );
-          //  });
-         //   System.out.println("VoyageController.updateVoyageState+"+req.toString()+" ID:"+req.getString("id")+" DaysAtSea:"+req.getInt("daysAtSea"));
-            
-            //JsonParser parser = new JsonParser();
-         //   JsonObject req = new JsonObject(state);
-            //System.out.println("VoyageController.updateVoyageState() - ID:"+req.getString("id") +" DaysAtSea:"+req.getInt("daysAtSea"));
-      //  Voyage voyage = shipScheduleService.getVoyage(req.getString("id"));
-   
-          } catch( Exception e) {
-            e.printStackTrace();
-          }
-          /*
-          JsonReader jsonReader = Json.createReader(new StringReader(state));
           JsonObject req = jsonReader.readObject();
+          voyageId = req.getString("voyageId");
+          if ( req.containsKey("daysAtSea")) {
+            daysAtSea = req.getInt("daysAtSea");
 
-          //JsonParser parser = new JsonParser();
-       //   JsonObject req = new JsonObject(id).
-          System.out.println("VoyageController.updateVoyageState() - ID:"+req.getString("id") +" DaysAtSea:"+req.getInt("daysAtSea"));
-      Voyage voyage = shipScheduleService.getVoyage(req.getString("id"));
-     // voyage.getRoute().setVessel(vessel);
-*/
-/*
-      // update ship position
-      if ( !voyage.getRoute().getVessel().getPosition().equals(vessel.getPosition())) {
-        voyage.getRoute().getVessel().setPosition(vessel.getPosition());
-      }
-      if ( !voyage.getRoute().getVessel().getPosition().equals(vessel.getPosition())) {
-        voyage.getRoute().getVessel().setPosition(vessel.getPosition());
-      }
-      if ( voyage.getRoute().getVessel().getFreeCapacity() != vessel.getFreeCapacity()) {
-        voyage.getRoute().getVessel().setFreeCapacity(vessel.getFreeCapacity());
-      }
-*/
+            System.out.println("VoyageController.updateVoyageState() daysAtSea="+req.getInt("daysAtSea"));
+          
+            Voyage voyage = shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
+            Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysAtSea);
+            if ( shipCurrentDate.equals(Instant.parse(voyage.getArrivalDate()) )  ||
+                  shipCurrentDate.isAfter(Instant.parse(voyage.getArrivalDate()))) {
+              orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED);
+            } else {
+              orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT);
+            }
+            
+          } else if ( req.containsKey("reeferCount") ) {
+            int reeferCount = req.getInt("reeferCount");
+            System.out.println("VoyageController.updateVoyageState() reeferCount="+reeferCount);
+
+            int shipFreeCapacity =
+              shipScheduleService.updateFreeCapacity(voyageId, reeferCount);
+            updateSimulator(voyageId, shipFreeCapacity);
+
+            System.out.println("VoyageController.updateVoyageState() - Ship booked - Ship free capacity:"+shipFreeCapacity);
+
+          } else if ( req.containsKey("reefers") ) {
+            
+          }
+
+        } catch( Exception e) {
+          e.printStackTrace();
+        }
     } 
     @GetMapping("/voyage/routes")
     public List<Route> getRoutes() {

@@ -1,12 +1,9 @@
 package com.ibm.research.kar.reeferserver.controller;
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import com.ibm.research.kar.reefer.model.*;
-
+import com.ibm.research.kar.reefer.model.Port;
+import com.ibm.research.kar.reefer.model.Reefer;
 import com.ibm.research.kar.reeferserver.model.ReeferSupply;
 import com.ibm.research.kar.reeferserver.service.PortService;
 import com.ibm.research.kar.reeferserver.service.ReeferService;
@@ -21,18 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @CrossOrigin("*")
-public class ReeferController extends TimerTask {
+public class ReeferController {
     @Autowired
     private ReeferService reeferService;
     @Autowired
     private PortService portService;
 	@Autowired
 	private NotificationController webSocket;
-	private int count=1;
 
 	public ReeferController() {
-	//	Timer timer = new Timer();
-	//	timer.scheduleAtFixedRate(this, new Date(), 5000);
 	}
     @PostMapping("/reefers")
 	public   List<Port>  addReefers(@RequestBody ReeferSupply reeferAdd) throws IOException {
@@ -47,7 +41,7 @@ public class ReeferController extends TimerTask {
 	public List<Reefer>  getAllReefers() {
 		System.out.println("getAllReefers() - Got New Request");
 		
-		return reeferService.getReefers(); //new ArrayList<Reefer>(new ArrayList<Reefer>());
+		return reeferService.getReefers();
 	}
 	@GetMapping("/reefers/{port}")
 	public List<Reefer>  getReefers(@RequestParam("port") String port) {
@@ -55,13 +49,7 @@ public class ReeferController extends TimerTask {
 		
 		return reeferService.getReefers(port);
     }
-	public void run(){
-		//toy implementation
-		
-		//updateReefers();
-		//System.out.println("after change age is "+age);
-  
-	  }
+
 	private void updateReefers() {
 		if ( reeferService != null ) {
 			List<Reefer> reefers = reeferService.getReefers();
@@ -77,9 +65,7 @@ public class ReeferController extends TimerTask {
 				}
 				
 			}
-			count++;
 			webSocket.sendReefersUpdate(reefers);
-//			System.out.println("Websocket :: updating reefers");
 		}
 		
 	}

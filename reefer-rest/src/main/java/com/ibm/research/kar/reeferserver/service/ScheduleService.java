@@ -1,25 +1,23 @@
 package com.ibm.research.kar.reeferserver.service;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
-import com.ibm.research.kar.reefer.model.*;
-import com.ibm.research.kar.reeferserver.scheduler.*;
-import org.springframework.stereotype.Component;
-import org.springframework.core.io.Resource;
-import org.springframework.beans.factory.annotation.Value;
-
 import com.ibm.research.kar.reefer.common.error.RouteNotFoundException;
 import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
+import com.ibm.research.kar.reefer.model.Route;
+import com.ibm.research.kar.reefer.model.Voyage;
+import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
+import com.ibm.research.kar.reeferserver.scheduler.ShippingScheduler;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
 @Component
 public class ScheduleService {
 

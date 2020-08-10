@@ -10,8 +10,6 @@ import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import com.ibm.research.kar.reeferserver.model.*;
-
 import org.springframework.stereotype.Component;
 
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
@@ -19,7 +17,6 @@ import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
 @Component
 public class ShippingScheduler {
-//    private final LinkedList<Voyage> sortedSchedule = new LinkedList<Voyage>();
     private List<Route> routes = new ArrayList<Route>();
 
     public void initialize(final InputStream routeConfigFile) throws Exception {
@@ -35,10 +32,6 @@ public class ShippingScheduler {
                 + route.getVessel().getName() + " Ship Capacity:" + route.getVessel().getMaxCapacity())
 
             );
-   //        for (final Route route : routes) {
-    //            System.out.println("................Origin Port: " + route.getOriginPort() + " Ship:"
-    //                    + route.getVessel().getName() + " Ship Capacity:" + route.getVessel().getMaxCapacity());
-    //        }
         } catch (final IOException e) {
             System.out.println("Unable to save users: " + e.getMessage());
         }

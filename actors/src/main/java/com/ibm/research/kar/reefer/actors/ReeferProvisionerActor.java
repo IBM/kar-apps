@@ -1,5 +1,22 @@
 package com.ibm.research.kar.reefer.actors;
  
+import static com.ibm.research.kar.Kar.actorCall;
+import static com.ibm.research.kar.Kar.actorRef;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonValue;
+
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.annotations.Activate;
@@ -13,27 +30,7 @@ import com.ibm.research.kar.reefer.common.ReeferState;
 import com.ibm.research.kar.reefer.common.packingalgo.PackingAlgo;
 import com.ibm.research.kar.reefer.common.packingalgo.SimplePackingAlgo;
 import com.ibm.research.kar.reefer.model.JsonOrder;
-import com.ibm.research.kar.reefer.model.Order;
-import com.ibm.research.kar.reefer.model.Reefer;
 
-import static com.ibm.research.kar.Kar.*;
-
-import java.util.ArrayList;
-//import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-//import java.util.concurrent.CompletionStage;
-
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonValue;
-//import javax.json.JsonString;
-//import javax.json.JsonValue;
 @Actor
 public class ReeferProvisionerActor extends BaseActor {
 
@@ -57,35 +54,20 @@ public class ReeferProvisionerActor extends BaseActor {
                 Kar.actorGetAllState(this);
             System.out.println(
                     "ReeferProvisionerActor.init() Fetched Inventory from Actor State" );
-            //JsonObject object = Json.createObjectBuilder().build();
-
            
             if ( currentInventory == null || currentInventory.isEmpty()) {
                 System.out.println(
                 "ReeferProvisionerActor.init() - inventory not available");
                 addReefers(10000);
                
-                //JsonObjectBuilder builder = Json.createObjectBuilder();
-               // inventory.forEach(builder::add);
                 inventory.forEach( (key,value) -> {
-                   // builder.add(key,value);
                    Kar.actorSetState(this, key, value);
-                 //  System.out.println("ReeferProvisionerActor.init() saved reefer: "+value.toString());
-                });
-               // JsonObject obj = builder.build();
-
-             //   System.out.println("ReeferProvisionerActor.init() >>>>saving reefer inventory of size:"+inventory.size());
-             //   System.out.println("ReeferProvisionerActor.init() inventory: "+obj.toString());
-            //    Kar.actorSetState(this, "reefer-inventory", obj);
+                 });
                 System.out.println("ReeferProvisionerActor.init() - saved reefer inventory ");
 
             } else {
                 System.out.println(
                     "ReeferProvisionerActor.init() - inventory available ");
-             //   System.out.println(
-             //       "ReeferProvisionerActor.init() - inventory available "+currentInventory.toString());
-                //JsonObject obj = currentInventory.asJsonObject();
-                //obj.forEach(inventory::put);
                 inventory = currentInventory;
             }
  
@@ -102,26 +84,12 @@ public class ReeferProvisionerActor extends BaseActor {
 
 
         for( int i=0; i < howMany; i++ ) {
-            //String reeferId = UUID.randomUUID().toString();
             JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
             String id = UUID.randomUUID().toString();
             jsonBuilder.add(ReeferState.REEFER_ID_KEY, id).add(ReeferState.VOYAGE_ID_KEY,"").
                 add(ReeferState.ALLOCATION_STATUS_KEY, ReeferAllocationStatus.EMPTY.toString()).
                 add(ReeferState.MAX_CAPACITY_KEY, 1000).add(ReeferState.REMAINING_CAPACITY_KEY, 1000);
             inventory.put(id, jsonBuilder.build());
-/*            
-            // Actors are instantiated lazily
-            ActorRef reeferActor =  actorRef(ReeferAppConfig.ReeferActorName,reeferId);
-             
-            try {
-                actorCall(reeferActor, "configure", params);
-            } catch (ActorMethodNotFoundException e) {
-                e.printStackTrace();
-            }
-             
-//            System.out.println("ReeferProvisioner.addReefers() - created new reefer - ID:"+reeferActor.getId());
-            reeferInventory.put(reeferId, reeferActor);
-            */
         }
         System.out.println("ReeferProvisioner.addReefers() - created "+howMany+" Actors");
     }
@@ -153,12 +121,9 @@ public class ReeferProvisionerActor extends BaseActor {
         JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
      
         System.out.println("ReeferProvisionerActor.bookReefers() called ");
-       // JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
         if ( order.containsKey(JsonOrder.ProductQtyKey)) {
             int qty = order.getProductQty();
 
-//            List<ActorRef> allocatedReefers = 
-//                ReeferAllocator.allocate(packingAlgo, new ArrayList<ActorRef>(reeferInventory.values()), qty, order.getVoyageId());
             List<ReeferState> allocatedReefers = 
                 ReeferAllocator.allocateReefers(packingAlgo, new ArrayList<JsonValue>(inventory.values()), qty, order.getVoyageId());
 
@@ -172,10 +137,7 @@ public class ReeferProvisionerActor extends BaseActor {
             for( ReeferState reefer : allocatedReefers ) {
                 arrayBuilder.add(reefer.getId());
             }
-/*
-            // BELOW IS TEMPORARY. REPLENISH REEFER INVENTORY.REMOVE WHEN THE USE IS FULLY IMPLEMENTED
-            addReefers(allocatedReefers.size());
-*/
+
             // Uncomment below when supporting reefers
             //JsonArrayBuilder arrayBuilder = reserveReefers(allocatedReefers, order);
 

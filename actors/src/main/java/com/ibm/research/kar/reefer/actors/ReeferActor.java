@@ -3,7 +3,6 @@ import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.model.JsonOrder;
-import com.ibm.research.kar.reefer.model.Order;
 
 import static com.ibm.research.kar.Kar.*;
 
@@ -27,11 +26,7 @@ public class ReeferActor extends BaseActor {
   
     @Activate
     public void init() {
-//       System.out.println("ReeferActor.init() - ID:"+this.getId());
-        // Map<String, JsonValue> stateMap =  actorGetAllState(this);
-        // if ( !stateMap.isEmpty() ) {
 
-        // }
     }
 
     @Remote
@@ -58,8 +53,6 @@ public class ReeferActor extends BaseActor {
         System.out.println("ReeferActor.reserve() called - Id:"+this.getId());
         JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
  
-        //ActorRef voyageActor =  actorRef("voyage","444");
-  
     }
     @Remote
     public void changeLocation(JsonObject message) {

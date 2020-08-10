@@ -90,12 +90,6 @@ public class VoyageActor extends BaseActor {
  
         System.out.println("VoyageActor.reserve() called "+message.toString());
 
-//        Map<String, JsonValue> stateMap = actorGetAllState(this);
-/*        
-        if ( shipSecured() ) {
-
-        }
-*/  
         JsonObject params = Json.createObjectBuilder()
                 .add(JsonOrder.OrderKey,  order.getAsObject())
 			    .build();
@@ -113,9 +107,6 @@ public class VoyageActor extends BaseActor {
                 try {
          
                     Response response = restPost("reeferservice","/voyage/update", params2);
-//                    return Json.createObjectBuilder()
-//                    .add("status", "OK")
-//                    .build();
                     return Json.createObjectBuilder()
                     .add("status", "OK")
                     .add("reefers",  reply.asJsonObject().getJsonArray("reefers")) 
@@ -128,44 +119,10 @@ public class VoyageActor extends BaseActor {
                     .add("error",e.getMessage())
                     .build();
                 }
-
-
-
-
-
-
             } else {
                 return reply.asJsonObject();
             }
-        //    JsonValue v = actorGetState(this, "reefers");
-        //    JsonArray reefers = v.asJsonArray();
-         //   reefers.addAll(reefers.size(), reefers);
-        //    actorSetState(this, "reefers", reefers);
- //       System.out.println("VoyageActor.changePosition() called "+message.toString());
-
-//        int daysAtSea = message.getInt("daysAtSea");
- //       String currentDate = message.getString("currentDate");
-/*
-        JsonObject params = Json.createObjectBuilder()
-        .add("voyageId",getId())
-        .add("daysAtSea",daysAtSea)
-        .build();
-        try {
  
-            restPost("reeferservice","/voyage/update", params);
-            return Json.createObjectBuilder()
-            .add("status", "OK")
-            .build();
-        } catch( Exception e) {
-            e.printStackTrace();
-            return Json.createObjectBuilder()
-            .add("status", "Failed")
-            .add("error",e.getMessage())
-            .build();
-        }
-        */
-
-           
         } catch( ActorMethodNotFoundException ee) {
             ee.printStackTrace();
             return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","INVALID_CALL").add("orderId", String.valueOf(this.getId())).build();

@@ -19,16 +19,11 @@ public class NotificationController {
     @Autowired
     private SimpMessagingTemplate template;
 
-    // Initialize Notifications
-    //private Notifications notifications = new Notifications(0);
 
     @GetMapping("/notify")
     public String getNotification() {
 
-        // Increment Notification by one
-        //notifications.increment();
-        System.out.println("........ getNotification() called");
-        // Push notifications to front-end
+         // Push notifications to front-end
         template.convertAndSend("/topic/notification", "Hello");
 
         return "Notifications successfully sent to Angular !";
@@ -42,10 +37,10 @@ public class NotificationController {
     }
     public void sendActiveVoyageUpdate(List<Voyage> voyages, String currentDate) {
         ShippingSchedule schedule = new ShippingSchedule(voyages, currentDate);
-        template.convertAndSend("/topic/voyages", schedule); //voyages);
+        template.convertAndSend("/topic/voyages", schedule); 
     }
     public void sendOrderUpdate(Order order) {
         
-        template.convertAndSend("/topic/orders", order); //voyages);
+        template.convertAndSend("/topic/orders", order); 
     }
 }

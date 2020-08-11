@@ -15,8 +15,8 @@ Its main responsibility is to implement business logic for Reefer App use cases.
 
 4. Simulator server running in OpenLiberty
 Its main responsibility is to provide drivers for Reefer App use cases. Currently supported use case are:
-   * Advance time to move ships from origin to destination
-   * Create shipping orders and assigned them to ships
+   * Advance time and notify active voyages of their new locations
+   * Gradually create orders to fill upcoming voyages to a specified target capacity
 
 ## Reefer Deployment
 
@@ -31,8 +31,11 @@ Its main responsibility is to provide drivers for Reefer App use cases. Currentl
 # build KAR java SDK in [KAR install dir]/sdk/java/kar-java
 mvn clean install
 
-# deploy kind by running 
+# deploy KAR dependencies Kafka and Redis by either ...
+# ... running them in kind
 [KAR install dir]/scripts/setup-kind-kar-macos.sh
+# ... or running them in docker-compose
+[KAR install dir]/scripts/docker-compose-start.sh
 
 # export Kafka and Redis specific env vars by running
 [KAR install dir]/scripts/kar-kind-env.sh

@@ -19,7 +19,7 @@
             <input type="text" matInput placeholder="" [(ngModel)]="customerId" required>
             
 
-            <mat-hint align="end">Enter Customer Id ^</mat-hint>
+            <mat-hint align="front">Enter Customer Id ^</mat-hint>
           </mat-form-field>
         </div>
   
@@ -36,7 +36,7 @@
       <div class="example-container">
 
 
-        <mat-form-field style="width:130px !important" appearance="fill">
+        <mat-form-field style="width:150px !important" appearance="fill">
           <!--mat-label>Select me</mat-label--->
           <mat-select [(ngModel)]="selectedProduct" [style.fontSize.px]="'20'" required>
 
@@ -44,7 +44,7 @@
                 {{product.name}}
               </mat-option>
           </mat-select>
-          <mat-hint align="end">Choose product to ship ^</mat-hint>
+          <mat-hint align="front">Choose product to ship ^</mat-hint>
         </mat-form-field>
         <mat-form-field style="width:70px !important; background-color: lightgrey">
           <input matInput [style.fontSize.px]="'20'" placeholder="Quantity" [(ngModel)]="productQty" type="number" value="1000">

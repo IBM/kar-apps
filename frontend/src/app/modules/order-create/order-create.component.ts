@@ -70,7 +70,8 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   //shippingSchedule: ShipSchedule;
   connected: Subscription;
   isConnected = false;
-  date : Date;//  =  new  FormControl(new  Date());
+  date = new Date(new Date().setDate(new Date().getDate()+1));
+  //date : this.tomorrow;//  =  new  FormControl(new  Date());
 
   displayedColumns: string[] = ['select', 'voyageId', 'vessel', 'origin', 'destination','sailDate', 'transitTime', 'freeCapacity'];
   //dataSource = new MatTableDataSource<ShipSchedule>(SHIPPING_SCHEDULE);
@@ -80,7 +81,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
 
 
   constructor(private dialog: MatDialog, private shipSchedule: ShipScheduleService,private restService: RestService) {
-
+console.log("Date:"+this.date);
     this.restService.getRoutes().subscribe((data) => {
      // console.log(data);
      this.allRoutes = data;
@@ -165,7 +166,9 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   resetVoyages() {
     this.selectedOriginPort="";
     this.selectedDestinationPort="";
+    
     this.departureDate = new Date();
+    
     this.dataSource.data = [];
   }
   showOrderIdDialog(orderId: string) {
@@ -347,7 +350,8 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.restService.currentDate().subscribe((data) => {
       console.log("nextDay() - Current Date:" + data.substr(0,10));
-      this.date = new Date(data.toString());
+      // start the Date picker with tommorrow as the earliest date to order 
+      this.date = new Date(new Date().setDate(new Date(data.toString()).getDate()+1));
     });
    // this.dataService.initializeWebSocketConnection();
     this.dataSource.paginator = this.paginator;

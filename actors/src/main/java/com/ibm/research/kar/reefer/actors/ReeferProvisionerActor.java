@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
@@ -30,10 +29,15 @@ import com.ibm.research.kar.reefer.common.ReeferState;
 import com.ibm.research.kar.reefer.common.packingalgo.PackingAlgo;
 import com.ibm.research.kar.reefer.common.packingalgo.SimplePackingAlgo;
 import com.ibm.research.kar.reefer.model.JsonOrder;
+import com.ibm.research.kar.reefer.model.ReeferDTO;
+
+import it.unimi.dsi.util.XoRoShiRo128PlusRandom;
 
 @Actor
 public class ReeferProvisionerActor extends BaseActor {
-
+//    int reeferInventorySize = 1000000;
+    List<ReeferDTO> reeferMasterInventory = new ArrayList<>(ReeferAppConfig.ReeferInventorySize);
+    
     private Map<String,JsonValue> inventory = new HashMap<>();
 
     private Map<String,ActorRef> reeferInventory = new HashMap<>();
@@ -76,6 +80,11 @@ public class ReeferProvisionerActor extends BaseActor {
             e.printStackTrace();
         }
  
+    }
+    @Remote
+    public JsonObject reeferInventorySize() {
+        JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
+        return jsonBuilder.add("inventorySize", reeferMasterInventory.size()).build();
     }
     private void addReefers(int howMany) {
         JsonObject params = Json.createObjectBuilder()
@@ -175,5 +184,9 @@ public class ReeferProvisionerActor extends BaseActor {
         List<ActorRef> newReefers = new ArrayList<>();
 
         return newReefers;
+    }
+    private int randomIndex() {
+        XoRoShiRo128PlusRandom xoroRandom = new XoRoShiRo128PlusRandom();
+        return xoroRandom.nextInt(ReeferAppConfig.ReeferInventorySize);
     }
 }

@@ -93,7 +93,7 @@ public class SimulatorResource {
   }
 
   /**
-   * One-shot advance of time
+   * One-shot creation of order for future voyages
    */
   @POST
   @Path("/createorder")
@@ -102,7 +102,7 @@ public class SimulatorResource {
       return simService.createOrder();
     } catch (Exception e) {
       e.printStackTrace();
-      System.err.println("help! from advancetime");
+      System.err.println("help! from createorder");
       return Json.createValue(-1);
     }
   }
@@ -137,6 +137,49 @@ public class SimulatorResource {
   @Path("/newdayfororders")
   public void newdayfororders() {
     simService.newDayForOrders();
+  }
+
+
+  @POST
+  @Path("/setfailuretarget")
+  public JsonValue setfailuretarget(JsonValue num) {
+    try {
+      return simService.setFailureTarget(num);
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from setfailertarget");
+      return Json.createValue(-1);
+    }
+  }
+
+  /**
+   * Gets the current setting for Unit Period
+   */
+  @GET
+  @Path("/getfailuretarget")
+  public JsonValue getfailuretarget() {
+    try {
+      return simService.getFailureTarget();
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from getfailertarget");
+      return Json.createValue(-1);
+    }
+  }
+
+  /**
+   * One-shot creation of order for future voyages
+   */
+  @POST
+  @Path("/createanomaly")
+  public JsonValue createanomaly() {
+    try {
+      return simService.createAnomaly();
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from createanomaly");
+      return Json.createValue(-1);
+    }
   }
 
 }

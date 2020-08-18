@@ -2,7 +2,7 @@
 
 To launch Reefer Actor service run:
 
-kar --app reefer -service kcontainer -actors order,reefer,voyage,reefer-provisioner mvn liberty:run
+kar --app reefer -actors order,reefer,voyage,reefer-provisioner mvn liberty:run
 
 To test placing an order run the following in a separate shell:
 

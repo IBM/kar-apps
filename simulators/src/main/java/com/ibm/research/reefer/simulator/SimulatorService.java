@@ -1,6 +1,5 @@
 package com.ibm.research.reefer.simulator;
 
-import static com.ibm.research.kar.Kar.actorCall;
 import static com.ibm.research.kar.Kar.actorRef;
 
 import java.util.HashMap;
@@ -15,6 +14,7 @@ import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 
+import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 
 public class SimulatorService {
@@ -50,7 +50,7 @@ public class SimulatorService {
   private JsonValue get(JsonValue key) {
     if (null == persistentData) {
       persistentData = new HashMap<String, JsonValue>();
-      persistentData.putAll((JsonObject) actorCall(aref, "getAll"));
+      persistentData.putAll(Kar.actorGetAllState(aref));
     }
     return persistentData.get(((JsonString) key).getString());
   }
@@ -59,10 +59,10 @@ public class SimulatorService {
   private JsonValue set(JsonValue key, JsonValue value) {
     if (null == persistentData) {
       persistentData = new HashMap<String, JsonValue>();
-      persistentData.putAll((JsonObject) actorCall(aref, "getAll"));
+      persistentData.putAll(Kar.actorGetAllState(aref));
     }
     persistentData.put(((JsonString) key).getString(), value);
-    return actorCall(aref, "set", key, value);
+    return Json.createValue(Kar.actorSetState(aref, ((JsonString)key).getString(), value));
   }
 
   // local utility to get or init persistent value

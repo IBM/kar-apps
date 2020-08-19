@@ -43,6 +43,19 @@ curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simula
 ... from another reeferapp service:  
 Kar.restPost("simservice", "simulator/setordertarget", Json.createObjectBuilder().add("value", T).build());
 
+To create one (1) reefer anomaly ...  
+... from command line:  
+curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/createanomaly  
+... from another reeferapp service:  
+Kar.restPost("simservice", "simulator/createanomaly", JsonValue.NULL);
+
+
+To put reeferthread in auto mode with reefertarget percent = 0.0T, or back into manual-order mode with T=0, ...  
+... from command line:  
+curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setreefertarget -d '{"value":T}'  
+... from another reeferapp service:  
+Kar.restPost("simservice", "simulator/setreefertarget", Json.createObjectBuilder().add("value", T).build());
+
 
 Note for simulator developers:
 As of now a running simulator server supports hot method replace.  

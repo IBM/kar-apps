@@ -23,7 +23,7 @@ public class OrderThread extends Thread {
   Instant today;
 
   // TODO make orderPerDay configurable
-  int ordersPerDay = 1;
+  int ordersPerDay = 3;
   int ordersDoneToday = 0;
 
   public void run() {
@@ -146,7 +146,7 @@ public class OrderThread extends Thread {
       if (!oneshot) {
         try {
           // finish orders in 1/2 day
-          Thread.sleep(1000 * SimulatorService.unitdelay.intValue() / (2 * ordersPerDay));
+          Thread.sleep(3 * 1000 * SimulatorService.unitdelay.intValue() / (4 * ordersPerDay));
         } catch (InterruptedException e) {
 //            		System.out.println("orderthread: Interrupted Thread "+Thread.currentThread().getId());
           interrupted = true;

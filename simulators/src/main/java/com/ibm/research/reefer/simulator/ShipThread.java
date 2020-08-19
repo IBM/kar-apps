@@ -77,8 +77,8 @@ public class ShipThread extends Thread {
         // tell GUI to update active voyages
         Kar.restPost("reeferservice", "voyage/updateGui", currentDate);
 
-        // tell order thread to wake up and make some orders
-        Kar.restPost("simservice", "simulator/newdayfororders", JsonValue.NULL);
+        // tell other threads to wake up
+        Kar.restPost("simservice", "simulator/newday", JsonValue.NULL);
       }
 
       try {

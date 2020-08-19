@@ -131,12 +131,12 @@ public class SimulatorResource {
   }
 
   /**
-   * Used by the shipthread to wake up orderthread
+   * Used by the shipthread to wake up other sim threads
    */
   @POST
-  @Path("/newdayfororders")
-  public void newdayfororders() {
-    simService.newDayForOrders();
+  @Path("/newday")
+  public void newday() {
+    simService.newDay();
   }
 
 

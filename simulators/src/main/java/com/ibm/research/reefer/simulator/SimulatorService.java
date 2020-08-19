@@ -241,10 +241,13 @@ public class SimulatorService {
   }
 //	}
 
-  // wake up order thread if sleeping
-  public void newDayForOrders() {
+  // wake up order and reefer threads if sleeping
+  public void newDay() {
     if (null != orderthread) {
       orderthread.interrupt();
+    }
+    if (null != reeferthread) {
+      reeferthread.interrupt();
     }
   }
 

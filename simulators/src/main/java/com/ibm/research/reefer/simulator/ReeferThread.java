@@ -23,7 +23,7 @@ public class ReeferThread extends Thread {
   JsonValue currentDate = Json.createValue("");
 
   //TODO make updatesPerDay configurable
-  int updatesPerDay = 1;
+  int updatesPerDay = 10;
   int anomaliesPerUpdate;
   int anomaliesDoneToday;
 
@@ -61,6 +61,7 @@ public class ReeferThread extends Thread {
         // If new day ...
         if (oneshot || !currentDate.equals((JsonValue) SimulatorService.currentDate.get())) {
 
+          currentDate = (JsonValue) SimulatorService.currentDate.get();
           // Get reefer inventory size from reefer-rest
           Response response = Kar.restGet("reeferservice", "reefers/inventory/size");
           JsonValue is = (JsonValue) response.readEntity(JsonValue.class);

@@ -14,7 +14,6 @@ import com.ibm.research.kar.Kar;
 
 public class OrderThread extends Thread {
   boolean running = true;
-  boolean interrupted = false;
   boolean oneshot = false;
   int threadloops = 0;
   int ordertarget;
@@ -22,8 +21,6 @@ public class OrderThread extends Thread {
   JsonValue futureVoyages;
   Instant today;
 
-  // TODO make orderPerDay configurable
-  int ordersPerDay = 3;
   int ordersDoneToday = 0;
 
   public void run() {
@@ -32,6 +29,10 @@ public class OrderThread extends Thread {
       oneshot = true;
     }
 
+    int ordersPerDay = SimulatorService.orderupdates.intValue();
+    if (ordersPerDay < 1) {
+      ordersPerDay = 1; 
+    }
     Thread.currentThread().setName("orderthread");
     SimulatorService.orderthreadcount.incrementAndGet();
     System.out.println(
@@ -66,8 +67,8 @@ public class OrderThread extends Thread {
           // ... fetch all future voyages leaving in the next N days
           currentDate = (JsonValue) SimulatorService.currentDate.get();
           today = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
-          // TODO make window size a control variable
-          int windowsize = 7;
+
+          int windowsize = SimulatorService.orderwindow.intValue();
           Instant endday = today.plus(windowsize, ChronoUnit.DAYS);
           JsonObject message = Json.createObjectBuilder().add("startDate", today.toString())
                   .add("endDate", endday.toString()).build();
@@ -145,11 +146,10 @@ public class OrderThread extends Thread {
       // sleep if not a oneshot order command
       if (!oneshot) {
         try {
-          // finish orders in 1/2 day
+          // finish orders in 3/4 day
           Thread.sleep(3 * 1000 * SimulatorService.unitdelay.intValue() / (4 * ordersPerDay));
         } catch (InterruptedException e) {
 //            		System.out.println("orderthread: Interrupted Thread "+Thread.currentThread().getId());
-          interrupted = true;
         }
       }
 

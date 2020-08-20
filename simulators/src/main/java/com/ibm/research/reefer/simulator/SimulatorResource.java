@@ -17,12 +17,11 @@ public class SimulatorResource {
   private static SimulatorService simService = new SimulatorService();
 
   /**
-   * Simulator cold start goes into manual mode. warm start resumes last operational state.
-   * Transition from manual to auto will start associated Time, Order or Reefer thread running.
-   * Transition to manual will kill the associated thread when it is sleeping. Transition to auto
-   * will initialize any required but unset parameters to their default values. Delay = 0 means
-   * manual mode
+   * API interface endpoints
    */
+
+//-------------------- Ship thread controls ----------------
+
   @POST
   @Path("/setunitdelay")
   public JsonValue setunitdelay(JsonValue num) {
@@ -65,20 +64,64 @@ public class SimulatorResource {
     }
   }
 
-  @POST
-  @Path("/setordertarget")
-  public JsonValue setordertarget(JsonValue num) {
+// -------------------- Order controls ----------------
+
+  /**
+   * gets & sets the number of days from now that future voyages can get orders
+   */
+  @GET
+  @Path("/getorderwindow")
+  public JsonValue getorderwindow() {
     try {
-      return simService.setOrderTarget(num);
+      return simService.getOrderWindow();
     } catch (Exception e) {
       e.printStackTrace();
-      System.err.println("help! from setordertarget");
+      System.err.println("help! from getorderwindow");
+      return Json.createValue(-1);
+    }
+  }
+
+  @POST
+  @Path("/setorderwindow")
+  public JsonValue setorderwindow(JsonValue num) {
+    try {
+      return simService.setOrderWindow(num);
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from setorderwindow");
       return Json.createValue(-1);
     }
   }
 
   /**
-   * Gets the current setting for Unit Period
+   * gets/sets the number of times per day that orders can be generated
+   */
+  @GET
+  @Path("/getorderupdates")
+  public JsonValue getorderupdates() {
+    try {
+      return simService.getOrderUpdates();
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from getorderupdates");
+      return Json.createValue(-1);
+    }
+  }
+
+  @POST
+  @Path("/setorderupdates")
+  public JsonValue setorderupdates(JsonValue num) {
+    try {
+      return simService.setOrderUpdates(num);
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from setorderupdates");
+      return Json.createValue(-1);
+    }
+  }
+
+  /**
+   * gets/sets the capacity utilization % target for order generation
    */
   @GET
   @Path("/getordertarget")
@@ -92,8 +135,20 @@ public class SimulatorResource {
     }
   }
 
+  @POST
+  @Path("/setordertarget")
+  public JsonValue setordertarget(JsonValue num) {
+    try {
+      return simService.setOrderTarget(num);
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from setordertarget");
+      return Json.createValue(-1);
+    }
+  }
+
   /**
-   * One-shot creation of order for future voyages
+   * One-shot creation of orders for future voyages
    */
   @POST
   @Path("/createorder")
@@ -108,7 +163,7 @@ public class SimulatorResource {
   }
 
   /**
-   * Update voyage capacity
+   * Feedback from order actors with updated voyage capacity
    */
   @POST
   @Path("/updatevoyagecapacity")
@@ -122,7 +177,7 @@ public class SimulatorResource {
   }
 
   /**
-   * Toggle connection with reefer-rest server
+   * For development, toggle connection with reefer-rest server
    */
   @POST
   @Path("/togglereeferrest")
@@ -131,7 +186,7 @@ public class SimulatorResource {
   }
 
   /**
-   * Used by the shipthread to wake up other sim threads
+   * Called by the shipthread to wake up order and reefer threads
    */
   @POST
   @Path("/newday")
@@ -139,6 +194,21 @@ public class SimulatorResource {
     simService.newDay();
   }
 
+
+  /**
+   * gets/sets the target (x0.01) percent of reefers getting anomalies per day
+   */
+  @GET
+  @Path("/getfailuretarget")
+  public JsonValue getfailuretarget() {
+    try {
+      return simService.getFailureTarget();
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from getfailertarget");
+      return Json.createValue(-1);
+    }
+  }
 
   @POST
   @Path("/setfailuretarget")
@@ -153,22 +223,34 @@ public class SimulatorResource {
   }
 
   /**
-   * Gets the current setting for Unit Period
+   * gets/sets the max number of times a day anomalies may be generated
    */
   @GET
-  @Path("/getfailuretarget")
-  public JsonValue getfailuretarget() {
+  @Path("/getreeferupdates")
+  public JsonValue getreeferupdates() {
     try {
-      return simService.getFailureTarget();
+      return simService.getReeferUpdates();
     } catch (Exception e) {
       e.printStackTrace();
-      System.err.println("help! from getfailertarget");
+      System.err.println("help! from getreeferupdates");
+      return Json.createValue(-1);
+    }
+  }
+
+  @POST
+  @Path("/setreeferupdates")
+  public JsonValue setreeferupdates(JsonValue num) {
+    try {
+      return simService.setReeferUpdates(num);
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from setreeferupdates");
       return Json.createValue(-1);
     }
   }
 
   /**
-   * One-shot creation of order for future voyages
+   * One-shot creation of a reefer anomaly
    */
   @POST
   @Path("/createanomaly")

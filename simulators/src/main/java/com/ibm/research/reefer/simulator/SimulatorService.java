@@ -17,6 +17,13 @@ import javax.json.JsonValue;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 
+/**
+ * At simulator startup time advance set to manual mode, UnitDelay = 0
+ * Transitioning time advance to auto will also start Order and/or Reefer threads if enabled
+ * Transitioning time advance to manual will stop running Order or Reefer threads 
+ * At thread start any required but unset parameters are to their default values.
+ */
+
 public class SimulatorService {
 
   private Map<String, JsonValue> persistentData;
@@ -26,10 +33,12 @@ public class SimulatorService {
   public final static AtomicBoolean reeferRestRunning = new AtomicBoolean(true);
   public final static AtomicInteger ordertarget = new AtomicInteger(0);
   public final static AtomicInteger orderthreadcount = new AtomicInteger(0);
+  public final static AtomicInteger orderwindow = new AtomicInteger(0);
+  public final static AtomicInteger orderupdates = new AtomicInteger(0);
   public final static AtomicReference<JsonValue> currentDate = new AtomicReference<JsonValue>();
   public final static AtomicInteger failuretarget = new AtomicInteger(0);
-  public final static AtomicInteger reefertarget = new AtomicInteger(0);
   public final static AtomicInteger reeferthreadcount = new AtomicInteger(0);
+  public final static AtomicInteger reeferupdates = new AtomicInteger(0);
   public final static Map<String, FutureVoyage> voyageFreeCap = new HashMap<String, FutureVoyage>();
   private Thread shipthread;
   private Thread orderthread;
@@ -65,17 +74,28 @@ public class SimulatorService {
     return Json.createValue(Kar.actorSetState(aref, ((JsonString)key).getString(), value));
   }
 
-  // local utility to get or init persistent value
+  // local utility to get or init persistent values
   private JsonValue getOrInit(JsonValue key) {
     JsonNumber av = (JsonNumber) this.get(key);
     if (av == null) {
-      this.set(key, (JsonValue) Json.createValue(0));
-      return Json.createValue(0);
+      switch (((JsonString)key).getString()) {
+        case "ordertarget": av = (JsonNumber) Json.createValue(75); break;
+        case "orderupdates": av = (JsonNumber) Json.createValue(3); break;
+        case "orderwindow": av = (JsonNumber) Json.createValue(1); break;
+        case "failuretarget": av = (JsonNumber) Json.createValue(1); break;
+        case "reeferupdates": av = (JsonNumber) Json.createValue(10); break;
+        default: av = (JsonNumber) Json.createValue(0);
+      }
+      this.set(key, av);
     }
     return av;
   }
 
   // -------------------------------- Ship Thread Controller --------------------------------
+
+  private void startShipThread() {
+    (shipthread = new ShipThread()).start();
+  }
 
   public JsonNumber getUnitDelay() {
     return Json.createValue(unitdelay.get());
@@ -122,16 +142,12 @@ public class SimulatorService {
       // save new delay
       unitdelay.set(newval.intValue());
 
-      // get persistent value of ordertarget
-      JsonNumber ot = (JsonNumber) getOrInit(Json.createValue("ordertarget"));
-      ordertarget.set(ot.intValue());
 
       // get persistent value of failure target
       JsonNumber ft = (JsonNumber) getOrInit(Json.createValue("failuretarget"));
       failuretarget.set(ft.intValue());
 
-      // start the Ship thread
-      (shipthread = new ShipThread()).start();
+      startShipThread();
 
       // if auto order enabled, start that thread too
       if (0 < ordertarget.intValue()) {
@@ -140,12 +156,12 @@ public class SimulatorService {
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
-        (orderthread = new OrderThread()).start();
+        startOrderThread();
       }
 
       // if auto reefer enabled, start that thread too
       if (0 < failuretarget.intValue()) {
-        (reeferthread = new ReeferThread()).start();
+        startReeferThread();
       }
 
       return Json.createValue("accepted");
@@ -159,7 +175,7 @@ public class SimulatorService {
         // get persistent value of ordertarget
         JsonNumber ot = (JsonNumber) this.getOrInit(Json.createValue("ordertarget"));
         ordertarget.set(ot.intValue());
-        (new ShipThread()).start();
+        startShipThread();
         if (0 < ordertarget.intValue()) {
           // call order oneshot as well
           try {
@@ -167,7 +183,7 @@ public class SimulatorService {
           } catch (InterruptedException e) {
             e.printStackTrace();
           }
-          (new OrderThread()).start();
+          startOrderThread();
         }
         return Json.createValue("accepted");
       }
@@ -178,6 +194,60 @@ public class SimulatorService {
   }
 
   // -------------------------------- Order Thread Controller --------------------------------
+
+  private void startOrderThread() {
+    // make sure persistent values are set
+    JsonNumber ot = (JsonNumber) getOrInit(Json.createValue("ordertarget"));
+    ordertarget.set(ot.intValue());
+    JsonNumber ou = (JsonNumber) getOrInit(Json.createValue("orderupdates"));
+    orderupdates.set(ou.intValue());
+    JsonNumber ow = (JsonNumber) getOrInit(Json.createValue("orderwindow"));
+    orderwindow.set(ow.intValue());
+
+    (orderthread = new OrderThread()).start();
+  }
+
+  public JsonNumber getOrderUpdates() {
+    JsonNumber ou = (JsonNumber) this.getOrInit(Json.createValue("orderupdates"));
+    orderupdates.set(ou.intValue());
+    return ou;
+  }
+
+  public JsonNumber setOrderUpdates(JsonValue value) {
+    JsonNumber newval;
+    if (JsonValue.ValueType.OBJECT == value.getValueType()) {
+      newval = ((JsonObject) value).getJsonNumber("value");
+    } else {
+      newval = Json.createValue(((JsonNumber) value).intValue());
+    }
+    newval = newval.intValue() > 1 ? newval : (JsonNumber) Json.createValue(1);
+    newval = newval.intValue() < 30 ? newval : (JsonNumber) Json.createValue(30);
+    orderupdates.set(newval.intValue());
+    this.set(Json.createValue("orderupdates"), newval);
+    System.out.println("simulator: orderupdates set=" + newval.intValue());
+    return newval;
+  }
+
+  public JsonNumber getOrderWindow() {
+    JsonNumber ow = (JsonNumber) this.getOrInit(Json.createValue("orderwindow"));
+    orderwindow.set(ow.intValue());
+    return ow;
+  }
+
+  public JsonNumber setOrderWindow(JsonValue value) {
+    JsonNumber newval;
+    if (JsonValue.ValueType.OBJECT == value.getValueType()) {
+      newval = ((JsonObject) value).getJsonNumber("value");
+    } else {
+      newval = Json.createValue(((JsonNumber) value).intValue());
+    }
+    newval = newval.intValue() > 1 ? newval : (JsonNumber) Json.createValue(1);
+    newval = newval.intValue() < 28 ? newval : (JsonNumber) Json.createValue(28);
+    orderwindow.set(newval.intValue());
+    this.set(Json.createValue("orderwindow"), newval);
+    System.out.println("simulator: orderwindow set=" + newval.intValue());
+    return newval;
+  }
 
   public JsonNumber getOrderTarget() {
     JsonNumber ot = (JsonNumber) this.getOrInit(Json.createValue("ordertarget"));
@@ -217,7 +287,7 @@ public class SimulatorService {
 
       // start the Order thread if no thread already running and unitdelay>0
       if (0 == orderthreadcount.get() && 0 < unitdelay.intValue()) {
-        (orderthread = new OrderThread()).start();
+        startOrderThread();
       } else {
         System.out.println("simulator: ordertarget set=" + ordertarget.get()
                 + " but thread not started. orderthreadcount=" + orderthreadcount.get()
@@ -230,16 +300,14 @@ public class SimulatorService {
 
   // Manual oneshot. Runs only when orderthreadcount == 0
   public JsonValue createOrder() {
-//    	synchronized (ordertarget) {
     if (0 == orderthreadcount.get()) {
-      (orderthread = new OrderThread()).start();
+      startOrderThread();
       return Json.createValue("accepted");
     }
     System.out
             .println("simulator: createOrder rejected: orderthreadcount=" + orderthreadcount.get());
     return Json.createValue("rejected");
   }
-//	}
 
   // wake up order and reefer threads if sleeping
   public void newDay() {
@@ -269,6 +337,16 @@ public class SimulatorService {
 
 
   // -------------------------------- Reefer Thread Controller --------------------------------
+
+  private void startReeferThread() {
+    // make sure persistent values are set
+    JsonNumber ft = (JsonNumber) getOrInit(Json.createValue("failuretarget"));
+    failuretarget.set(ft.intValue());
+    JsonNumber ru = (JsonNumber) getOrInit(Json.createValue("reeferupdates"));
+    reeferupdates.set(ru.intValue());
+
+    (reeferthread = new ReeferThread()).start();
+  }
 
   public JsonNumber getFailureTarget() {
     JsonNumber rt = (JsonNumber) this.getOrInit(Json.createValue("failuretarget"));
@@ -309,7 +387,7 @@ public class SimulatorService {
 
       // start the reefer thread if no thread already running and unitdelay>0
       if (0 == reeferthreadcount.get() && 0 < unitdelay.intValue()) {
-        (reeferthread = new ReeferThread()).start();
+        startReeferThread();
       } else {
         System.out.println("simulator: failuretarget set=" + failuretarget.get()
                 + " but thread not started. reeferthreadcount=" + reeferthreadcount.get()
@@ -320,10 +398,31 @@ public class SimulatorService {
     }
   }
 
+  public JsonNumber getReeferUpdates() {
+    JsonNumber ru = (JsonNumber) this.getOrInit(Json.createValue("reeferupdates"));
+    reeferupdates.set(ru.intValue());
+    return ru;
+  }
+
+  public JsonNumber setReeferUpdates(JsonValue value) {
+    JsonNumber newval;
+    if (JsonValue.ValueType.OBJECT == value.getValueType()) {
+      newval = ((JsonObject) value).getJsonNumber("value");
+    } else {
+      newval = Json.createValue(((JsonNumber) value).intValue());
+    }
+    newval = newval.intValue() > 1 ? newval : (JsonNumber) Json.createValue(1);
+    newval = newval.intValue() < 30 ? newval : (JsonNumber) Json.createValue(30);
+    reeferupdates.set(newval.intValue());
+    this.set(Json.createValue("reeferupdates"), newval);
+    System.out.println("simulator: reeferupdates set=" + newval.intValue());
+    return newval;
+  }
+
   // Manual oneshot. Runs only when reeferthreadcount == 0
   public JsonValue createAnomaly() {
     if (0 == reeferthreadcount.get()) {
-      (reeferthread = new ReeferThread()).start();
+      startReeferThread();
       return Json.createValue("accepted");
     }
     System.out

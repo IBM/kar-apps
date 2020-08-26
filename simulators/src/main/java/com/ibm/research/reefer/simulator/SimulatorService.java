@@ -81,7 +81,7 @@ public class SimulatorService {
       switch (((JsonString)key).getString()) {
         case "ordertarget": av = (JsonNumber) Json.createValue(75); break;
         case "orderupdates": av = (JsonNumber) Json.createValue(3); break;
-        case "orderwindow": av = (JsonNumber) Json.createValue(1); break;
+        case "orderwindow": av = (JsonNumber) Json.createValue(7); break;
         case "failuretarget": av = (JsonNumber) Json.createValue(1); break;
         case "reeferupdates": av = (JsonNumber) Json.createValue(10); break;
         default: av = (JsonNumber) Json.createValue(0);

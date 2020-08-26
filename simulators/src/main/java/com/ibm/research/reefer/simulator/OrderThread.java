@@ -134,7 +134,10 @@ public class OrderThread extends Thread {
                       .add("customerId", "simulator").add("product", "pseudoBanana")
                       .add("productQty", ordersize).build();
               Response response = Kar.restPost("reeferservice", "orders", order);
-              // TODO check response for errors?
+              JsonValue rsp = response.readEntity(JsonValue.class);
+              if (null == rsp.asJsonObject().getString("voyageId")) {
+                System.err.println("orderthread: error submitting order: "+ order.toString());
+              }
             }
 //            		    else {
 //            		    	System.out.println("orderthread: no order for "+entry.getKey());

@@ -15,7 +15,6 @@ import com.ibm.research.kar.reeferserver.service.ReeferService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.autoconfigure.endpoint.expose.IncludeExcludeEndpointFilter;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +31,7 @@ public class ReeferController {
     @Autowired
     private PortService portService;
 	@Autowired
-	private NotificationController webSocket;
+	private GuiController gui;
     @Autowired
     private ScheduleService shipScheduleService;
 
@@ -92,7 +91,7 @@ public class ReeferController {
 				}
 				
 			}
-			webSocket.sendReefersUpdate(reefers);
+			//gui.sendReefersUpdate(reefers);
 		}
 		
 	}

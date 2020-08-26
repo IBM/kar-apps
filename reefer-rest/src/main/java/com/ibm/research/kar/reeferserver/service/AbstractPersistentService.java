@@ -9,7 +9,7 @@ import javax.json.JsonValue;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 
-public abstract class PersistentService {
+public abstract class AbstractPersistentService {
     private ActorRef aref = Kar.actorRef("resthelper", "reeferservice");
     private Map<String, JsonValue> persistentData=null;
     protected JsonValue get(String key) {

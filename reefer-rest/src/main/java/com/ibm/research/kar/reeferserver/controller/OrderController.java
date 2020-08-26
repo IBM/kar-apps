@@ -5,13 +5,11 @@ import static com.ibm.research.kar.Kar.actorRef;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.List;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
-
 import javax.json.JsonValue;
 
 import com.ibm.research.kar.actor.ActorRef;
@@ -45,7 +43,7 @@ public class OrderController {
 	@Autowired
 	private VoyageService voyageService;
 	@Autowired
-	private NotificationController webSocket;
+	private GuiController gui;
 
 	private OrderProperties orderDetails(String orderMsg) {
 		OrderProperties orderProperties = new OrderProperties();
@@ -95,11 +93,9 @@ public class OrderController {
 			order.setStatus(OrderStatus.BOOKED.getLabel());
 
 			voyageService.addOrderToVoyage(order);
-
-			//webSocket.sendOrderUpdate(order);
 			int  futureOrderCount =  orderService.getOrders("booked-orders");
 
-			webSocket.updateFutureOrderCount(futureOrderCount);	
+			gui.updateFutureOrderCount(futureOrderCount);	
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
         //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
@@ -107,23 +103,9 @@ public class OrderController {
         } catch( Exception ee) {
 			ee.printStackTrace();
 		}
-
-		
-		
 		return orderProperties;
-
-
-	}
-	/*
-	@GetMapping("/orders")
-	public List<Order>  getAllOrders() {
-		System.out.println("getAllOrders() - Got New Request");
-		
-		return orderService.getOrders();
 	}
 
-
-	*/
 	@GetMapping("/orders/stats")
 	public OrderStats  getOrderStats() {
 		System.out.println("getOrderStats() - Got New Request");

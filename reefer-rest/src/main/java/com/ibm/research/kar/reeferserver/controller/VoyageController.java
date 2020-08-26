@@ -1,4 +1,9 @@
 package com.ibm.research.kar.reeferserver.controller;
+
+import static com.ibm.research.kar.Kar.actorCall;
+import static com.ibm.research.kar.Kar.actorRef;
+import static com.ibm.research.kar.Kar.restPost;
+
 import java.io.StringReader;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -6,16 +11,12 @@ import java.util.List;
 
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
 //import com.ibm.research.kar.Kar.*;
 import com.ibm.research.kar.actor.ActorRef;
-import static com.ibm.research.kar.Kar.actorCall;
-import static com.ibm.research.kar.Kar.actorRef;
-import static com.ibm.research.kar.Kar.restPost;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.Route;
@@ -42,7 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
     @Autowired
     private VoyageService voyageService;
     @Autowired
-    private NotificationController webSocket;
+    private GuiController gui;
 
     @PostMapping("/voyage/matching")
     public List<Voyage> getMatchingVoyages(@RequestBody String body) {
@@ -187,16 +188,9 @@ import org.springframework.web.bind.annotation.RestController;
       try {
         
         for( Voyage voyage: activeVoyages) {
-          //int orders = );
-         // voyage.setOrderCount(orderService.getActiveOrders(voyage.getId()));
           voyage.setOrderCount(voyageOrders(voyage.getId()));
-          //totalActiveOrders += voyage.getOrderCount();
-        //  totalActiveOrders += voyage.getOrderCount();
-          //voyageService.getVoyageOrderCount(voyage.getId());
         }
-        
-  
-      } catch( Exception e) {
+       } catch( Exception e) {
         e.printStackTrace();
       }
 
@@ -206,15 +200,13 @@ import org.springframework.web.bind.annotation.RestController;
     public void updateGui(@RequestBody String currentDate ) {
       System.out.println("VoyageController.updateGui() - updating GUI with active schedule - currentDate:"+currentDate);
       List<Voyage> activeVoyages = activeVoyages();
-      webSocket.sendActiveVoyageUpdate(activeVoyages, currentDate);
+      gui.sendActiveVoyageUpdate(activeVoyages, currentDate);
 
       int totalActiveOrders = 0;
       for( Voyage voyage: activeVoyages) {
-
         totalActiveOrders += voyage.getOrderCount();
-      
       }
-      webSocket.updateInTransitOrderCount(totalActiveOrders);
+      gui.updateInTransitOrderCount(totalActiveOrders);
       System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% VoyageController.activeVoyages() - Done - Total Active Orders:"+totalActiveOrders);
  
     }

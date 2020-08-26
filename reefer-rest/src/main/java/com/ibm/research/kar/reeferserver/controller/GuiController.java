@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @CrossOrigin("*")
-public class NotificationController {
+public class GuiController {
     @Autowired
     private SimpMessagingTemplate template;
 

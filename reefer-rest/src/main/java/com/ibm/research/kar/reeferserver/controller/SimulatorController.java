@@ -11,6 +11,7 @@ import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.DelayTarget;
 import com.ibm.research.kar.reefer.model.OrderSimControls;
 import com.ibm.research.kar.reeferserver.service.OrderService;
+import com.ibm.research.kar.reeferserver.service.SimulatorService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class SimulatorController {
     @Autowired
     private VoyageService voyageService;
+ 
     @Autowired
-    private OrderService orderService;
-    
+    private SimulatorService simulatorService;
+
   @PostMapping("/simulator/delay")
-//    @PostMapping("/simulator/automode")
 	public Instant  shipSimulatorDelay(@RequestBody String delay) {
         System.out.println("SimulatorController.shipSimulatorDelay() - delay "+delay);
         int delayTime=0;
@@ -60,7 +61,7 @@ public class SimulatorController {
         System.out.println("SimulatorController.getDelayAndTarget() ");
         try {
           int delay = voyageService.getDelay();
-          int target = orderService.getSimOrderTarget();
+          int target = simulatorService.getSimOrderTarget();
           return new DelayTarget(delay, target);
         }  catch( Exception e) {
           e.printStackTrace();
@@ -71,7 +72,7 @@ public class SimulatorController {
     public int  getSimOrderTarget() {
       System.out.println("SimulatorControllertroller.getSimOrderTarget() ");
 
-      return orderService.getSimOrderTarget();
+      return simulatorService.getSimOrderTarget();
   }
 
 
@@ -85,44 +86,37 @@ public class SimulatorController {
       
           orderTarget = Integer.valueOf(req.getJsonString("target").toString().replace("\"",""));
           System.out.println("TimeConSimulatorControllertroller.setSimOrderTarget() - orderTarget "+orderTarget);
-          orderService.setSimOrderTarget(orderTarget);
+          simulatorService.setSimOrderTarget(orderTarget);
         } catch( Exception e) {
           e.printStackTrace();
         }
+    }
+    
+  @PostMapping("/simulator/setordersimcontrols")
+  public void  setOrderSimControls(@RequestBody String body) {
+    System.out.println("SimulatorController.setOrderSimControls() - target "+body);
+    int orderTarget=0;
+    int orderWindow = 0;
+    int updateFrequency = 0;
+    try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
+          
+        JsonObject req = jsonReader.readObject();
+    
+        orderTarget = Integer.valueOf(req.getJsonString("target").toString().replace("\"",""));
+        orderWindow = Integer.valueOf(req.getJsonString("window").toString().replace("\"",""));
+        updateFrequency = Integer.valueOf(req.getJsonString("updateFrequency").toString().replace("\"",""));
+        System.out.println("TimeConSimulatorControllertroller.setOrderSimControls() - target "+orderTarget+ " window:"+orderWindow+ " updateFrequency:"+updateFrequency);
+        simulatorService.updateOrderSimControls(orderTarget, orderWindow, updateFrequency);
+      } catch( Exception e) {
+        e.printStackTrace();
       }
-      @PostMapping("/simulator/setordersimcontrols")
-      public void  setOrderSimControls(@RequestBody String body) {
-        System.out.println("SimulatorController.setOrderSimControls() - target "+body);
-        int orderTarget=0;
-        int orderWindow = 0;
-        int updateFrequency = 0;
-        try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
-              
-            JsonObject req = jsonReader.readObject();
-        
-            orderTarget = Integer.valueOf(req.getJsonString("target").toString().replace("\"",""));
-            orderWindow = Integer.valueOf(req.getJsonString("window").toString().replace("\"",""));
-            updateFrequency = Integer.valueOf(req.getJsonString("updateFrequency").toString().replace("\"",""));
-            System.out.println("TimeConSimulatorControllertroller.setOrderSimControls() - target "+orderTarget+ " window:"+orderWindow+ " updateFrequency:"+updateFrequency);
-            orderService.updateOrderSimControls(orderTarget, orderWindow, updateFrequency);
-          } catch( Exception e) {
-            e.printStackTrace();
-          }
-        }
+    }
     @GetMapping("/simulator/getordersimcontrols")
     public OrderSimControls  getOrderSimControls() {
       System.out.println("SimulatorController.getOrderSimControls() ");
-      OrderSimControls controls = orderService.getOrderSimControls();
+      OrderSimControls controls = simulatorService.getOrderSimControls();
       System.out.println("TimeConSimulatorControllertroller.getordersimcontrols() - target "+controls.getTarget()+ " window:"+controls.getWindow()+ " updateFrequency:"+controls.getUpdateTarget());
       return controls;
     }
 
-    /*
-    @PostMapping("/simulator/createorder")
-    public void  createOrder() {
-          System.out.println("SimulatorController.createOrder()");
-          orderService.createSimOrder();
-          
-      }
-*/
 }

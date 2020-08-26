@@ -1,13 +1,13 @@
 package com.ibm.research.kar.reefer.model;
 
 public class ReeferDTO {
-    public enum State {EMPTY, PARTIALLY_FULL, ON_MAINTENANCE};
+    public enum State {EMPTY, ALLOCATED, PARTIALLY_ALLOCATED, SPOILT, ON_MAINTENANCE};
 
     private int id;
     private State state;
     private String orderId;
     private String voyageId;
-    
+
     public ReeferDTO(int id, State state, String orderId, String voyageId) {
         this.id = id;
         this.state = state;
@@ -23,7 +23,9 @@ public class ReeferDTO {
     public State getState() {
         return state;
     }
-
+    public void setState(State state) {
+        this.state = state;
+    }
 
 
     public String getOrderId() {

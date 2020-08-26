@@ -5,6 +5,7 @@ export interface Voyage {
   route: Route;
   sailDateObject: string;
   sailDate: string;
+  orderCount: number;
   /*
   shipName: string;
   originPort: string;

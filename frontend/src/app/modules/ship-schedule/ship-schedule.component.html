@@ -107,7 +107,10 @@
                     
                     </td>
                 </ng-container>
-
+                <ng-container  matColumnDef="orders">
+                    <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header width ="10%" style="font-size: 16px;text-align: center;align-items: center;"> Orders </th>
+                    <td mat-cell *matCellDef="let element" style="font-size: 16px; text-align: center;"> {{element.orderCount}} </td>
+                </ng-container>   
                 <ng-container  matColumnDef="maxCapacity">
                     <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header width ="10%" style="font-size: 16px;"> Max Capacity </th>
                     <td mat-cell *matCellDef="let element" style="font-size: 16px; text-align: center;"> {{element.route.vessel.maxCapacity}} </td>

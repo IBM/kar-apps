@@ -8,6 +8,7 @@ public interface ReeferState {
     public static final String REMAINING_CAPACITY_KEY = "remainingCapacity";
     public static final String MAX_CAPACITY_KEY = "remainingCapacity";
     public static final String VOYAGE_ID_KEY = "voyageId";
+    public static final String ORDER_ID_KEY = "orderId";
     public static final String REEFER_ID_KEY = "id";
     public String getId();
     public String getVoyageId();

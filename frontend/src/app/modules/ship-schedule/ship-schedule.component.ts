@@ -31,7 +31,7 @@ export class ShipScheduleComponent implements OnInit {
   @ViewChild(MatHorizontalStepper) stepper: MatHorizontalStepper;  
   expandedElement:Voyage | null;
 //  shipTableColumns: string[] = [ 'vessel', 'origin', 'destination', 'maxCapacity', 'freeCapacity', 'location'];
-  shipTableColumns: string[] = [ 'vessel', 'progress', 'maxCapacity', 'freeCapacity'];
+  shipTableColumns: string[] = [ 'vessel', 'progress', 'orders','maxCapacity', 'freeCapacity'];
 
   constructor(private restService: RestService, private webSocketService : SocketService) { 
     let stompClient = this.webSocketService.connect();

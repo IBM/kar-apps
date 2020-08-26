@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
+import static com.ibm.research.kar.Kar.*;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.model.Reefer;
 
 import org.springframework.stereotype.Component;
@@ -42,7 +47,24 @@ public class ReeferService {
 			System.out.println("Added new reefer ID:"+reefer.getReeferId());
 		}
 		
-    }
+	}
+	/*
+	public void setReeferInventorySize(int inventorySize) {
+		JsonObject params = Json.createObjectBuilder()
+		.add("inventorySize",  inventorySize)
+		.build();
+		try {
+			// Book reefers for this order thru the ReeferProvisioner
+			JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"inventorySize", params);
+			if ( reply.asJsonObject().getString("status").equals("OK") ) {
+
+			}
+		} catch( Exception e) {
+			e.printStackTrace();
+		}
+
+	}	
+	*/
     public List<Reefer> getReefers() {
         List<Reefer> reefers = new ArrayList<>();
 		for( Entry<String, List<Reefer>> r : portReeferMap.entrySet()) {

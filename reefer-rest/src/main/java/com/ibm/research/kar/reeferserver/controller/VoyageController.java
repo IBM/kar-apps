@@ -6,10 +6,16 @@ import java.util.List;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
+import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
-import com.ibm.research.kar.Kar;
+//import com.ibm.research.kar.Kar.*;
+import com.ibm.research.kar.actor.ActorRef;
+import static com.ibm.research.kar.Kar.actorCall;
+import static com.ibm.research.kar.Kar.actorRef;
+import static com.ibm.research.kar.Kar.restPost;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.Route;
@@ -17,6 +23,7 @@ import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
+import com.ibm.research.kar.reeferserver.service.VoyageService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -32,6 +39,8 @@ import org.springframework.web.bind.annotation.RestController;
     private ScheduleService shipScheduleService;
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private VoyageService voyageService;
     @Autowired
     private NotificationController webSocket;
 
@@ -79,7 +88,9 @@ import org.springframework.web.bind.annotation.RestController;
     @GetMapping("/voyage/active")
     public List<Voyage> getActiveVoyages() {
       System.out.println("VoyageController.getActiveVoyages()");
-      return shipScheduleService.getActiveSchedule();
+     // return shipScheduleService.getActiveSchedule();
+    
+     return activeVoyages();
     } 
     @GetMapping("/voyage/upcoming")
     public List<Voyage> getShippingSchedule() {
@@ -99,7 +110,7 @@ import org.springframework.web.bind.annotation.RestController;
       .build();
       try {
 
-          Response response = Kar.restPost("simservice","/simulator/updatevoyagecapacity", params);
+          Response response = restPost("simservice","/simulator/updatevoyagecapacity", params);
 
       } catch( Exception e) {
           e.printStackTrace();
@@ -120,15 +131,16 @@ import org.springframework.web.bind.annotation.RestController;
           if ( req.containsKey("daysAtSea")) {
             daysAtSea = req.getInt("daysAtSea");
 
-            System.out.println("VoyageController.updateVoyageState() daysAtSea="+req.getInt("daysAtSea"));
+           // System.out.println("VoyageController.updateVoyageState() daysAtSea="+req.getInt("daysAtSea"));
           
             Voyage voyage = shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
             Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysAtSea);
             if ( shipCurrentDate.equals(Instant.parse(voyage.getArrivalDate()) )  ||
                   shipCurrentDate.isAfter(Instant.parse(voyage.getArrivalDate()))) {
-              orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED);
+              orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED, daysAtSea);
+              voyageService.removeVoyage(voyageId);
             } else {
-              orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT);
+              orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT, daysAtSea);
             }
             
           } else if ( req.containsKey("reeferCount") ) {
@@ -154,11 +166,57 @@ import org.springframework.web.bind.annotation.RestController;
       System.out.println("VoyageController.getRoutes()");
       return shipScheduleService.getRoutes();
     }
+    private int voyageOrders(String voyageId) {
+      int voyages = 0;
+
+      try {
+        ActorRef voyageActor = actorRef("voyage", voyageId);
+        JsonObject params = Json.createObjectBuilder().build();
+        JsonValue reply = actorCall(voyageActor, "getVoyageOrderCount", params);
+        System.out.println("----------------Voyage Actor "+voyageId+" orders:"+reply);
+        voyages = reply.asJsonObject().getInt("orders");
+      } catch( Exception e) {
+        e.printStackTrace();
+      }
+      return voyages;
+
+    }
+    private List<Voyage> activeVoyages() {
+      List<Voyage> activeVoyages = shipScheduleService.getActiveSchedule();
+      System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% VoyageController.activeVoyages() - active voyages:"+activeVoyages.size());
+      try {
+        
+        for( Voyage voyage: activeVoyages) {
+          //int orders = );
+         // voyage.setOrderCount(orderService.getActiveOrders(voyage.getId()));
+          voyage.setOrderCount(voyageOrders(voyage.getId()));
+          //totalActiveOrders += voyage.getOrderCount();
+        //  totalActiveOrders += voyage.getOrderCount();
+          //voyageService.getVoyageOrderCount(voyage.getId());
+        }
+        
+  
+      } catch( Exception e) {
+        e.printStackTrace();
+      }
+
+      return activeVoyages;
+    }
     @PostMapping("/voyage/updateGui")
     public void updateGui(@RequestBody String currentDate ) {
       System.out.println("VoyageController.updateGui() - updating GUI with active schedule - currentDate:"+currentDate);
-      webSocket.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule(), currentDate);
-      System.out.println("VoyageController.updateGui() - Done");
+      List<Voyage> activeVoyages = activeVoyages();
+      webSocket.sendActiveVoyageUpdate(activeVoyages, currentDate);
+
+      int totalActiveOrders = 0;
+      for( Voyage voyage: activeVoyages) {
+
+        totalActiveOrders += voyage.getOrderCount();
+      
+      }
+      webSocket.updateInTransitOrderCount(totalActiveOrders);
+      System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% VoyageController.activeVoyages() - Done - Total Active Orders:"+totalActiveOrders);
+ 
     }
 
 }

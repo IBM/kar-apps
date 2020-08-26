@@ -1,21 +1,33 @@
 <mat-card class="example-card" [style.backgroundColor]="'gainsboro'">
   <mat-card-content >
       <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
-          <mat-card fxFlex="40">
+          <mat-card fxFlex="80">
               <mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'22'">
                   <mat-card-title>Order Simulator</mat-card-title>
                   <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
               </mat-card-header>
 
               <mat-card-content>
-                  <div class="example-container">
-                      <mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill">
-                          <input matInput min="0" max="100" step="10" ngStep="10"  name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
-                          <!--input matInput min="0" max="100" step="10" ngStep="10" (change)="orderTargetChange($event)" name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required-->
+                  <div class="example-container" fxLayout="row" fxLayoutGap="10px">
+                        <!--mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill" -->
+                        <mat-form-field appearance="fill">
+                            <!--mat-form-field   appearance="fill" fxLayout="row"-->
+                           <input matInput min="0" max="100" step="10" ngStep="10"  name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                        <mat-hint align="start">Order Target ^</mat-hint>
+                        </mat-form-field>
+                       <mat-form-field appearance="fill">
+                           <input matInput min="0" max="1000" step="1" ngStep="1"  name="windowSize" [(ngModel)]="windowSize" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                           <mat-hint align="start">Window Size ^</mat-hint>
+                        </mat-form-field>  
+                        <mat-form-field appearance="fill">
+                        <input matInput min="0" max="100" step="10" ngStep="10"  name="orderUpdates" [(ngModel)]="orderUpdates" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                        <mat-hint align="start">Order Frequency Updates ^</mat-hint>
+                        <!--input matInput min="0" max="100" step="10" ngStep="10" (change)="orderTargetChange($event)" name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required-->
                           <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
                           <!--mat-hint align="front">Choose target utilization^</mat-hint-->
                       </mat-form-field>
-                      <button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateOrderTarget($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button>
+                      <button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateOrderSimulatorControlls($event)" mat-raised-button  color="primary"  [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button>
+                      <!--button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateOrderTarget($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button -->
                       <!--button [disabled]="orderTarget === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleEnableDisable($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button-->
 
                   </div>
@@ -23,13 +35,13 @@
               </mat-card-content>
           </mat-card>
           <!--mat-card fxFlex="1"> </mat-card-->
-          <mat-card fxFlex="59" >
+          <mat-card fxFlex="20" >
               <!--mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'35'">
                   <mat-card-title ></mat-card-title>
               </mat-card-header-->
-              <mat-card-content class="advance" color="primary" >
+              <mat-card-content class="advance" color="primary" style="margin:14px; padding:5px">
                   <div fxLayout="row" fxLayoutAlign="start center">
-                      <app-personaldetails fxFlex="50%">
+                      <app-personaldetails fxFlex="80%">
                           <button [disabled]="createOrderManually === false" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Order</button>
                           <!--button [disabled]="orderTarget > 0" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Order</button-->
 
@@ -37,17 +49,7 @@
                       <app-personaldetails fxFlex="3%">
 
                       </app-personaldetails>
-                      <!--app-contactdetails fxFlex="47%">
-                          <mat-card [style.backgroundColor]="'gainsboro'" [style.fontSize.px]="'20'" [style.height.px]="'22'" style="border: 1px solid;">
-                              
-                              <mat-card-header [style.backgroundColor]="'gainsboro'" style="padding: 1px;margin:0 auto;text-align: center;justify-content: center" >
-                                      <mat-card-title >Current Date</mat-card-title>
-                                 
-                              </mat-card-header>
-                              <mat-card-content class="advance" color="primary" [style.fontSize.px]="'18'"  style="padding: 1px;margin:0 auto;text-align: center;justify-content: center;  ">
-                              </mat-card-content>
-                          </mat-card>
-                      </app-contactdetails-->
+ 
                    </div>
 
               </mat-card-content>
@@ -55,6 +57,89 @@
               <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
           </mat-card>
       </div>
+
+      
+
+      <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
+        <mat-card fxFlex="33"  style="backgroundColor:#9dade2;margin:35px; padding:25px">
+
+
+            <mat-card-content>
+                <div fxLayout="row" fxLayoutAlign="center center" width="100%">
+                    <div  >
+                        <h1>In-Transit Orders</h1>
+    
+                    </div>
+                </div>
+                <div fxLayout="row" fxLayoutAlign="center center" width="100%">
+                    <div >
+                        <mat-label [style.font-size]="'50px'">{{inTransitOrders}}</mat-label>
+    
+                    </div>
+                 </div>
+                 <div fxLayout="row" fxLayoutAlign="center center">
+                    <div >
+                        <button  (click)="showInTransitOrders(); " [style.font-size]="'20px'"> Click to view list</button><br />
+                    </div>
+                    
+                    
+                </div>
+            </mat-card-content>
+        </mat-card>
+       <mat-card fxFlex="33" style="backgroundColor:#9dade2;margin:35px; padding:25px" >
+
+            <mat-card-content class="advance" color="primary" >
+                <div fxLayout="row" fxLayoutAlign="center center">
+                    <div class="example-container">
+                        <h1>Future Orders</h1>
+    
+                    </div>
+                </div>
+                <div fxLayout="row" fxLayoutAlign="center center">
+                    <div >
+                        <mat-label [style.font-size]="'50px'">{{futureOrders}}</mat-label>
+    
+                    </div>
+                 </div>
+                 <div fxLayout="row" fxLayoutAlign="center center">
+                    <div >
+                        <button (click)="showFutureOrders()" [style.font-size]="'20px'"> Click to view list</button><br />
+                    </div>
+                    
+                    
+                </div>
+            </mat-card-content>
+
+            <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
+        </mat-card>
+        <mat-card fxFlex="33" style="backgroundColor:#9dade2;margin:35px; padding:25px">
+            <mat-card-content class="advance" color="primary" >
+                <div fxLayout="row" fxLayoutAlign="center center">
+                    <div class="example-container">
+                        <h1>Spoilt Orders</h1>
+    
+                    </div>
+                 </div>
+                 <div fxLayout="row" fxLayoutAlign="center center">
+                    <div >
+                        <mat-label [style.font-size]="'50px'">{{spoiltOrders}}</mat-label>
+ 
+                    </div>
+                    
+                    
+                </div>
+                <div fxLayout="row" fxLayoutAlign="center center">
+                    <div >
+                        <button (click)="showSpoiltOrders()" [style.font-size]="'20px'"> Click to view list</button><br />
+                    </div>
+                    
+                    
+                </div>
+            </mat-card-content>
+
+            <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
+        </mat-card>
+    </div>
   </mat-card-content>
 </mat-card>
 

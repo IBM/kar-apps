@@ -9,6 +9,7 @@ import javax.json.JsonReader;
 
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.DelayTarget;
+import com.ibm.research.kar.reefer.model.OrderSimControls;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
 
@@ -89,13 +90,39 @@ public class SimulatorController {
           e.printStackTrace();
         }
       }
+      @PostMapping("/simulator/setordersimcontrols")
+      public void  setOrderSimControls(@RequestBody String body) {
+        System.out.println("SimulatorController.setOrderSimControls() - target "+body);
+        int orderTarget=0;
+        int orderWindow = 0;
+        int updateFrequency = 0;
+        try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
+              
+            JsonObject req = jsonReader.readObject();
+        
+            orderTarget = Integer.valueOf(req.getJsonString("target").toString().replace("\"",""));
+            orderWindow = Integer.valueOf(req.getJsonString("window").toString().replace("\"",""));
+            updateFrequency = Integer.valueOf(req.getJsonString("updateFrequency").toString().replace("\"",""));
+            System.out.println("TimeConSimulatorControllertroller.setOrderSimControls() - target "+orderTarget+ " window:"+orderWindow+ " updateFrequency:"+updateFrequency);
+            orderService.updateOrderSimControls(orderTarget, orderWindow, updateFrequency);
+          } catch( Exception e) {
+            e.printStackTrace();
+          }
+        }
+    @GetMapping("/simulator/getordersimcontrols")
+    public OrderSimControls  getOrderSimControls() {
+      System.out.println("SimulatorController.getOrderSimControls() ");
+      OrderSimControls controls = orderService.getOrderSimControls();
+      System.out.println("TimeConSimulatorControllertroller.getordersimcontrols() - target "+controls.getTarget()+ " window:"+controls.getWindow()+ " updateFrequency:"+controls.getUpdateTarget());
+      return controls;
+    }
 
-
+    /*
     @PostMapping("/simulator/createorder")
     public void  createOrder() {
           System.out.println("SimulatorController.createOrder()");
           orderService.createSimOrder();
           
       }
-
+*/
 }

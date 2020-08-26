@@ -38,9 +38,19 @@ public class NotificationController {
     public void sendActiveVoyageUpdate(List<Voyage> voyages, String currentDate) {
         ShippingSchedule schedule = new ShippingSchedule(voyages, currentDate);
         template.convertAndSend("/topic/voyages", schedule); 
+     //   updateInTransitOrderCount(voyages.size());
     }
     public void sendOrderUpdate(Order order) {
         
         template.convertAndSend("/topic/orders", order); 
     }
+    public void updateInTransitOrderCount(int orderCount) {
+        
+        template.convertAndSend("/topic/orders/intransit", orderCount); 
+    }
+    public void updateFutureOrderCount(int orderCount) {
+        
+        template.convertAndSend("/topic/orders/future", orderCount); 
+    }
+
 }

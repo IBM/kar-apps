@@ -9,6 +9,7 @@ public class Voyage {
     private Instant sailDateObject;
     private String sailDate;
     private String arrivalDate;
+    private int orderCount=0;
     
     public Voyage(Route route, Instant sailDateObject, String arrivalDate) {
         this.route = route;
@@ -33,6 +34,14 @@ public class Voyage {
     }
     public Instant getSailDateObject() {
         return sailDateObject;
+    }
+
+    public int getOrderCount() {
+        return orderCount;
+    }
+
+    public void setOrderCount(int orderCount) {
+        this.orderCount = orderCount;
     }
  
     

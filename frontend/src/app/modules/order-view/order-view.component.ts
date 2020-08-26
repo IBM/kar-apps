@@ -28,11 +28,16 @@ export class OrderViewComponent implements OnInit {
   displayedColumns: string[] = ['select',  'id', 'customerId','status','product', 'productQty', 'voyageId'];//, 'origin', 'destination','sailDate', 'transitTime', 'voyageId', 'reeferIds'];
   orders: Order[] = [];
   orderTarget : number = 0;
+  windowSize : number = 0;
+  orderUpdates : number = 0;
   filterValues = {};
   filterSelectObj = [];
   totalElements: number = 0;
   loading: boolean;
   createOrderManually: boolean;
+  inTransitOrders:number = 0;
+  futureOrders:number = 0;
+  spoiltOrders:number = 0;
 
   autoSimButtonLabel: string = "Update";
   dataSource = new MatTableDataSource(this.orders);
@@ -49,6 +54,12 @@ export class OrderViewComponent implements OnInit {
   //@Input() sorting: MatSortable;
 
   constructor(private dialog: MatDialog, private restService: RestService, private webSocketService : SocketService) { 
+    this.restService.getOrderStats().subscribe((data) => {
+      // console.log(data);
+      this.inTransitOrders = data.inTransitOrderCount;
+      this.futureOrders = data.futureOrderCount;
+      this.spoiltOrders = data.spoiltOrderCount;
+    });
     let stompClient = this.webSocketService.connect();
     console.log('OrderView - connected socket');
     stompClient.connect({}, frame => {
@@ -78,9 +89,27 @@ export class OrderViewComponent implements OnInit {
 
           }
 
-        })
+        });
+        stompClient.subscribe('/topic/orders/intransit', (event:any) => {
+          if ( event.body) {
+            let orderCount : number;
+            console.log("-------- IntransitOrders Update:"+event.body);
+            orderCount = JSON.parse(event.body);
+            this.inTransitOrders = orderCount;
+          }
+      });
+      stompClient.subscribe('/topic/orders/future', (event:any) => {
+        if ( event.body) {
+          let orderCount : number;
+          console.log("-------- FutureOrders Update:"+event.body);
+          orderCount = JSON.parse(event.body);
+          this.futureOrders = orderCount;
+        }
     });
+    });
+    
 
+    
   }
 
   isExpansionDetailRow = (_, row: any) => row.hasOwnProperty('detailRow');
@@ -113,9 +142,15 @@ export class OrderViewComponent implements OnInit {
         console.log("++++++++++++++ Disable CreateOrder Button");
       }
       this.orderTarget = data.target;
+
+      
     });
-
-
+    this.restService.getOrderSimControls().subscribe((data) => {
+      this.orderTarget = data.target;
+      this.windowSize = data.window;
+      this.orderUpdates = data.updateTarget;
+    });
+/*
     this.restService.getAllOrders().subscribe((data) => {
       console.log(data);
       this.dataSource.data = data;
@@ -127,17 +162,29 @@ export class OrderViewComponent implements OnInit {
 
 
     );
+    */
  //    this.dataSource.paginator = this.paginator;
  //    this.dataSource.sort = this.sort;
 
   }
+  showInTransitOrders() {
+    console.log("Click >>>>> showInTransitOrders()");
+  }
+  showFutureOrders() {
+    console.log("Click >>>>> showFutureOrders()");
+  }
+  showSpoiltOrders() {
+    console.log("Click >>>>> showSpoiltOrders()");
+  }
 
-  updateOrderTarget(event: Event) {
+  updateOrderSimulatorControlls(event: Event) {
     console.log("Click >>>>>"+event +" Order Target:"+this.orderTarget);
     const request = {};
     request['target'] = this.orderTarget.toString();
+    request['window'] = this.windowSize.toString();
+    request['updateFrequency'] = this.orderUpdates.toString();
   
-    this.restService.setOrderTarget(request).subscribe((data) => {
+    this.restService.setOrderSimControls(request).subscribe((data) => {
       console.log(data);
       if ( this.orderTarget == 0 ) {
         this.createOrderManually = true;

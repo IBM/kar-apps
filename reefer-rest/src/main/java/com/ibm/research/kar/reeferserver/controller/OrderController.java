@@ -19,9 +19,11 @@ import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.OrderProperties;
+import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
+import com.ibm.research.kar.reeferserver.service.VoyageService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -40,6 +42,8 @@ public class OrderController {
 	@Autowired
 	private ScheduleService scheduleService;
 	
+	@Autowired
+	private VoyageService voyageService;
 	@Autowired
 	private NotificationController webSocket;
 
@@ -70,11 +74,13 @@ public class OrderController {
 	}
     @PostMapping("/orders")
 	public OrderProperties bookOrder(@RequestBody String op) throws IOException {
-		System.out.println("bookOrder() Called -"+op);
+		System.out.println("OrderController.bookOrder - Called -"+op);
 		OrderProperties orderProperties = orderDetails(op);
-
-		Order order = orderService.createOrder(orderProperties); 
         try {
+
+
+			Order order = orderService.createOrder(orderProperties); 
+			orderProperties.setOrderId(order.getId());
 			JsonObjectBuilder ordersProps = Json.createObjectBuilder();
 			ordersProps.add("orderId",order.getId()).
 				add("orderVoyageId", order.getVoyageId()).
@@ -87,8 +93,13 @@ public class OrderController {
             JsonValue reply = actorCall(orderActor, "createOrder", params);
 			System.out.println("Order Actor reply:"+reply);
 			order.setStatus(OrderStatus.BOOKED.getLabel());
-			webSocket.sendOrderUpdate(order);
 
+			voyageService.addOrderToVoyage(order);
+
+			//webSocket.sendOrderUpdate(order);
+			int  futureOrderCount =  orderService.getOrders("booked-orders");
+
+			webSocket.updateFutureOrderCount(futureOrderCount);	
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
         //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
@@ -97,17 +108,27 @@ public class OrderController {
 			ee.printStackTrace();
 		}
 
-		orderProperties.setOrderId(order.getId());
+		
 		
 		return orderProperties;
 
 
 	}
+	/*
 	@GetMapping("/orders")
 	public List<Order>  getAllOrders() {
 		System.out.println("getAllOrders() - Got New Request");
 		
 		return orderService.getOrders();
+	}
+
+
+	*/
+	@GetMapping("/orders/stats")
+	public OrderStats  getOrderStats() {
+		System.out.println("getOrderStats() - Got New Request");
+		
+		return orderService.getOrderStats();
 	}
 	/**
 	 * Implements server side pagination for the front end. Currently just a stub

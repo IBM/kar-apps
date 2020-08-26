@@ -17,6 +17,8 @@ import { Delay } from '../models/delay';
 import { VoyagesQuery } from '../models/voyages-query';
 import { OrderTarget } from '../models/order-target';
 import { DelayTarget } from '../models/delay-target';
+import { OrderStats } from '../models/order-stats';
+import { OrderSimControls } from '../models/order-sim-controls';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -212,11 +214,27 @@ setOrderTarget(request) {
   return this.httpClient.post<String>(this.REST_API_SERVER+'/simulator/setsimordertarget',params).pipe(retry(3), catchError(this.handleError));
 
 }
+setOrderSimControls(request) {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const params = request;
+  return this.httpClient.post<String>(this.REST_API_SERVER+'/simulator/setordersimcontrols',params).pipe(retry(3), catchError(this.handleError));
+}
+getOrderSimControls() {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  return this.httpClient.get<OrderSimControls>(this.REST_API_SERVER+'/simulator/getordersimcontrols').pipe(retry(3), catchError(this.handleError));
+}
 getOrderTargetAndSimDelay() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
   
   return this.httpClient.get<DelayTarget>(this.REST_API_SERVER+'/simulator/getdelayandtarget', options).pipe(retry(3), catchError(this.handleError));
+
+}
+getOrderStats() {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+  
+  return this.httpClient.get<OrderStats>(this.REST_API_SERVER+'/orders/stats', options).pipe(retry(3), catchError(this.handleError));
 
 }
 getOrderTarget() {

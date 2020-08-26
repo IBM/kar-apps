@@ -13,15 +13,15 @@ public class JsonOrder {
     public static final String OriginPortKey = "originPort";
     public static final String DestinationPortKey = "destinationPort";
     private JsonObject order;
-    private String id;
+ //   private String id;
 
     public JsonOrder(JsonObject order) {
         this.order = order; 
-        id = Instant.now().toString();
+ //       id = Instant.now().toString();
     }
 
     public String getId() {
-        return id; //order.getString(IdKey);
+        return order.getString(IdKey); //order.getString(IdKey);
     }
 
     public boolean containsKey(String key) {

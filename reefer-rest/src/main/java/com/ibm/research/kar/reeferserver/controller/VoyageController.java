@@ -139,6 +139,7 @@ import org.springframework.web.bind.annotation.RestController;
             if ( shipCurrentDate.equals(Instant.parse(voyage.getArrivalDate()) )  ||
                   shipCurrentDate.isAfter(Instant.parse(voyage.getArrivalDate()))) {
               orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED, daysAtSea);
+              System.out.println("VoyageController.updateVoyageState() voyageId="+voyageId+" has ARRIVED ------------------------------------------------------");
               voyageService.removeVoyage(voyageId);
             } else {
               orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT, daysAtSea);
@@ -146,13 +147,13 @@ import org.springframework.web.bind.annotation.RestController;
             
           } else if ( req.containsKey("reeferCount") ) {
             int reeferCount = req.getInt("reeferCount");
-            System.out.println("VoyageController.updateVoyageState() reeferCount="+reeferCount);
+            System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  VoyageController.updateVoyageState() reeferCount="+reeferCount);
 
             int shipFreeCapacity =
               shipScheduleService.updateFreeCapacity(voyageId, reeferCount);
             updateSimulator(voyageId, shipFreeCapacity);
 
-            System.out.println("VoyageController.updateVoyageState() - Ship booked - Ship free capacity:"+shipFreeCapacity);
+            System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  VoyageController.updateVoyageState() - Ship booked - Ship free capacity:"+shipFreeCapacity);
 
           } else if ( req.containsKey("reefers") ) {
             

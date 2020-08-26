@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import javax.json.JsonValue;
+
 
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
@@ -19,8 +21,10 @@ import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.OrderProperties;
 import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.Voyage;
+import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
+import com.ibm.research.kar.reeferserver.service.SimulatorService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +45,16 @@ public class OrderController {
 	private ScheduleService scheduleService;
 	
 	@Autowired
+	private SimulatorService simulatorService;
+	
+	@Autowired
 	private VoyageService voyageService;
 	@Autowired
 	private GuiController gui;
 
 	private OrderProperties orderDetails(String orderMsg) {
 		OrderProperties orderProperties = new OrderProperties();
-			
+		String voyageId="";	
 			
 		try (JsonReader jsonReader = Json.createReader(new StringReader(orderMsg))) {
 		 
@@ -58,16 +65,19 @@ public class OrderController {
 			if ( req.containsKey("customerId")) {
 				customerId = req.getString("customerId");
 			}
+			voyageId = req.getString("voyageId");
 			orderProperties.setCustomerId(customerId);
-			Voyage voyage = scheduleService.getVoyage(req.getString("voyageId"));
+			Voyage voyage = scheduleService.getVoyage(voyageId);
 			
 			orderProperties.setVoyageId(req.getString("voyageId"));
 			orderProperties.setOriginPort(voyage.getRoute().getOriginPort());
 			orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
 
+		  } catch( VoyageNotFoundException e) {
+			  System.out.println("OrderController.orderDetails() - voyage "+voyageId+" not found in the shipping schedule");
 		  } catch( Exception e) {
 			e.printStackTrace();
-		  }
+		  } 
 		  return orderProperties;
 	}
     @PostMapping("/orders")
@@ -91,6 +101,14 @@ public class OrderController {
             JsonValue reply = actorCall(orderActor, "createOrder", params);
 			System.out.println("Order Actor reply:"+reply);
 			order.setStatus(OrderStatus.BOOKED.getLabel());
+			JsonObject o = reply.asJsonObject();
+			JsonObject o2 = o.getJsonObject("booking");
+			JsonArray reefers = o2.getJsonArray("reefers");
+			
+			int shipFreeCapacity =
+				scheduleService.updateFreeCapacity(order.getVoyageId(), reefers.size());
+
+			simulatorService.updateVoyageCapacity(order.getVoyageId(), shipFreeCapacity);
 
 			voyageService.addOrderToVoyage(order);
 			int  futureOrderCount =  orderService.getOrders("booked-orders");

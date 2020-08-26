@@ -8,12 +8,16 @@ import java.util.Set;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.Kar.*;
+import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.model.Order;
+import com.ibm.research.kar.reefer.model.Voyage;
 
 import org.springframework.stereotype.Component;
 
@@ -33,11 +37,23 @@ public class VoyageService {
         }
         orders.add(order);
         System.out.println("VoyageService.addOrderToVoyage()-++++++++++ Added Order to Voyage:"+order.getVoyageId()+" Order Count:"+orders.size());
+
     }
     public void removeVoyage(String voyageId) {
        
+        System.out.println("*************** VoyageService.removeVoyage() - "+voyageId+" voyage ended - valid voyage:"+voyageOrders.containsKey(voyageId));
         if (voyageOrders.containsKey(voyageId)) {
-
+            Set<Order> orders = voyageOrders.get(voyageId);
+            System.out.println("*************** VoyageService.removeVoyage() - voyage orders:"+orders.size());
+            JsonObjectBuilder orderObject = Json.createObjectBuilder();
+            JsonObject params = orderObject.build();
+            orders.forEach(order -> {
+                System.out.println("*************** VoyageService.removeVoyage() - calling OrderActor.delivered() Id:"+order.getId());
+                ActorRef orderActor = Kar.actorRef("order", order.getId());
+                JsonValue reply = Kar.actorCall(orderActor, "delivered", params);
+                System.out.println("Order Actor reply:"+reply);
+            });
+    
             for(Iterator<String> iterator = voyageOrders.keySet().iterator(); iterator.hasNext(); ) {
                 String key = iterator.next();
                 if ( key.equals(voyageId)) {

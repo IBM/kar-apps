@@ -2,6 +2,7 @@ package com.ibm.research.kar.reefer.model;
 
 import java.time.Instant;
 
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 
 public class JsonOrder {
@@ -42,4 +43,5 @@ public class JsonOrder {
     public JsonObject getAsObject() {
         return order;
     }
+
 }

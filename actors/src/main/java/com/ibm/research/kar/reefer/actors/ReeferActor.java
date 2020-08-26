@@ -1,10 +1,13 @@
 package com.ibm.research.kar.reefer.actors;
+import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.ReeferState;
 import com.ibm.research.kar.reefer.model.JsonOrder;
+import com.ibm.research.kar.reefer.model.OrderStatus;
 
 import static com.ibm.research.kar.Kar.*;
 
@@ -13,6 +16,7 @@ import java.util.Map;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
 
 @Actor
@@ -32,7 +36,7 @@ public class ReeferActor extends BaseActor {
         stateMap = actorGetAllState(this);
      }
 
-    @Remote
+    //@Remote
     /**
      * Called once to initialize reefer state. 
      * 
@@ -41,17 +45,35 @@ public class ReeferActor extends BaseActor {
     public void setState(JsonObject reeferProperties) {
         System.out.println("ReeferActor.setState() - ID:"+this.getId()); 
    
-        Map<String, JsonValue> newStateMap = new HashMap<>();
+//        Map<String, JsonValue> newStateMap = new HashMap<>();
 
         try {
+            if ( reeferProperties.containsKey(ReeferState.MAX_CAPACITY_KEY)) {
+                set(this,ReeferState.MAX_CAPACITY_KEY,Json.createValue(reeferProperties.getInt(ReeferState.MAX_CAPACITY_KEY)));
+            }
+            if ( reeferProperties.containsKey(ReeferState.ORDER_ID_KEY)) {
+                set(this,ReeferState.ORDER_ID_KEY,Json.createValue(reeferProperties.getString(ReeferState.ORDER_ID_KEY)));
+            }
+            if ( reeferProperties.containsKey(ReeferState.VOYAGE_ID_KEY)) {
+                set(this,ReeferState.VOYAGE_ID_KEY,Json.createValue(reeferProperties.getString(ReeferState.VOYAGE_ID_KEY)));
+            }
+            if ( reeferProperties.containsKey(ReeferState.STATE_KEY)) {
+                set(this,ReeferState.STATE_KEY,Json.createValue(reeferProperties.getString(ReeferState.STATE_KEY)));
+            }
+
+/*
+
             newStateMap.put(ReeferState.MAX_CAPACITY_KEY, Json.createValue(reeferProperties.getInt(ReeferState.MAX_CAPACITY_KEY)));
             newStateMap.put(ReeferState.ORDER_ID_KEY, Json.createValue(reeferProperties.getString(ReeferState.ORDER_ID_KEY)));
             newStateMap.put(ReeferState.VOYAGE_ID_KEY, Json.createValue(reeferProperties.getString(ReeferState.VOYAGE_ID_KEY)));
+            newStateMap.put(ReeferState.VOYAGE_ID_KEY, Json.createValue(reeferProperties.getString(ReeferState.STATE_KEY)));
+            */
+           
            // stateMap.put(ReeferAvailCapacityKey, Json.createValue(maxCapacity));
            // stateMap.put(ReeferAllocationStatusKey, Json.createValue(ReeferAllocationStatus.EMPTY.name()));
            // stateMap.put(ReeferConditionKey, Json.createValue(ReeferCondition.NORMAL.name()));
-            actorSetMultipleState(this, newStateMap);
-            stateMap = newStateMap;
+ //           actorSetMultipleState(this, newStateMap);
+  //          stateMap = newStateMap;
 
         } catch( Exception e) {
             e.printStackTrace();
@@ -61,15 +83,48 @@ public class ReeferActor extends BaseActor {
     public void reserve(JsonObject message) {
         //JsonObject result = Json.createObjectBuilder().
         System.out.println("ReeferActor.reserve() called - Id:"+this.getId());
-        JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
- 
+       // JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
+        setState(message);
     }
     @Remote
-    public void anomaly(JsonObject message) {
+    public void unreserve(JsonObject message) {
+        //JsonObject result = Json.createObjectBuilder().
+        System.out.println("ReeferActor.unreserve() called - Id:"+this.getId());
+        JsonObject properties = Json.createObjectBuilder().
+            add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.UNALLOCATED.name())).
+            add(ReeferState.ORDER_ID_KEY,Json.createValue("")).
+            add(ReeferState.VOYAGE_ID_KEY,Json.createValue("")).build();
+        setState(properties);
+        JsonObject provisionerMessage = Json.createObjectBuilder().add("reeferId", getId()).build();
+        JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"unreserveReefer", provisionerMessage); 
+        System.out.println("ReeferActor.unreserve() - reply from the ReeferProvisionerActor - "+reply);
+    //    if ( reply.asJsonObject().getString("status").equals("OK") ) {
+     //   }
+    }
+    @Remote
+    public JsonValue anomaly(JsonObject message) {
         System.out.println("ReeferActor.anomaly() called - Id:"+this.getId()+"\n"+message.toString());
- //       String location = message.getString(ReeferLocationKey);
- //       String allocationStatus = message.getString(ReeferAllocationStatusKey);
- //       actorSetState(this, ReeferLocationKey, Json.createValue(location));
-  //      actorSetState(this, ReeferAllocationStatusKey, Json.createValue(allocationStatus));
+        JsonObjectBuilder propertiesBuilder = Json.createObjectBuilder();
+        JsonObjectBuilder reply = Json.createObjectBuilder();
+        JsonValue orderId = get(this,ReeferState.ORDER_ID_KEY);
+        if ( orderId != null && orderId.toString().length() > 0 ) {
+            JsonObject orderReply = notifyOrderOfSpoilage(orderId.toString());
+             if ( orderReply.getString("order-status").equals("INTRANSIT")) {
+                propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
+                reply.add("reefer-state", ReeferState.State.SPOILT.name());
+            } else {
+                propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.MAINTENANCE.name()));
+                reply.add("reefer-state", ReeferState.State.MAINTENANCE.name());
+            }
+        } else {
+            propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.MAINTENANCE.name()));
+        }
+        setState(propertiesBuilder.build());
+        return reply.build();
+    }
+    private JsonObject notifyOrderOfSpoilage(String orderId) {
+        ActorRef orderActor =  Kar.actorRef(ReeferAppConfig.OrderActorName,orderId);
+        JsonObject params = Json.createObjectBuilder().add("reeferId",getId()).build();
+        return actorCall( orderActor, "anomaly", params).asJsonObject();
     }
 }

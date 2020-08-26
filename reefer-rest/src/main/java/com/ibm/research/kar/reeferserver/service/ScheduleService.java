@@ -219,7 +219,14 @@ public class ScheduleService {
     public int updateFreeCapacity(String voyageId, int reeferCount) throws VoyageNotFoundException, ShipCapacityExceeded {
         Voyage voyage = getVoyage(voyageId);
         if ( voyage.getRoute().getVessel().getFreeCapacity() - reeferCount >= 0 ) {
+
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ScheduleService.updateFreeCapacity() - Free Capacity Before:"+
+                voyage.getRoute().getVessel().getFreeCapacity() + " Reefers to cargo:" + reeferCount
+            );
             voyage.getRoute().getVessel().setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity()- reeferCount);
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ScheduleService.updateFreeCapacity() - Free Capacity After:"+
+            voyage.getRoute().getVessel().getFreeCapacity()
+        );
             return voyage.getRoute().getVessel().getFreeCapacity();
         }
         throw new ShipCapacityExceeded("VoyageID:"+voyageId+" Unable to book ship due to lack of capacity. Current capacity:"+voyage.getRoute().getVessel().getFreeCapacity()+" Order reefer count:"+reeferCount);

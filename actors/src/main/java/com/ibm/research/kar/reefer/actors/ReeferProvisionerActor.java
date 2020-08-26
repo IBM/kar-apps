@@ -42,7 +42,7 @@ public class ReeferProvisionerActor extends BaseActor {
     
   //  private Map<String,JsonValue> inventory = new HashMap<>();
 
-    private Map<Integer,ActorRef> reeferInventory = new HashMap<>();
+  //  private Map<Integer,ActorRef> reeferInventory = new HashMap<>();
   //  private PackingAlgo packingAlgo;
 
     @Activate
@@ -144,14 +144,24 @@ public class ReeferProvisionerActor extends BaseActor {
                 .add(ReeferState.ORDER_ID_KEY,  reefer.getOrderId())
                 .add(ReeferState.MAX_CAPACITY_KEY, ReeferAppConfig.ReeferMaxCapacityValue)
                 .add(ReeferState.VOYAGE_ID_KEY, reefer.getVoyageId() )
+                .add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.ALLOCATED.name()))
                 .build();
-            actorCall( reeferActor, "setState", params);
+            actorCall( reeferActor, "reserve", params);
         
         } catch( ActorMethodNotFoundException ee) {
             ee.printStackTrace();
         } catch( Exception ee) {
             ee.printStackTrace();
         }
+    }
+    @Remote
+    public JsonObject unreserveReefer(JsonObject message ) {
+        JsonObjectBuilder reply = Json.createObjectBuilder();
+    
+        String reeferId = message.getString("reeferId");
+        System.out.println("ReeferProvisionerActor.unreserverReefer() - freeing reefer "+reeferId+" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+        reeferMasterInventory[Integer.valueOf(reeferId)] = null;
+        return reply.build();
     }
     @Remote
     public void reeferAnomaly(JsonObject message) {

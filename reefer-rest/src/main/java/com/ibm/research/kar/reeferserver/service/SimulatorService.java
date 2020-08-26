@@ -12,6 +12,22 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class SimulatorService {
+
+
+    public void updateVoyageCapacity(String voyageId, int freeCapacity) {
+        JsonObject params = Json.createObjectBuilder()
+        .add("voyageId",voyageId)
+        .add("freeCapacity",freeCapacity)
+        .build();
+        try {
+  
+            Response response = Kar.restPost("simservice","/simulator/updatevoyagecapacity", params);
+  
+        } catch( Exception e) {
+            e.printStackTrace();
+            
+        }
+    }
     public void setSimOrderTarget(int orderTarget) {
         System.out.println("OrderService.setSimOrderTarget()");
         try {

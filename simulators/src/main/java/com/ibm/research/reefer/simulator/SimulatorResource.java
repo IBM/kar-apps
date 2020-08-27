@@ -70,6 +70,33 @@ public class SimulatorResource {
    * gets & sets the number of days from now that future voyages can get orders
    */
   @GET
+  @Path("/getordercontrols")
+  public JsonValue getordercontrols() {
+    try {
+      return simService.getOrderControls();
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from getordercontrols");
+      return Json.createValue(-1);
+    }
+  }
+
+  @POST
+  @Path("/setordercontrols")
+  public JsonValue setordercontrols(JsonValue controls) {
+    try {
+      return simService.setOrderControls(controls);
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from setordercontrols");
+      return Json.createValue(-1);
+    }
+  }
+
+  /**
+   * gets & sets the number of days from now that future voyages can get orders
+   */
+  @GET
   @Path("/getorderwindow")
   public JsonValue getorderwindow() {
     try {

@@ -171,7 +171,8 @@ public class SimulatorService {
   // Manual oneshot. Runs only when unitdelay == 0
   public JsonValue advanceTime() {
     synchronized (unitdelay) {
-      if (0 == unitdelay.intValue() && 0 == shipthreadcount.get()) {
+      if (0 == unitdelay.intValue() && 0 == shipthreadcount.get() &&
+              0 == orderthreadcount.get() && 0 == reeferthreadcount.get()) {
         // get persistent value of ordertarget
         JsonNumber ot = (JsonNumber) this.getOrInit(Json.createValue("ordertarget"));
         ordertarget.set(ot.intValue());
@@ -188,7 +189,9 @@ public class SimulatorService {
         return Json.createValue("accepted");
       }
       System.out.println("simulator: advanceTime rejected: unitdelay=" + unitdelay.get()
-              + " shipthreadcount=" + shipthreadcount.get());
+              + " shipthreadcount=" + shipthreadcount.get()
+              + " orderthreadcount=" + orderthreadcount.get()
+              + " reeferthreadcount=" + reeferthreadcount.get());
       return Json.createValue("rejected");
     }
   }
@@ -205,6 +208,60 @@ public class SimulatorService {
     orderwindow.set(ow.intValue());
 
     (orderthread = new OrderThread()).start();
+  }
+
+  public JsonValue getOrderControls() {
+    JsonObject oc = Json.createObjectBuilder()
+            .add("ordertarget", (JsonNumber) getOrInit(Json.createValue("ordertarget")))
+            .add("orderupdates", (JsonNumber) getOrInit(Json.createValue("orderupdates")))
+            .add("orderwindow", (JsonNumber) getOrInit(Json.createValue("orderwindow")))
+            .build();
+    return oc;
+  }
+
+  public JsonValue setOrderControls(JsonValue controls) {
+    if (((JsonObject) controls).containsKey("orderwindow")) {
+      try {
+        JsonNumber ow = ((JsonObject) controls).getJsonNumber("orderwindow");
+        setOrderWindow(ow);
+      }
+      catch (Exception e) {
+        JsonObject message = Json.createObjectBuilder()
+                .add("invalid orderwindow", ((JsonObject) controls).getString("orderwindow")).build();
+        return message;
+      }
+    }
+
+    if (((JsonObject) controls).containsKey("orderupdates")) {
+      try {
+        JsonNumber ou = ((JsonObject) controls).getJsonNumber("orderupdates");
+        setOrderUpdates(ou);
+      }
+      catch (Exception e) {
+        JsonObject message = Json.createObjectBuilder()
+                .add("invalid orderupdates", ((JsonObject) controls).getString("orderupdates")).build();
+        return message;
+      }
+    }
+
+    if (((JsonObject) controls).containsKey("ordertarget")) {
+      try {
+        JsonNumber ot = ((JsonObject) controls).getJsonNumber("ordertarget");
+        setOrderTarget(ot);
+      }
+      catch (Exception e) {
+        JsonObject message = Json.createObjectBuilder()
+                .add("invalid ordertarget", ((JsonObject) controls).getString("ordertarget")).build();
+        return message;
+      }
+    }
+
+    JsonObject oc = Json.createObjectBuilder()
+            .add("ordertarget", (JsonNumber) getOrInit(Json.createValue("ordertarget")))
+            .add("orderupdates", (JsonNumber) getOrInit(Json.createValue("orderupdates")))
+            .add("orderwindow", (JsonNumber) getOrInit(Json.createValue("orderwindow")))
+            .build();
+    return oc;
   }
 
   public JsonNumber getOrderUpdates() {

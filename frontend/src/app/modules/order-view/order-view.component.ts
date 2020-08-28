@@ -64,6 +64,24 @@ export class OrderViewComponent implements OnInit {
     console.log('OrderView - connected socket');
     stompClient.connect({}, frame => {
       console.log('OrderView - connected stompClient');
+
+      stompClient.subscribe('/topic/orders/intransit', (event:any) => {
+        if ( event.body) {
+          let orderCount : number;
+          console.log("-------- IntransitOrders Update:"+event.body);
+          orderCount = JSON.parse(event.body);
+          this.inTransitOrders = orderCount;
+        }
+      });
+      stompClient.subscribe('/topic/orders/future', (event:any) => {
+        if ( event.body) {
+          let orderCount : number;
+          console.log("-------- FutureOrders Update:"+event.body);
+          orderCount = JSON.parse(event.body);
+          this.futureOrders = orderCount;
+        }
+      });
+
   // Subscribe to notification topic
         stompClient.subscribe('/topic/orders', (event:any) => {
           if ( event.body) {
@@ -90,22 +108,7 @@ export class OrderViewComponent implements OnInit {
           }
 
         });
-        stompClient.subscribe('/topic/orders/intransit', (event:any) => {
-          if ( event.body) {
-            let orderCount : number;
-            console.log("-------- IntransitOrders Update:"+event.body);
-            orderCount = JSON.parse(event.body);
-            this.inTransitOrders = orderCount;
-          }
-      });
-      stompClient.subscribe('/topic/orders/future', (event:any) => {
-        if ( event.body) {
-          let orderCount : number;
-          console.log("-------- FutureOrders Update:"+event.body);
-          orderCount = JSON.parse(event.body);
-          this.futureOrders = orderCount;
-        }
-    });
+
     });
     
 

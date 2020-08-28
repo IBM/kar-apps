@@ -10,6 +10,7 @@ import javax.json.JsonReader;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.DelayTarget;
 import com.ibm.research.kar.reefer.model.OrderSimControls;
+import com.ibm.research.kar.reefer.model.ReeferSimControls;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.SimulatorService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
@@ -91,7 +92,30 @@ public class SimulatorController {
           e.printStackTrace();
         }
     }
-    
+    @GetMapping("/simulator/controls")
+	public ReeferSimControls getReeferSimulatorControls() {
+		System.out.println("SimulatorController.getReeferSimulatorControls() - Got New Request");
+		
+		return simulatorService.getReeferSimControls();
+	}
+	@PostMapping("/simulator/controls/update")
+	public void updateReeferSimulatorControls(@RequestBody String body) {
+		System.out.println("SimulatorController.updateReeferSimulatorControls() - Got New Request");
+    int failureRate=0;
+    int updateFrequency = 0;
+    try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
+          
+      JsonObject req = jsonReader.readObject();
+      failureRate = Integer.valueOf(req.getJsonString("failureRate").toString().replace("\"",""));
+      updateFrequency = Integer.valueOf(req.getJsonString("updateFrequency").toString().replace("\"",""));
+    } catch( Exception e ) {
+      e.printStackTrace();
+    }
+      
+		simulatorService.updateReeferSimControls(new ReeferSimControls(failureRate, updateFrequency));
+
+	//	return "OK";
+	}
   @PostMapping("/simulator/setordersimcontrols")
   public void  setOrderSimControls(@RequestBody String body) {
     System.out.println("SimulatorController.setOrderSimControls() - target "+body);

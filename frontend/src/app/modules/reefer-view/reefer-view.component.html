@@ -11,12 +11,16 @@
                   <div class="example-container" fxLayout="row" fxLayoutGap="10px">
                         <!--mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill" -->
                         <mat-form-field appearance="fill">
-                            <!--mat-form-field   appearance="fill" fxLayout="row"-->
+                            
                            <input matInput min="0" max="100" step="1" ngStep="1"  name="failureRate" [(ngModel)]="failureRate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
                         <mat-hint align="start">Reefer Failure Rate ^</mat-hint>
                         </mat-form-field>
-                       
-                      <button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateReeferFailureRate()" mat-raised-button  color="primary"  [style.height.px]="'55'" [style.fontSize.px]="'17'">Update</button>
+                        <mat-form-field appearance="fill">
+                          
+                         <input matInput min="0" max="100" step="1" ngStep="1"  name="updateFrequency" [(ngModel)]="updateFrequency" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                      <mat-hint align="start">Update Frequency ^</mat-hint>
+                      </mat-form-field>
+                      <button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateReeferControls()" mat-raised-button  color="primary"  [style.height.px]="'55'" [style.fontSize.px]="'17'">Update</button>
                       <!--button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateOrderTarget($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button -->
                       <!--button [disabled]="orderTarget === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleEnableDisable($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button-->
 

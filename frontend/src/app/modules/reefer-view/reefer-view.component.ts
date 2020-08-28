@@ -29,14 +29,14 @@ export class ReeferViewComponent implements OnInit {
   messageList:  string[] = [];
   portSelection = new SelectionModel<Port>(false, []);
   reeferSelection = new SelectionModel<Reefer>(false, []);
-  totalReefers : number = 0;
-  totalInTransitReefers : number = 0;
-  totalBookedReefers : number = 0;
-  totalSpoiltReefers : number = 0;
-  totalOnMaintenanceReefers : number = 0;
+  totalReefers : number ;
+  totalInTransitReefers : number;
+  totalBookedReefers : number;
+  totalSpoiltReefers : number;
+  totalOnMaintenanceReefers : number;
   createAnomalyManually: boolean;
-  failureRate: number = 0;
-
+  failureRate: number;
+  updateFrequency : number;
   //@ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   @ViewChild(MatSort, {static: true}) sort: MatSort;
@@ -44,6 +44,12 @@ export class ReeferViewComponent implements OnInit {
 
 
   constructor(private dialog: MatDialog, private restService: RestService, private webSocketService : SocketService ) {
+    this.restService.getReeferControls().subscribe((data) => {
+      console.log(data);
+      this.failureRate = data.failureRate;
+      this.updateFrequency = data.updateFrequency;
+      
+    });
     this.restService.getReeferStats().subscribe((data) => {
       console.log(data);
 
@@ -60,6 +66,7 @@ export class ReeferViewComponent implements OnInit {
     stompClient.connect({}, frame => {
       console.log('ReeferView - connected socket');
   // Subscribe to notification topic
+  /*
         stompClient.subscribe('/topic/reefers', (event:any) => {
           if ( event.body) {
             this.reefers = JSON.parse(event.body);
@@ -69,6 +76,7 @@ export class ReeferViewComponent implements OnInit {
           }
 
         });
+        */
         stompClient.subscribe('/topic/reefers/stats', (event:any) => {
           if ( event.body) {
             this.reeferStats = JSON.parse(event.body);
@@ -105,12 +113,13 @@ export class ReeferViewComponent implements OnInit {
       this.portsDataSource.data = data;
       });
 */
+/*
 this.restService.getAllReefers().subscribe((data) => {
   console.log(">>>>>>>>>"+data);
 
   this.reeferDataSource.data = data;
   });
-
+*/
   }
 
   public doFilter = (value: string) => {
@@ -169,8 +178,16 @@ createFilter() {
   return filterFunction
 }
 
-updateReeferFailureRate() {
+updateReeferControls() {
+  console.log("Click >>>>>"+event +" Failure Rate:"+this.failureRate+" update Frequency:"+this.updateFrequency);
+  const request = {};
+  request['failureRate'] = this.failureRate.toString();
+  request['updateFrequency'] = this.updateFrequency.toString();
 
+  this.restService.updateReeferControls(request).subscribe((data) => {
+    console.log(data);
+
+  });
 }
 createAnomaly() {
 

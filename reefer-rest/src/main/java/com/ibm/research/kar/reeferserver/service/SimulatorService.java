@@ -7,6 +7,7 @@ import javax.ws.rs.core.Response;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.model.OrderSimControls;
+import com.ibm.research.kar.reefer.model.ReeferSimControls;
 
 import org.springframework.stereotype.Service;
 
@@ -165,4 +166,38 @@ public class SimulatorService {
         } 
         return orderTarget;
     }
+    public ReeferSimControls getReeferSimControls() {
+        System.out.println("SimulatorService.getReeferSimControls ");
+        Response response = Kar.restGet("simservice", "simulator/getreefercontrols");
+        JsonValue respValue = response.readEntity(JsonValue.class);
+        System.out.println("Response = "+respValue);
+        int failureRate = respValue.asJsonObject().getInt("failuretarget");
+        int updateFrequency = respValue.asJsonObject().getInt("reeferupdates");
+		return new ReeferSimControls(failureRate,updateFrequency);
+	}
+	public void updateReeferSimControls(ReeferSimControls simControls) {
+        System.out.println("SimulatorService.updateReeferSimControls()");
+        try {
+            JsonObject body = Json.createObjectBuilder().
+                add("reeferupdates", simControls.getUpdateFrequency()).
+                add("failuretarget", simControls.getFailureRate()).
+                build();
+
+            Response response = Kar.restPost("simservice", "simulator/setreefercontrols", body);
+            JsonValue respValue = response.readEntity(JsonValue.class);
+            System.out.println("Response = "+respValue);
+        } catch (ActorMethodNotFoundException ee) {
+            ee.printStackTrace();
+        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
+  
+        } catch( Exception ee) {
+			ee.printStackTrace();
+		} 
+		/*
+			JsonObject message = Json.createObjectBuilder().build();
+			JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"getStats", message); 
+			JsonObject controls = reply.asJsonObject();
+			*/
+			System.out.println("SimulatorService.updateReeferSimControls - failureRate:"+simControls.getFailureRate()+" frequencyUpdate:"+simControls.getUpdateFrequency());
+		}
 }

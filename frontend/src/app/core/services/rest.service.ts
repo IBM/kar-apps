@@ -20,6 +20,7 @@ import { DelayTarget } from '../models/delay-target';
 import { OrderStats } from '../models/order-stats';
 import { OrderSimControls } from '../models/order-sim-controls';
 import { ReeferStats } from '../models/reefer-stats';
+import {  ReeferSimControls } from '../models/reefer-sim-controls';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -243,6 +244,19 @@ getOrderStats() {
   const options = { header: headers, params: new HttpParams()};
   
   return this.httpClient.get<OrderStats>(this.REST_API_SERVER+'/orders/stats', options).pipe(retry(3), catchError(this.handleError));
+
+}
+getReeferControls() {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+  
+  return this.httpClient.get<ReeferSimControls>(this.REST_API_SERVER+'/simulator/controls', options).pipe(retry(3), catchError(this.handleError));
+
+}
+updateReeferControls(request) {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const params = request;
+  return this.httpClient.post<String>(this.REST_API_SERVER+'/simulator/controls/update', params).pipe(retry(1), catchError(this.handleError));
 
 }
 getOrderTarget() {

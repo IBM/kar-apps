@@ -1,5 +1,6 @@
 package com.ibm.research.kar.reeferserver.service;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,6 +39,14 @@ public class VoyageService {
         orders.add(order);
         System.out.println("VoyageService.addOrderToVoyage()-++++++++++ Added Order to Voyage:"+order.getVoyageId()+" Order Count:"+orders.size());
 
+    }
+
+    public Set<Order> getOrders(String voyageId) {
+        if ( voyageOrders.containsKey(voyageId)) {
+            return voyageOrders.get(voyageId);
+        } else {
+            return Collections.emptySet();
+        }
     }
     public void removeVoyage(String voyageId) {
        

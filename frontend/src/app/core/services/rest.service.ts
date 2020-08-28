@@ -19,6 +19,7 @@ import { OrderTarget } from '../models/order-target';
 import { DelayTarget } from '../models/delay-target';
 import { OrderStats } from '../models/order-stats';
 import { OrderSimControls } from '../models/order-sim-controls';
+import { ReeferStats } from '../models/reefer-stats';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -148,6 +149,13 @@ getReefers( inPort: string)  {
   const options = { header: headers, params: new HttpParams().set('port',inPort) };
 
   return this.httpClient.get<Reefer[]>(this.REST_API_SERVER+'/reefers/'+inPort, options).pipe(retry(3), catchError(this.handleError));
+
+}
+getReeferStats()  {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams() };
+
+  return this.httpClient.get<ReeferStats>(this.REST_API_SERVER+'/reefers/stats', options).pipe(retry(3), catchError(this.handleError));
 
 }
 getAllReefers()  {

@@ -27,17 +27,17 @@ export class OrderViewComponent implements OnInit {
   selection = new SelectionModel<Order>(false, []);
   displayedColumns: string[] = ['select',  'id', 'customerId','status','product', 'productQty', 'voyageId'];//, 'origin', 'destination','sailDate', 'transitTime', 'voyageId', 'reeferIds'];
   orders: Order[] = [];
-  orderTarget : number = 0;
-  windowSize : number = 0;
-  orderUpdates : number = 0;
+  orderTarget : number ;
+  windowSize : number;
+  orderUpdates : number;
   filterValues = {};
   filterSelectObj = [];
   totalElements: number = 0;
   loading: boolean;
   createOrderManually: boolean;
-  inTransitOrders:number = 0;
-  futureOrders:number = 0;
-  spoiltOrders:number = 0;
+  inTransitOrders:number ;
+  futureOrders:number;
+  spoiltOrders:number ;
 
   autoSimButtonLabel: string = "Update";
   dataSource = new MatTableDataSource(this.orders);

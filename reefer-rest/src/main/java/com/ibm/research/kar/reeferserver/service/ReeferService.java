@@ -12,6 +12,7 @@ import javax.json.JsonValue;
 import static com.ibm.research.kar.Kar.*;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.model.Reefer;
+import com.ibm.research.kar.reefer.model.ReeferStats;
 
 import org.springframework.stereotype.Component;
 @Component
@@ -71,6 +72,13 @@ public class ReeferService {
 			reefers.addAll(r.getValue());
 		}
         return reefers;
+	}
+	public ReeferStats getReeferStats() {
+		JsonObject message = Json.createObjectBuilder().build();
+		JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"getStats", message); 
+		JsonObject stats = reply.asJsonObject();
+		
+		return new ReeferStats(stats.getInt("total"),stats.getInt("totalInTransit"),stats.getInt("totalBooked"),stats.getInt("totalSpoilt"),stats.getInt("totalOnMaintenance"));
     }
     public List<Reefer> getReefers(String port) {
         List<Reefer> reefers;

@@ -70,7 +70,7 @@ public class VoyageActor extends BaseActor {
     }
     @Remote
     public JsonValue changePosition(JsonObject message) {
-        System.out.println("VoyageActor.changePosition() called "+message.toString());
+        System.out.println(getId()+" VoyageActor.changePosition() called "+message.toString());
 
         int daysAtSea = message.getInt("daysAtSea");
         String currentDate = message.getString("currentDate");
@@ -155,7 +155,7 @@ public class VoyageActor extends BaseActor {
         orderCount = orders.size();
        }
 
-        System.out.println("VoyageActor.reserve() called "+message.toString()+" OrderID:"+order.getId()+" Orders size="+orderCount);
+        System.out.println(getId()+" VoyageActor.reserve() called "+message.toString()+" OrderID:"+order.getId()+" Orders size="+orderCount);
 /*
         JsonObject params = Json.createObjectBuilder()
                 .add(JsonOrder.OrderKey,  order.getAsObject())

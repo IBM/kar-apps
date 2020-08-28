@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Reefer;
+import com.ibm.research.kar.reefer.model.ReeferStats;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.model.ShippingSchedule;
 
@@ -52,5 +53,8 @@ public class GuiController {
         
         template.convertAndSend("/topic/orders/future", orderCount); 
     }
-
+    public void updateReeferStats(ReeferStats stats) {
+        
+        template.convertAndSend("/topic/reefers/stats", stats); 
+    }
 }

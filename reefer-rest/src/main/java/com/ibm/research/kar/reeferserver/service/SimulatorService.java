@@ -29,7 +29,7 @@ public class SimulatorService {
         }
     }
     public void setSimOrderTarget(int orderTarget) {
-        System.out.println("OrderService.setSimOrderTarget()");
+        System.out.println("SimulatorService.setSimOrderTarget()");
         try {
             JsonObject body = Json.createObjectBuilder().add("value", orderTarget).build();
 
@@ -46,7 +46,7 @@ public class SimulatorService {
 		} 
     }
     public void setSimOrderWindow(int window) {
-        System.out.println("OrderService.setSimOrderWindow()");
+        System.out.println("SimulatorService.setSimOrderWindow()");
         try {
             JsonObject body = Json.createObjectBuilder().add("value", window).build();
 
@@ -63,7 +63,7 @@ public class SimulatorService {
 		} 
     }
     public void setSimOrderUpdateFrequency(int updateFrequency) {
-        System.out.println("OrderService.setSimOrderUpdateFrequency()");
+        System.out.println("SimulatorService.setSimOrderUpdateFrequency()");
         try {
             JsonObject body = Json.createObjectBuilder().add("value", updateFrequency).build();
 
@@ -80,7 +80,7 @@ public class SimulatorService {
 		} 
     }
     public void updateOrderSimControls(int orderTarget, int window, int updateFrequency) {
-        System.out.println("OrderService.updateOrderSimControls()");
+        System.out.println("SimulatorService.updateOrderSimControls()");
         try {
             setSimOrderTarget(orderTarget);
             setSimOrderWindow(window);
@@ -94,7 +94,7 @@ public class SimulatorService {
 		} 
     }
     public OrderSimControls getOrderSimControls() {
-        System.out.println("OrderService.getOrderSimControls()");
+        System.out.println("SimulatorService.getOrderSimControls()");
         int target = 0;
         int window = 1;
         int updateFrequency = 2;
@@ -111,15 +111,16 @@ public class SimulatorService {
         } catch( Exception ee) {
 			ee.printStackTrace();
         } 
+        System.out.println("SimulatorService.getOrderSimControls() - target:"+target+" window:"+window+" updateFrequency:"+updateFrequency);
         return new OrderSimControls(target, window, updateFrequency);
     }
     public int getSimOrderTarget() {
-        System.out.println("OrderService.getSimOrderTarget()");
+        System.out.println("SimulatorService.getSimOrderTarget()");
         int orderTarget=0;
         try {
             Response response = Kar.restGet("simservice", "simulator/getordertarget");
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("OrderService.getSimOrderTarget() Sim Response = "+respValue);
+            System.out.println("SimulatorService.getSimOrderTarget() Sim Response = "+respValue);
             orderTarget = Integer.parseInt(respValue.toString());
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
@@ -131,12 +132,12 @@ public class SimulatorService {
         return orderTarget;
     }
     public int getOrderSimWindow() {
-        System.out.println("OrderService.getOrderSimWindow()");
+        System.out.println("SimulatorService.getOrderSimWindow()");
         int orderTarget=0;
         try {
             Response response = Kar.restGet("simservice", "simulator/getorderwindow");
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("OrderService.getSimOrderTarget() Sim Response = "+respValue);
+            System.out.println("SimulatorService.getSimOrderTarget() Sim Response = "+respValue);
             orderTarget = Integer.parseInt(respValue.toString());
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
@@ -148,12 +149,12 @@ public class SimulatorService {
         return orderTarget;
     }
     public int getOrderSimUpdateFrequency() {
-        System.out.println("OrderService.getOrderSimUpdateFrequency()");
+        System.out.println("SimulatorService.getOrderSimUpdateFrequency()");
         int orderTarget=0;
         try {
             Response response = Kar.restGet("simservice", "simulator/getorderupdates");
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("OrderService.getSimOrderTarget() Sim Response = "+respValue);
+            System.out.println("SimulatorService.getSimOrderTarget() Sim Response = "+respValue);
             orderTarget = Integer.parseInt(respValue.toString());
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();

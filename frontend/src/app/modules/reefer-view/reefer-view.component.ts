@@ -8,6 +8,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { Reefer } from 'src/app/core/models/reefer';
 import { MatSort } from '@angular/material/sort';
 import { SocketService } from 'src/app/core/services/socket.service';
+import { ReeferStats } from 'src/app/core/models/reefer-stats';
 
 @Component({
   selector: 'app-reefer-view',
@@ -18,6 +19,7 @@ export class ReeferViewComponent implements OnInit {
   selectedPort : string;
   ports: Port[] = [];
   reefers: Reefer[] = [];
+  reeferStats: ReeferStats;
   portsDataSource = new MatTableDataSource(this.ports);
   reeferDataSource = new MatTableDataSource(this.reefers);
   portTableColumns: string[] = [ 'port', 'position', 'reeferCnt', 'onMaintenance', 'add'];
@@ -27,6 +29,14 @@ export class ReeferViewComponent implements OnInit {
   messageList:  string[] = [];
   portSelection = new SelectionModel<Port>(false, []);
   reeferSelection = new SelectionModel<Reefer>(false, []);
+  totalReefers : number = 0;
+  totalInTransitReefers : number = 0;
+  totalBookedReefers : number = 0;
+  totalSpoiltReefers : number = 0;
+  totalOnMaintenanceReefers : number = 0;
+  createAnomalyManually: boolean;
+  failureRate: number = 0;
+
   //@ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   @ViewChild(MatSort, {static: true}) sort: MatSort;
@@ -34,6 +44,15 @@ export class ReeferViewComponent implements OnInit {
 
 
   constructor(private dialog: MatDialog, private restService: RestService, private webSocketService : SocketService ) {
+    this.restService.getReeferStats().subscribe((data) => {
+      console.log(data);
+
+      this.totalReefers = data.total;
+      this.totalBookedReefers = data.totalBooked;
+      this.totalInTransitReefers = data.totalInTransit;
+      this.totalSpoiltReefers = data.totalSpoilt;
+      this.totalOnMaintenanceReefers = data.totalOnMaintenance;
+      });
 // Object to create Filter for
 		// Open connection with server socket
     let stompClient = this.webSocketService.connect();
@@ -49,7 +68,20 @@ export class ReeferViewComponent implements OnInit {
 
           }
 
+        });
+        stompClient.subscribe('/topic/reefers/stats', (event:any) => {
+          if ( event.body) {
+            this.reeferStats = JSON.parse(event.body);
+            console.log('::::::'+this.reeferStats);
+            this.totalReefers = this.reeferStats.total;
+            this.totalBookedReefers = this.reeferStats.totalBooked;
+            this.totalInTransitReefers = this.reeferStats.totalInTransit;
+            this.totalSpoiltReefers = this.reeferStats.totalSpoilt;
+            this.totalOnMaintenanceReefers = this.reeferStats.totalOnMaintenance;
+          }
+
         })
+        
     });
 
   }
@@ -137,7 +169,12 @@ createFilter() {
   return filterFunction
 }
 
+updateReeferFailureRate() {
 
+}
+createAnomaly() {
+
+}
 // Reset table filters
 resetFilters() {
   this.filterValues = {}

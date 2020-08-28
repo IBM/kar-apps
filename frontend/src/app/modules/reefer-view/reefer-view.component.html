@@ -1,53 +1,163 @@
-<!--div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
-  <div fxFlex="100">
-    <div class="mat-elevation-z8">
-      <div class="col m12 s12 mat-elevation-z8" style="margin-top:-10px;border-radius:4px; background: linear-gradient(60deg,#6d6fc0,#50649c); padding:5px">
-        <h2 class="white-text">Ports</h2>
+<mat-card class="example-card" [style.backgroundColor]="'gainsboro'">
+  <mat-card-content >
+      <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
+          <mat-card fxFlex="80">
+              <mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'22'">
+                  <mat-card-title>Reefer Simulator</mat-card-title>
+                  <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
+              </mat-card-header>
+
+              <mat-card-content>
+                  <div class="example-container" fxLayout="row" fxLayoutGap="10px">
+                        <!--mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill" -->
+                        <mat-form-field appearance="fill">
+                            <!--mat-form-field   appearance="fill" fxLayout="row"-->
+                           <input matInput min="0" max="100" step="10" ngStep="10"  name="failureRate" [(ngModel)]="failureRate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                        <mat-hint align="start">Reefer Failure Rate ^</mat-hint>
+                        </mat-form-field>
+                       
+                      <button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateReeferFailureRate()" mat-raised-button  color="primary"  [style.height.px]="'55'" [style.fontSize.px]="'17'">Update</button>
+                      <!--button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateOrderTarget($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button -->
+                      <!--button [disabled]="orderTarget === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleEnableDisable($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button-->
+
+                  </div>
+
+              </mat-card-content>
+          </mat-card>
+          <!--mat-card fxFlex="1"> </mat-card-->
+          <mat-card fxFlex="20" >
+              <!--mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'35'">
+                  <mat-card-title ></mat-card-title>
+              </mat-card-header-->
+              <mat-card-content class="advance" color="primary" style="margin:14px; padding:5px">
+                  <div fxLayout="row" fxLayoutAlign="start center">
+                      <app-personaldetails fxFlex="80%">
+                          <button [disabled]="createAnomalyManually === false" (click)="createAnomaly()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Anomaly</button>
+                          <!--button [disabled]="orderTarget > 0" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Order</button-->
+
+                      </app-personaldetails>
+                      <app-personaldetails fxFlex="3%">
+
+                      </app-personaldetails>
+ 
+                   </div>
+
+              </mat-card-content>
+
+              <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
+          </mat-card>
       </div>
-      <table mat-table [dataSource]="portsDataSource">
 
-        <ng-container matColumnDef="port">
-          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Port </th>
-          <td mat-cell *matCellDef="let element"> {{element.name}} </td>
-        </ng-container>
-        <ng-container matColumnDef="position">
-          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Geo Location </th>
-          <td mat-cell *matCellDef="let element"> {{element.position}} </td>
-        </ng-container>
+      
 
-        <ng-container matColumnDef="reeferCnt">
-          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Available Reefers </th>
-          <td mat-cell *matCellDef="let element">{{element.availableReefers}}</td>
-        </ng-container>
+      <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="4px" class="stats-cards" >
+        <mat-card fxFlex="20"  style="backgroundColor:#9dade2;margin:35px; padding:25px">
 
 
-        <ng-container matColumnDef="onMaintenance">
-          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Reefers on Maintenance </th>
-          <td mat-cell *matCellDef="let element"> {{element.reefersOnMaintenance}} </td>
-        </ng-container>
+            <mat-card-content>
+                <div fxLayout="row" fxLayoutAlign="center center" width="100%">
+                    <div  >
+                        <h1>Total Reefers</h1>
+    
+                    </div>
+                </div>
+                <div fxLayout="row" fxLayoutAlign="center center" width="100%">
+                    <div >
+                        <mat-label [style.font-size]="'50px'">{{totalReefers}}</mat-label>
+    
+                    </div>
+                 </div>
+                
+            </mat-card-content>
+        </mat-card>
+       <mat-card fxFlex="20" style="backgroundColor:#9dade2;margin:35px; padding:25px" >
 
+            <mat-card-content class="advance" color="primary" >
+                <div fxLayout="row" fxLayoutAlign="center center">
+                    <div class="example-container">
+                        <h1>In-Transit</h1>
+    
+                    </div>
+                </div>
+                <div fxLayout="row" fxLayoutAlign="center center">
+                    <div >
+                        <mat-label [style.font-size]="'50px'">{{totalInTransitReefers}}</mat-label>
+    
+                    </div>
+                 </div>
+                 
+            </mat-card-content>
 
-        <ng-container matColumnDef="add">
-          <th mat-header-cell *matHeaderCellDef class="table-head-fix"> Add</th>
-          <td mat-cell *matCellDef="let element" (click)="$event.stopPropagation()">
-            <button mat-icon-button color="warn" (click)="addPortReefers(element)">
-              <mat-icon class="mat-18">addchart</mat-icon>
-            </button>
-        </td>
-        </ng-container>
+            <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
+        </mat-card>
+        <mat-card fxFlex="20" style="backgroundColor:#9dade2;margin:35px; padding:25px">
+            <mat-card-content class="advance" color="primary" >
+                <div fxLayout="row" fxLayoutAlign="center center">
+                    <div class="example-container">
+                        <h1>Booked</h1>
+    
+                    </div>
+                 </div>
+                 <div fxLayout="row" fxLayoutAlign="center center">
+                    <div >
+                        <mat-label [style.font-size]="'50px'">{{totalBookedReefers}}</mat-label>
+ 
+                    </div>
+                    
+                    
+                </div>
+               
+            </mat-card-content>
 
+            <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
+        </mat-card>
+        <mat-card fxFlex="20" style="backgroundColor:#9dade2;margin:35px; padding:25px">
+          <mat-card-content class="advance" color="primary" >
+              <div fxLayout="row" fxLayoutAlign="center center">
+                  <div class="example-container">
+                      <h1>Spoilt</h1>
+  
+                  </div>
+               </div>
+               <div fxLayout="row" fxLayoutAlign="center center">
+                  <div >
+                      <mat-label [style.font-size]="'50px'">{{totalSpoiltReefers}}</mat-label>
 
-        <tr mat-header-row *matHeaderRowDef="portTableColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: portTableColumns;" (click) = "onRowClicked(row)" ></tr>
+                  </div>
+                  
+                  
+              </div>
 
-      </table>
+          </mat-card-content>
 
-      <mat-paginator [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+          <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
+      </mat-card>
+      <mat-card fxFlex="20" style="backgroundColor:#9dade2;margin:35px; padding:25px">
+        <mat-card-content class="advance" color="primary" >
+            <div fxLayout="row" fxLayoutAlign="center center">
+                <div class="example-container">
+                    <h1>On Maintenance</h1>
+
+                </div>
+             </div>
+             <div fxLayout="row" fxLayoutAlign="center center">
+                <div >
+                    <mat-label [style.font-size]="'50px'">{{totalOnMaintenanceReefers}}</mat-label>
+
+                </div>
+                
+                
+            </div>
+            
+        </mat-card-content>
+
+        <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
+    </mat-card>
     </div>
-  </div>
-</div-->
+  </mat-card-content>
+</mat-card>
 
-<mat-divider></mat-divider>
+
 <br>
 
 <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >

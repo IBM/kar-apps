@@ -8,6 +8,7 @@ import java.io.StringReader;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -15,10 +16,13 @@ import javax.json.JsonReader;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
+import com.ibm.research.kar.Kar;
 //import com.ibm.research.kar.Kar.*;
 import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
+import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
@@ -142,6 +146,17 @@ import org.springframework.web.bind.annotation.RestController;
               System.out.println("VoyageController.updateVoyageState() voyageId="+voyageId+" has ARRIVED ------------------------------------------------------");
               voyageService.removeVoyage(voyageId);
             } else {
+
+              if ( daysAtSea == 1) {
+                Set<Order> orders = voyageService.getOrders(voyageId);
+                orders.forEach(order -> {
+                  ActorRef orderActor =  Kar.actorRef(ReeferAppConfig.OrderActorName, order.getId());
+                  JsonObject params = Json.createObjectBuilder().build();
+                  actorCall( orderActor, "departed", params);
+                });
+
+
+              }
               orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT, daysAtSea);
             }
             

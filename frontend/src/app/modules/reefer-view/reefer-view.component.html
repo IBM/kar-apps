@@ -12,7 +12,7 @@
                         <!--mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill" -->
                         <mat-form-field appearance="fill">
                             <!--mat-form-field   appearance="fill" fxLayout="row"-->
-                           <input matInput min="0" max="100" step="10" ngStep="10"  name="failureRate" [(ngModel)]="failureRate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                           <input matInput min="0" max="100" step="1" ngStep="1"  name="failureRate" [(ngModel)]="failureRate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
                         <mat-hint align="start">Reefer Failure Rate ^</mat-hint>
                         </mat-form-field>
                        
@@ -160,21 +160,10 @@
 
 <br>
 
-<div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
+<!--div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
   <div fxFlex="100">
     <div class="mat-elevation-z8">
-      <!--div>
-        <mat-form-field *ngFor="let filter of filterSelectObj" style="margin-left: 15px;">
-          <mat-label>Filter {{filter.name}}</mat-label>
-          <select matNativeControl name="{{filter.columnProp}}" [(ngModel)]="filter.modelValue"
-            (change)="filterChange(filter,$event)">
-            <option value="">-- Select {{filter.name}} --</option>
-            <option [value]="item" *ngFor="let item of filter.options">{{item}}</option>
-          </select>
-        </mat-form-field>
-        &nbsp;
-        <button mat-flat-button color="warn" (click)="resetFilters()">Reset</button>
-      </div-->
+
 
       <div fxLayout fxLayoutAlign="center center">
         <mat-form-field fxFlex="40%">
@@ -228,6 +217,6 @@
       <mat-paginator [pageSizeOptions]="[ 10, 15, 20]"></mat-paginator>
     </div>
   </div>
-</div>
+</div-->
 
 

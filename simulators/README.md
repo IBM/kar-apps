@@ -31,7 +31,8 @@ curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simula
 Kar.restPost("simservice", "simulator/setunitdelay", Json.createObjectBuilder().add("value", N).build());
 
 
-To create one order for needy voyages when in manual-time or manual-order modes ...
+To create orders for needy voyages when in manual-time or manual-order modes ...  
+... from command line:  
 curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/createorder  
 ... from another reeferapp service:  
 Kar.restPost("simservice", "simulator/createorder", JsonValue.NULL);
@@ -39,9 +40,10 @@ Kar.restPost("simservice", "simulator/createorder", JsonValue.NULL);
 
 To put orderthread in auto-order mode with ordertarget percent = T, or back into manual-order mode with T=0, ...  
 ... from command line:  
-curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setordertarget -d '{"value":T}'  
+curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setordercontrols -d '{"ordertarget":T}'  
 ... from another reeferapp service:  
-Kar.restPost("simservice", "simulator/setordertarget", Json.createObjectBuilder().add("value", T).build());
+Kar.restPost("simservice", "simulator/setordercontrols", Json.createObjectBuilder().add("ordertarget", T).build());
+The setordercontrols API can also be used to set orderwindow and orderupdates values. More than one order controls can be set at the same time.
 
 To create one (1) reefer anomaly ...  
 ... from command line:  
@@ -50,11 +52,12 @@ curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simula
 Kar.restPost("simservice", "simulator/createanomaly", JsonValue.NULL);
 
 
-To put reeferthread in auto mode with reefertarget percent = 0.0T, or back into manual-order mode with T=0, ...  
+To put reeferthread in auto mode with failuretarget percent = 0.0T, or back into manual-order mode with T=0, ...  
 ... from command line:  
-curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setreefertarget -d '{"value":T}'  
+curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/setreefercontrols -d '{"failuretarget":T}'  
 ... from another reeferapp service:  
-Kar.restPost("simservice", "simulator/setreefertarget", Json.createObjectBuilder().add("value", T).build());
+Kar.restPost("simservice", "simulator/setreefercontrols", Json.createObjectBuilder().add("failuretarget", T).build());  
+The setreefercontrols API can also be used to set reeferupdates. More than one reefer controls can be set at the same time.  
 
 
 Note for simulator developers:

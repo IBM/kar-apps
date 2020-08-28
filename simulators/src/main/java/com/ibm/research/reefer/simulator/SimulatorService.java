@@ -405,6 +405,46 @@ public class SimulatorService {
     (reeferthread = new ReeferThread()).start();
   }
 
+  public JsonValue getReeferControls() {
+    JsonObject oc = Json.createObjectBuilder()
+            .add("failuretarget", (JsonNumber) getOrInit(Json.createValue("failuretarget")))
+            .add("reeferupdates", (JsonNumber) getOrInit(Json.createValue("reeferupdates")))
+            .build();
+    return oc;
+  }
+
+  public JsonValue setReeferControls(JsonValue controls) {
+    if (((JsonObject) controls).containsKey("reeferupdates")) {
+      try {
+        JsonNumber ru = ((JsonObject) controls).getJsonNumber("reeferupdates");
+        setReeferUpdates(ru);
+      }
+      catch (Exception e) {
+        JsonObject message = Json.createObjectBuilder()
+                .add("invalid reeferupdates", ((JsonObject) controls).getString("reeferupdates")).build();
+        return message;
+      }
+    }
+
+    if (((JsonObject) controls).containsKey("failuretarget")) {
+      try {
+        JsonNumber ft = ((JsonObject) controls).getJsonNumber("failuretarget");
+        setFailureTarget(ft);
+      }
+      catch (Exception e) {
+        JsonObject message = Json.createObjectBuilder()
+                .add("invalid failuretarget", ((JsonObject) controls).getString("failuretarget")).build();
+        return message;
+      }
+    }
+
+    JsonObject oc = Json.createObjectBuilder()
+            .add("failuretarget", (JsonNumber) getOrInit(Json.createValue("failuretarget")))
+            .add("reeferupdates", (JsonNumber) getOrInit(Json.createValue("reeferupdates")))
+            .build();
+    return oc;
+  }
+
   public JsonNumber getFailureTarget() {
     JsonNumber rt = (JsonNumber) this.getOrInit(Json.createValue("failuretarget"));
     failuretarget.set(rt.intValue());
@@ -437,7 +477,7 @@ public class SimulatorService {
         return Json.createValue("accepted");
       }
 
-      // this is a request to start auto order mode
+      // this is a request to start auto Reefer mode
       // save new Target
       failuretarget.set(newval.intValue());
       this.set(Json.createValue("failuretarget"), newval);

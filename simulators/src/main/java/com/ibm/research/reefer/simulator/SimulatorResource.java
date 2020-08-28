@@ -67,7 +67,7 @@ public class SimulatorResource {
 // -------------------- Order controls ----------------
 
   /**
-   * gets & sets the number of days from now that future voyages can get orders
+   * gets & sets order simulator control parameters
    */
   @GET
   @Path("/getordercontrols")
@@ -221,6 +221,33 @@ public class SimulatorResource {
     simService.newDay();
   }
 
+
+  /**
+   * gets & sets reefer simulator control parameters
+   */
+  @GET
+  @Path("/getreefercontrols")
+  public JsonValue getreefercontrols() {
+    try {
+      return simService.getReeferControls();
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from getreefercontrols");
+      return Json.createValue(-1);
+    }
+  }
+
+  @POST
+  @Path("/setreefercontrols")
+  public JsonValue setreefercontrols(JsonValue controls) {
+    try {
+      return simService.setReeferControls(controls);
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from setreefercontrols");
+      return Json.createValue(-1);
+    }
+  }
 
   /**
    * gets/sets the target (x0.01) percent of reefers getting anomalies per day

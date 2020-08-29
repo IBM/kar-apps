@@ -245,8 +245,8 @@ public class ReeferProvisionerActor extends BaseActor {
     public JsonObject unreserveReefer(JsonObject message ) {
         JsonObjectBuilder reply = Json.createObjectBuilder();
     
-        String reeferId = message.getString("reeferId");
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>> ReeferProvisionerActor.unreserverReefer() - freeing reefer "+reeferId+" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+        String reeferId = message.getString("reeferId").trim();
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>> ReeferProvisionerActor.unreserverReefer() - freeing reefer "+reeferId+" reeferMasterInventory=null >" +reeferMasterInventory==null+" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
         reeferMasterInventory[Integer.valueOf(reeferId)] = null;
 
         JsonValue booked = get(this, Constants.TOTAL_BOOKED_KEY);

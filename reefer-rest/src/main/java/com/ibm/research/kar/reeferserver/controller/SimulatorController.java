@@ -142,5 +142,8 @@ public class SimulatorController {
       System.out.println("TimeConSimulatorControllertroller.getordersimcontrols() - target "+controls.getTarget()+ " window:"+controls.getWindow()+ " updateFrequency:"+controls.getUpdateTarget());
       return controls;
     }
-
+    @PostMapping("/simulator/reefer/anomaly")
+    public void generateAnomaly() {
+      simulatorService.generateAnomaly();
+    }
 }

@@ -190,7 +190,10 @@ updateReeferControls() {
   });
 }
 createAnomaly() {
+  this.restService.generateAnomaly().subscribe((data) => {
+    console.log(data);
 
+  });
 }
 // Reset table filters
 resetFilters() {

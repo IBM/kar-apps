@@ -288,7 +288,8 @@ setOrderTarget(orderTarget: number) {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
   const body : OrderTarget = {
-    target: orderTarget
+    targ
+    et: orderTarget
 
   }
   return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/setsimordertarget',body, options).pipe(retry(3), catchError(this.handleError));
@@ -300,6 +301,13 @@ nextPage(request) {
   //const options = { header: headers, params: new HttpParams() };
   const params = request;
   return this.httpClient.post<String>(this.REST_API_SERVER+'/orders/nextpage', params).pipe(retry(3), catchError(this.handleError));
+
+}
+generateAnomaly() {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  
+  const options = { header: headers, params: new HttpParams()};
+  return this.httpClient.post<String>(this.REST_API_SERVER+'/simulator/reefer/anomaly', options).pipe(retry(3), catchError(this.handleError));
 
 }
     handleError(error: HttpErrorResponse) {

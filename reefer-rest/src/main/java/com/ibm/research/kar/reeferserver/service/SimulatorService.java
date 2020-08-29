@@ -199,5 +199,19 @@ public class SimulatorService {
 			JsonObject controls = reply.asJsonObject();
 			*/
 			System.out.println("SimulatorService.updateReeferSimControls - failureRate:"+simControls.getFailureRate()+" frequencyUpdate:"+simControls.getUpdateFrequency());
-		}
+        }
+        public void generateAnomaly() {
+            System.out.println("SimulatorService.generateAnomaly()");
+            try {
+                Response response = Kar.restPost("simservice", "simulator/createanomaly", JsonValue.NULL);
+                JsonValue respValue = response.readEntity(JsonValue.class);
+                System.out.println("Response = "+respValue);
+            } catch (ActorMethodNotFoundException ee) {
+                ee.printStackTrace();
+            //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
+      
+            } catch( Exception ee) {
+                ee.printStackTrace();
+            } 
+        }
 }

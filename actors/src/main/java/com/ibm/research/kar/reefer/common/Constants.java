@@ -10,4 +10,11 @@ public class Constants {
    public static final String BOOKED_ORDERS_KEY="booked-orders";
 
    public static final String VOYAGE_ID_KEY="voyageId";
+   public static final String REEFER_PROVISIONER_STATE_KEY="provisionerState";
+
+   public static final String REEFER_ID_KEY="reeferId";
+   public static final String REEFER_STATE_KEY="reeferState";
+
+   public static final String ORDER_ID_KEY="orderId";
+   
 }

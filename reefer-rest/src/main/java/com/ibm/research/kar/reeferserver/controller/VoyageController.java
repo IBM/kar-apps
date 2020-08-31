@@ -223,6 +223,10 @@ import org.springframework.web.bind.annotation.RestController;
         totalActiveOrders += voyage.getOrderCount();
       }
       gui.updateInTransitOrderCount(totalActiveOrders);
+
+      int  futureOrderCount =  orderService.getOrders("booked-orders");
+
+			gui.updateFutureOrderCount(futureOrderCount);	
       System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% VoyageController.activeVoyages() - Done - Total Active Orders:"+totalActiveOrders);
  
     }

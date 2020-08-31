@@ -214,4 +214,21 @@ public class SimulatorService {
                 ee.printStackTrace();
             } 
         }
+
+        public void createOrder() {
+            System.out.println("SimulatorService.createOrder()");
+            try {
+ 
+    
+                Response response = Kar.restPost("simservice", "simulator/createorder", JsonValue.NULL);
+                JsonValue respValue = response.readEntity(JsonValue.class);
+                System.out.println("Response = "+respValue);
+            } catch (ActorMethodNotFoundException ee) {
+                ee.printStackTrace();
+            //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
+      
+            } catch( Exception ee) {
+                ee.printStackTrace();
+            } 
+            }
 }

@@ -164,9 +164,9 @@ public class ScheduleService {
                 // we just stop iterating since all voyagaes sail in the future.
                 break;
             }
-            System.out.println("getActiveSchedule() - CurrentDate: "+currentDate.toString()+ " Voyage "+voyage.getId()+
-            " SailDate: "+
-            voyage.getSailDate()+" ArrivalDate: "+arrivalDate.toString()); 
+          //  System.out.println("getActiveSchedule() - CurrentDate: "+currentDate.toString()+ " Voyage "+voyage.getId()+
+           // " SailDate: "+
+          //  voyage.getSailDate()+" ArrivalDate: "+arrivalDate.toString()); 
             // find active voyage which is one that started before current date and
             // has not yet completed
             if (TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate) ||

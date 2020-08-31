@@ -47,6 +47,11 @@ public class SimulatorController {
         voyageService.changeDelay(delayTime);
         return TimeUtils.getInstance().getCurrentDate();
     }
+    @PostMapping("/simulator/createorder")
+    public void  createOrder() {
+        System.out.println("SimulatorController.createOrder() ");
+        simulatorService.createOrder();
+    }
     @PostMapping("/simulator/getdelay")
     public int  getShipSimulatorDelay() {
         System.out.println("SimulatorController.getShipSimulatorDelay() ");

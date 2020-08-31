@@ -99,7 +99,6 @@ public class ReeferController {
 	}
 	@GetMapping("/reefers/inventory/size")
 	public int getReeferInventorySize() {
-		System.out.println("getReeferInventorySize() - Got New Request");
 		return inventorySize;
 	}
 	@GetMapping("/reefers/{port}")

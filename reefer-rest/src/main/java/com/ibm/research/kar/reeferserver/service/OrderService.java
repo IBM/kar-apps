@@ -110,19 +110,22 @@ public class OrderService extends AbstractPersistentService {
         set(Constants.BOOKED_ORDERS_KEY,newbookedOrderArray.build());
     }
     private void voyageArrived(String voyageId) {
-        JsonValue activeOrders2 = get(Constants.ACTIVE_ORDERS_KEY);
-        JsonArray activeOrderArray = activeOrders2.asJsonArray();
+        JsonValue activeOrders = get(Constants.ACTIVE_ORDERS_KEY);
+        JsonArray activeOrderArray = activeOrders.asJsonArray();
         JsonArrayBuilder activeOrderArrayBuilder = Json.createArrayBuilder();
 
         Iterator<JsonValue> it = activeOrderArray.iterator();
         // move booked voyage orders to active 
         while( it.hasNext() ) {
             JsonValue v = it.next();
-            if ( voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY) ) ) {
+            // skip orders which has just been delivered (voyage arrived)
+            if ( !voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY) ) ) {
                 activeOrderArrayBuilder.add(v);
             }
         }
-        set(Constants.ACTIVE_ORDERS_KEY,activeOrderArrayBuilder.build());
+        JsonArray orders = activeOrderArrayBuilder.build();
+        System.out.println("................................. OrderService.voyageArrived() - voyageId:"+voyageId+" - Saving Active Voyages - Count:"+orders.size());
+        set(Constants.ACTIVE_ORDERS_KEY,orders);
     }
 
     public void updateOrderStatus(String voyageId, OrderStatus status, int daysAtSea) {

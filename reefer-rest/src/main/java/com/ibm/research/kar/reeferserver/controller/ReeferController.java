@@ -90,7 +90,7 @@ public class ReeferController {
 			int totalInTransit = req.getInt("totalInTransit");
 			int totalSpoilt = req.getInt("totalSpoilt");
 			int totalOnMaintenance = req.getInt("totalOnMaintenance");
-			System.out.println("ReeferController.updateGui() - ################# total:"+total+" booked:"+totalBooked+" intransit:"+totalInTransit+" spoilt:"+totalSpoilt+"  onmaintenance:"+totalOnMaintenance);
+			//System.out.println("ReeferController.updateGui() - ################# total:"+total+" booked:"+totalBooked+" intransit:"+totalInTransit+" spoilt:"+totalSpoilt+"  onmaintenance:"+totalOnMaintenance);
 			gui.updateReeferStats(new ReeferStats(total, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance));
 		} catch( Exception e) {
 			e.printStackTrace();

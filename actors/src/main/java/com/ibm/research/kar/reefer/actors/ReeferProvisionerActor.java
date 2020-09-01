@@ -296,27 +296,27 @@ public class ReeferProvisionerActor extends BaseActor {
         JsonObjectBuilder reply = Json.createObjectBuilder();
     
         String reeferId = message.getString("reeferId").trim();
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>> ReeferProvisionerActor.unreserverReefer() - freeing reefer "+reeferId+" reeferMasterInventory=null " +(reeferMasterInventory==null)+" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
         reeferMasterInventory[Integer.valueOf(reeferId)] = null;
-
+        int totalBooked = 0;
         JsonValue booked = get(this, Constants.TOTAL_BOOKED_KEY);
         if ( booked != null ) {
-            int totalBooked = ((JsonNumber)booked).intValue()-1;
+            totalBooked = ((JsonNumber)booked).intValue()-1;
             set(this, Constants.TOTAL_BOOKED_KEY, Json.createValue(totalBooked));
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>> ReeferProvisionerActor.unreserverReefer() - freeing reefer from booked "+reeferId+" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ booked:"+totalBooked);
+           // System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>> ReeferProvisionerActor.unreserverReefer() - freeing reefer from booked "+reeferId+" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ booked:"+totalBooked);
 
         }
-    
+        int totalInTransit=0;
         JsonValue inTransit = get(this, Constants.TOTAL_INTRANSIT_KEY);
         if ( inTransit != null ) {
-            int totalInTransit = ((JsonNumber)inTransit).intValue()-1;
+            totalInTransit = ((JsonNumber)inTransit).intValue()-1;
             if ( totalInTransit < 0 ) {
                 totalInTransit = 0;
             }
             set(this, Constants.TOTAL_INTRANSIT_KEY, Json.createValue(totalInTransit));
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>> ReeferProvisionerActor.unreserverReefer() - freeing reefer from intransit "+reeferId+" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ inTransit:"+totalInTransit);
+            //System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>> ReeferProvisionerActor.unreserverReefer() - freeing reefer from intransit "+reeferId+" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ inTransit:"+totalInTransit);
 
         }
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>> ReeferProvisionerActor.unreserverReefer() - released reefer "+reeferId+" total booked"+totalBooked+" totalInTransit:" + totalInTransit+ " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
         updateRest();
 

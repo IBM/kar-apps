@@ -23,6 +23,7 @@ import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.Order;
+import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
@@ -123,6 +124,9 @@ import org.springframework.web.bind.annotation.RestController;
       }
 
     }
+    private boolean shipDeparted(int daysAtSea) {
+      return daysAtSea == 1;
+    }
     @PostMapping("/voyage/update")
       public void updateVoyageState(  @RequestBody String state) throws VoyageNotFoundException{
         System.out.println("VoyageController.updateVoyageState() "+state);
@@ -147,7 +151,7 @@ import org.springframework.web.bind.annotation.RestController;
               voyageService.removeVoyage(voyageId);
             } else {
 
-              if ( daysAtSea == 1) {
+              if ( shipDeparted(daysAtSea) ) {
                 Set<Order> orders = voyageService.getOrders(voyageId);
                 orders.forEach(order -> {
                   ActorRef orderActor =  Kar.actorRef(ReeferAppConfig.OrderActorName, order.getId());
@@ -158,6 +162,10 @@ import org.springframework.web.bind.annotation.RestController;
 
               }
               orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT, daysAtSea);
+              OrderStats stats = orderService.getOrderStats();
+              
+//              gui.updateInTransitOrderCount(stats.getInTransitOrderCount());
+ //             gui.updateFutureOrderCount(stats.getFutureOrderCount());	
             }
             
           } else if ( req.containsKey("reeferCount") ) {

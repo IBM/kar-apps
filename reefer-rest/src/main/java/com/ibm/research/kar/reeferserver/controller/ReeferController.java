@@ -52,7 +52,8 @@ public class ReeferController {
 			fleetMaxCapacity += route.getVessel().getMaxCapacity();
 			fleet.add(route.getVessel().getName());
 		}
-		inventorySize = Double.valueOf(fleet.size()*fleetMaxCapacity*1.2).intValue();
+		//inventorySize = Double.valueOf(fleet.size()*fleetMaxCapacity*1.2).intValue();
+		inventorySize = Double.valueOf(fleet.size()*fleetMaxCapacity*0.4).intValue();
 		System.out.println("Inventory Size:::::::"+inventorySize);
     }
     @PostMapping("/reefers")

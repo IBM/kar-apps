@@ -324,7 +324,7 @@ public class ReeferProvisionerActor extends BaseActor {
     }
     @Remote
     public void reeferAnomaly(JsonObject message) {
-        int reeferId = message.getInt(ReeferState.REEFER_ID_KEY);
+        int reeferId = message.getInt(Constants.REEFER_ID_KEY);
         try {
             ActorRef reeferActor =  Kar.actorRef(ReeferAppConfig.ReeferActorName,String.valueOf(reeferId));
             // placeholder for future params

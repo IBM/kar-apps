@@ -6,10 +6,18 @@ import java.util.Set;
 
 import javax.json.Json;
 import javax.json.JsonNumber;
+import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.actor.exceptions.ActorException;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.Constants;
+
+import static com.ibm.research.kar.Kar.actorCall;
+import static com.ibm.research.kar.Kar.actorRef;
 
 public class ReeferThread extends Thread {
   boolean running = true;
@@ -93,8 +101,19 @@ public class ReeferThread extends Thread {
         // if not done for the day, generate anomaliesPerUpdate more failures
         if (anomaliesDoneToday < reefersToBreak) {
           for (int i=0; i<anomaliesPerUpdate; i++) {
-            String reefer = "R" + r2b[anomaliesDoneToday++];
-            System.out.println("reeferthread: alerting provisioner about anomaly in "+reefer);
+            int reeferid = r2b[anomaliesDoneToday++];
+            ActorRef reeferProvisionerActor =  Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
+                    ReeferAppConfig.ReeferProvisionerId);
+            JsonObject params = Json.createObjectBuilder()
+                    .add(Constants.REEFER_ID_KEY, reeferid)
+                    .build();
+
+            System.out.println("reeferthread: alerting provisioner about anomaly in reefer_"+reeferid);
+            try {
+              actorCall(reeferProvisionerActor, "reeferAnomaly", params);
+            } catch (ActorException e) {
+              System.err.println("reeferthread: error sending anomaly "+ e.toString());
+            }
           }
         }
       }

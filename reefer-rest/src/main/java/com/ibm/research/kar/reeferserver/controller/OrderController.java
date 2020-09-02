@@ -5,6 +5,8 @@ import static com.ibm.research.kar.Kar.actorRef;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -51,6 +53,8 @@ public class OrderController {
 	private VoyageService voyageService;
 	@Autowired
 	private GuiController gui;
+
+	private List<Order> orders = new ArrayList<>();
 
 	private OrderProperties orderDetails(String orderMsg) {
 		OrderProperties orderProperties = new OrderProperties();
@@ -123,7 +127,18 @@ public class OrderController {
 		}
 		return orderProperties;
 	}
-
+	@GetMapping("/orders/list/active")
+	public List<Order>  getActiveOrderList() {
+		System.out.println("getActiveOrderList() - Got New Request");
+		
+		return orderService.getActiveOrderList();
+	}
+	@GetMapping("/orders/list/booked")
+	public List<Order>  getBookedOrderList() {
+		System.out.println("getBookedOrderList() - Got New Request");
+		
+		return orderService.getBookedOrderList();
+	}
 	@GetMapping("/orders/stats")
 	public OrderStats  getOrderStats() {
 		System.out.println("getOrderStats() - Got New Request");

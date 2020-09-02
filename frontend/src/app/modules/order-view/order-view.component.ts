@@ -38,6 +38,7 @@ export class OrderViewComponent implements OnInit {
   inTransitOrders:number ;
   futureOrders:number;
   spoiltOrders:number ;
+  orderLabel: string = " ----------- Orders ----------- ";
 
   autoSimButtonLabel: string = "Update";
   dataSource = new MatTableDataSource(this.orders);
@@ -172,9 +173,32 @@ export class OrderViewComponent implements OnInit {
   }
   showInTransitOrders(event) {
     console.log("Click >>>>> showInTransitOrders() ");
+    this.restService.getActiveOrders().subscribe((data) => {
+      console.log(data);
+      this.dataSource.data = data;
+    
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+    this.orderLabel = " ----------- In-Transit Orders ----------- ";
+
+     }
+
+
+    );
   }
   showFutureOrders() {
     console.log("Click >>>>> showFutureOrders()");
+    this.restService.getBookedOrders().subscribe((data) => {
+      console.log(data);
+      this.dataSource.data = data;
+    
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+    this.orderLabel = " ----------- Future Orders ----------- ";
+     }
+
+
+    );
   }
   showSpoiltOrders() {
     console.log("Click >>>>> showSpoiltOrders()");

@@ -1,11 +1,15 @@
 package com.ibm.research.kar.reeferserver.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonValue;
+import javax.validation.constraints.Max;
 
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.Order;
@@ -18,10 +22,35 @@ import org.springframework.stereotype.Service;
 @Service
 public class OrderService extends AbstractPersistentService {
 
+    private static int MaxOrdersToReturn = 10;
+    List<Order> bookedOrders = new ArrayList<>();
+    List<Order> activeOrders = new ArrayList<>();
+    List<Order> spoiledOrders = new ArrayList<>();
+    List<Order> onMaintenanceOrders = new ArrayList<>();
+
+    public List<Order> getActiveOrderList() {
+        if (activeOrders.size() <=MaxOrdersToReturn) {
+            return Collections.unmodifiableList(activeOrders);
+        } else {
+            return activeOrders.subList(activeOrders.size()-10, activeOrders.size());
+        }
+    
+    }
+    public List<Order> getBookedOrderList() {
+        synchronized(bookedOrders) {
+            if ( bookedOrders.size() <= MaxOrdersToReturn) {
+                return bookedOrders;
+            } else {
+                return bookedOrders.subList(bookedOrders.size()-10, bookedOrders.size());
+            }
+
+        }
+        
+    }
     public Order createOrder(OrderProperties orderProperties) {
         Order order = 
             new Order(orderProperties);
-
+        bookedOrders.add(order);
         JsonArrayBuilder bookedOrderArrayBuilder = null;
         // fetch booked orders from Kar
         JsonValue bookedOrders = get(Constants.BOOKED_ORDERS_KEY);
@@ -86,12 +115,35 @@ public class OrderService extends AbstractPersistentService {
         }
         return voyageOrders;
     }
+    private void moveBookedOrdersToActive(String departedVoyageId) {
+        synchronized(bookedOrders) {
+            Iterator<Order> bookedIterator = bookedOrders.iterator();
+            while( bookedIterator.hasNext()) {
+                Order order = bookedIterator.next();
+               
+                if ( departedVoyageId.equals(order.getVoyageId())) {
+                    activeOrders.add(order);
+                    order.setStatus(OrderStatus.INTRANSIT.name().toLowerCase());
+                    bookedIterator.remove();
+                }
+            }
+        }
  
+    }
+    private void removeActiveOrders(String arrivedVoyageId) {
+        Iterator<Order> activeIterator = activeOrders.iterator();
+        while( activeIterator.hasNext()) {
+            Order order = activeIterator.next();
+            if ( arrivedVoyageId.equals(order.getVoyageId())) {
+                activeIterator.remove();
+            }
+        }
+    }
     private void voyageDeparted(String voyageId) {
         System.out.println("OrderService.voyageDeparted() - voyage:"+voyageId);
         JsonValue bookedOrders = get(Constants.BOOKED_ORDERS_KEY);
         JsonArray bookedOrderArray = bookedOrders.asJsonArray();
-
+        moveBookedOrdersToActive(voyageId);
         JsonArrayBuilder newbookedOrderArray = Json.createArrayBuilder();
          JsonArrayBuilder activeOrderbuilder = Json.createArrayBuilder(get(Constants.ACTIVE_ORDERS_KEY).asJsonArray());
         System.out.println(voyageId+"--------------- OrderService.voyageDeparted() number of booked orders "+bookedOrderArray.size());
@@ -113,7 +165,7 @@ public class OrderService extends AbstractPersistentService {
         JsonValue activeOrders = get(Constants.ACTIVE_ORDERS_KEY);
         JsonArray activeOrderArray = activeOrders.asJsonArray();
         JsonArrayBuilder activeOrderArrayBuilder = Json.createArrayBuilder();
-
+        removeActiveOrders(voyageId);
         Iterator<JsonValue> it = activeOrderArray.iterator();
         // move booked voyage orders to active 
         while( it.hasNext() ) {

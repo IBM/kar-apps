@@ -25,7 +25,7 @@ public class OrderActor extends BaseActor {
     JsonValue state;
      @Activate
     public void init() {
-       JsonValue reefers = get(this, REEFERS_KEY);
+      JsonValue reefers = get(this, REEFERS_KEY);
         if ( reefers != null ) {
             reeferList = reefers.asJsonArray();
             System.out.println("OrderActor.init() - Order Id:"+getId()+" cached reefer list size:"+reeferList.size());

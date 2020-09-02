@@ -145,6 +145,20 @@ getAllOrders()  {
   return this.httpClient.get<Order[]>(this.REST_API_SERVER+'/orders', options).pipe(retry(3), catchError(this.handleError));
 
 }
+getActiveOrders()  {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams() };
+
+  return this.httpClient.get<Order[]>(this.REST_API_SERVER+'/orders/list/active', options).pipe(retry(3), catchError(this.handleError));
+
+}
+getBookedOrders()  {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams() };
+
+  return this.httpClient.get<Order[]>(this.REST_API_SERVER+'/orders/list/booked', options).pipe(retry(3), catchError(this.handleError));
+
+}
 getReefers( inPort: string)  {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams().set('port',inPort) };

@@ -79,7 +79,7 @@
                  </div>
                  <div fxLayout="row" fxLayoutAlign="center center">
                     <div >
-                        <button  mat-button (click)="showInTransitOrders($event); " [style.font-size]="'20px'"> Click to view list</button><br />
+                        <button  mat-button (click)="showInTransitOrders($event); " [style.font-size]="'20px'"> Click to view most recent orders</button><br />
                     </div>
                     
                     
@@ -103,7 +103,7 @@
                  </div>
                  <div fxLayout="row" fxLayoutAlign="center center">
                     <div >
-                        <button (click)="showFutureOrders()" [style.font-size]="'20px'"> Click to view list</button><br />
+                        <button (click)="showFutureOrders()" [style.font-size]="'20px'"> Click to view most recent orders</button><br />
                     </div>
                     
                     
@@ -130,7 +130,7 @@
                 </div>
                 <div fxLayout="row" fxLayoutAlign="center center">
                     <div >
-                        <button (click)="showSpoiltOrders()" [style.font-size]="'20px'"> Click to view list</button><br />
+                        <button (click)="showSpoiltOrders()" [style.font-size]="'20px'"> Click to view most recent orders</button><br />
                     </div>
                     
                     
@@ -155,7 +155,7 @@
     <div fxFlex="100">
         <div class="mat-elevation-z8">
           <div class="col m12 s12 mat-elevation-z8" style="margin-top:-10px;border-radius:4px; background: linear-gradient(60deg,#6d6fc0,#50649c); padding:5px">
-            <h2 class="white-text"> Orders </h2>
+            <h2 class="white-text"> {{orderLabel}} </h2>
           </div>
             <table mat-table [dataSource]="dataSource" multiTemplateDataRows matSort class="mat-elevation-z8">
 

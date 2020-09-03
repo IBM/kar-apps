@@ -4,6 +4,7 @@ import static com.ibm.research.kar.Kar.actorRef;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 import javax.json.Json;
@@ -16,16 +17,25 @@ import com.ibm.research.kar.Kar;
 // Ship Simulator thread functions
 // 1. tell REST to update world time
 // 2. request from REST list of all active voyages
-// 3. send ship position to all active voyage actors
-// 4. tell order simulator the new time
-// 5. sleep for UnitDelay seconds
+// 3. send ship position to all active voyage actors, spread out thru day
+// 4. tell order&reefer simulators the new time
+// 5. total sleep of UnitDelay seconds spread out thru day
 // 6. quit if one-shot request or thread interrupted
+
 
 public class ShipThread extends Thread {
   boolean running = true;
   boolean interrupted = false;
   boolean oneshot = false;
   int loopcnt = 0;
+  int events_per_day = 5;
+  int voyages_per_event;
+  int extra_per_event;
+  int voyages_updated;
+  LinkedHashMap<String,JsonObject> activemap;
+  String[] activekeys;
+  int sleeptime;
+  JsonValue currentDate;
 
   public void run() {
     if (0 == SimulatorService.unitdelay.intValue()) {
@@ -36,78 +46,104 @@ public class ShipThread extends Thread {
     SimulatorService.shipthreadcount.incrementAndGet();
     System.out.println(
             "shipthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
+    int nextevent = 0;
+    activemap = new LinkedHashMap<String,JsonObject>();
+    sleeptime=1000 * SimulatorService.unitdelay.intValue();
+
     while (running) {
-      if (!oneshot) {
-        System.out.println(
-                "shipthread: " + Thread.currentThread().getId() + ": running " + ++loopcnt);
-      }
+      System.out.println(
+              "shipthread: " + Thread.currentThread().getId() + ": running " + ++loopcnt + " nextevent= "+nextevent);
 
       if (!SimulatorService.reeferRestRunning.get()) {
         System.out.println(
                 "shipthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
       } else {
-        // tell REST to advance time
-        Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
-        JsonValue currentDate = response.readEntity(JsonValue.class);
-        SimulatorService.currentDate.set(currentDate);
-        System.out.println("shipthread: New time = " + currentDate.toString());
+        if (0 == nextevent) {
+          // start of new day, tell REST to advance time
+          Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
+          currentDate = response.readEntity(JsonValue.class);
+          SimulatorService.currentDate.set(currentDate);
+          System.out.println("shipthread: New time = " + currentDate.toString());
 
-        // fetch all active voyages from REST
-        response = Kar.restGet("reeferservice", "voyage/active");
-        JsonValue activeVoyages = response.readEntity(JsonValue.class);
-        System.out.println(
-                "shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
+          // tell other threads to wake up
+          Kar.restPost("simservice", "simulator/newday", JsonValue.NULL);
 
-        // send ship positions to all active voyages
-        int nv = 0;
-        Instant ed = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
-        for (JsonValue v : activeVoyages.asJsonArray()) {
-          String id = v.asJsonObject().getString("id");
-          Instant sd = Instant
-                  .parse(v.asJsonObject().getString("sailDateObject").replaceAll("^\"|\"$", ""));
-          long daysout = ChronoUnit.DAYS.between(sd, ed);
-          JsonObject message = Json.createObjectBuilder().add("daysAtSea", daysout)
-                  .add("currentDate", currentDate).build();
-          System.out.println("shipthread: updates voyageid: " + id + " with " + message.toString());
-          Kar.actorCall(actorRef("voyage", id), "changePosition", message);
-          nv++;
+          // fetch all active voyages from REST
+          response = Kar.restGet("reeferservice", "voyage/active");
+          JsonValue activeVoyages = response.readEntity(JsonValue.class);
+          System.out.println(
+                  "shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
+
+          // send ship positions to all active voyages
+          Instant ed = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
+          for (JsonValue v : activeVoyages.asJsonArray()) {
+            String id = v.asJsonObject().getString("id");
+            Instant sd = Instant
+                    .parse(v.asJsonObject().getString("sailDateObject").replaceAll("^\"|\"$", ""));
+            long daysout = ChronoUnit.DAYS.between(sd, ed);
+            JsonObject message = Json.createObjectBuilder().add("daysAtSea", daysout)
+                    .add("currentDate", currentDate).build();
+            activemap.put(id,message);
+          }
+
+          activekeys = activemap.keySet().toArray(new String[activemap.size()]);
+          voyages_per_event = activemap.size()/events_per_day;
+          // spread out any extras as well
+          extra_per_event = activemap.size() % events_per_day;
+          if (0 == voyages_per_event) {
+            voyages_per_event = 1;
+          }
+          voyages_updated = 0;
+          if (SimulatorService.unitdelay.intValue() > 0) {
+            sleeptime = (1000 * SimulatorService.unitdelay.intValue())/(events_per_day);
+          } else {
+            sleeptime = (1000 / events_per_day);
+          }
         }
-        System.out.println("shipthread: updated " + nv + " active voyages");
+
+        int voyages_to_update = (0 < extra_per_event--) ? voyages_per_event + 1 : voyages_per_event;
+        for (int e=0; e<voyages_to_update; e++) {
+          if ( activemap.size() > voyages_updated) {
+            String id = activekeys[voyages_updated++];
+            JsonObject message = activemap.get(id);
+            Kar.actorCall(actorRef("voyage", id), "changePosition", message);
+            System.out.println("shipthread: updates voyageid: " + id + " with " + message.toString());
+          }
+        }
+      }
+
+      nextevent++;
+      if (events_per_day == nextevent) {
+        nextevent = 0;
 
         // tell GUI to update active voyages
         Kar.restPost("reeferservice", "voyage/updateGui", currentDate);
-
-        // tell other threads to wake up
-        Kar.restPost("simservice", "simulator/newday", JsonValue.NULL);
       }
 
       try {
-        Thread.sleep(1000 * SimulatorService.unitdelay.intValue());
+        Thread.sleep(sleeptime);
       } catch (InterruptedException e) {
-//        		System.out.println("shipthread: Interrupted Thread "+Thread.currentThread().getId());
         interrupted = true;
       }
 
       // check if auto mode turned off
-      synchronized (SimulatorService.unitdelay) {
-        if (0 == SimulatorService.unitdelay.intValue() || interrupted || oneshot) {
-          SimulatorService.unitdelay.set(0);
-          System.out.println(
-                  "shipthread: Stopping Thread " + Thread.currentThread().getId() + " LOUD HORN");
-          running = false;
+      if ((nextevent==0 && (0 == SimulatorService.unitdelay.intValue() || oneshot)) || interrupted ) {
+        SimulatorService.unitdelay.set(0);
+        System.out.println(
+                "shipthread: Stopping Thread " + Thread.currentThread().getId() + " LOUD HORN");
+        running = false;
 
-          if (0 < SimulatorService.shipthreadcount.decrementAndGet()) {
-            System.err.println("shipthread: we have an extra thread running!");
-          }
+        if (0 < SimulatorService.shipthreadcount.decrementAndGet()) {
+          System.err.println("shipthread: we have an extra thread running!");
+        }
 
-          // check for threads leftover from a hot method replace
-          Set<Thread> threadset = Thread.getAllStackTraces().keySet();
-          for (Thread thread : threadset) {
-            if (thread.getName().equals("shipthread")
-                    && thread.getId() != Thread.currentThread().getId()) {
-              System.out.println("shipthread: killing leftover threadid=" + thread.getId());
-              thread.interrupt();
-            }
+        // check for threads leftover from a hot method replace
+        Set<Thread> threadset = Thread.getAllStackTraces().keySet();
+        for (Thread thread : threadset) {
+          if (thread.getName().equals("shipthread")
+                  && thread.getId() != Thread.currentThread().getId()) {
+            System.out.println("shipthread: killing leftover threadid=" + thread.getId());
+            thread.interrupt();
           }
         }
       }

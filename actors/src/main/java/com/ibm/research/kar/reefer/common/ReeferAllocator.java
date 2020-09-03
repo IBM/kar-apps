@@ -9,11 +9,12 @@ import javax.json.JsonValue;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.actors.ReeferActor.ReeferAllocationStatus;
+import com.ibm.research.kar.reefer.common.ReeferState.State;
 import com.ibm.research.kar.reefer.common.error.ReeferInventoryExhaustedException;
 import com.ibm.research.kar.reefer.common.packingalgo.PackingAlgo;
 import com.ibm.research.kar.reefer.model.Reefer;
 import com.ibm.research.kar.reefer.model.ReeferDTO;
-import com.ibm.research.kar.reefer.model.ReeferDTO.State;
+
 
 import it.unimi.dsi.util.XoRoShiRo128PlusRandom;
 
@@ -65,7 +66,7 @@ public class ReeferAllocator {
         try {
             while(howManyReefersNeeded-- > 0 ) {
                 int index = findInsertionIndexForReefer(reeferInventory);
-                ReeferDTO reefer = new ReeferDTO(index, State.ALLOCATED, orderId, voyageId);
+                ReeferDTO reefer = new ReeferDTO(index, ReeferState.State.ALLOCATED, orderId, voyageId);
                 reeferInventory[index] = reefer;
                 reefers.add(reefer);
                 System.out.println("+++++++++++++++++++++ ReeferId:"+index+" Added to order:"+orderId);
@@ -87,9 +88,9 @@ public class ReeferAllocator {
     private static int findInsertionIndexForReefer(ReeferDTO[] reeferInventory) throws ReeferInventoryExhaustedException{
         int index = randomIndex(reeferInventory.length);
         // max number of lookup steps before we jump (randomly)
-        int maxSteps = 3;
+        int maxSteps = 10;
         // if lookup hits unassigned spot, we've found an insertion index for a new reefer
-        if ( reeferInventory[index] == null ) {
+        if ( reeferInventory[index] == null || reeferInventory[index].getState().equals(State.UNALLOCATED) ) {
             return index;
         } else {
             // the random index hit an assigned spot in the list. Do maxSteps to find an unassigned spot

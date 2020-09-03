@@ -48,16 +48,16 @@ public class VoyageService {
             return Collections.emptySet();
         }
     }
-    public void removeVoyage(String voyageId) {
+    public void voyageEnded(String voyageId) {
        
-        System.out.println("*************** VoyageService.removeVoyage() - "+voyageId+" voyage ended - valid voyage:"+voyageOrders.containsKey(voyageId));
+        System.out.println("*************** VoyageService.voyageEnded() - "+voyageId+" voyage ended - valid voyage:"+voyageOrders.containsKey(voyageId));
         if (voyageOrders.containsKey(voyageId)) {
             Set<Order> orders = voyageOrders.get(voyageId);
-            System.out.println("*************** VoyageService.removeVoyage() - voyage orders:"+orders.size());
+            System.out.println("*************** VoyageService.voyageEnded() - voyage orders:"+orders.size());
             JsonObjectBuilder orderObject = Json.createObjectBuilder();
             JsonObject params = orderObject.build();
             orders.forEach(order -> {
-                System.out.println("*************** VoyageService.removeVoyage() - calling OrderActor.delivered() Id:"+order.getId());
+                System.out.println("*************** VoyageService.voyageEnded() - calling OrderActor.delivered() Id:"+order.getId());
                 ActorRef orderActor = Kar.actorRef("order", order.getId());
                 JsonValue reply = Kar.actorCall(orderActor, "delivered", params);
                 System.out.println("Order Actor reply:"+reply);

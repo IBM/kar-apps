@@ -33,20 +33,17 @@ public class OrderActor extends BaseActor {
         state = get(this, STATE_KEY);
     }
     private void unreserveReefer(String reeferId) {
-
-
         ActorRef reeferActor =  Kar.actorRef(ReeferAppConfig.ReeferActorName,reeferId);
         JsonObject params = Json.createObjectBuilder().build();
         actorCall( reeferActor, "unreserve", params);
-
     }
     @Remote
     public JsonObject delivered(JsonObject message) {
         JsonValue voyageId = get(this, "voyageId");
         System.out.println(voyageId+" >>>>>>>>>>>>>>>>>>>>>>>>>>> orderActor.delivered() called- Actor ID:" +getId());
         try {
-            JsonValue orderState = Json.createValue(OrderStatus.DELIVERED.ordinal());
-            set(this,STATE_KEY, orderState);
+            state = Json.createValue(OrderStatus.DELIVERED.name());
+            set(this,STATE_KEY, state);
             if ( reeferList == null ) {
                 JsonValue reefers = get(this, REEFERS_KEY);
                 reeferList = reefers.asJsonArray();
@@ -68,6 +65,8 @@ public class OrderActor extends BaseActor {
         JsonValue voyage = get(this,"voyageId");
         System.out.println("OrderActor.departed() called- Actor ID:" +getId()+" voyage:"+voyage);
         try {
+            state = Json.createValue(OrderStatus.INTRANSIT.name());
+            set(this,STATE_KEY, state);
             //JsonValue orderState = Json.createValue(OrderStatus..ordinal());
             //set(this,STATE_KEY, orderState);
             if ( reeferList != null ) {
@@ -83,6 +82,13 @@ public class OrderActor extends BaseActor {
             e.printStackTrace();
             return Json.createObjectBuilder().add("status", "FAILED").add("ERROR",e.getMessage()).add("orderId", String.valueOf(this.getId())).build();
         }
+    }
+    @Remote
+    public JsonObject anomaly(JsonObject message) {
+    //    JsonValue voyage = get(this,"voyageId");
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OrderActor.anomaly() called- Actor ID:" +getId()+" state:"+state);
+        return Json.createObjectBuilder().add("status", state.toString()).add("orderId", String.valueOf(this.getId())).build();
+
     }
     @Remote
     public JsonObject createOrder(JsonObject message) {

@@ -148,7 +148,7 @@ import org.springframework.web.bind.annotation.RestController;
                   shipCurrentDate.isAfter(Instant.parse(voyage.getArrivalDate()))) {
               orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED, daysAtSea);
               System.out.println("VoyageController.updateVoyageState() voyageId="+voyageId+" has ARRIVED ------------------------------------------------------");
-              voyageService.removeVoyage(voyageId);
+              voyageService.voyageEnded(voyageId);
             } else {
 
               if ( shipDeparted(daysAtSea) ) {
@@ -162,7 +162,7 @@ import org.springframework.web.bind.annotation.RestController;
 
               }
               orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT, daysAtSea);
-              OrderStats stats = orderService.getOrderStats();
+             // OrderStats stats = orderService.getOrderStats();
               
 //              gui.updateInTransitOrderCount(stats.getInTransitOrderCount());
  //             gui.updateFutureOrderCount(stats.getFutureOrderCount());	

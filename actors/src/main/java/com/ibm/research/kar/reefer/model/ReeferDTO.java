@@ -1,7 +1,9 @@
 package com.ibm.research.kar.reefer.model;
 
+import com.ibm.research.kar.reefer.common.ReeferState.State;
+
 public class ReeferDTO {
-    public enum State {EMPTY, ALLOCATED, PARTIALLY_ALLOCATED, SPOILT, ON_MAINTENANCE};
+ //   public enum State {EMPTY, ALLOCATED, PARTIALLY_ALLOCATED, SPOILT, ON_MAINTENANCE};
 
     private int id;
     private State state;

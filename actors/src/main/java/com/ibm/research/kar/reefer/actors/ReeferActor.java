@@ -5,6 +5,7 @@ import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferState;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.OrderStatus;
@@ -103,20 +104,23 @@ public class ReeferActor extends BaseActor {
     }
     @Remote
     public JsonValue anomaly(JsonObject message) {
-        System.out.println("ReeferActor.anomaly() called - Id:"+this.getId()+"\n"+message.toString());
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferActor.anomaly() called - Id:"+this.getId()+"\n"+message.toString());
         JsonObjectBuilder propertiesBuilder = Json.createObjectBuilder();
         JsonObjectBuilder reply = Json.createObjectBuilder();
+        // A reefer with an orderId is on a ship
         JsonValue orderId = get(this,ReeferState.ORDER_ID_KEY);
         if ( orderId != null && orderId.toString().length() > 0 ) {
             JsonObject orderReply = notifyOrderOfSpoilage(orderId.toString());
              if ( orderReply.getString("order-status").equals("INTRANSIT")) {
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
-                reply.add("reefer-state", ReeferState.State.SPOILT.name());
+                reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name());
             } else {
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.MAINTENANCE.name()));
-                reply.add("reefer-state", ReeferState.State.MAINTENANCE.name());
+                reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.MAINTENANCE.name());
             }
         } else {
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferActor.anomaly() called - Id:"+this.getId()+" Not Assigned to Order - Moving to OnMaintenance");
+            reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.MAINTENANCE.name());
             propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.MAINTENANCE.name()));
         }
         setState(propertiesBuilder.build());

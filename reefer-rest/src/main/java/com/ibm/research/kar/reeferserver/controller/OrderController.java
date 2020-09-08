@@ -18,6 +18,7 @@ import javax.json.JsonValue;
 
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.OrderProperties;
@@ -101,7 +102,7 @@ public class OrderController {
 			JsonObjectBuilder orderObject = Json.createObjectBuilder();
 			orderObject.add("order", ordersProps.build());
 			JsonObject params = orderObject.build();
-            ActorRef orderActor = actorRef("order", order.getId());
+            ActorRef orderActor = actorRef(ReeferAppConfig.OrderActorName, order.getId());
             JsonValue reply = actorCall(orderActor, "createOrder", params);
 			System.out.println("Order Actor reply:"+reply);
 			order.setStatus(OrderStatus.BOOKED.getLabel());

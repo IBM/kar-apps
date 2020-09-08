@@ -6,6 +6,7 @@ import static com.ibm.research.kar.Kar.actorRef;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 
 import com.ibm.research.kar.Kar;
@@ -27,20 +28,20 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
     JsonValue state;
      @Activate
     public void init() {
-        System.out.println("OrderActor.init() called id:"+getId());
+        System.out.println("OrderActor.init() called id:"+getId()+" type:"+this.getType());
         try {
             
             JsonValue reefers =  Kar.actorGetState(this, REEFERS_KEY);//get(this, REEFERS_KEY);
             if ( reefers != null && reefers != JsonValue.NULL) {
-                System.out.println("OrderActor.init() reefers not null - id:"+getId()+" reefers: "+reefers);
+                System.out.println("OrderActor.init() reefers not null - id:"+getId()+" type:"+this.getType()+" reefers: "+reefers);
                 reeferList = reefers.asJsonArray();
                 System.out.println("OrderActor.init() - Order Id:"+getId()+" cached reefer list size:"+reeferList.size());
             } else {
-                System.out.println("OrderActor.init() reefers  null id:"+getId());
+                System.out.println("OrderActor.init() reefers  null id:"+getId()+" type:"+this.getType());
             }
             state = Kar.actorGetState(this, STATE_KEY);
 //            state = Kar.actorGetState(this, ORDER_MAP_KEY, STATE_KEY);
-            System.out.println("OrderActor.init() - Order Id:"+getId()+" cached state:"+state);
+            System.out.println("OrderActor.init() - Order Id:"+getId()+" cached state:"+state+" type:"+this.getType());
         } catch( Exception e ) {
             e.printStackTrace();
         }
@@ -54,7 +55,7 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
     @Remote
     public JsonObject delivered(JsonObject message) {
         JsonValue voyageId = Kar.actorGetState(this, "voyageId");  //get(this, "voyageId");
-        System.out.println(voyageId+" >>>>>>>>>>>>>>>>>>>>>>>>>>> orderActor.delivered() called- Actor ID:" +getId());
+        System.out.println(voyageId+" >>>>>>>>>>>>>>>>>>>>>>>>>>> orderActor.delivered() called- Actor ID:" +getId()+" type:"+this.getType());
         try {
             state = Json.createValue(OrderStatus.DELIVERED.name());
             Kar.actorSetState(this,STATE_KEY, state);
@@ -64,7 +65,7 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
             }
             System.out.println(voyageId+" >>>>>>>>>>>>>>>>>>>>>>>>>>> OrderActor.delivered() - unreserving reefers:"+reeferList);
             reeferList.forEach(reefer -> {
-                unreserveReefer(String.valueOf(reefer.toString()));
+                unreserveReefer( ((JsonString)reefer).getString());
              });
             System.out.println(voyageId+"OrderActor.delivered() - Order Id:"+getId()+" cached reefer list size:"+reeferList.size());
             
@@ -77,7 +78,7 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
     @Remote
     public JsonObject departed(JsonObject message) {
         JsonValue voyage = get(this,"voyageId");
-        System.out.println("OrderActor.departed() called- Actor ID:" +getId()+" voyage:"+voyage);
+        System.out.println("OrderActor.departed() called- Actor ID:" +getId()+" type:"+this.getType()+" voyage:"+voyage);
         try {
             state = Json.createValue(OrderStatus.INTRANSIT.name());
             //set(this,STATE_KEY, state);
@@ -105,17 +106,20 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
  //       if ( state == null || state == JsonValue.NULL) {
  //           return Json.createObjectBuilder().add(Constants.ORDER_STATUS_KEY, OrderStatus.PENDING.name()).add("orderId", String.valueOf(this.getId())).build();
  //       }
-        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OrderActor.anomaly() called- Actor ID:" +getId()+" state:"+state);
-        return Json.createObjectBuilder().add(Constants.ORDER_STATUS_KEY, state.toString()).add("orderId", String.valueOf(this.getId())).build();
+ 
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OrderActor.anomaly() called- Actor ID:" +getId()+" type:"+this.getType()+" state:"+((JsonString)state).getString());
+        return Json.createObjectBuilder().add(Constants.ORDER_STATUS_KEY, ((JsonString)state).getString()).add("orderId", String.valueOf(this.getId())).build();
 
     }
     @Remote
     public JsonObject createOrder(JsonObject message) {
         System.out.println(
-            "OrderActor.createOrder() called- Actor ID:" + this.getId()+" message:"+message);//.getJsonObject(JsonOrder.OrderKey));
+            "OrderActor.createOrder() called- Actor ID:" + this.getId()+" type:"+this.getType()+" message:"+message);//.getJsonObject(JsonOrder.OrderKey));
         JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
         state = Json.createValue(OrderStatus.PENDING.name());
        // set(this,STATE_KEY, state);
+
+       
         Kar.actorSetState(this, STATE_KEY, state);
         try {
             // voyageId is mandatory
@@ -137,7 +141,8 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
                     state = Json.createValue(OrderStatus.BOOKED.name());
                     //set(this,STATE_KEY, state);
                     Kar.actorSetState(this, STATE_KEY, state);
-                    System.out.println("OrderActor.createOrder() saved order "+getId()+" state:"+ Kar.actorGetState(this,STATE_KEY)); //get(this,STATE_KEY));
+                    
+                    System.out.println("OrderActor.createOrder() saved order "+getId()+" state:"+ ((JsonString)state).getString()); //get(this,STATE_KEY));
                     return Json.createObjectBuilder().add(JsonOrder.OrderBookingKey, reply).build();
                 } else {
                     return reply;

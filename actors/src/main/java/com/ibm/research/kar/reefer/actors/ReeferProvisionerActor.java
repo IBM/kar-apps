@@ -15,6 +15,7 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
@@ -193,8 +194,9 @@ public class ReeferProvisionerActor extends BaseActor {
     private int getReeferInventorySize() {
         Response response = Kar.restGet("reeferservice", "reefers/inventory/size");
         JsonValue size = response.readEntity(JsonValue.class);
-        System.out.println("ReeferProvisionerActor.getReeferInventorySize() - Inventory Size:"+size);
-        return Integer.valueOf(size.toString());
+       
+        System.out.println("ReeferProvisionerActor.getReeferInventorySize() - Inventory Size:"+ (JsonNumber)size);
+        return ((JsonNumber)size).intValue();
     }
     private void createReeferActor(ReeferDTO reefer) {
         ActorRef reeferActor =  Kar.actorRef(ReeferAppConfig.ReeferActorName,String.valueOf(reefer.getId()));
@@ -348,7 +350,7 @@ public class ReeferProvisionerActor extends BaseActor {
             ReeferDTO reefer = reeferMasterInventory[reeferId];
          //   if ( reefer != null && reefer.getState().equals(State.ALLOCATED)) {
             System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferProvisionerActor.reeferAnomaly() - reeferId:"+reeferId);
-            
+           
             ActorRef reeferActor =  Kar.actorRef(ReeferAppConfig.ReeferActorName,String.valueOf(reeferId));
             // placeholder for future params
             JsonObject params = Json.createObjectBuilder().build();

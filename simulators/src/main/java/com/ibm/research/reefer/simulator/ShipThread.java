@@ -60,6 +60,7 @@ public class ShipThread extends Thread {
       } else {
         if (0 == nextevent) {
           // start of new day, tell REST to advance time
+          activemap.clear();
           Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
           currentDate = response.readEntity(JsonValue.class);
           SimulatorService.currentDate.set(currentDate);

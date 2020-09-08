@@ -99,8 +99,8 @@ public class ReeferThread extends Thread {
         }
 
         // if not done for the day, generate anomaliesPerUpdate more failures
-        if (anomaliesDoneToday < reefersToBreak) {
-          for (int i=0; i<anomaliesPerUpdate; i++) {
+        for (int i=0; i<anomaliesPerUpdate; i++) {
+          if (anomaliesDoneToday < reefersToBreak) {
             int reeferid = r2b[anomaliesDoneToday++];
             ActorRef reeferProvisionerActor =  Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
                     ReeferAppConfig.ReeferProvisionerId);

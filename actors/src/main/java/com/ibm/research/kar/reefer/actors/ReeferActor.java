@@ -104,14 +104,17 @@ public class ReeferActor extends BaseActor {
     }
     @Remote
     public JsonValue anomaly(JsonObject message) {
-        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferActor.anomaly() called - Id:"+this.getId()+"\n"+message.toString());
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferActor.anomaly() called - Id:"+this.getId());
         JsonObjectBuilder propertiesBuilder = Json.createObjectBuilder();
         JsonObjectBuilder reply = Json.createObjectBuilder();
         // A reefer with an orderId is on a ship
         JsonValue orderId = get(this,ReeferState.ORDER_ID_KEY);
-        if ( orderId != null && orderId.toString().length() > 0 ) {
+        if ( orderId != null && orderId != JsonValue.NULL && orderId.toString().length() > 0 ) {
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferActor.anomaly() - Id:"+this.getId()+" Assigned to Order Id:"+orderId+" - Spoiled Reefer - Notifying Order Actor");
+ 
             JsonObject orderReply = notifyOrderOfSpoilage(orderId.toString());
-             if ( orderReply.getString("order-status").equals("INTRANSIT")) {
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferActor.anomaly() - Id:"+this.getId()+" Order Actor:"+orderId+" reply:"+orderReply);
+             if ( orderReply.getString(Constants.ORDER_STATUS_KEY).equals("INTRANSIT")) {
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name());
             } else {

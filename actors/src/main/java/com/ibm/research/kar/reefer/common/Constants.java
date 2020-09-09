@@ -13,9 +13,14 @@ public class Constants {
    public static final String REEFER_PROVISIONER_STATE_KEY="provisionerState";
 
    public static final String REEFER_ID_KEY="reeferId";
+   public static final String REEFER_REPLACEMENT_ID_KEY="reeferReplacementId";
    public static final String REEFER_STATE_KEY="reeferState";
 
    public static final String ORDER_ID_KEY="orderId";
    public static final String ORDER_STATUS_KEY="order-status";
+
+   // each reefer can hold up to 1000 product units. Simplifaction is that
+   // each product unit has the same size.
+   public static final int REEFER_CAPACITY=1000;
    
 }

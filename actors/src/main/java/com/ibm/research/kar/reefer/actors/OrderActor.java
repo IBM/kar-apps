@@ -5,6 +5,9 @@ import static com.ibm.research.kar.Kar.actorRef;
 
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonBuilderFactory;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
@@ -17,6 +20,7 @@ import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferState.State;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.OrderStatus;
 @Actor
@@ -47,8 +51,8 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
         }
  
     }
-    private void unreserveReefer(String reeferId) {
-        ActorRef reeferActor =  Kar.actorRef(ReeferAppConfig.ReeferActorName,reeferId);
+    private void unreserveReefer(int reeferId) {
+        ActorRef reeferActor =  Kar.actorRef(ReeferAppConfig.ReeferActorName,String.valueOf(reeferId));
         JsonObject params = Json.createObjectBuilder().build();
         actorCall( reeferActor, "unreserve", params);
     }
@@ -65,7 +69,7 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
             }
             System.out.println(voyageId+" >>>>>>>>>>>>>>>>>>>>>>>>>>> OrderActor.delivered() - unreserving reefers:"+reeferList);
             reeferList.forEach(reefer -> {
-                unreserveReefer( ((JsonString)reefer).getString());
+                unreserveReefer( ((JsonNumber)reefer).intValue());
              });
             System.out.println(voyageId+"OrderActor.delivered() - Order Id:"+getId()+" cached reefer list size:"+reeferList.size());
             
@@ -103,12 +107,36 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
     public JsonObject anomaly(JsonObject message) {
     //    JsonValue voyage = get(this,"voyageId");
         state = Kar.actorGetState(this, STATE_KEY);
- //       if ( state == null || state == JsonValue.NULL) {
- //           return Json.createObjectBuilder().add(Constants.ORDER_STATUS_KEY, OrderStatus.PENDING.name()).add("orderId", String.valueOf(this.getId())).build();
- //       }
- 
         System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OrderActor.anomaly() called- Actor ID:" +getId()+" type:"+this.getType()+" state:"+((JsonString)state).getString());
         return Json.createObjectBuilder().add(Constants.ORDER_STATUS_KEY, ((JsonString)state).getString()).add("orderId", String.valueOf(this.getId())).build();
+
+    }
+    @Remote
+    /*
+       Replace spoilt reefer if the order has not departed yet. 
+    */
+    public JsonObject replaceReefer(JsonObject message) {
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OrderActor.replaceReefer() called- Actor ID:" +getId()+" state:"+((JsonString)state).getString());
+        if ( reeferList == null ) {
+            JsonValue reefers = Kar.actorGetState(this,  REEFERS_KEY); 
+            reeferList = reefers.asJsonArray();
+        }
+        int spoiltReeferId = message.getJsonNumber(Constants.REEFER_ID_KEY).intValue();
+        int replacementReeferId = message.getJsonNumber(Constants.REEFER_REPLACEMENT_ID_KEY).intValue();
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OrderActor.replaceReefer() called- Actor ID:" +getId()+" replacing spoilt reefer:"+spoiltReeferId+" with new one:"+replacementReeferId);
+        JsonArrayBuilder newReeferList = Json.createArrayBuilder();
+        reeferList.forEach(reefer -> {
+            if ( ((JsonNumber)reefer).intValue() == spoiltReeferId ) {
+                newReeferList.add(replacementReeferId);
+            } else {
+                newReeferList.add(reefer);
+            }
+           
+         });
+         JsonArray orderReefers = newReeferList.build();
+         Kar.actorSetState(this,REEFERS_KEY, orderReefers);
+         System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OrderActor.replaceReefer() called- Actor ID:" +getId()+" saved new Reefer List:"+orderReefers.toString());
+        return Json.createObjectBuilder().build();
 
     }
     @Remote

@@ -7,6 +7,7 @@ import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferState;
+import com.ibm.research.kar.reefer.common.ReeferState.State;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.OrderStatus;
 
@@ -92,16 +93,20 @@ public class ReeferActor extends BaseActor {
     public void unreserve(JsonObject message) {
         //JsonObject result = Json.createObjectBuilder().
         System.out.println(" >>>>>>>>>>>>>>>>>>>>>>>>>>>>> ReeferActor.unreserve() called - Id:"+this.getId());
-        JsonObject properties = Json.createObjectBuilder().
-            add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.UNALLOCATED.name())).
-            add(ReeferState.ORDER_ID_KEY,Json.createValue("")).
+ 
+        JsonObjectBuilder properties = Json.createObjectBuilder();
+        properties.add(ReeferState.ORDER_ID_KEY,Json.createValue("")).
             add(ReeferState.VOYAGE_ID_KEY,Json.createValue("")).build();
-        setState(properties);
-        JsonObject provisionerMessage = Json.createObjectBuilder().add("reeferId", getId()).build();
+
+        JsonValue state = get(this, ReeferState.STATE_KEY);
+        if ( state != null && ReeferState.State.ALLOCATED.equals(ReeferState.State.valueOf(((JsonString)state).getString()))) {
+            properties.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.UNALLOCATED.name()));
+        }
+        setState(properties.build());
+        JsonObject provisionerMessage = Json.createObjectBuilder().add(Constants.REEFER_ID_KEY, getId()).add(Constants.REEFER_STATE_KEY,((JsonString)state).getString()).build();
         JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"unreserveReefer", provisionerMessage); 
         System.out.println("ReeferActor.unreserve() - reply from the ReeferProvisionerActor - "+reply);
-    //    if ( reply.asJsonObject().getString("status").equals("OK") ) {
-     //   }
+    
     }
 
     
@@ -119,12 +124,16 @@ public class ReeferActor extends BaseActor {
             
             JsonObject orderReply = notifyOrderOfSpoilage(((JsonString)jsonOrderId).getString());
             System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferActor.anomaly() - Id:"+this.getId()+" Order Actor:"+((JsonString)jsonOrderId).getString()+" reply:"+orderReply);
-             if ( orderReply.getString(Constants.ORDER_STATUS_KEY).equals("INTRANSIT")) {
+             if ( orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.INTRANSIT.name() )) {
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
-                reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name());
+                reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name()).add(Constants.ORDER_STATUS_KEY, OrderStatus.INTRANSIT.name());
+            } else if ( orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name() )) {
+                // Booked orders have not yet departed. Spoiled reefers must be replaced in such case.
+                propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
+                reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name()).add(Constants.ORDER_STATUS_KEY, OrderStatus.BOOKED.name());
             } else {
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.MAINTENANCE.name()));
-                reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.MAINTENANCE.name());
+                reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.MAINTENANCE.name()).add(Constants.ORDER_STATUS_KEY, orderReply.getString(Constants.ORDER_STATUS_KEY));
             }
         } else {
             System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferActor.anomaly() called - Id:"+this.getId()+" Not Assigned to Order - Moving to OnMaintenance");

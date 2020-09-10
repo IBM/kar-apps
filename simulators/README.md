@@ -1,7 +1,7 @@
 # Reefer-app  simulator-server
 
 To launch simular-server:  
-kar -app_port 7080 -app reefer -service simservice -actors simhelper mvn liberty:run
+kar run -app_port 7080 -app reefer -service simservice -actors simhelper mvn liberty:run
 
 
 The simulator state on server start is:

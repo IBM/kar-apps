@@ -53,13 +53,13 @@ Launch Reefer server processes:
 mvn liberty:run
 
 # Reefer Actor Server in [reefer install dir]/actors dir run:
-kar -app reefer -actors order,reefer,voyage,reefer-provisioner mvn liberty:run
+kar run -app reefer -actors order,reefer,voyage,reefer-provisioner mvn liberty:run
 
 # Reefer REST Server in [reefer install dir]/reefer-rest dir run:
-kar -app_port 9080 -app reefer -service reeferservice  mvn liberty:run
+kar run -app_port 9080 -app reefer -service reeferservice  mvn liberty:run
 
 # Reefer Simulator Server in [reefer install dir]/simulators dir run:
-kar -app_port 7080 -app reefer -service simservice -actors simhelper mvn liberty:run
+kar run -app_port 7080 -app reefer -service simservice -actors simhelper mvn liberty:run
 ```
 
 To access the Reefer Web Application point your browser to:

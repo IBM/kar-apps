@@ -82,6 +82,14 @@ export class OrderViewComponent implements OnInit {
           this.futureOrders = orderCount;
         }
       });
+      stompClient.subscribe('/topic/orders/spoilt', (event:any) => {
+        if ( event.body) {
+          let orderCount : number;
+          console.log("-------- SpoiltOrders Update:"+event.body);
+          orderCount = JSON.parse(event.body);
+          this.spoiltOrders = orderCount;
+        }
+      });
 
   // Subscribe to notification topic
         stompClient.subscribe('/topic/orders', (event:any) => {

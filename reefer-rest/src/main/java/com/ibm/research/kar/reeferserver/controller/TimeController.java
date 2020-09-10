@@ -2,6 +2,9 @@ package com.ibm.research.kar.reeferserver.controller;
 
 import java.time.Instant;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,6 +12,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
@@ -44,6 +50,9 @@ public class TimeController {
         try {
             date = TimeUtils.getInstance().getCurrentDate().toString().substring(0,10);
             System.out.println("nextDay() - Returning Date >>>>>>>"+date);
+            JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(TimeUtils.getInstance().getCurrentDate().toString())).build();
+
+            Kar.actorCall(  Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"releaseReefersfromMaintenance", message); 
         } catch( Exception e) {
             e.printStackTrace();
         }
@@ -53,9 +62,18 @@ public class TimeController {
     @PostMapping("/time/advance")
 	public Instant  advance() {
         System.out.println("TimeController.advance()");
-        Instant time = 
-            TimeUtils.getInstance().advanceDate(1);
+        Instant time = TimeUtils.getInstance().advanceDate(1);
+        try {
+           
         schduleService.generateNextSchedule(time);
+        JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(time.toString())).build();
+
+        Kar.actorCall(  Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"releaseReefersfromMaintenance", message); 
+        } catch( Exception e) {
+            e.printStackTrace();
+        }
+
+
         return time;
     }
    

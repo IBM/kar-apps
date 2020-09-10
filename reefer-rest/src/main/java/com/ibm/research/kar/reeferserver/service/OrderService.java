@@ -8,6 +8,7 @@ import java.util.List;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.validation.constraints.Max;
 
@@ -47,6 +48,42 @@ public class OrderService extends AbstractPersistentService {
         }
         
     }
+    public List<Order> getSpoiltOrderList() {
+        synchronized(spoiledOrders) {
+            if ( spoiledOrders.size() <= MaxOrdersToReturn) {
+                return spoiledOrders;
+            } else {
+                return spoiledOrders.subList(spoiledOrders.size()-10, spoiledOrders.size());
+            }
+
+        }
+        
+    }
+    public int orderSpoilt(String orderId) {
+        JsonValue spoiltOrders = get(Constants.SPOILT_ORDERS_KEY);
+        JsonArrayBuilder builder = null;
+        if ( spoiltOrders != null && spoiltOrders != JsonValue.NULL ) {
+            builder = Json.createArrayBuilder(spoiltOrders.asJsonArray());
+        } else {
+            builder = Json.createArrayBuilder();
+        }
+        
+        Iterator<Order> activeIterator = activeOrders.iterator();
+        while( activeIterator.hasNext()) {
+            Order order = activeIterator.next();
+            if ( orderId.equals(order.getId())) {
+                
+                spoiledOrders.add(order);
+                JsonValue spoiltOrder = Json.createObjectBuilder().add("orderId",order.getId()).add("voyageId",order.getVoyageId()).build();
+                builder.add(spoiltOrder);
+                break;
+            }
+        }
+        JsonArray spoiltList = builder.build();
+        set(Constants.SPOILT_ORDERS_KEY, spoiltList);
+        return spoiltList.size();
+    }
+
     public Order createOrder(OrderProperties orderProperties) {
         Order order = 
             new Order(orderProperties);
@@ -80,8 +117,10 @@ public class OrderService extends AbstractPersistentService {
     }
 
     public OrderStats getOrderStats() {
-        return new OrderStats(getOrders(Constants.ACTIVE_ORDERS_KEY), getOrders(Constants.BOOKED_ORDERS_KEY), 0);
+        return new OrderStats(getOrders(Constants.ACTIVE_ORDERS_KEY), getOrders(Constants.BOOKED_ORDERS_KEY), getOrders(Constants.SPOILT_ORDERS_KEY));
     }
+    
+
     public int getOrders(String orderKindKey) {
         try {
             JsonValue o = get(orderKindKey);
@@ -136,6 +175,17 @@ public class OrderService extends AbstractPersistentService {
             Order order = activeIterator.next();
             if ( arrivedVoyageId.equals(order.getVoyageId())) {
                 activeIterator.remove();
+                removeSpoiltOrders(order.getId());
+            }
+        }
+    }
+    private void removeSpoiltOrders(String orderId) {
+        Iterator<Order> spoiltIterator = spoiledOrders.iterator();
+        while( spoiltIterator.hasNext()) {
+            Order order = spoiltIterator.next();
+            if ( orderId.equals(order.getId())) {
+                spoiltIterator.remove();
+                break;
             }
         }
     }
@@ -164,6 +214,15 @@ public class OrderService extends AbstractPersistentService {
     private void voyageArrived(String voyageId) {
         JsonValue activeOrders = get(Constants.ACTIVE_ORDERS_KEY);
         JsonArray activeOrderArray = activeOrders.asJsonArray();
+        //JsonArrayBuilder newSpoiltOrderArray = Json.createArrayBuilder(activeOrderArray);
+        List<JsonValue> newList = new ArrayList<>();
+ 
+        JsonValue spoiltOrders = get(Constants.SPOILT_ORDERS_KEY);
+        JsonArray spoiltOrderArray = spoiltOrders.asJsonArray();
+        spoiltOrderArray.forEach(value -> {
+            newList.add(value);
+        });
+        
         JsonArrayBuilder activeOrderArrayBuilder = Json.createArrayBuilder();
         removeActiveOrders(voyageId);
         Iterator<JsonValue> it = activeOrderArray.iterator();
@@ -173,13 +232,36 @@ public class OrderService extends AbstractPersistentService {
             // skip orders which has just been delivered (voyage arrived)
             if ( !voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY) ) ) {
                 activeOrderArrayBuilder.add(v);
+
+            } else {
+                removeOrderFromSpoiltList(newList, v.asJsonObject().getString(Constants.ORDER_ID_KEY));
             }
         }
         JsonArray orders = activeOrderArrayBuilder.build();
         System.out.println("................................. OrderService.voyageArrived() - voyageId:"+voyageId+" - Saving Active Voyages - Count:"+orders.size());
         set(Constants.ACTIVE_ORDERS_KEY,orders);
+        
+        JsonArrayBuilder newSpoiltOrderArrayBuilder = Json.createArrayBuilder();
+        newList.forEach(value -> {
+            newSpoiltOrderArrayBuilder.add(value);
+        });
+        JsonArray al = newSpoiltOrderArrayBuilder.build();
+        System.out.println("................................. OrderService.voyageArrived() - voyageId:"+voyageId+" - Saving SpoiltOrders List -"+al.toString());
+        set(Constants.SPOILT_ORDERS_KEY,al);
     }
+    private void removeOrderFromSpoiltList(List<JsonValue> spoiltOrderArray ,String orderId) {
+       // JsonArrayBuilder spoiltOrderArrayBuilder = Json.createArrayBuilder();
 
+        Iterator<JsonValue> it = spoiltOrderArray.iterator();
+        while(it.hasNext()) {
+            JsonValue v = it.next();
+             // skip orders which has just been delivered (voyage arrived)
+            if ( orderId.equals(v.asJsonObject().getString(Constants.ORDER_ID_KEY) ) ) {
+                it.remove();
+            } 
+        }
+        //return spoiltOrderArrayBuilder.bui
+    }
     public void updateOrderStatus(String voyageId, OrderStatus status, int daysAtSea) {
         System.out.println("OrderService.updateOrderStatus() - voyageId:"+voyageId+ " Status:"+status);
         if ( voyageId == null) {

@@ -53,6 +53,12 @@ public class GuiController {
         
         template.convertAndSend("/topic/orders/future", orderCount); 
     }
+    public void updateSpoiltOrderCount(int orderCount) {
+        
+        template.convertAndSend("/topic/orders/spoilt", orderCount); 
+    }
+    
+
     public void updateReeferStats(ReeferStats stats) {
         
         template.convertAndSend("/topic/reefers/stats", stats); 

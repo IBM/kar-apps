@@ -19,6 +19,7 @@ import javax.json.JsonValue;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.OrderProperties;
@@ -84,6 +85,18 @@ public class OrderController {
 			e.printStackTrace();
 		  } 
 		  return orderProperties;
+	}
+	@PostMapping("/orders/spoilt")
+	public void orderSpoilt(@RequestBody String op) throws IOException {
+		try (JsonReader jsonReader = Json.createReader(new StringReader(op))) {
+		 
+			JsonObject req = jsonReader.readObject();
+			String spoiltOrderId = req.getString(Constants.ORDER_ID_KEY);
+			int totalSpoiltOrders = orderService.orderSpoilt(spoiltOrderId);
+			gui.updateSpoiltOrderCount(totalSpoiltOrders);	
+		  } catch( Exception e) {
+			e.printStackTrace();
+		  } 
 	}
     @PostMapping("/orders")
 	public OrderProperties bookOrder(@RequestBody String op) throws IOException {

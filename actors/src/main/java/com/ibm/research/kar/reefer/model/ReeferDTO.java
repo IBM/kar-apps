@@ -1,18 +1,22 @@
 package com.ibm.research.kar.reefer.model;
 
+import java.time.Instant;
+
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferState.State;
+import com.ibm.research.kar.reefer.common.time.TimeUtils;
 
 public class ReeferDTO {
- //   public enum State {EMPTY, ALLOCATED, PARTIALLY_ALLOCATED, SPOILT, ON_MAINTENANCE};
 
     private int id;
     private State state;
     private String orderId;
     private String voyageId;
+    private String maintenanceReleaseDate;
 
     public ReeferDTO(int id, State state, String orderId, String voyageId) {
         this.id = id;
-        this.state = state;
+        setState(state);
         this.orderId = orderId;
         this.voyageId = voyageId;
     }
@@ -27,6 +31,10 @@ public class ReeferDTO {
     }
     public void setState(State state) {
         this.state = state;
+        if ( State.MAINTENANCE.equals(state)) {
+            maintenanceReleaseDate = TimeUtils.getInstance().futureDate( Instant.now(), Constants.REEFER_DAYS_ON_MAINTENANCE).toString();
+           
+        }
     }
 
 
@@ -37,6 +45,14 @@ public class ReeferDTO {
 
     public String getVoyageId() {
         return voyageId;
+    }
+
+    public String getMaintenanceReleaseDate() {
+        return maintenanceReleaseDate;
+    }
+
+    public void setMaintenanceReleaseDate(String maintenanceReleaseDate) {
+        this.maintenanceReleaseDate = maintenanceReleaseDate;
     }
 
 

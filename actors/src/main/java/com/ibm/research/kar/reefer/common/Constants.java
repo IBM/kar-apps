@@ -8,6 +8,7 @@ public class Constants {
 
    public static final String ACTIVE_ORDERS_KEY="active-orders";
    public static final String BOOKED_ORDERS_KEY="booked-orders";
+   public static final String SPOILT_ORDERS_KEY="spoilt-orders";
 
    public static final String VOYAGE_ID_KEY="voyageId";
    public static final String REEFER_PROVISIONER_STATE_KEY="provisionerState";
@@ -22,5 +23,9 @@ public class Constants {
    // each reefer can hold up to 1000 product units. Simplifaction is that
    // each product unit has the same size.
    public static final int REEFER_CAPACITY=1000;
+   public static final int REEFER_DAYS_ON_MAINTENANCE=2;
+
+   public static final String ON_MAINTENANCE_PROVISIONER_LIST="on-maintenance-list";
+   public static final String DATE_KEY="date";
    
 }

@@ -13,6 +13,7 @@ public class Constants {
    public static final String VOYAGE_ID_KEY="voyageId";
    public static final String REEFER_PROVISIONER_STATE_KEY="provisionerState";
 
+   public static final String TOTAL_REEFER_COUNT_KEY="total";
    public static final String REEFER_ID_KEY="reeferId";
    public static final String REEFER_REPLACEMENT_ID_KEY="reeferReplacementId";
    public static final String REEFER_STATE_KEY="reeferState";

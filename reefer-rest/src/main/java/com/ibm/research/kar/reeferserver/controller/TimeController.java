@@ -61,8 +61,8 @@ public class TimeController {
     }
     @PostMapping("/time/advance")
 	public Instant  advance() {
-        System.out.println("TimeController.advance()");
         Instant time = TimeUtils.getInstance().advanceDate(1);
+        System.out.println("TimeController.advance() ***************************************** NEXT DAY "+time.toString()+" ***************************************************************");
         try {
            
         schduleService.generateNextSchedule(time);

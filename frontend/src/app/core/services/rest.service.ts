@@ -152,6 +152,13 @@ getActiveOrders()  {
   return this.httpClient.get<Order[]>(this.REST_API_SERVER+'/orders/list/active', options).pipe(retry(3), catchError(this.handleError));
 
 }
+getSpoiltOrders()  {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams() };
+
+  return this.httpClient.get<Order[]>(this.REST_API_SERVER+'/orders/list/spoilt', options).pipe(retry(3), catchError(this.handleError));
+
+}
 getBookedOrders()  {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams() };

@@ -210,6 +210,17 @@ export class OrderViewComponent implements OnInit {
   }
   showSpoiltOrders() {
     console.log("Click >>>>> showSpoiltOrders()");
+    this.restService.getSpoiltOrders().subscribe((data) => {
+      console.log(data);
+      this.dataSource.data = data;
+    
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+    this.orderLabel = " ----------- Spoilt Orders ----------- ";
+     }
+
+
+    );
   }
 
   updateOrderSimulatorControlls(event: Event) {

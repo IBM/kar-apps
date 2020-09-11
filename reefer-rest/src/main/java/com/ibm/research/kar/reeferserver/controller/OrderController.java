@@ -143,19 +143,25 @@ public class OrderController {
 	}
 	@GetMapping("/orders/list/active")
 	public List<Order>  getActiveOrderList() {
-		System.out.println("getActiveOrderList() - Got New Request");
+		System.out.println("OrderController.getActiveOrderList() - Got New Request");
 		
 		return orderService.getActiveOrderList();
 	}
 	@GetMapping("/orders/list/booked")
 	public List<Order>  getBookedOrderList() {
-		System.out.println("getBookedOrderList() - Got New Request");
+		System.out.println("OrderController.getBookedOrderList() - Got New Request");
 		
 		return orderService.getBookedOrderList();
 	}
+	@GetMapping("/orders/list/spoilt")
+	public List<Order>  getSpoiltOrderList() {
+		System.out.println("OrderController.getSpoiltOrderList() - Got New Request");
+		
+		return orderService.getSpoiltOrderList();
+	}
 	@GetMapping("/orders/stats")
 	public OrderStats  getOrderStats() {
-		System.out.println("getOrderStats() - Got New Request");
+		System.out.println("OrderController.getOrderStats() - Got New Request");
 		
 		return orderService.getOrderStats();
 	}

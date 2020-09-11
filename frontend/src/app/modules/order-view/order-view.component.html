@@ -13,7 +13,7 @@
                         <mat-form-field appearance="fill">
                             <!--mat-form-field   appearance="fill" fxLayout="row"-->
                            <input matInput min="0" max="100" step="10" ngStep="10"  name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
-                        <mat-hint align="start">Order Target ^</mat-hint>
+                        <mat-hint align="start">Order Target ^ ... 0 = Stop Orders</mat-hint>
                         </mat-form-field>
                        <mat-form-field appearance="fill">
                            <input matInput min="0" max="1000" step="1" ngStep="1"  name="windowSize" [(ngModel)]="windowSize" type="number" placeholder="0" [style.fontSize.px]="'17'" required>

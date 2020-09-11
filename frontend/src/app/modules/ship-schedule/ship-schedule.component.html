@@ -13,7 +13,7 @@
                         <mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill">
                             <input matInput   step="10" ngStep="10" (change)="delayChange($event)" name="rate" [(ngModel)]="rate" name="rate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
                             <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
-                            <mat-hint align="front">Choose rate of advance - 0 = Manual, >0 = Auto ^</mat-hint>
+                            <mat-hint align="front">Choose rate of advance...0 = Stop, >0 = Auto ^</mat-hint>
                         </mat-form-field>
                         <button [disabled]="rate === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleStartStop($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button>
 

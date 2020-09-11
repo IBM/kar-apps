@@ -31,12 +31,8 @@ public class ReeferDTO {
     }
     public void setState(State state) {
         this.state = state;
-        if ( State.MAINTENANCE.equals(state)) {
-            maintenanceReleaseDate = TimeUtils.getInstance().futureDate( Instant.now(), Constants.REEFER_DAYS_ON_MAINTENANCE).toString();
-           
-        }
+    
     }
-
 
     public String getOrderId() {
         return orderId;
@@ -51,8 +47,13 @@ public class ReeferDTO {
         return maintenanceReleaseDate;
     }
 
-    public void setMaintenanceReleaseDate(String maintenanceReleaseDate) {
-        this.maintenanceReleaseDate = maintenanceReleaseDate;
+    public void setMaintenanceReleaseDate(String today) {
+        if ( today == null ) {
+            maintenanceReleaseDate = null;
+        } else {
+            maintenanceReleaseDate = TimeUtils.getInstance().futureDate( Instant.parse(today), Constants.REEFER_DAYS_ON_MAINTENANCE).toString();
+        }
+        
     }
 
 

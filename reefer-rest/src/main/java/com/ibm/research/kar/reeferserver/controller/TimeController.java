@@ -41,6 +41,7 @@ public class TimeController {
 
         return date;
     }
+    /*
     @PostMapping("/time/nextDay")
 	public Instant  nextDay() {
         System.out.println("TimeController.nextDay()");
@@ -59,6 +60,7 @@ public class TimeController {
             
        return TimeUtils.getInstance().getCurrentDate();
     }
+    */
     @PostMapping("/time/advance")
 	public Instant  advance() {
         Instant time = TimeUtils.getInstance().advanceDate(1);

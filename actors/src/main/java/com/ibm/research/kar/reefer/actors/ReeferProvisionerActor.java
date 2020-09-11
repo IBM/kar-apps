@@ -27,6 +27,7 @@ import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferAllocator;
 import com.ibm.research.kar.reefer.common.ReeferState;
 import com.ibm.research.kar.reefer.common.ReeferState.State;
+import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.OrderStatus;
 import com.ibm.research.kar.reefer.model.ReeferDTO;
@@ -394,7 +395,7 @@ public class ReeferProvisionerActor extends BaseActor {
             if ( reeferMasterInventory[Integer.valueOf(reeferId)].getState().equals(State.SPOILT)) {
                 reeferMasterInventory[Integer.valueOf(reeferId)].setState(State.MAINTENANCE);
                 changeReeferState(reeferMasterInventory[Integer.valueOf(reeferId)], Integer.valueOf(reeferId),  ReeferState.State.MAINTENANCE,Constants.TOTAL_ONMAINTENANCE_KEY);
-
+                reeferMasterInventory[Integer.valueOf(reeferId)].setMaintenanceReleaseDate(TimeUtils.getInstance().getCurrentDate().toString());
                 reeferOnMaintenance(reeferId);
 
                 JsonValue totalSpoilt = get(this, Constants.TOTAL_SPOILT_KEY);
@@ -436,7 +437,7 @@ public class ReeferProvisionerActor extends BaseActor {
     @Remote
     public void reeferAnomaly(JsonObject message) {
         int reeferId = message.getInt(Constants.REEFER_ID_KEY);
-
+        
         try {
             // lazily initialize master reefer inventory list on the first call.
             // This is fast since all we do is just creating an array of
@@ -459,7 +460,9 @@ public class ReeferProvisionerActor extends BaseActor {
             if ( reeferSpoilt( state) ) {
                 
                 if ( OrderStatus.BOOKED.equals( OrderStatus.valueOf(reply.asJsonObject().getString(Constants.ORDER_STATUS_KEY))) ) {
+                    String today = message.getString(Constants.DATE_KEY);
                     changeReeferState(reefer, reeferId, ReeferState.State.MAINTENANCE,Constants.TOTAL_ONMAINTENANCE_KEY);
+                    reefer.setMaintenanceReleaseDate(today);
                     reeferMasterInventory[Integer.valueOf(reeferId)].setState(State.MAINTENANCE);
                     reeferOnMaintenance(String.valueOf(reeferId));
                     //Kar.actorSetState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reeferId), Json.createValue(reeferId));
@@ -481,7 +484,11 @@ public class ReeferProvisionerActor extends BaseActor {
                 }
                 
             } else { //if ( reeferMaintenance( state) ) {
+                String today = message.getString(Constants.DATE_KEY);
                 changeReeferState(reefer, reeferId, ReeferState.State.MAINTENANCE,Constants.TOTAL_ONMAINTENANCE_KEY);
+                
+                reeferMasterInventory[Integer.valueOf(reeferId)].setMaintenanceReleaseDate(today);
+                //reefer.setMaintenanceReleaseDate(TimeUtils.getInstance().getCurrentDate().toString());
                 reeferMasterInventory[Integer.valueOf(reeferId)].setState(State.MAINTENANCE);
                 reeferOnMaintenance(String.valueOf(reeferId));
                 //Kar.actorSetState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reeferId), Json.createValue(reeferId));

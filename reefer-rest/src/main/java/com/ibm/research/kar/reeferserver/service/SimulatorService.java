@@ -50,6 +50,7 @@ public class SimulatorService {
         System.out.println("SimulatorService.setSimOrderWindow()");
         try {
             JsonObject body = Json.createObjectBuilder().add("value", window).build();
+            System.out.println("SimulatorService.setSimOrderWindow() - sending update to the simulator:"+body.toString());
 
             Response response = Kar.restPost("simservice", "simulator/setorderwindow", body);
             JsonValue respValue = response.readEntity(JsonValue.class);
@@ -67,7 +68,7 @@ public class SimulatorService {
         System.out.println("SimulatorService.setSimOrderUpdateFrequency()");
         try {
             JsonObject body = Json.createObjectBuilder().add("value", updateFrequency).build();
-
+            System.out.println("SimulatorService.setSimOrderUpdateFrequency() - sending update to the simulator:"+body.toString());
             Response response = Kar.restPost("simservice", "simulator/setorderupdates", body);
             JsonValue respValue = response.readEntity(JsonValue.class);
             System.out.println("Response = "+respValue);

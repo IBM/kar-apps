@@ -106,6 +106,7 @@ public class ReeferThread extends Thread {
                     ReeferAppConfig.ReeferProvisionerId);
             JsonObject params = Json.createObjectBuilder()
                     .add(Constants.REEFER_ID_KEY, reeferid)
+                    .add(Constants.DATE_KEY, currentDate)
                     .build();
 
             System.out.println("reeferthread: alerting provisioner about anomaly in reefer_"+reeferid);

@@ -1,6 +1,7 @@
 package com.ibm.research.reefer.simulator;
 
-import java.time.Instant;
+import static com.ibm.research.kar.Kar.actorCall;
+
 import java.util.Random;
 import java.util.Set;
 
@@ -16,9 +17,6 @@ import com.ibm.research.kar.actor.exceptions.ActorException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 
-import static com.ibm.research.kar.Kar.actorCall;
-import static com.ibm.research.kar.Kar.actorRef;
-
 public class ReeferThread extends Thread {
   boolean running = true;
   boolean interrupted = false;
@@ -27,11 +25,9 @@ public class ReeferThread extends Thread {
   int reefersToBreak;
   int r2b[];
   int inventorySize;
-  Instant today;
   JsonValue currentDate = Json.createValue("");
 
-  //TODO make updatesPerDay configurable
-  int updatesPerDay = 10;
+  int updatesPerDay = 1;
   int anomaliesPerUpdate;
   int anomaliesDoneToday;
 
@@ -91,6 +87,7 @@ public class ReeferThread extends Thread {
             r2b[i] = rand.nextInt(inventorySize) + 1;
           }
 
+          updatesPerDay = SimulatorService.reeferupdates.get();
           anomaliesPerUpdate = reefersToBreak / updatesPerDay;
           if (0 == anomaliesPerUpdate && 0 < reefersToBreak) {
             anomaliesPerUpdate = 1;

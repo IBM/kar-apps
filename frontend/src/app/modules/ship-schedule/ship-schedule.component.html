@@ -4,16 +4,16 @@
             <mat-card fxFlex="40" >
                 <mat-card-header [style.backgroundColor]="'gainsboro'" >
                 <!--mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'45'"-->
-                        <mat-card-title>Simulated Delay</mat-card-title>
+                        <mat-card-title>Simulation Delay</mat-card-title>
                     <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
                 </mat-card-header>
   
                 <mat-card-content>
                     <div class="example-container">
                         <mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill">
-                            <input matInput   step="10" ngStep="10" (change)="delayChange($event)" name="rate" [(ngModel)]="rate" name="rate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                            <input matInput   step="5" ngStep="5" (change)="delayChange($event)" name="rate" [(ngModel)]="rate" name="rate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
                             <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
-                            <mat-hint align="front">Choose rate of advance...0 = Stop, >0 = Auto ^</mat-hint>
+                            <mat-hint align="front">Advance Delay (sec) ... 0 = Manual</mat-hint>
                         </mat-form-field>
                         <button [disabled]="rate === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleStartStop($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button>
 
@@ -25,13 +25,13 @@
             <mat-card fxFlex="59" >
                 <mat-card-header [style.backgroundColor]="'gainsboro'" >
                 <!--mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'45'"-->
-                        <mat-card-title style="margin-top:5px;">Advance Time</mat-card-title>
+                        <mat-card-title style="margin-top:5px;">Manual Time Advance</mat-card-title>
                     <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
                 </mat-card-header>
                 <mat-card-content class="advance" color="primary" >
                     <div fxLayout="row" fxLayoutAlign="start center">
                         <app-personaldetails fxFlex="50%">
-                            <button [disabled]="rate > 0" (click)="nextDay()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Click to Move Ships One Day Ahead</button>
+                            <button [disabled]="rate > 0" (click)="nextDay()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Click to Advance Time</button>
 
                         </app-personaldetails>
                         <app-personaldetails fxFlex="3%">

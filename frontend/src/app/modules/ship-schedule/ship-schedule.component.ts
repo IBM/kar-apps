@@ -59,7 +59,7 @@ export class ShipScheduleComponent implements OnInit {
   delayChange(event: any) {
  
     let value = event.target.value;
-    this.rate = Math.ceil(value/10)*10;
+    this.rate = Math.ceil(value/5)*5;
     console.log("Delay Change:"+this.rate);
   }
   ngOnInit(): void {

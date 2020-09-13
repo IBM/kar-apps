@@ -12,17 +12,17 @@
                         <!--mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill" -->
                         <mat-form-field appearance="fill">
                             <!--mat-form-field   appearance="fill" fxLayout="row"-->
-                           <input matInput min="0" max="100" step="10" ngStep="10"  name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
-                        <mat-hint align="start">Order Target ^ ... 0 = Stop Orders</mat-hint>
+                           <input matInput min="0" max="100" step="5" ngStep="5"  name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                        <mat-hint align="start">Order Target % ... 0 = Manual</mat-hint>
                         </mat-form-field>
                        <mat-form-field appearance="fill">
                            <input matInput min="0" max="1000" step="1" ngStep="1"  name="windowSize" [(ngModel)]="windowSize" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
-                           <mat-hint align="start">Window Size ^</mat-hint>
+                           <mat-hint align="start">Future Time Window</mat-hint>
                         </mat-form-field>  
                         <mat-form-field appearance="fill">
-                        <input matInput min="0" max="100" step="10" ngStep="10"  name="orderUpdates" [(ngModel)]="orderUpdates" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
-                        <mat-hint align="start">Order Frequency Updates ^</mat-hint>
-                        <!--input matInput min="0" max="100" step="10" ngStep="10" (change)="orderTargetChange($event)" name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required-->
+                        <input matInput min="0" max="20" step="1" ngStep="1"  name="orderUpdates" [(ngModel)]="orderUpdates" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                        <mat-hint align="start">Order Updates per day</mat-hint>
+                        <!--input matInput min="0" max="1000" step="10" ngStep="10" (change)="orderTargetChange($event)" name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required-->
                           <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
                           <!--mat-hint align="front">Choose target utilization^</mat-hint-->
                       </mat-form-field>
@@ -42,7 +42,7 @@
               <mat-card-content class="advance" color="primary" style="margin:14px; padding:5px">
                   <div fxLayout="row" fxLayoutAlign="start center">
                       <app-personaldetails fxFlex="80%">
-                          <button [disabled]="createOrderManually === false" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Order</button>
+                          <button [disabled]="createOrderManually === false" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Orders</button>
                           <!--button [disabled]="orderTarget > 0" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Order</button-->
 
                       </app-personaldetails>

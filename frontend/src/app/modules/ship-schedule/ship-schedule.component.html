@@ -11,7 +11,7 @@
                 <mat-card-content>
                     <div class="example-container">
                         <mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill">
-                            <input matInput   step="5" ngStep="5" (change)="delayChange($event)" name="rate" [(ngModel)]="rate" name="rate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
+                            <input matInput  min="0" step="5" ngStep="5" (change)="delayChange($event)" name="rate" [(ngModel)]="rate" name="rate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
                             <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
                             <mat-hint align="front">Advance Delay (sec) ... 0 = Manual</mat-hint>
                         </mat-form-field>

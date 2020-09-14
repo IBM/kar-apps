@@ -42,6 +42,9 @@ public class TimeController {
         return date;
     }
     /*
+        Called by the GUI to advance time while in manual mode.
+        
+    */
     @PostMapping("/time/nextDay")
 	public Instant  nextDay() {
         System.out.println("TimeController.nextDay()");
@@ -60,7 +63,7 @@ public class TimeController {
             
        return TimeUtils.getInstance().getCurrentDate();
     }
-    */
+    
     @PostMapping("/time/advance")
 	public Instant  advance() {
         Instant time = TimeUtils.getInstance().advanceDate(1);

@@ -79,8 +79,9 @@ export class ShipScheduleComponent implements OnInit {
     this.getActiveVoyages();
   }
   
-  toggleStartStop(event: Event) {
+  update(event: Event) {
     console.log("Click "+event);
+    /*
     if ( this.autoSimButtonLabel == "START") {
       this.autoSimButtonLabel = "STOP";
 //      this.restService.setAutoMode(10).subscribe((data) => {
@@ -91,6 +92,7 @@ export class ShipScheduleComponent implements OnInit {
       this.rate = 0;
       console.log("............ Stopping Ship Simulator - delay:"+this.rate);
     }
+    */
     this.restService.setSimulatorDelay(this.rate).subscribe((data) => {
       console.log(data);
     });

@@ -15,7 +15,8 @@
                             <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
                             <mat-hint align="front">Advance Delay (sec) ... 0 = Manual</mat-hint>
                         </mat-form-field>
-                        <button [disabled]="rate === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleStartStop($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button>
+                        <button  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="update($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Update</button>
+                        <!--button [disabled]="rate === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleStartStop($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button-->
 
                     </div>
 

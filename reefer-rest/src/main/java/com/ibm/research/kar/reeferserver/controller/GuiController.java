@@ -39,7 +39,6 @@ public class GuiController {
     public void sendActiveVoyageUpdate(List<Voyage> voyages, String currentDate) {
         ShippingSchedule schedule = new ShippingSchedule(voyages, currentDate);
         template.convertAndSend("/topic/voyages", schedule); 
-     //   updateInTransitOrderCount(voyages.size());
     }
     public void sendOrderUpdate(Order order) {
         

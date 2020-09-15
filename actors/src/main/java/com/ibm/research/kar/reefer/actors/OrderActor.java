@@ -25,7 +25,7 @@ import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.OrderStatus;
 @Actor
 public class OrderActor extends BaseActor { //} extends BaseActor {
-    private final String REEFERS_KEY = "reefers";
+   // private final String REEFERS_KEY = "reefers";
     private final String ORDER_MAP_KEY="order-map-key";
     private final String STATE_KEY = "order-state";
     JsonArray reeferList;
@@ -35,16 +35,16 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
         System.out.println("OrderActor.init() called id:"+getId()+" type:"+this.getType());
         try {
             
-            JsonValue reefers =  Kar.actorGetState(this, REEFERS_KEY);//get(this, REEFERS_KEY);
+            JsonValue reefers =  Kar.actorGetState(this, Constants.REEFER_LIST_KEY);//get(this, REEFERS_KEY);
             if ( reefers != null && reefers != JsonValue.NULL) {
                 System.out.println("OrderActor.init() reefers not null - id:"+getId()+" type:"+this.getType()+" reefers: "+reefers);
                 reeferList = reefers.asJsonArray();
                 System.out.println("OrderActor.init() - Order Id:"+getId()+" cached reefer list size:"+reeferList.size());
             } else {
-                System.out.println("OrderActor.init() reefers  null id:"+getId()+" type:"+this.getType());
+                System.out.println("OrderActor.init() reefer list is null id:"+getId()+" type:"+this.getType());
             }
             state = Kar.actorGetState(this, STATE_KEY);
-//            state = Kar.actorGetState(this, ORDER_MAP_KEY, STATE_KEY);
+
             System.out.println("OrderActor.init() - Order Id:"+getId()+" cached state:"+state+" type:"+this.getType());
         } catch( Exception e ) {
             e.printStackTrace();
@@ -58,13 +58,13 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
     }
     @Remote
     public JsonObject delivered(JsonObject message) {
-        JsonValue voyageId = Kar.actorGetState(this, "voyageId");  //get(this, "voyageId");
+        JsonValue voyageId = Kar.actorGetState(this, "voyageId");  
         System.out.println(voyageId+" >>>>>>>>>>>>>>>>>>>>>>>>>>> orderActor.delivered() called- Actor ID:" +getId()+" type:"+this.getType());
         try {
             state = Json.createValue(OrderStatus.DELIVERED.name());
             Kar.actorSetState(this,STATE_KEY, state);
             if ( reeferList == null ) {
-                JsonValue reefers = Kar.actorGetState(this,  REEFERS_KEY); //get(this, REEFERS_KEY);
+                JsonValue reefers = Kar.actorGetState(this, Constants.REEFER_LIST_KEY); 
                 reeferList = reefers.asJsonArray();
             }
             System.out.println(voyageId+" >>>>>>>>>>>>>>>>>>>>>>>>>>> OrderActor.delivered() - unreserving reefers:"+reeferList);
@@ -82,20 +82,25 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
     @Remote
     public JsonObject departed(JsonObject message) {
         JsonValue voyage = get(this,"voyageId");
-        System.out.println("OrderActor.departed() called- Actor ID:" +getId()+" type:"+this.getType()+" voyage:"+voyage);
+        System.out.println("................................OrderActor.departed() called- Actor ID:" +getId()+" type:"+this.getType()+" voyage:"+voyage);
         try {
+            if ( reeferList == null ) {
+                JsonValue reefers = Kar.actorGetState(this,  Constants.REEFER_LIST_KEY); 
+                reeferList = reefers.asJsonArray();
+            }
             state = Json.createValue(OrderStatus.INTRANSIT.name());
-            //set(this,STATE_KEY, state);
+            
             Kar.actorSetState(this, STATE_KEY, state);
-            //JsonValue orderState = Json.createValue(OrderStatus..ordinal());
-            //set(this,STATE_KEY, orderState);
+            
             if ( reeferList != null ) {
 
                 ActorRef reeferProvisionerActor =  Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId);
                 JsonObject params = Json.createObjectBuilder().add("in-transit",reeferList.size()).build();
                 actorCall( reeferProvisionerActor, "updateInTransit", params);
  
-                System.out.println(voyage+" OrderActor.departed() - Order Id:"+getId()+" in-transit reefer list size:"+reeferList.size());
+                System.out.println(voyage+"..................... OrderActor.departed() - Order Id:"+getId()+" in-transit reefer list size:"+reeferList.size());
+            } else {
+                System.out.println(".......................... OrderActor.departed() - Order Id:"+getId()+" has no booked reefers");
             }
             return Json.createObjectBuilder().add("status", "OK").add("orderId", String.valueOf(this.getId())).build();
         } catch( Exception e ) {
@@ -118,7 +123,7 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
     public JsonObject replaceReefer(JsonObject message) {
         System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OrderActor.replaceReefer() called- Actor ID:" +getId()+" state:"+((JsonString)state).getString());
         if ( reeferList == null ) {
-            JsonValue reefers = Kar.actorGetState(this,  REEFERS_KEY); 
+            JsonValue reefers = Kar.actorGetState(this,  Constants.REEFER_LIST_KEY); 
             reeferList = reefers.asJsonArray();
         }
         int spoiltReeferId = message.getJsonNumber(Constants.REEFER_ID_KEY).intValue();
@@ -134,11 +139,22 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
            
          });
          JsonArray orderReefers = newReeferList.build();
-         Kar.actorSetState(this,REEFERS_KEY, orderReefers);
+         Kar.actorSetState(this,Constants.REEFER_LIST_KEY, orderReefers);
          System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OrderActor.replaceReefer() called- Actor ID:" +getId()+" saved new Reefer List:"+orderReefers.toString());
         return Json.createObjectBuilder().build();
 
     }
+    @Remote
+    public JsonObject reeferCount(JsonObject message) {
+        JsonValue reefers = Kar.actorGetState(this,  Constants.REEFER_LIST_KEY); 
+        int reeferCount = 0;
+        if ( reefers != null ) {
+            reeferCount = reefers.asJsonArray().size();
+        }
+        return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, reeferCount).build();
+        
+    }
+            
     @Remote
     public JsonObject createOrder(JsonObject message) {
         System.out.println(
@@ -163,7 +179,8 @@ public class OrderActor extends BaseActor { //} extends BaseActor {
                     System.out.println("OrderActor.createOrder() - Order Booked - Reefers:"+reefers.size());
                     if ( reefers != null && reefers != JsonValue.NULL ) {
                       // set(this,"reefers", reefers);
-                       Kar.actorSetState(this,"reefers", reefers);
+                       Kar.actorSetState(this,Constants.REEFER_LIST_KEY, reefers);
+                       //Kar.actorSetState(this,"reefers", reefers);
                        System.out.println("OrderActor.createOrder() saved order "+getId()+" reefer list - size "+reefers.size());
                     }
                     state = Json.createValue(OrderStatus.BOOKED.name());

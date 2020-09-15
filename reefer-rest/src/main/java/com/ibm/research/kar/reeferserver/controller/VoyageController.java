@@ -20,6 +20,7 @@ import com.ibm.research.kar.Kar;
 //import com.ibm.research.kar.Kar.*;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.Order;
@@ -152,10 +153,12 @@ import org.springframework.web.bind.annotation.RestController;
             } else {
 
               if ( shipDeparted(daysAtSea) ) {
+                System.out.println("VoyageController.updateVoyageState() voyageId="+voyageId+" has DEPARTED ------------------------------------------------------");
                 Set<Order> orders = voyageService.getOrders(voyageId);
                 orders.forEach(order -> {
                   ActorRef orderActor =  Kar.actorRef(ReeferAppConfig.OrderActorName, order.getId());
                   JsonObject params = Json.createObjectBuilder().build();
+                  System.out.println("VoyageController.updateVoyageState() voyageId="+order.getVoyageId()+" Notifying Order Actor of departure - OrderID:"+order.getId());
                   actorCall( orderActor, "departed", params);
                 });
 
@@ -195,15 +198,36 @@ import org.springframework.web.bind.annotation.RestController;
       int voyages = 0;
 
       try {
+
+        Set<Order> orders = voyageService.getOrders(voyageId);
+        int totalOrderReefers = 0;
+        for( Order order : orders) {
+          totalOrderReefers += orderReefers(order.getId());
+        }
         ActorRef voyageActor = actorRef("voyage", voyageId);
         JsonObject params = Json.createObjectBuilder().build();
         JsonValue reply = actorCall(voyageActor, "getVoyageOrderCount", params);
-        System.out.println("----------------Voyage Actor "+voyageId+" orders:"+reply);
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>----------------VoyageController.voyageOrders() - Voyage "+voyageId+" orders:"+reply+" total Order Reefers:"+totalOrderReefers);
         voyages = reply.asJsonObject().getInt("orders");
       } catch( Exception e) {
         e.printStackTrace();
       }
       return voyages;
+
+    }
+    private int orderReefers(String orderId) {
+      int reeferCount = 0;
+
+      try {
+        ActorRef orderActor = actorRef("order", orderId);
+        JsonObject params = Json.createObjectBuilder().build();
+        JsonValue reply = actorCall(orderActor, "reeferCount", params);
+        //System.out.println("VoyageController.orderReefers()----------------Order Actor reply"+orderId+" orders:"+reply);
+        reeferCount = reply.asJsonObject().getInt(Constants.TOTAL_REEFER_COUNT_KEY);
+      } catch( Exception e) {
+        e.printStackTrace();
+      }
+      return reeferCount;
 
     }
     private List<Voyage> activeVoyages() {

@@ -17,6 +17,7 @@ public class Constants {
    public static final String REEFER_ID_KEY="reeferId";
    public static final String REEFER_REPLACEMENT_ID_KEY="reeferReplacementId";
    public static final String REEFER_STATE_KEY="reeferState";
+   public static final String REEFER_LIST_KEY="reeferCount";
 
    public static final String ORDER_ID_KEY="orderId";
    public static final String ORDER_STATUS_KEY="order-status";

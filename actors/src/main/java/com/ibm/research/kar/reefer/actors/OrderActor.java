@@ -8,6 +8,7 @@ import java.util.Map;
 
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonString;
@@ -23,6 +24,8 @@ import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.OrderStatus;
+
+import io.jaegertracing.internal.samplers.ConstSampler;
 
 @Actor
 public class OrderActor extends BaseActor {
@@ -54,11 +57,20 @@ public class OrderActor extends BaseActor {
             System.out.println(voyageId + "OrderActor.delivered() - Order Id:" + getId() + " cached reefer list size:"
                     + reeferMap.size());
 
-            return Json.createObjectBuilder().add("status", "OK").add("orderId", String.valueOf(this.getId())).build();
+            JsonArrayBuilder reefersToRelease = Json.createArrayBuilder(); //reeferMap.values()).build();
+            for(JsonValue reeferId : reeferMap.values()) {
+                reefersToRelease.add(reeferId);
+            }
+            JsonValue bookingStatus = actorCall(
+                        actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+                        "unreserveReefers", Json.createObjectBuilder().add(Constants.REEFERS_KEY, reefersToRelease).build());
+
+
+            return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {
             e.printStackTrace();
-            return Json.createObjectBuilder().add("status", "FAILED").add("ERROR", "VOYAGE_ID_MISSING")
-                    .add("orderId", String.valueOf(this.getId())).build();
+            return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "VOYAGE_ID_MISSING")
+                    .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         }
     }
 
@@ -84,11 +96,11 @@ public class OrderActor extends BaseActor {
                 System.out.println(" OrderActor.departed() - Order Id:" + getId()
                         + " has no booked reefers");
             }
-            return Json.createObjectBuilder().add("status", "OK").add("orderId", String.valueOf(this.getId())).build();
+            return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {
             e.printStackTrace();
-            return Json.createObjectBuilder().add("status", "FAILED").add("ERROR", e.getMessage())
-                    .add("orderId", String.valueOf(this.getId())).build();
+            return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
+                    .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         }
     }
 
@@ -98,7 +110,7 @@ public class OrderActor extends BaseActor {
         System.out.println("OrderActor.anomaly() called- Actor ID:" + getId() + " type:"
                 + this.getType() + " state:" + ((JsonString) state).getString());
         return Json.createObjectBuilder().add(Constants.ORDER_STATUS_KEY, ((JsonString) state).getString())
-                .add("orderId", String.valueOf(this.getId())).build();
+                .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
 
     }
 
@@ -112,16 +124,16 @@ public class OrderActor extends BaseActor {
                 + " state:" + ((JsonString) state).getString());
 
         
-        Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
+        //Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
         int spoiltReeferId = message.getJsonNumber(Constants.REEFER_ID_KEY).intValue();
         int replacementReeferId = message.getJsonNumber(Constants.REEFER_REPLACEMENT_ID_KEY).intValue();
         System.out.println("OrderActor.replaceReefer() called- Actor ID:" + getId()
                 + " replacing spoilt reefer:" + spoiltReeferId + " with a new one:" + replacementReeferId);
-        reeferMap.remove(String.valueOf(spoiltReeferId));
-        super.removeFromSubMap(this,"reefers-map",String.valueOf(spoiltReeferId));
+        //reeferMap.remove(String.valueOf(spoiltReeferId));
+        super.removeFromSubMap(this,Constants.REEFER_MAP_KEY,String.valueOf(spoiltReeferId));
 
-        reeferMap.put(String.valueOf(replacementReeferId),Json.createValue(replacementReeferId));
-        super.addToSubMap(this, "reefers-map", String.valueOf(replacementReeferId), Json.createValue(replacementReeferId));
+        //reeferMap.put(String.valueOf(replacementReeferId),Json.createValue(replacementReeferId));
+        super.addToSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(replacementReeferId), Json.createValue(replacementReeferId));
 
         return Json.createObjectBuilder().build();
 
@@ -147,30 +159,30 @@ public class OrderActor extends BaseActor {
             if (order.containsKey(JsonOrder.VoyageIdKey)) {
                 JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
                 
-                super.set(this, "voyageId", Json.createValue(order.getVoyageId()));
-                JsonObject orderBooking = bookVoyage(order.getVoyageId(), order);
-                System.out.println("OrderActor.createOrder() - Order Booked -Reply:" + orderBooking);
-                if (voyageBooked(orderBooking)) {
-                    saveOrderReefers(orderBooking);
+                super.set(this, Constants.VOYAGE_ID_KEY, Json.createValue(order.getVoyageId()));
+                JsonObject voyageBookingResult = bookVoyage(order.getVoyageId(), order);
+                System.out.println("OrderActor.createOrder() - Voyage Booked - Reply:" + voyageBookingResult);
+                if (voyageBooked(voyageBookingResult)) {
+                    saveOrderReefers(voyageBookingResult);
                     saveOrderStatus(OrderStatus.BOOKED);
         
                     System.out
-                            .println("OrderActor.createOrder() saved order " + getId() + " state:" + state.toString());
-                    return Json.createObjectBuilder().add(JsonOrder.OrderBookingKey, orderBooking).build();
+                            .println("OrderActor.createOrder() - Order Booked - saved order " + getId() + " state:" + state.toString());
+                    return Json.createObjectBuilder().add(JsonOrder.OrderBookingKey, voyageBookingResult).build();
                 } else {
-                    return orderBooking;
+                    return voyageBookingResult;
                 }
             } else {
                 System.out.println("OrderActor.createOrder() Failed - Missing voyageId");
-                return Json.createObjectBuilder().add("status", "FAILED").add("ERROR", "VOYAGE_ID_MISSING")
-                        .add("orderId", String.valueOf(this.getId())).build();
+                return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "VOYAGE_ID_MISSING")
+                        .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
 
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Json.createObjectBuilder().add("status", "FAILED").add("ERROR", "Exception")
-                    .add("orderId", String.valueOf(this.getId())).build();
+            return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Exception")
+                    .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
 
         }
 
@@ -187,11 +199,11 @@ public class OrderActor extends BaseActor {
     }
 
     private boolean voyageBooked(JsonObject orderBookingStatus) {
-        return orderBookingStatus.getString("status").equals("OK");
+        return orderBookingStatus.getString(Constants.STATUS_KEY).equals(Constants.OK);
     }
 
     private void saveOrderReefers(JsonObject orderBookingStatus) throws Exception {
-        JsonArray reefers = orderBookingStatus.getJsonArray("reefers");
+        JsonArray reefers = orderBookingStatus.getJsonArray(Constants.REEFERS_KEY);
         System.out.println("OrderActor.createOrder() - Order Booked - Reefers:" + reefers.size());
         if (reefers != null && reefers != JsonValue.NULL) {
             // copy assigned reefer id's to a map and save it in kar storage
@@ -214,7 +226,7 @@ public class OrderActor extends BaseActor {
             return reply.asJsonObject();
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-            return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR", "INVALID_CALL")
+            return Json.createObjectBuilder().add(Constants.STATUS_KEY, OrderStatus.FAILED.name()).add("ERROR", "INVALID_CALL")
                     .add(JsonOrder.IdKey, order.getId()).build();
         }
     }

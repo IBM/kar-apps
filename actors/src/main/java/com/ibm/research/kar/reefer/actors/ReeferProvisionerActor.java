@@ -4,6 +4,7 @@ import static com.ibm.research.kar.Kar.actorCall;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -11,6 +12,7 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
@@ -36,13 +38,16 @@ public class ReeferProvisionerActor extends BaseActor {
     
     private ReeferDTO[] reeferMasterInventory = null;
     private JsonValue totalReeferInventory=null;
-
+    private Map<String,JsonValue> reeferInventory = null;
+    
     @Activate
     public void init() {
         System.out.println(
             "ReeferProvisionerActor.init() called- Actor ID:" + this.getId());
         totalReeferInventory = get(this,"total");
       
+        reeferInventory = super.getSubMap(this, "reefer-inventory");
+
         JsonValue state = get(this, Constants.REEFER_PROVISIONER_STATE_KEY);
         if ( state != null ) {
             System.out.println(
@@ -123,6 +128,7 @@ public class ReeferProvisionerActor extends BaseActor {
                 .add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.ALLOCATED.name()))
                 .build();
             actorCall( reeferActor, "reserve", params);
+            /*
             JsonValue booked = get(this,Constants.TOTAL_BOOKED_KEY);
             int totalBooked;
             if ( booked == null ) {
@@ -131,6 +137,8 @@ public class ReeferProvisionerActor extends BaseActor {
                 totalBooked = ((JsonNumber)booked).intValue();
             }
             totalBooked++;
+            */
+            int totalBooked = super.incrementAndSave(this, Constants.TOTAL_BOOKED_KEY, 1);
             System.out.println("............................. Total Booked Reefers:"+totalBooked);
             set(this,Constants.TOTAL_BOOKED_KEY,Json.createValue( totalBooked));
             updateRest();
@@ -215,6 +223,8 @@ public class ReeferProvisionerActor extends BaseActor {
                         r.setState(State.UNALLOCATED);
                         r.setMaintenanceReleaseDate(null);
                         Kar.actorDeleteState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(r.getId()));
+                        int onMaintenance = super.decrementAndSave(this, Constants.TOTAL_ONMAINTENANCE_KEY, 1);
+                        /*
                         JsonValue totalOnMainteJsonValue = get(this, Constants.TOTAL_ONMAINTENANCE_KEY);
                         if ( totalOnMainteJsonValue != null ) {
                             int onMaintenance = ((JsonNumber)totalOnMainteJsonValue).intValue();
@@ -225,6 +235,8 @@ public class ReeferProvisionerActor extends BaseActor {
         
                             System.out.println("ReeferProvisioner.releaseReefersfromMaintenance() - released reefer:"+reeferId+" from maintenance. Today:"+today);
                         }
+                        */
+                        System.out.println("ReeferProvisioner.releaseReefersfromMaintenance() - released reefer:"+reeferId+" from maintenance. Today:"+today);
                     } else {
                        
                         builder.add(Json.createValue(r.getId()));
@@ -259,6 +271,8 @@ public class ReeferProvisionerActor extends BaseActor {
         JsonObjectBuilder reply = Json.createObjectBuilder();
         int newInTransit = message.getInt("in-transit");
 
+        int totalBooked = super.decrementAndSave(this, Constants.TOTAL_BOOKED_KEY, newInTransit);
+        /*
         JsonValue booked = get(this,Constants.TOTAL_BOOKED_KEY);
         int totalBooked;
         if ( booked == null ) {
@@ -271,7 +285,10 @@ public class ReeferProvisionerActor extends BaseActor {
                 totalBooked = 0;
             }
         }
+*/
+
         set(this, Constants.TOTAL_BOOKED_KEY, Json.createValue(totalBooked));
+
 
         JsonValue inTransitAlready = get(this, Constants.TOTAL_INTRANSIT_KEY);
 
@@ -284,10 +301,12 @@ public class ReeferProvisionerActor extends BaseActor {
             totalInTransit = newInTransit;
         }
         set(this, Constants.TOTAL_INTRANSIT_KEY, Json.createValue(totalInTransit));
+
+
         updateRest();
         return reply.build();
     }
-    private void reeferOnMaintenance(String reeferId ) {
+    private void reeferOnMaintenance(int reeferId ) {
         JsonArrayBuilder builder = Json.createArrayBuilder();
         JsonValue onMaintenanceList = Kar.actorGetState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST);
         if ( onMaintenanceList != null && onMaintenanceList != JsonValue.NULL) {
@@ -297,65 +316,13 @@ public class ReeferProvisionerActor extends BaseActor {
             });
             
         }
-        builder.add(Json.createValue(Integer.valueOf(reeferId)));
+        builder.add(Json.createValue(reeferId));
         JsonArray array = builder.build();
 
         Kar.actorSetState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, array);
         System.out.println("############################### ReeferProvisionerActor.reeferOnMaintenance() - ActorId:"+getId()+" saved new onMaintenance list:"+array.toString());
     }
-    @Remote
-    public JsonObject unreserveReefer(JsonObject message ) {
-        JsonObjectBuilder reply = Json.createObjectBuilder();
-    
-        String reeferId = message.getString(Constants.REEFER_ID_KEY).trim();
-        if ( reeferMasterInventory[Integer.valueOf(reeferId)] != null) {
-            // Reefers can be marked as spoilt only during the voyage. When a voyage ends
-            // all spoilt reefers are automatically put on maintenance.
-            if ( reeferMasterInventory[Integer.valueOf(reeferId)].getState().equals(State.SPOILT)) {
-                reeferMasterInventory[Integer.valueOf(reeferId)].setState(State.MAINTENANCE);
-                changeReeferState(reeferMasterInventory[Integer.valueOf(reeferId)], Integer.valueOf(reeferId),  ReeferState.State.MAINTENANCE,Constants.TOTAL_ONMAINTENANCE_KEY);
-                reeferMasterInventory[Integer.valueOf(reeferId)].setMaintenanceReleaseDate(TimeUtils.getInstance().getCurrentDate().toString());
-                reeferOnMaintenance(reeferId);
 
-                JsonValue totalSpoilt = get(this, Constants.TOTAL_SPOILT_KEY);
-                if ( totalSpoilt != null ) {
-                    int spoilt = ((JsonNumber)totalSpoilt).intValue();
-                    if ( spoilt > 0 ) {
-                        spoilt--;
-                    }
-                    set(this,Constants.TOTAL_SPOILT_KEY,Json.createValue(spoilt));
-
-                    System.out.println("ReeferProvisioner.unreserveReefer() - spoilt reefer:"+reeferId+" arrived - changed state to OnMaintenance");
-                }
-            } else {
-                reeferMasterInventory[Integer.valueOf(reeferId)].setState(State.UNALLOCATED);
-            }
-            
-        }
-        /*
-        int totalBooked = 0;
-        JsonValue booked = get(this, Constants.TOTAL_BOOKED_KEY);
-        if ( booked != null ) {
-            totalBooked = ((JsonNumber)booked).intValue()-1;
-            set(this, Constants.TOTAL_BOOKED_KEY, Json.createValue(totalBooked));
-         }
-         */
-        int totalInTransit=0;
-        JsonValue inTransit = get(this, Constants.TOTAL_INTRANSIT_KEY);
-        if ( inTransit != null ) {
-            totalInTransit = ((JsonNumber)inTransit).intValue()-1;
-            if ( totalInTransit < 0 ) {
-                totalInTransit = 0;
-            }
-            set(this, Constants.TOTAL_INTRANSIT_KEY, Json.createValue(totalInTransit));
-        }
-        JsonValue totalBooked = get(this,Constants.TOTAL_BOOKED_KEY);
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>> ReeferProvisionerActor.unreserverReefer() - released reefer "+reeferId+" total booked"+totalBooked+" totalInTransit:" + totalInTransit+ " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-
-        updateRest();
-
-        return reply.build();
-    }
     @Remote
     public void reeferAnomaly(JsonObject message) {
         int reeferId = message.getInt(Constants.REEFER_ID_KEY);
@@ -385,8 +352,8 @@ public class ReeferProvisionerActor extends BaseActor {
                     String today = message.getString(Constants.DATE_KEY);
                     changeReeferState(reefer, reeferId, ReeferState.State.MAINTENANCE,Constants.TOTAL_ONMAINTENANCE_KEY);
                     reefer.setMaintenanceReleaseDate(today);
-                    reeferMasterInventory[Integer.valueOf(reeferId)].setState(State.MAINTENANCE);
-                    reeferOnMaintenance(String.valueOf(reeferId));
+                    reeferMasterInventory[reeferId].setState(State.MAINTENANCE);
+                    reeferOnMaintenance(reeferId);
                     //Kar.actorSetState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reeferId), Json.createValue(reeferId));
                     // Order has been booked but a reefer in it is spoilt. Remove spoilt reefer from the order and replace with a new one. 
                     List<ReeferDTO> replacementReefer = ReeferAllocator.allocateReefers(reeferMasterInventory, Constants.REEFER_CAPACITY, String.valueOf(reefer.getId()), reefer.getVoyageId());
@@ -397,6 +364,16 @@ public class ReeferProvisionerActor extends BaseActor {
                         System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferProvisionerActor.reeferAnomaly() - notifying order actor to replace reeferId:"+reeferId+" with:"+replacementReefer.get(0).getId());
                         notifyOrderOfReeferReplacement(reefer.getOrderId(), reefer.getId(), replacementReefer.get(0).getId());
                     }
+                    // decrement booked
+                    super.decrementAndSave(this, Constants.TOTAL_BOOKED_KEY, 1);
+
+                    
+
+
+
+
+
+
                     //updateRest();
                 } else {
                     changeReeferState(reefer, reeferId, ReeferState.State.SPOILT,Constants.TOTAL_SPOILT_KEY);
@@ -409,10 +386,10 @@ public class ReeferProvisionerActor extends BaseActor {
                 String today = message.getString(Constants.DATE_KEY);
                 changeReeferState(reefer, reeferId, ReeferState.State.MAINTENANCE,Constants.TOTAL_ONMAINTENANCE_KEY);
                 
-                reeferMasterInventory[Integer.valueOf(reeferId)].setMaintenanceReleaseDate(today);
+                reeferMasterInventory[reeferId].setMaintenanceReleaseDate(today);
                 //reefer.setMaintenanceReleaseDate(TimeUtils.getInstance().getCurrentDate().toString());
-                reeferMasterInventory[Integer.valueOf(reeferId)].setState(State.MAINTENANCE);
-                reeferOnMaintenance(String.valueOf(reeferId));
+                reeferMasterInventory[reeferId].setState(State.MAINTENANCE);
+                reeferOnMaintenance(reeferId);
                 //Kar.actorSetState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reeferId), Json.createValue(reeferId));
                 System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferProvisionerActor.reeferAnomaly() - id:"+getId()+" added reefer:"+reeferId+" to "+Constants.ON_MAINTENANCE_PROVISIONER_LIST+" Map");
             }
@@ -453,12 +430,7 @@ public class ReeferProvisionerActor extends BaseActor {
         }
         return false;
     }
-    private boolean reeferMaintenance(ReeferState.State state) {
-        if ( state.equals(ReeferState.State.MAINTENANCE)) {
-            return true;
-        }
-        return false;
-    }
+    
     @Remote
     public JsonObject bookReefers(JsonObject message) {
 
@@ -474,15 +446,16 @@ public class ReeferProvisionerActor extends BaseActor {
   
         if ( order.containsKey(JsonOrder.ProductQtyKey)) {
             
-            int qty = order.getProductQty();
-            List<ReeferDTO> orderReefers = ReeferAllocator.allocateReefers(reeferMasterInventory, qty, order.getId(), order.getVoyageId());
+            //int qty = order.getProductQty();
+            // allocate enough reefers to cary products in the order
+            List<ReeferDTO> orderReefers = ReeferAllocator.allocateReefers(reeferMasterInventory, order.getProductQty(), order.getId(), order.getVoyageId());
             JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-
+            // book each reefer 
             for( ReeferDTO reefer : orderReefers ) {
                 arrayBuilder.add(reefer.getId());
                 createReeferActor(reefer);
             }
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ReeferProvisionerActor.bookReefers())- Order:"+order.getId() + " reefer count:"+orderReefers.size());
+            System.out.println("ReeferProvisionerActor.bookReefers())- Order:"+order.getId() + " reefer count:"+orderReefers.size());
             updateRest();
 
             return  Json.createObjectBuilder()
@@ -494,5 +467,77 @@ public class ReeferProvisionerActor extends BaseActor {
             return Json.createObjectBuilder().add("status", "FAILED").add("ERROR","ProductQuantityMissing").add(JsonOrder.IdKey, order.getId()).build();
         }
     }
+    @Remote
+    public JsonObject unreserveReefers(JsonObject message ) {
+        JsonObjectBuilder reply = Json.createObjectBuilder();
+    
+        JsonArray reeferIds = message.getJsonArray(Constants.REEFERS_KEY);    //getString(Constants.REEFERS_KEY).trim().split(",");
+        for( JsonValue reeferId : reeferIds) {
+            unreserveReefer( ((JsonNumber)reeferId).intValue());
 
+        }
+        updateRest();
+
+        return reply.build();
+    }
+    //@Remote
+    private void unreserveReefer(int reeferId) {
+    //    JsonObjectBuilder reply = Json.createObjectBuilder();
+    
+       // String reeferId = message.getString(Constants.REEFER_ID_KEY).trim();
+        if ( reeferMasterInventory[Integer.valueOf(reeferId)] != null) {
+            // Reefers can be marked as spoilt only during the voyage. When a voyage ends
+            // all spoilt reefers are automatically put on maintenance.
+            if ( reeferMasterInventory[reeferId].getState().equals(State.SPOILT)) {
+                reeferMasterInventory[reeferId].setState(State.MAINTENANCE);
+                changeReeferState(reeferMasterInventory[reeferId], reeferId,  ReeferState.State.MAINTENANCE,Constants.TOTAL_ONMAINTENANCE_KEY);
+                reeferMasterInventory[reeferId].setMaintenanceReleaseDate(TimeUtils.getInstance().getCurrentDate().toString());
+                reeferOnMaintenance(reeferId);
+
+                int spoilt = super.decrementAndSave(this, Constants.TOTAL_SPOILT_KEY, 1);
+                /*
+                JsonValue totalSpoilt = get(this, Constants.TOTAL_SPOILT_KEY);
+                if ( totalSpoilt != null ) {
+                    int spoilt = ((JsonNumber)totalSpoilt).intValue();
+                    if ( spoilt > 0 ) {
+                        spoilt--;
+                    }
+                    set(this,Constants.TOTAL_SPOILT_KEY,Json.createValue(spoilt));
+
+                    System.out.println("ReeferProvisioner.unreserveReefer() - spoilt reefer:"+reeferId+" arrived - changed state to OnMaintenance");
+                }
+                */
+                System.out.println("ReeferProvisioner.unreserveReefer() - spoilt reefer:"+reeferId+" arrived - changed state to OnMaintenance");
+            } else {
+                reeferMasterInventory[reeferId].setState(State.UNALLOCATED);
+                release(reeferId);
+            }
+            int totalInTransit = super.decrementAndSave(this, Constants.TOTAL_INTRANSIT_KEY, 1);
+
+            JsonValue totalBooked = get(this,Constants.TOTAL_BOOKED_KEY);
+            System.out.println("ReeferProvisionerActor.unreserverReefer() - released reefer "+reeferId+" total booked"+totalBooked+" totalInTransit:" + totalInTransit); 
+            
+            
+        }
+/*
+        int totalInTransit=0;
+        JsonValue inTransit = get(this, Constants.TOTAL_INTRANSIT_KEY);
+        if ( inTransit != null ) {
+            totalInTransit = ((JsonNumber)inTransit).intValue()-1;
+            if ( totalInTransit < 0 ) {
+                totalInTransit = 0;
+            }
+            set(this, Constants.TOTAL_INTRANSIT_KEY, Json.createValue(totalInTransit));
+        }
+        */
+
+     //   updateRest();
+
+     //   return reply.build();
+    }
+    private void release(int reeferId) {
+        ActorRef reeferActor = Kar.actorRef(ReeferAppConfig.ReeferActorName, String.valueOf(reeferId));
+        JsonObject params = Json.createObjectBuilder().build();
+        actorCall(reeferActor, "unreserve", params);
+    }
 }

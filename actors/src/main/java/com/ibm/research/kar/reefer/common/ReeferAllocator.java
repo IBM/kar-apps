@@ -12,6 +12,7 @@ import com.ibm.research.kar.reefer.actors.ReeferActor.ReeferAllocationStatus;
 import com.ibm.research.kar.reefer.common.ReeferState.State;
 import com.ibm.research.kar.reefer.common.error.ReeferInventoryExhaustedException;
 import com.ibm.research.kar.reefer.common.packingalgo.PackingAlgo;
+import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Reefer;
 import com.ibm.research.kar.reefer.model.ReeferDTO;
 

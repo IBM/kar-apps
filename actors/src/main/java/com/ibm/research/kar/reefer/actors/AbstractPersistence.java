@@ -2,7 +2,10 @@ package com.ibm.research.kar.reefer.actors;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
+import javax.json.Json;
+import javax.json.JsonNumber;
 import javax.json.JsonValue;
 
 import com.ibm.research.kar.Kar;
@@ -18,6 +21,29 @@ public abstract class AbstractPersistence {
     }
     return persistentData.get(key);
   }
+  protected int incrementAndSave(ActorRef ref, String key, int incrementBy) {
+    return calculateAndSave(ref, key, true, incrementBy);
+  }
+  protected int decrementAndSave(ActorRef ref, String key, int decrementBy) {
+    return calculateAndSave(ref, key, false, decrementBy);
+  }
+  protected int calculateAndSave(ActorRef ref, String key, boolean increment, int adjustment) {
+    JsonValue counter = get(ref,key);
+    int total=0;
+    if ( counter != null ) {
+      total = ((JsonNumber)counter).intValue();
+    } 
+    if ( increment ) {
+      total += adjustment;
+    } else if ( (total - adjustment) > 0 ) {
+      total -= adjustment;
+    } else {
+      total = 0;
+    }
+    
+    set(ref, key, Json.createValue( total));
+    return total;
+  }
 
   // local utility to update local cache and persistent state
   protected JsonValue set(ActorRef ref, String key, JsonValue value) {
@@ -32,10 +58,10 @@ public abstract class AbstractPersistence {
     return Kar.actorSubMapGet(ref, subMapName);
   }
   protected void removeFromSubMap(ActorRef ref,String subMapName, String subMapKey) {
-    Kar.actorDeleteState(ref,"reefers-map",subMapKey);
+    Kar.actorDeleteState(ref,subMapName,subMapKey);
   }
   protected void addToSubMap(ActorRef ref,String subMapName, String subMapKey, JsonValue value) {
-    Kar.actorSetState(ref,"reefers-map",subMapKey, value);
+    Kar.actorSetState(ref,subMapName,subMapKey, value);
   }
   protected void addSubMap(ActorRef ref,String subMapName, Map<String, JsonValue> subMap) {
     Kar.actorSetMultipleState(ref, subMapName, subMap);

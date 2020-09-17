@@ -11,6 +11,8 @@ public class Constants {
    public static final String SPOILT_ORDERS_KEY="spoilt-orders";
 
    public static final String VOYAGE_ID_KEY="voyageId";
+   public static final String VOYAGE_ORDERS_KEY="voyage-orders";
+
    public static final String REEFER_PROVISIONER_STATE_KEY="provisionerState";
 
    public static final String TOTAL_REEFER_COUNT_KEY="total";
@@ -18,6 +20,7 @@ public class Constants {
    public static final String REEFER_REPLACEMENT_ID_KEY="reeferReplacementId";
    public static final String REEFER_STATE_KEY="reeferState";
    public static final String REEFER_MAP_KEY="reefer-map";
+   public static final String REEFERS_KEY="reefers";
 
    public static final String ORDER_ID_KEY="orderId";
    public static final String ORDER_STATUS_KEY="order-status";
@@ -29,5 +32,9 @@ public class Constants {
 
    public static final String ON_MAINTENANCE_PROVISIONER_LIST="on-maintenance-list";
    public static final String DATE_KEY="date";
-   
+   public static final String STATUS_KEY="status";
+
+   public static final String OK="OK";
+   public static final String FAILED="Failed";
+   public static final String ERROR="error";
 }

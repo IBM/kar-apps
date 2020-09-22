@@ -1,0 +1,14 @@
+FROM us.icr.io/research/kar-dev/sdk-java-builder-11
+
+#ENV LANG en_US.UTF-8
+#ENV LANGUAGE en_US:en
+#ENV LC_ALL en_US.UTF-8
+
+#RUN apk add --update maven && apk update && apk upgrade
+
+WORKDIR /kar/actor
+
+COPY pom.xml pom.xml
+COPY src src
+
+RUN mvn install

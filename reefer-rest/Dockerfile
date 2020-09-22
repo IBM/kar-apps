@@ -15,8 +15,7 @@ RUN mvn package
 # Copy the artifacts to the runtime image
 #
 FROM $JAVA_RUNTIME
-COPY --from=builder --chown=default:root /kar/app/target/simulator-server.war /opt/ol/wlp/usr/servers/defaultServer/apps
-COPY --from=builder --chown=default:root /kar/app/src/main/liberty/config/server.xml /opt/ol/wlp/usr/servers/defaultServer
+COPY  --from=builder --chown=default:root /kar/app/target/liberty/wlp/usr/servers/defaultServer /opt/ol/wlp/usr/servers/defaultServer
 
 #
 # Run Open Liberty configure script.

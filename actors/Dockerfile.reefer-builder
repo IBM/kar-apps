@@ -11,4 +11,4 @@ WORKDIR /kar/actor
 COPY pom.xml pom.xml
 COPY src src
 
-RUN mvn install
+RUN mvn install && /bin/rm -rf /kar/actor

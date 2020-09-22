@@ -8,7 +8,7 @@ FROM $JAVA_BUILDER as builder
 
 WORKDIR /kar/app
 COPY pom.xml ./
-COPY src/main/liberty src/main/liberty
+COPY src src
 RUN mvn package
 
 #

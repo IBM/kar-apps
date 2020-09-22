@@ -29,4 +29,16 @@ public abstract class AbstractPersistentService {
         persistentData.put(key, value);
         return Json.createValue(Kar.actorSetState(aref, key, value));
       }
+      protected Map<String, JsonValue> getSubMap(String subMapName) {
+        return Kar.actorSubMapGet(aref, subMapName);
+      }
+      protected void removeFromSubMap(String subMapName, String subMapKey) {
+        Kar.actorDeleteState(aref,subMapName,subMapKey);
+      }
+      protected void addToSubMap(String subMapName, String subMapKey, JsonValue value) {
+        Kar.actorSetState(aref,subMapName,subMapKey, value);
+      }
+      protected void addSubMap(String subMapName, Map<String, JsonValue> subMap) {
+        Kar.actorSetMultipleState(aref, subMapName, subMap);
+      }
 }

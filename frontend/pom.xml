@@ -11,6 +11,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+ 
   </properties>
 
   <build>
@@ -119,6 +120,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
         <executions>
           <execution>
             <id>copyruntime</id>
@@ -132,7 +134,28 @@
                 <copy todir="${project.basedir}/src/main/webapp/WEB-INF">
                   <fileset dir="${project.basedir}/src/main/WEB-INF"/>
                 </copy>
+                <replace file="${project.basedir}/src/main/webapp/index.html" token="localhost" value="${env.REST_URL}"/>
+
               </tasks>
+              <!--target>
+
+              <taskdef resource="net/sf/antcontrib/antcontrib.properties"
+                                     classpath="${settings.localRepository}/ant-contrib/ant-contrib/1.0b3/ant-contrib-1.0b3.jar"/>
+              <property environment="env"/> 
+              <echo message="REST_URL is ${env.REST_URL}"/>
+         
+              <if>
+                  <isset property="env.REST_URL"/>
+                     <then>
+                     <echo message="REST_URL is set" />
+                          <replace file="${project.basedir}/src/main/webapp/index.html" token="localhost" value="${env.REST_URL}"/>
+                     </then>
+                     <else>
+<echo message="REST_URL is NOT set" />
+                     </else>
+                </if>
+                </target>
+               
             </configuration>
             <goals>
               <goal>run</goal>

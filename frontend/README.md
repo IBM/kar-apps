@@ -9,12 +9,16 @@ and change the value of http port in the following xml element:
 
 `<httpEndpoint httpPort="9088" httpsPort="8443" id="defaultHttpEndpoint" host="*" />`
 
-The Reefer front end communicates with the REST service using a URL defined in dist/reefer/index.html
+The Reefer front end communicates with the REST service using a URL defined in dist/reefer/index.html.
 
  `var reeferRestApiBaseUrl="http://localhost:9080";`
 
+Define environment variable REST_URL to point to your REST service and export it 
 
-Change the value of reeferRestApiBaseUrl to match the host and port of your REST service.
+export REST_URL=<Your Host>:9080
+
+You need to run: mvn clean install to replace the value of reeferRestApiBaseUrl in index.html. 
+NOTE: the REST_URL environment variable is required even if you want to use localhost. 
 
 __Before launching Reefer front end make sure that Reefer REST, Reefer Actors, and Reefer Simulator processes are running. When ready, each of theses processes should show _The defaultServer server is ready to run a smarter planet. The defaultServer server started in <N> seconds_. Also when the Reefer Simulator starts, run curl -s -H "Content-Type: application/json" -X POST http://localhost:7080/simulator/togglereeferrest__
 

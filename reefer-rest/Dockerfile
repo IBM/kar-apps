@@ -1,4 +1,4 @@
-ARG JAVA_BUILDER=us.icr.io/reefer/builder
+ARG JAVA_BUILDER=us.icr.io/research/kar-dev/reefer/builder
 ARG JAVA_RUNTIME=us.icr.io/research/kar-dev/sdk-java-runtime-11
 
 #
@@ -15,7 +15,7 @@ RUN mvn package
 # Copy the artifacts to the runtime image
 #
 FROM $JAVA_RUNTIME
-COPY  --from=builder --chown=default:root /kar/app/target/liberty/wlp/usr/servers/defaultServer /opt/ol/wlp/usr/servers/defaultServer
+COPY  --from=builder --chown=default:root /kar/app/target/liberty/wlp /opt/ol/wlp
 
 #
 # Run Open Liberty configure script.

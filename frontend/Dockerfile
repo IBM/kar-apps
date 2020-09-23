@@ -10,7 +10,8 @@ WORKDIR /kar/app
 COPY pom.xml tsconfig.app.json tsconfig.json tsconfig.spec.json tslint.json package.json package-lock.json angular.json karma.conf.js browserslist ./
 COPY e2e e2e
 COPY src src
-RUN mvn package
+CMD export MAVEN_OPTS="-Dmstr.clientNameLookup=false"
+RUN mvn clean install
 
 #
 # Copy the artifacts to the runtime image

@@ -1,4 +1,4 @@
-ARG JAVA_BUILDER=us.icr.io/reefer/builder
+ARG JAVA_BUILDER=us.icr.io/research/kar-dev/sdk-java-builder-11
 ARG JAVA_RUNTIME=us.icr.io/research/kar-dev/sdk-java-runtime-11
 
 #

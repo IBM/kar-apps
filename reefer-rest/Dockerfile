@@ -1,4 +1,4 @@
-ARG JAVA_BUILDER=us.icr.io/research/kar-dev/reefer/builder
+ARG JAVA_BUILDER=us.icr.io/research/kar-dev/sdk-java-builder-11
 ARG JAVA_RUNTIME=us.icr.io/research/kar-dev/sdk-java-runtime-11
 
 #
@@ -9,6 +9,7 @@ FROM $JAVA_BUILDER as builder
 WORKDIR /kar/app
 COPY pom.xml ./
 COPY src src
+CMD export MAVEN_OPTS="-Dmstr.clientNameLookup=false"
 RUN mvn package
 
 #

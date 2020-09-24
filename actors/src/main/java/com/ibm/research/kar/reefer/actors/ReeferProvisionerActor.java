@@ -406,11 +406,11 @@ public class ReeferProvisionerActor extends BaseActor {
 
             } else {
                 setReeferOnMaintenance(reefer, message.getString(Constants.DATE_KEY));
-                updateStore(reefer);
                 System.out.println("ReeferProvisionerActor.reeferAnomaly() - id:"
                         + getId() + " added reefer:" + reeferId + " to " + Constants.ON_MAINTENANCE_PROVISIONER_LIST
                         + " Map"+ " onMaintenance date:"+message.getString(Constants.DATE_KEY));
             }
+            updateStore(reefer);
             updateRest();
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();

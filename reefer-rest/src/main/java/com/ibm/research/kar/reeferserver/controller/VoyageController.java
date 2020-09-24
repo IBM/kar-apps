@@ -11,10 +11,13 @@ import java.util.List;
 import java.util.Set;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
+
 
 import com.ibm.research.kar.Kar;
 //import com.ibm.research.kar.Kar.*;
@@ -204,10 +207,11 @@ import org.springframework.web.bind.annotation.RestController;
         for( Order order : orders) {
           totalOrderReefers += orderReefers(order.getId());
         }
+        
         ActorRef voyageActor = actorRef("voyage", voyageId);
         JsonObject params = Json.createObjectBuilder().build();
         JsonValue reply = actorCall(voyageActor, "getVoyageOrderCount", params);
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>----------------VoyageController.voyageOrders() - Voyage "+voyageId+" orders:"+reply+" total Order Reefers:"+totalOrderReefers);
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>----------------VoyageController.voyageOrders() - Voyage "+voyageId+" orders:"+reply); //+" total Order Reefers:"+totalOrderReefers);
         voyages = reply.asJsonObject().getInt("orders");
       } catch( Exception e) {
         e.printStackTrace();

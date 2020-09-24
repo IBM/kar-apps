@@ -34,9 +34,9 @@ public class ReeferService {
 		addPortReefers("New Orleans, LA", 10);
 		addPortReefers("New York, NY", 10);
 		*/
-    }
-
-    public void addPortReefers(String port, int howMany) {
+	}
+	
+	public void addPortReefers(String port, int howMany) {
 		for( int i=0; i < howMany; i++ ) {
 			Reefer reefer = new Reefer(port, 1000,1000,"Empty","OnDock","");
 			List<Reefer> reefers;
@@ -49,7 +49,7 @@ public class ReeferService {
 			System.out.println("Added new reefer ID:"+reefer.getReeferId());
 		}
 		
-	}
+	}	
 	/*
 	public void setReeferInventorySize(int inventorySize) {
 		JsonObject params = Json.createObjectBuilder()

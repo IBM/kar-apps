@@ -14,21 +14,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class SimulatorService {
 
-
     public void updateVoyageCapacity(String voyageId, int freeCapacity) {
-        JsonObject params = Json.createObjectBuilder()
-        .add("voyageId",voyageId)
-        .add("freeCapacity",freeCapacity)
-        .build();
+        JsonObject params = Json.createObjectBuilder().add("voyageId", voyageId).add("freeCapacity", freeCapacity)
+                .build();
         try {
-  
-            Response response = Kar.restPost("simservice","/simulator/updatevoyagecapacity", params);
-  
-        } catch( Exception e) {
+
+            Response response = Kar.restPost("simservice", "/simulator/updatevoyagecapacity", params);
+
+        } catch (Exception e) {
             e.printStackTrace();
-            
+
         }
     }
+
     public void setSimOrderTarget(int orderTarget) {
         System.out.println("SimulatorService.setSimOrderTarget()");
         try {
@@ -36,51 +34,62 @@ public class SimulatorService {
 
             Response response = Kar.restPost("simservice", "simulator/setordertarget", body);
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("Response = "+respValue);
+            System.out.println("Response = " + respValue);
 
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-  
-        } catch( Exception ee) {
-			ee.printStackTrace();
-		} 
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
     }
+
     public void setSimOrderWindow(int window) {
         System.out.println("SimulatorService.setSimOrderWindow()");
         try {
             JsonObject body = Json.createObjectBuilder().add("value", window).build();
-            System.out.println("SimulatorService.setSimOrderWindow() - sending update to the simulator:"+body.toString());
+            System.out.println(
+                    "SimulatorService.setSimOrderWindow() - sending update to the simulator:" + body.toString());
 
             Response response = Kar.restPost("simservice", "simulator/setorderwindow", body);
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("Response = "+respValue);
+            System.out.println("Response = " + respValue);
 
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-  
-        } catch( Exception ee) {
-			ee.printStackTrace();
-		} 
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
     }
+
     public void setSimOrderUpdateFrequency(int updateFrequency) {
         System.out.println("SimulatorService.setSimOrderUpdateFrequency()");
         try {
             JsonObject body = Json.createObjectBuilder().add("value", updateFrequency).build();
-            System.out.println("SimulatorService.setSimOrderUpdateFrequency() - sending update to the simulator:"+body.toString());
+            System.out.println("SimulatorService.setSimOrderUpdateFrequency() - sending update to the simulator:"
+                    + body.toString());
             Response response = Kar.restPost("simservice", "simulator/setorderupdates", body);
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("Response = "+respValue);
+            System.out.println("Response = " + respValue);
 
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-  
-        } catch( Exception ee) {
-			ee.printStackTrace();
-		} 
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
     }
+
     public void updateOrderSimControls(int orderTarget, int window, int updateFrequency) {
         System.out.println("SimulatorService.updateOrderSimControls()");
         try {
@@ -89,12 +98,15 @@ public class SimulatorService {
             setSimOrderUpdateFrequency(updateFrequency);
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-  
-        } catch( Exception ee) {
-			ee.printStackTrace();
-		} 
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
     }
+
     public OrderSimControls getOrderSimControls() {
         System.out.println("SimulatorService.getOrderSimControls()");
         int target = 0;
@@ -105,131 +117,199 @@ public class SimulatorService {
             window = getOrderSimWindow();
             updateFrequency = getOrderSimUpdateFrequency();
 
-  
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-  
-        } catch( Exception ee) {
-			ee.printStackTrace();
-        } 
-        System.out.println("SimulatorService.getOrderSimControls() - target:"+target+" window:"+window+" updateFrequency:"+updateFrequency);
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
+        System.out.println("SimulatorService.getOrderSimControls() - target:" + target + " window:" + window
+                + " updateFrequency:" + updateFrequency);
         return new OrderSimControls(target, window, updateFrequency);
     }
+
     public int getSimOrderTarget() {
         System.out.println("SimulatorService.getSimOrderTarget()");
-        int orderTarget=0;
+        int orderTarget = 0;
         try {
             Response response = Kar.restGet("simservice", "simulator/getordertarget");
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("SimulatorService.getSimOrderTarget() Sim Response = "+respValue);
+            System.out.println("SimulatorService.getSimOrderTarget() Sim Response = " + respValue);
             orderTarget = Integer.parseInt(respValue.toString());
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-  
-        } catch( Exception ee) {
-			ee.printStackTrace();
-        } 
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
         return orderTarget;
     }
+
     public int getOrderSimWindow() {
         System.out.println("SimulatorService.getOrderSimWindow()");
-        int orderTarget=0;
+        int orderTarget = 0;
         try {
             Response response = Kar.restGet("simservice", "simulator/getorderwindow");
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("SimulatorService.getSimOrderTarget() Sim Response = "+respValue);
+            System.out.println("SimulatorService.getSimOrderTarget() Sim Response = " + respValue);
             orderTarget = Integer.parseInt(respValue.toString());
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-  
-        } catch( Exception ee) {
-			ee.printStackTrace();
-        } 
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
         return orderTarget;
     }
+
     public int getOrderSimUpdateFrequency() {
         System.out.println("SimulatorService.getOrderSimUpdateFrequency()");
-        int orderTarget=0;
+        int orderTarget = 0;
         try {
             Response response = Kar.restGet("simservice", "simulator/getorderupdates");
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("SimulatorService.getSimOrderTarget() Sim Response = "+respValue);
+            System.out.println("SimulatorService.getSimOrderTarget() Sim Response = " + respValue);
             orderTarget = Integer.parseInt(respValue.toString());
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-  
-        } catch( Exception ee) {
-			ee.printStackTrace();
-        } 
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
         return orderTarget;
     }
+
     public ReeferSimControls getReeferSimControls() {
         System.out.println("SimulatorService.getReeferSimControls ");
         Response response = Kar.restGet("simservice", "simulator/getreefercontrols");
         JsonValue respValue = response.readEntity(JsonValue.class);
-        System.out.println("Response = "+respValue);
+        System.out.println("Response = " + respValue);
         int failureRate = respValue.asJsonObject().getInt("failuretarget");
         int updateFrequency = respValue.asJsonObject().getInt("reeferupdates");
-		return new ReeferSimControls(failureRate,updateFrequency);
-	}
-	public void updateReeferSimControls(ReeferSimControls simControls) {
+        return new ReeferSimControls(failureRate, updateFrequency);
+    }
+
+    public void updateReeferSimControls(ReeferSimControls simControls) {
         System.out.println("SimulatorService.updateReeferSimControls()");
         try {
-            JsonObject body = Json.createObjectBuilder().
-                add("reeferupdates", simControls.getUpdateFrequency()).
-                add("failuretarget", simControls.getFailureRate()).
-                build();
+            JsonObject body = Json.createObjectBuilder().add("reeferupdates", simControls.getUpdateFrequency())
+                    .add("failuretarget", simControls.getFailureRate()).build();
 
             Response response = Kar.restPost("simservice", "simulator/setreefercontrols", body);
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("Response = "+respValue);
+            System.out.println("Response = " + respValue);
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-        //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-  
-        } catch( Exception ee) {
-			ee.printStackTrace();
-		} 
-		/*
-			JsonObject message = Json.createObjectBuilder().build();
-			JsonValue reply = actorCall(  actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"getStats", message); 
-			JsonObject controls = reply.asJsonObject();
-			*/
-			System.out.println("SimulatorService.updateReeferSimControls - failureRate:"+simControls.getFailureRate()+" frequencyUpdate:"+simControls.getUpdateFrequency());
-        }
-        public void generateAnomaly() {
-            System.out.println("SimulatorService.generateAnomaly()");
-            try {
-                Response response = Kar.restPost("simservice", "simulator/createanomaly", JsonValue.NULL);
-                JsonValue respValue = response.readEntity(JsonValue.class);
-                System.out.println("Response = "+respValue);
-            } catch (ActorMethodNotFoundException ee) {
-                ee.printStackTrace();
-            //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-      
-            } catch( Exception ee) {
-                ee.printStackTrace();
-            } 
-        }
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
 
-        public void createOrder() {
-            System.out.println("SimulatorService.createOrder()");
-            try {
- 
-    
-                Response response = Kar.restPost("simservice", "simulator/createorder", JsonValue.NULL);
-                JsonValue respValue = response.readEntity(JsonValue.class);
-                System.out.println("Response = "+respValue);
-            } catch (ActorMethodNotFoundException ee) {
-                ee.printStackTrace();
-            //    return Json.createObjectBuilder().add("status", OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey, order.getId()).build();
-      
-            } catch( Exception ee) {
-                ee.printStackTrace();
-            } 
-            }
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
+        /*
+         * JsonObject message = Json.createObjectBuilder().build(); JsonValue reply =
+         * actorCall(
+         * actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.
+         * ReeferProvisionerId),"getStats", message); JsonObject controls =
+         * reply.asJsonObject();
+         */
+        System.out.println("SimulatorService.updateReeferSimControls - failureRate:" + simControls.getFailureRate()
+                + " frequencyUpdate:" + simControls.getUpdateFrequency());
+    }
+
+    public void generateAnomaly() {
+        System.out.println("SimulatorService.generateAnomaly()");
+        try {
+            Response response = Kar.restPost("simservice", "simulator/createanomaly", JsonValue.NULL);
+            JsonValue respValue = response.readEntity(JsonValue.class);
+            System.out.println("Response = " + respValue);
+        } catch (ActorMethodNotFoundException ee) {
+            ee.printStackTrace();
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
+    }
+
+    public void createOrder() {
+        System.out.println("SimulatorService.createOrder()");
+        try {
+
+            Response response = Kar.restPost("simservice", "simulator/createorder", JsonValue.NULL);
+            JsonValue respValue = response.readEntity(JsonValue.class);
+            System.out.println("Response = " + respValue);
+        } catch (ActorMethodNotFoundException ee) {
+            ee.printStackTrace();
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
+    }
+/*
+    public void nextDay() {
+        System.out.println("SimulatorService.nextDay()");
+        try {
+            Response response = Kar.restPost("simservice", "simulator/advancetime", JsonValue.NULL);
+            JsonValue respValue = response.readEntity(JsonValue.class);
+            System.out.println("Response = " + respValue);
+
+        } catch (ActorMethodNotFoundException ee) {
+            ee.printStackTrace();
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
+    }
+
+    public void changeDelay(int delay) {
+        System.out.println("SimulatorService.changeDelay() - delay:" + delay);
+        try {
+            JsonObject delayArg = Json.createObjectBuilder().add("value", delay).build();
+            Response response = Kar.restPost("simservice", "simulator/setunitdelay", delayArg); // Json.createValue(delay));
+            JsonValue respValue = response.readEntity(JsonValue.class);
+            System.out.println("SimulatorService.getDelay() Sim Response = " + respValue);
+
+        } catch (ActorMethodNotFoundException ee) {
+            ee.printStackTrace();
+            // return Json.createObjectBuilder().add("status",
+            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
+            // order.getId()).build();
+
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
+    }
+
+    public int getDelay() throws Exception {
+        System.out.println("SimulatorService.getDelay()");
+        Response response = Kar.restGet("simservice", "simulator/getunitdelay"); // Json.createValue(delay));
+        JsonValue respValue = response.readEntity(JsonValue.class);
+        System.out.println("SimulatorService.getDelay() Sim Response = " + respValue);
+
+        return Integer.parseInt(respValue.toString());
+
+    }
+    */
 }

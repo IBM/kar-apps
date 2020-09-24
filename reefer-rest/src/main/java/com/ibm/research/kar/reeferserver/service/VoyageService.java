@@ -1,13 +1,17 @@
 package com.ibm.research.kar.reeferserver.service;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
@@ -17,13 +21,15 @@ import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.Kar.*;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Voyage;
 
 import org.springframework.stereotype.Component;
 
 @Component
-public class VoyageService {
+public class VoyageService extends AbstractPersistentService {
     
     Map<String, Set<Order>> voyageOrders = new HashMap<>();
     
@@ -42,6 +48,13 @@ public class VoyageService {
     }
 
     public Set<Order> getOrders(String voyageId) {
+/*
+        the following calls fail with Timeout
+        ActorRef voyageActor = Kar.actorRef("voyage", voyageId);
+        JsonObject params = Json.createObjectBuilder().build();
+        JsonValue reply = Kar.actorCall(voyageActor, "getVoyageOrderCount", params);
+        System.out.println("*************** VoyageService.getOrders() - voyage id:"+voyageId+" reply:"+reply);
+        */
         if ( voyageOrders.containsKey(voyageId)) {
             return voyageOrders.get(voyageId);
         } else {
@@ -49,8 +62,7 @@ public class VoyageService {
         }
     }
     public void voyageEnded(String voyageId) {
-       
-        System.out.println("*************** VoyageService.voyageEnded() - "+voyageId+" voyage ended - valid voyage:"+voyageOrders.containsKey(voyageId));
+
         if (voyageOrders.containsKey(voyageId)) {
             Set<Order> orders = voyageOrders.get(voyageId);
             System.out.println("*************** VoyageService.voyageEnded() - voyage orders:"+orders.size());
@@ -77,7 +89,8 @@ public class VoyageService {
         if (voyageOrders.containsKey(voyageId)) {
             return voyageOrders.get(voyageId).size();
         }
-        return 0;
+        return getOrders(voyageId).size();
+       // return 0;
     }
     public void nextDay() {
         System.out.println("VoyageService.nextDay()");

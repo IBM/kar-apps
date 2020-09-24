@@ -17,6 +17,7 @@ import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
+import com.ibm.research.kar.reeferserver.service.SimulatorService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
 @RestController
 @CrossOrigin("*")
@@ -25,6 +26,8 @@ public class TimeController {
     private VoyageService voyageService;
     @Autowired
     private ScheduleService schduleService;
+    @Autowired
+    private SimulatorService simulatorService;
 
     @PostMapping("/time/startDate")
 	public Instant  getStartDate() {

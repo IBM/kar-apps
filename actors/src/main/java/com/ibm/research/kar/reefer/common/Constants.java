@@ -21,6 +21,7 @@ public class Constants {
    public static final String REEFER_STATE_KEY="reeferState";
    public static final String REEFER_MAP_KEY="reefer-map";
    public static final String REEFERS_KEY="reefers";
+   public static final String REEFERS_MAINTENANCE_DATE="maintenanceDate";
 
    public static final String ORDER_ID_KEY="orderId";
    public static final String ORDER_STATUS_KEY="order-status";

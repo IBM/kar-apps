@@ -90,7 +90,16 @@ public class ReeferActor extends BaseActor {
         System.out.println("ReeferActor.unreserve() called - Id:" + this.getId());
         Kar.actorDeleteAllState(this);
     }
-
+    @Remote
+    public void onMaintenance(JsonObject message) {
+        System.out.println("ReeferActor.onMaintenance() called - Id:" + this.getId() + " message:" + message.toString());
+        setState(message);
+    }
+    @Remote
+    public void offMaintenance(JsonObject message) {
+        System.out.println("ReeferActor.offMaintenance() called - Id:" + this.getId() + " message:" + message.toString());
+        Kar.actorDeleteAllState(this);
+    }
     @Remote
     public JsonValue anomaly(JsonObject message) {
         System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ReeferActor.anomaly() called - Id:" + this.getId());

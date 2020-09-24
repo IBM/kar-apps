@@ -51,10 +51,8 @@ public class OrderActor extends BaseActor {
             saveOrderStatus(OrderStatus.DELIVERED);
 
             Map<String, JsonValue> reeferMap = super.getSubMap(this,  Constants.REEFER_MAP_KEY);
-            reeferMap.values().forEach(reefer -> {
-                unreserveReefer(((JsonNumber) reefer).intValue());
-            });
-            System.out.println(voyageId + "OrderActor.delivered() - Order Id:" + getId() + " cached reefer list size:"
+
+            System.out.println(voyageId + " Ended ::: OrderActor.delivered() - Order Id:" + getId() + " reefer map size:"
                     + reeferMap.size());
 
             JsonArrayBuilder reefersToRelease = Json.createArrayBuilder(); //reeferMap.values()).build();
@@ -186,12 +184,6 @@ public class OrderActor extends BaseActor {
 
         }
 
-    }
-
-    private void unreserveReefer(int reeferId) {
-        ActorRef reeferActor = Kar.actorRef(ReeferAppConfig.ReeferActorName, String.valueOf(reeferId));
-        JsonObject params = Json.createObjectBuilder().build();
-        actorCall(reeferActor, "unreserve", params);
     }
 
     private void saveOrderStatus(OrderStatus status) {

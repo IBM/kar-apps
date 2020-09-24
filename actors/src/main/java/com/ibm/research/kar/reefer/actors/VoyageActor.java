@@ -32,7 +32,7 @@ public class VoyageActor extends BaseActor {
 
     @Remote
     public JsonValue changePosition(JsonObject message) {
-        System.out.println(getId() + " VoyageActor.changePosition() called " + message.toString());
+        System.out.println("VoyageActor.changePosition() called Id:"+getId()+" " + message.toString());
 
         int daysAtSea = message.getInt("daysAtSea");
         JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).add("daysAtSea", daysAtSea).build();
@@ -49,17 +49,22 @@ public class VoyageActor extends BaseActor {
 
     @Remote
     public JsonObject getVoyageOrders() {
+        System.out.println("VoyageActor.getVoyageOrders() called " + getId() );
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                 .add("orders", Json.createArrayBuilder(loadOrders().values()).build()).build();
     }
 
     @Remote
     public JsonObject getVoyageOrderCount(JsonObject message) {
-        return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add("orders", loadOrders().size()).build();
+        System.out.println("VoyageActor.getVoyageOrderCount() called " + getId() );
+        Map<String, JsonValue> orders = loadOrders();
+        System.out.println(" VoyageActor.getVoyageOrderCount() called " + getId() +" Orders:"+orders.size());
+        return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add("orders", orders.size()).build();
     }
 
     @Remote
     public JsonObject changeState(JsonObject message) {
+        System.out.println("VoyageActor.changeState() called " + getId() );
         JsonValue value = Json.createValue(message.getString(Constants.STATUS_KEY));
         super.set(this, Constants.STATUS_KEY, value);
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).build();
@@ -69,7 +74,7 @@ public class VoyageActor extends BaseActor {
     public JsonObject reserve(JsonObject message) {
         JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
 
-        System.out.println(getId() + " VoyageActor.reserve() called " + message.toString() + " OrderID:" + order.getId()
+        System.out.println("VoyageActor.reserve() called Id:"+getId() +" "+ message.toString() + " OrderID:" + order.getId()
                 + " Orders size=" + loadOrders().size());
 
         try {

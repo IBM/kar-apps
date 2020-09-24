@@ -5,7 +5,6 @@ import static com.ibm.research.kar.Kar.actorRef;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.json.Json;
@@ -55,8 +54,6 @@ public class OrderController {
 	private VoyageService voyageService;
 	@Autowired
 	private GuiController gui;
-
-	private List<Order> orders = new ArrayList<>();
 
 	private OrderProperties orderDetails(String orderMsg) {
 		OrderProperties orderProperties = new OrderProperties();

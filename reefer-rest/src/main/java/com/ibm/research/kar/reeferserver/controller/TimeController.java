@@ -19,6 +19,7 @@ import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import com.ibm.research.kar.reeferserver.service.SimulatorService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
+
 @RestController
 @CrossOrigin("*")
 public class TimeController {
@@ -30,59 +31,66 @@ public class TimeController {
     private SimulatorService simulatorService;
 
     @PostMapping("/time/startDate")
-	public Instant  getStartDate() {
+    public Instant getStartDate() {
         System.out.println("TimeController.getStartDate()");
-        Instant date =  TimeUtils.getInstance().getStartDate();
-        System.out.println("TimeController.getStartDate() - Date:"+date.toString());
+        Instant date = TimeUtils.getInstance().getStartDate();
+        System.out.println("TimeController.getStartDate() - Date:" + date.toString());
         return date;
     }
+
     @PostMapping("/time/currentDate")
-	public Instant  getCurrentDate() {
+    public Instant getCurrentDate() {
         System.out.println("TimeController.getCurrentDate()");
-        Instant date =  TimeUtils.getInstance().getCurrentDate();
-       System.out.println("TimeController.getCurrentDate() - Date:"+date.toString());
+        Instant date = TimeUtils.getInstance().getCurrentDate();
+        System.out.println("TimeController.getCurrentDate() - Date:" + date.toString());
 
         return date;
     }
+
     /*
-        Called by the GUI to advance time while in manual mode.
-        
-    */
+     * Called by the GUI to advance time while in manual mode.
+     * 
+     */
     @PostMapping("/time/nextDay")
-	public Instant  nextDay() {
+    public Instant nextDay() {
         System.out.println("TimeController.nextDay()");
-    
+
         voyageService.nextDay();
         String date = "";
         try {
-            date = TimeUtils.getInstance().getCurrentDate().toString().substring(0,10);
-            System.out.println("nextDay() - Returning Date >>>>>>>"+date);
-            JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(TimeUtils.getInstance().getCurrentDate().toString())).build();
+            date = TimeUtils.getInstance().getCurrentDate().toString().substring(0, 10);
+            System.out.println("nextDay() - Returning Date >>>>>>>" + date);
+            JsonObject message = Json.createObjectBuilder()
+                    .add(Constants.DATE_KEY, Json.createValue(TimeUtils.getInstance().getCurrentDate().toString()))
+                    .build();
 
-            Kar.actorCall(  Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"releaseReefersfromMaintenance", message); 
-        } catch( Exception e) {
+            Kar.actorCall(Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+                    "releaseReefersfromMaintenance", message);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-            
-       return TimeUtils.getInstance().getCurrentDate();
+
+        return TimeUtils.getInstance().getCurrentDate();
     }
-    
-    @PostMapping("/time/advance")
-	public Instant  advance() {
-        Instant time = TimeUtils.getInstance().advanceDate(1);
-        System.out.println("TimeController.advance() ***************************************** NEXT DAY "+time.toString()+" ***************************************************************");
-        try {
-           
-        schduleService.generateNextSchedule(time);
-        JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(time.toString())).build();
 
-        Kar.actorCall(  Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,ReeferAppConfig.ReeferProvisionerId),"releaseReefersfromMaintenance", message); 
-        } catch( Exception e) {
+    @PostMapping("/time/advance")
+    public Instant advance() {
+        Instant time = TimeUtils.getInstance().advanceDate(1);
+        System.out.println("TimeController.advance() ***************************************** NEXT DAY "
+                + time.toString() + " ***************************************************************");
+        try {
+
+            schduleService.generateNextSchedule(time);
+            JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(time.toString()))
+                    .build();
+
+            Kar.actorCall(Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+                    "releaseReefersfromMaintenance", message);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
 
         return time;
     }
-   
+
 }

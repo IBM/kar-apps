@@ -1,4 +1,5 @@
 package com.ibm.research.kar.reeferserver.controller;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.LinkedHashSet;
@@ -31,59 +32,60 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @CrossOrigin("*")
 public class ReeferController {
-	private int inventorySize=0;
+	private int inventorySize = 0;
 	@Autowired
-    private ReeferService reeferService;
-    @Autowired
-    private PortService portService;
+	private ReeferService reeferService;
+	@Autowired
+	private PortService portService;
 	@Autowired
 	private GuiController gui;
-    @Autowired
-    private ScheduleService shipScheduleService;
-
+	@Autowired
+	private ScheduleService shipScheduleService;
 
 	@PostConstruct
-    public void init() {
+	public void init() {
 		List<Route> routes = shipScheduleService.getRoutes();
 		Set<String> fleet = new LinkedHashSet<>();
 
-		long fleetMaxCapacity=0;
-		for (Route route: routes) {
+		long fleetMaxCapacity = 0;
+		for (Route route : routes) {
 			fleetMaxCapacity += route.getVessel().getMaxCapacity();
 			fleet.add(route.getVessel().getName());
 		}
-		//inventorySize = Double.valueOf(fleet.size()*fleetMaxCapacity*1.2).intValue();
-		inventorySize = Double.valueOf(fleet.size()*fleetMaxCapacity*0.4).intValue();
-		System.out.println("Inventory Size:::::::"+inventorySize);
-    }
-    @PostMapping("/reefers")
-	public   List<Port>  addReefers(@RequestBody ReeferSupply reeferAdd) throws IOException {
-		System.out.println("addReefers() Called - port:"+reeferAdd.getPort()+" howMany:"+reeferAdd.getReeferInventoryCount());
-		
-        reeferService.addPortReefers(reeferAdd.getPort(), reeferAdd.getReeferInventoryCount());
-        portService.incrementReefersAtPort(reeferAdd.getPort(), reeferAdd.getReeferInventoryCount());
+		// inventorySize = Double.valueOf(fleet.size()*fleetMaxCapacity*1.2).intValue();
+		inventorySize = Double.valueOf(fleet.size() * fleetMaxCapacity * 0.4).intValue();
+		System.out.println("Inventory Size:::::::" + inventorySize);
+	}
+
+	@PostMapping("/reefers")
+	public List<Port> addReefers(@RequestBody ReeferSupply reeferAdd) throws IOException {
+		System.out.println("addReefers() Called - port:" + reeferAdd.getPort() + " howMany:"
+				+ reeferAdd.getReeferInventoryCount());
+
+		reeferService.addPortReefers(reeferAdd.getPort(), reeferAdd.getReeferInventoryCount());
+		portService.incrementReefersAtPort(reeferAdd.getPort(), reeferAdd.getReeferInventoryCount());
 		return portService.getPorts();
 	}
 
 	@GetMapping("/reefers")
-	public List<Reefer>  getAllReefers() {
+	public List<Reefer> getAllReefers() {
 		System.out.println("getAllReefers() - Got New Request");
-		
+
 		return reeferService.getReefers();
 	}
 
-	
 	@GetMapping("/reefers/stats")
 	public ReeferStats getReeferStats() {
 		System.out.println("getReeferStats() - Got New Request");
-		
+
 		return reeferService.getReeferStats();
 	}
-	@PostMapping("/reefers/stats/update") 
-	public void updateGui(@RequestBody String stats ) {
+
+	@PostMapping("/reefers/stats/update")
+	public void updateGui(@RequestBody String stats) {
 		System.out.println("ReeferController.updateGui() ");
 		try (JsonReader jsonReader = Json.createReader(new StringReader(stats))) {
-            
+
 			JsonObject req = jsonReader.readObject();
 
 			int total = req.getInt("total");
@@ -91,41 +93,45 @@ public class ReeferController {
 			int totalInTransit = req.getInt("totalInTransit");
 			int totalSpoilt = req.getInt("totalSpoilt");
 			int totalOnMaintenance = req.getInt("totalOnMaintenance");
-			//System.out.println("ReeferController.updateGui() - ################# total:"+total+" booked:"+totalBooked+" intransit:"+totalInTransit+" spoilt:"+totalSpoilt+"  onmaintenance:"+totalOnMaintenance);
+			// System.out.println("ReeferController.updateGui() - #################
+			// total:"+total+" booked:"+totalBooked+" intransit:"+totalInTransit+"
+			// spoilt:"+totalSpoilt+" onmaintenance:"+totalOnMaintenance);
 			gui.updateReeferStats(new ReeferStats(total, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance));
-		} catch( Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 	}
+
 	@GetMapping("/reefers/inventory/size")
 	public int getReeferInventorySize() {
 		return inventorySize;
 	}
+
 	@GetMapping("/reefers/{port}")
-	public List<Reefer>  getReefers(@RequestParam("port") String port) {
-		System.out.println("getReefers() - Got New Request Port:"+port);
-		
+	public List<Reefer> getReefers(@RequestParam("port") String port) {
+		System.out.println("getReefers() - Got New Request Port:" + port);
+
 		return reeferService.getReefers(port);
-    }
+	}
 
 	private void updateReefers() {
-		if ( reeferService != null ) {
+		if (reeferService != null) {
 			List<Reefer> reefers = reeferService.getReefers();
-			for( Reefer reefer : reefers ) {
-				if ( reefer.getStatus().equals("Empty")) {
+			for (Reefer reefer : reefers) {
+				if (reefer.getStatus().equals("Empty")) {
 					reefer.setStatus("PartiallyFull");
-				} else if ( reefer.getStatus().equals("PartiallyFull")){
+				} else if (reefer.getStatus().equals("PartiallyFull")) {
 					reefer.setStatus("Full");
-				} else if ( reefer.getStatus().equals("Full")){
+				} else if (reefer.getStatus().equals("Full")) {
 					reefer.setStatus("OnShip");
-				} else if ( reefer.getStatus().equals("OnShip")){
+				} else if (reefer.getStatus().equals("OnShip")) {
 					reefer.setStatus("Empty");
 				}
-				
+
 			}
-			//gui.sendReefersUpdate(reefers);
+			// gui.sendReefersUpdate(reefers);
 		}
-		
+
 	}
 }

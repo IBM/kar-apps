@@ -20,15 +20,15 @@ public class GuiController {
     @Autowired
     private SimpMessagingTemplate template;
 
-
     @GetMapping("/notify")
     public String getNotification() {
 
-         // Push notifications to front-end
+        // Push notifications to front-end
         template.convertAndSend("/topic/notification", "Hello");
 
         return "Notifications successfully sent to Angular !";
     }
+
     public void send(String msg) {
         template.convertAndSend("/topic/notification", "Hello");
     }
@@ -36,30 +36,34 @@ public class GuiController {
     public void sendReefersUpdate(List<Reefer> reefers) {
         template.convertAndSend("/topic/reefers", reefers);
     }
+
     public void sendActiveVoyageUpdate(List<Voyage> voyages, String currentDate) {
         ShippingSchedule schedule = new ShippingSchedule(voyages, currentDate);
-        template.convertAndSend("/topic/voyages", schedule); 
+        template.convertAndSend("/topic/voyages", schedule);
     }
+
     public void sendOrderUpdate(Order order) {
-        
-        template.convertAndSend("/topic/orders", order); 
+
+        template.convertAndSend("/topic/orders", order);
     }
+
     public void updateInTransitOrderCount(int orderCount) {
-        
-        template.convertAndSend("/topic/orders/intransit", orderCount); 
+
+        template.convertAndSend("/topic/orders/intransit", orderCount);
     }
+
     public void updateFutureOrderCount(int orderCount) {
-        
-        template.convertAndSend("/topic/orders/future", orderCount); 
+
+        template.convertAndSend("/topic/orders/future", orderCount);
     }
+
     public void updateSpoiltOrderCount(int orderCount) {
-        
-        template.convertAndSend("/topic/orders/spoilt", orderCount); 
+
+        template.convertAndSend("/topic/orders/spoilt", orderCount);
     }
-    
 
     public void updateReeferStats(ReeferStats stats) {
-        
-        template.convertAndSend("/topic/reefers/stats", stats); 
+
+        template.convertAndSend("/topic/reefers/stats", stats);
     }
 }

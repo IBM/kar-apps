@@ -55,27 +55,27 @@ public class OrderController {
 	@Autowired
 	private GuiController gui;
 
-	private OrderProperties orderDetails(String orderMsg) {
+	private OrderProperties jsonToOrderProperties(String orderMsg) {
 		OrderProperties orderProperties = new OrderProperties();
 		String voyageId = "";
 
 		try (JsonReader jsonReader = Json.createReader(new StringReader(orderMsg))) {
 
 			JsonObject req = jsonReader.readObject();
+
+			voyageId = req.getString(Constants.VOYAGE_ID_KEY);
+			Voyage voyage = scheduleService.getVoyage(voyageId);
+			
 			orderProperties.setProduct(req.getString("product"));
 			orderProperties.setProductQty(req.getInt("productQty"));
 			String customerId = "N/A";
 			if (req.containsKey("customerId")) {
 				customerId = req.getString("customerId");
 			}
-			voyageId = req.getString("voyageId");
 			orderProperties.setCustomerId(customerId);
-			Voyage voyage = scheduleService.getVoyage(voyageId);
-
-			orderProperties.setVoyageId(req.getString("voyageId"));
+			orderProperties.setVoyageId(req.getString(voyageId));
 			orderProperties.setOriginPort(voyage.getRoute().getOriginPort());
 			orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
-
 		} catch (VoyageNotFoundException e) {
 			System.out.println(
 					"OrderController.orderDetails() - voyage " + voyageId + " not found in the shipping schedule");
@@ -84,6 +84,7 @@ public class OrderController {
 		}
 		return orderProperties;
 	}
+
 
 	@PostMapping("/orders/spoilt")
 	public void orderSpoilt(@RequestBody String op) throws IOException {
@@ -101,7 +102,8 @@ public class OrderController {
 	@PostMapping("/orders")
 	public OrderProperties bookOrder(@RequestBody String op) throws IOException {
 		System.out.println("OrderController.bookOrder - Called -" + op);
-		OrderProperties orderProperties = orderDetails(op);
+		// get Java POJO with order properties from json messages
+		OrderProperties orderProperties = jsonToOrderProperties(op);
 		try {
 
 			Order order = orderService.createOrder(orderProperties);
@@ -117,17 +119,11 @@ public class OrderController {
 			JsonValue reply = actorCall(orderActor, "createOrder", params);
 			System.out.println("Order Actor reply:" + reply);
 			order.setStatus(OrderStatus.BOOKED.getLabel());
-			JsonObject o = reply.asJsonObject();
-			JsonObject o2 = o.getJsonObject("booking");
-			JsonArray reefers = o2.getJsonArray("reefers");
-
+			JsonArray reefers = reply.asJsonObject().getJsonObject("booking").getJsonArray("reefers");
 			int shipFreeCapacity = scheduleService.updateFreeCapacity(order.getVoyageId(), reefers.size());
-
 			simulatorService.updateVoyageCapacity(order.getVoyageId(), shipFreeCapacity);
-
 			voyageService.addOrderToVoyage(order);
 			int futureOrderCount = orderService.getOrders("booked-orders");
-
 			gui.updateFutureOrderCount(futureOrderCount);
 		} catch (ActorMethodNotFoundException ee) {
 			ee.printStackTrace();

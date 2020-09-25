@@ -78,7 +78,7 @@ public class OrderActor extends BaseActor {
             Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
             saveOrderStatus(OrderStatus.INTRANSIT);
              // Notify ReeferProvisioner that the order is in-transit
-            if (reeferMap.size() > 0) {
+            if (!reeferMap.isEmpty()) {
 
                 ActorRef reeferProvisionerActor = Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
                         ReeferAppConfig.ReeferProvisionerId);
@@ -101,6 +101,9 @@ public class OrderActor extends BaseActor {
 
     @Remote
     public JsonObject anomaly(JsonObject message) {
+        // Reefer notifies the order on anomaly. The order returns its current state which will
+        // propagate to the ReeferProvisioner where the decision is made to either spoil the
+        // reefer or assign it to maintenance. 
         JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
         System.out.println("OrderActor.anomaly() called- Actor ID:" + getId() + " type:"
                 + this.getType() + " state:" + ((JsonString) state).getString());
@@ -111,23 +114,19 @@ public class OrderActor extends BaseActor {
 
     @Remote
     /*
-     * Replace spoilt reefer with a good one.
+     * Replace spoilt reefer with a good one. This is a use case where an order has not yet departed 
+     * but one of more of its reefers spoilt.
      */
     public JsonObject replaceReefer(JsonObject message) {
         JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
         System.out.println("OrderActor.replaceReefer() called- Actor ID:" + getId()
                 + " state:" + ((JsonString) state).getString());
-
-        
-        //Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
+       
         int spoiltReeferId = message.getJsonNumber(Constants.REEFER_ID_KEY).intValue();
         int replacementReeferId = message.getJsonNumber(Constants.REEFER_REPLACEMENT_ID_KEY).intValue();
         System.out.println("OrderActor.replaceReefer() called- Actor ID:" + getId()
                 + " replacing spoilt reefer:" + spoiltReeferId + " with a new one:" + replacementReeferId);
-        //reeferMap.remove(String.valueOf(spoiltReeferId));
         super.removeFromSubMap(this,Constants.REEFER_MAP_KEY,String.valueOf(spoiltReeferId));
-
-        //reeferMap.put(String.valueOf(replacementReeferId),Json.createValue(replacementReeferId));
         super.addToSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(replacementReeferId), Json.createValue(replacementReeferId));
 
         return Json.createObjectBuilder().build();
@@ -136,7 +135,6 @@ public class OrderActor extends BaseActor {
 
     @Remote
     public JsonObject reeferCount(JsonObject message) {
-      
         Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
         return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, reeferMap.size()).build();
     }

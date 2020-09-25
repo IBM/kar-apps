@@ -11,7 +11,6 @@ import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.DelayTarget;
 import com.ibm.research.kar.reefer.model.OrderSimControls;
 import com.ibm.research.kar.reefer.model.ReeferSimControls;
-import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.SimulatorService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
 

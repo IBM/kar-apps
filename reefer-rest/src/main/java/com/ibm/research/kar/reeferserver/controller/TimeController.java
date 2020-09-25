@@ -5,13 +5,6 @@ import java.time.Instant;
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
@@ -20,6 +13,11 @@ import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import com.ibm.research.kar.reeferserver.service.SimulatorService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 @RestController
 @CrossOrigin("*")
 public class TimeController {
@@ -27,8 +25,6 @@ public class TimeController {
     private VoyageService voyageService;
     @Autowired
     private ScheduleService schduleService;
-    @Autowired
-    private SimulatorService simulatorService;
 
     @PostMapping("/time/startDate")
     public Instant getStartDate() {

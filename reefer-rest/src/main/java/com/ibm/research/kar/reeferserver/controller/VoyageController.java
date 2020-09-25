@@ -100,7 +100,6 @@ public class VoyageController {
   @GetMapping("/voyage/active")
   public List<Voyage> getActiveVoyages() {
     System.out.println("VoyageController.getActiveVoyages()");
-    // return shipScheduleService.getActiveSchedule();
 
     return activeVoyages();
   }
@@ -121,7 +120,7 @@ public class VoyageController {
     JsonObject params = Json.createObjectBuilder().add("voyageId", voyageId).add("freeCapacity", freeCapacity).build();
     try {
 
-      Response response = restPost("simservice", "/simulator/updatevoyagecapacity", params);
+      restPost("simservice", "/simulator/updatevoyagecapacity", params);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -146,10 +145,6 @@ public class VoyageController {
       voyageId = req.getString("voyageId");
       if (req.containsKey("daysAtSea")) {
         daysAtSea = req.getInt("daysAtSea");
-
-        // System.out.println("VoyageController.updateVoyageState()
-        // daysAtSea="+req.getInt("daysAtSea"));
-
         Voyage voyage = shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
         Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysAtSea);
         if (shipCurrentDate.equals(Instant.parse(voyage.getArrivalDate()))
@@ -183,14 +178,14 @@ public class VoyageController {
       } else if (req.containsKey("reeferCount")) {
         int reeferCount = req.getInt("reeferCount");
         System.out
-            .println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  VoyageController.updateVoyageState() reeferCount="
+            .println("VoyageController.updateVoyageState() reeferCount="
                 + reeferCount);
 
         int shipFreeCapacity = shipScheduleService.updateFreeCapacity(voyageId, reeferCount);
         updateSimulator(voyageId, shipFreeCapacity);
 
         System.out.println(
-            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  VoyageController.updateVoyageState() - Ship booked - Ship free capacity:"
+            "VoyageController.updateVoyageState() - Ship booked - Ship free capacity:"
                 + shipFreeCapacity);
 
       } else if (req.containsKey("reefers")) {
@@ -212,18 +207,12 @@ public class VoyageController {
     int voyages = 0;
 
     try {
-
-      Set<Order> orders = voyageService.getOrders(voyageId);
-      int totalOrderReefers = 0;
-      for (Order order : orders) {
-        totalOrderReefers += orderReefers(order.getId());
-      }
-
+      // ask voyage actor for its order count
       ActorRef voyageActor = actorRef("voyage", voyageId);
       JsonObject params = Json.createObjectBuilder().build();
       JsonValue reply = actorCall(voyageActor, "getVoyageOrderCount", params);
-      System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>----------------VoyageController.voyageOrders() - Voyage "
-          + voyageId + " orders:" + reply); // +" total Order Reefers:"+totalOrderReefers);
+      System.out.println("VoyageController.voyageOrders() - Voyage "
+          + voyageId + " orders:" + reply); 
       voyages = reply.asJsonObject().getInt("orders");
     } catch (Exception e) {
       e.printStackTrace();
@@ -232,26 +221,9 @@ public class VoyageController {
 
   }
 
-  private int orderReefers(String orderId) {
-    int reeferCount = 0;
-
-    try {
-      ActorRef orderActor = actorRef("order", orderId);
-      JsonObject params = Json.createObjectBuilder().build();
-      JsonValue reply = actorCall(orderActor, "reeferCount", params);
-      // System.out.println("VoyageController.orderReefers()----------------Order
-      // Actor reply"+orderId+" orders:"+reply);
-      reeferCount = reply.asJsonObject().getInt(Constants.TOTAL_REEFER_COUNT_KEY);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return reeferCount;
-
-  }
-
   private List<Voyage> activeVoyages() {
     List<Voyage> activeVoyages = shipScheduleService.getActiveSchedule();
-    System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% VoyageController.activeVoyages() - active voyages:"
+    System.out.println("VoyageController.activeVoyages() - active voyages:"
         + activeVoyages.size());
     try {
 
@@ -264,6 +236,9 @@ public class VoyageController {
 
     return activeVoyages;
   }
+  /**
+   * called by the simulator to update the GUI 
+   */
 
   @PostMapping("/voyage/updateGui")
   public void updateGui(@RequestBody String currentDate) {
@@ -281,7 +256,7 @@ public class VoyageController {
 
     gui.updateFutureOrderCount(futureOrderCount);
     System.out
-        .println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% VoyageController.activeVoyages() - Done - Total Active Orders:"
+        .println("VoyageController.activeVoyages() - Done - Total Active Orders:"
             + totalActiveOrders);
 
   }

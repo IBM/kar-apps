@@ -73,7 +73,7 @@ public class OrderController {
 				customerId = req.getString("customerId");
 			}
 			orderProperties.setCustomerId(customerId);
-			orderProperties.setVoyageId(req.getString(voyageId));
+			orderProperties.setVoyageId(voyageId);
 			orderProperties.setOriginPort(voyage.getRoute().getOriginPort());
 			orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
 		} catch (VoyageNotFoundException e) {

@@ -48,21 +48,18 @@ public class OrderActor extends BaseActor {
         System.out.println(voyageId + " orderActor.delivered() called- Actor ID:" + getId()
                 + " type:" + this.getType());
         try {
-            saveOrderStatus(OrderStatus.DELIVERED);
-
+            // fetch all reefers in this order
             Map<String, JsonValue> reeferMap = super.getSubMap(this,  Constants.REEFER_MAP_KEY);
 
             System.out.println(voyageId + " Ended ::: OrderActor.delivered() - Order Id:" + getId() + " reefer map size:"
                     + reeferMap.size());
 
-            JsonArrayBuilder reefersToRelease = Json.createArrayBuilder(); //reeferMap.values()).build();
-            for(JsonValue reeferId : reeferMap.values()) {
-                reefersToRelease.add(reeferId);
-            }
-            JsonValue bookingStatus = actorCall(
-                        actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+            JsonArrayBuilder reefersToRelease = Json.createArrayBuilder(reeferMap.keySet()); 
+             // message the ReeferProvisionerActor to release reefers in a given list
+            actorCall( actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                         "unreserveReefers", Json.createObjectBuilder().add(Constants.REEFERS_KEY, reefersToRelease).build());
-
+            // as soon as the order is delivered and reefers are released we clear actor state 
+            Kar.actorDeleteAllState(this);
 
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {

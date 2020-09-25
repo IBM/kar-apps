@@ -12,6 +12,7 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
@@ -515,7 +516,7 @@ public class ReeferProvisionerActor extends BaseActor {
 
         JsonArray reeferIds = message.getJsonArray(Constants.REEFERS_KEY); 
         for (JsonValue reeferId : reeferIds) {
-            unreserveReefer(((JsonNumber) reeferId).intValue());
+            unreserveReefer(Integer.valueOf(((JsonString) reeferId).getString()));
         }
         updateRest();
         JsonValue totalBooked = get(this, Constants.TOTAL_BOOKED_KEY);

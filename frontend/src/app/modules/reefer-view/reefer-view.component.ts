@@ -80,7 +80,7 @@ export class ReeferViewComponent implements OnInit {
         stompClient.subscribe('/topic/reefers/stats', (event:any) => {
           if ( event.body) {
             this.reeferStats = JSON.parse(event.body);
-            console.log('::::::'+this.reeferStats);
+            //console.log('::::::'+this.reeferStats);
             this.totalReefers = this.reeferStats.total;
             this.totalBookedReefers = this.reeferStats.totalBooked;
             this.totalInTransitReefers = this.reeferStats.totalInTransit;

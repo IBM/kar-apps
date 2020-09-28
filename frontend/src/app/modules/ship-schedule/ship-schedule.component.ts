@@ -47,7 +47,7 @@ export class ShipScheduleComponent implements OnInit {
             //this.voyages = JSON.parse(event.body);
             this.voyages = schedule.voyages;
             this.date = schedule.currentDate.substr(1,10);
-            console.log('::::::'+this.voyages);
+           // console.log('::::::'+this.voyages);
             this.voyageDataSource.data = this.voyages;
 
           }

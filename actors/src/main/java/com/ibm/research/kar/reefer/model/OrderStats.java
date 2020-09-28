@@ -4,7 +4,6 @@ public class OrderStats {
     int inTransitOrderCount;
     int futureOrderCount;
     int spoiltOrderCount;
-
     public OrderStats(int inTransitOrderCount, int futureOrderCount, int spoiltOrderCount) {
         this.inTransitOrderCount = inTransitOrderCount;
         this.futureOrderCount = futureOrderCount;

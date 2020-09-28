@@ -255,6 +255,9 @@ public class VoyageController {
     int futureOrderCount = orderService.getOrders("booked-orders");
 
     gui.updateFutureOrderCount(futureOrderCount);
+
+    gui.updateSpoiltOrderCount(orderService.getOrders(Constants.SPOILT_ORDERS_KEY));
+    
     System.out
         .println("VoyageController.activeVoyages() - Done - Total Active Orders:"
             + totalActiveOrders);

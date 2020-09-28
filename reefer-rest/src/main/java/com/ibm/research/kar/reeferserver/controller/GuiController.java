@@ -1,8 +1,13 @@
 package com.ibm.research.kar.reeferserver.controller;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ibm.research.kar.reefer.model.Order;
+import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.Reefer;
 import com.ibm.research.kar.reefer.model.ReeferStats;
 import com.ibm.research.kar.reefer.model.Voyage;
@@ -20,17 +25,20 @@ public class GuiController {
     @Autowired
     private SimpMessagingTemplate template;
 
-    @GetMapping("/notify")
-    public String getNotification() {
+    private AtomicInteger inTransitOrderCount = new AtomicInteger();
+    private AtomicInteger futureOrderCount = new AtomicInteger();
+    private AtomicInteger spoiltOrderCount = new AtomicInteger();
+    private ReeferStats reeferStats;
 
-        // Push notifications to front-end
-        template.convertAndSend("/topic/notification", "Hello");
+    // private OrderStats orderStats = new OrderStats();
+    private AtomicBoolean valuesChanged = new AtomicBoolean();
 
-        return "Notifications successfully sent to Angular !";
-    }
-
-    public void send(String msg) {
-        template.convertAndSend("/topic/notification", "Hello");
+    public GuiController() {
+        TimerTask timerTask = new GuiUpdateTask();
+        // running timer task as daemon thread
+        Timer timer = new Timer(true);
+        timer.scheduleAtFixedRate(timerTask, 0, 500);
+        System.out.println("TimerTask started");
     }
 
     public void sendReefersUpdate(List<Reefer> reefers) {
@@ -48,22 +56,40 @@ public class GuiController {
     }
 
     public void updateInTransitOrderCount(int orderCount) {
-
-        template.convertAndSend("/topic/orders/intransit", orderCount);
+        inTransitOrderCount.set(orderCount);
+        valuesChanged.set(true);
     }
 
     public void updateFutureOrderCount(int orderCount) {
-
-        template.convertAndSend("/topic/orders/future", orderCount);
+        futureOrderCount.set(orderCount);
+        valuesChanged.set(true);
     }
 
     public void updateSpoiltOrderCount(int orderCount) {
-
-        template.convertAndSend("/topic/orders/spoilt", orderCount);
+        spoiltOrderCount.set(orderCount);
+        valuesChanged.set(true);
     }
 
     public void updateReeferStats(ReeferStats stats) {
+        reeferStats = stats;
+        valuesChanged.set(true);
+       
+    }
 
-        template.convertAndSend("/topic/reefers/stats", stats);
+    private class GuiUpdateTask extends TimerTask {
+        @Override
+        public void run() {
+
+            if (valuesChanged.get()) {
+                OrderStats orderStats = new OrderStats(inTransitOrderCount.get(), futureOrderCount.get(),
+                        spoiltOrderCount.get());
+                System.out.println(
+                        "GuiController.run()................................. Orders Spoilt:" + spoiltOrderCount.get());
+                template.convertAndSend("/topic/orders/stats", orderStats);
+                template.convertAndSend("/topic/reefers/stats", reeferStats);
+                valuesChanged.set(false);
+            }
+
+        }
     }
 }

@@ -93,6 +93,7 @@ public class OrderController {
 			JsonObject req = jsonReader.readObject();
 			String spoiltOrderId = req.getString(Constants.ORDER_ID_KEY);
 			int totalSpoiltOrders = orderService.orderSpoilt(spoiltOrderId);
+			System.out.println("OrderController.orderSpoilt()................................. Orders Spoilt:"+totalSpoiltOrders);
 			gui.updateSpoiltOrderCount(totalSpoiltOrders);
 		} catch (Exception e) {
 			e.printStackTrace();

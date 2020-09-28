@@ -22,10 +22,10 @@ import org.springframework.stereotype.Service;
 public class OrderService extends AbstractPersistentService {
 
     private static int MaxOrdersToReturn = 10;
-    List<Order> bookedOrders = new ArrayList<>();
-    List<Order> activeOrders = new ArrayList<>();
-    List<Order> spoiledOrders = new ArrayList<>();
-    List<Order> onMaintenanceOrders = new ArrayList<>();
+    private List<Order> bookedOrders = new ArrayList<>();
+    private List<Order> activeOrders = new ArrayList<>();
+    private List<Order> spoiltOrders = new ArrayList<>();
+    private List<Order> onMaintenanceOrders = new ArrayList<>();
 
     public List<Order> getActiveOrderList() {
         if (activeOrders.size() <= MaxOrdersToReturn) {
@@ -49,11 +49,11 @@ public class OrderService extends AbstractPersistentService {
     }
 
     public List<Order> getSpoiltOrderList() {
-        synchronized (spoiledOrders) {
-            if (spoiledOrders.size() <= MaxOrdersToReturn) {
-                return spoiledOrders;
+        synchronized (spoiltOrders) {
+            if (spoiltOrders.size() <= MaxOrdersToReturn) {
+                return spoiltOrders;
             } else {
-                return spoiledOrders.subList(spoiledOrders.size() - 10, spoiledOrders.size());
+                return spoiltOrders.subList(spoiltOrders.size() - 10, spoiltOrders.size());
             }
 
         }
@@ -61,10 +61,10 @@ public class OrderService extends AbstractPersistentService {
     }
 
     public int orderSpoilt(String orderId) {
-        JsonValue spoiltOrders = get(Constants.SPOILT_ORDERS_KEY);
+        JsonValue spoiltOrdersList = get(Constants.SPOILT_ORDERS_KEY);
         JsonArrayBuilder builder = null;
         if (spoiltOrders != null && spoiltOrders != JsonValue.NULL) {
-            builder = Json.createArrayBuilder(spoiltOrders.asJsonArray());
+            builder = Json.createArrayBuilder(spoiltOrdersList.asJsonArray());
         } else {
             builder = Json.createArrayBuilder();
         }
@@ -74,7 +74,7 @@ public class OrderService extends AbstractPersistentService {
             Order order = activeIterator.next();
             if (orderId.equals(order.getId())) {
 
-                spoiledOrders.add(order);
+                spoiltOrders.add(order);
                 JsonValue spoiltOrder = Json.createObjectBuilder().add("orderId", order.getId())
                         .add("voyageId", order.getVoyageId()).build();
                 builder.add(spoiltOrder);
@@ -187,7 +187,7 @@ public class OrderService extends AbstractPersistentService {
     }
 
     private void removeSpoiltOrders(String orderId) {
-        Iterator<Order> spoiltIterator = spoiledOrders.iterator();
+        Iterator<Order> spoiltIterator = spoiltOrders.iterator();
         while (spoiltIterator.hasNext()) {
             Order order = spoiltIterator.next();
             if (orderId.equals(order.getId())) {
@@ -240,7 +240,7 @@ public class OrderService extends AbstractPersistentService {
         // move booked voyage orders to active
         while (it.hasNext()) {
             JsonValue v = it.next();
-            // skip orders which has just been delivered (voyage arrived)
+            // skip orders which have just been delivered (voyage arrived)
             if (!voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY))) {
                 activeOrderArrayBuilder.add(v);
 

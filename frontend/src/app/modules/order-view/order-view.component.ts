@@ -8,6 +8,7 @@ import { MatTableDataSource, MatTable } from '@angular/material/table';
 import {MatSort, MatSortable} from '@angular/material/sort';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { SocketService } from 'src/app/core/services/socket.service';
+import { OrderStats } from 'src/app/core/models/order-stats';
 //import {CdkDetailRowDirective } from 'src/app/shared/components/cdk-detail-row.directive';
 
 
@@ -65,7 +66,7 @@ export class OrderViewComponent implements OnInit {
     console.log('OrderView - connected socket');
     stompClient.connect({}, frame => {
       console.log('OrderView - connected stompClient');
-
+/*
       stompClient.subscribe('/topic/orders/intransit', (event:any) => {
         if ( event.body) {
           let orderCount : number;
@@ -88,6 +89,17 @@ export class OrderViewComponent implements OnInit {
           console.log("-------- SpoiltOrders Update:"+event.body);
           orderCount = JSON.parse(event.body);
           this.spoiltOrders = orderCount;
+        }
+      });
+      */
+      stompClient.subscribe('/topic/orders/stats', (event:any) => {
+        if ( event.body) {
+          let orderStats : OrderStats;
+          console.log("-------- Orders Update:"+event.body);
+          orderStats = JSON.parse(event.body);
+          this.spoiltOrders = orderStats.spoiltOrderCount;
+          this.futureOrders = orderStats.futureOrderCount;
+          this.inTransitOrders = orderStats.inTransitOrderCount;
         }
       });
 

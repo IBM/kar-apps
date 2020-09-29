@@ -33,64 +33,21 @@ const httpOptions = {
 })
 export class RestService {
   schedule:ShipSchedule[] = [];
- // private REST_HOST : string =`${process.env.REEFER_REST_HOST}/`;
-
-//  private REST_API_SERVER = GlobalConstants.restServerUrl; 
-private REST_API_SERVER : string;
-
- // restUrl: nprocess.env.REEFER_REST_HOST;
-// BASE_URL = `http://${process.env.REEFER_REST_HOST}/`;
+ 
+  private REST_API_SERVER : string;
 
   constructor(private httpClient: HttpClient) { 
     let rest_url:string;
-    //console.log("+++++++++++++++++++++++++++++REST_API_SERVER:"+GlobalConstants.REST_API_SERVER);
+    
     if ( GlobalConstants.REST_API_SERVER.includes("undefined")) {
       rest_url = "http://localhost:9080";
     } else {
       rest_url = GlobalConstants.REST_API_SERVER;
     }
-    this.REST_API_SERVER = rest_url; //"http://"+rest_host+":"+GlobalConstants.REST_PORT+"/";
+    this.REST_API_SERVER = rest_url; 
     console.log("+++++++++++++++++++++++++++++ REST_API_SERVER:::"+this.REST_API_SERVER);
   }
-/*
-  public sendGetRequest(){
-    return this.httpClient.get(this.REST_API_SERVER);
-  }
-  */
- /*
-  public sendGetRequest(){
-    console.log('sendGetRequest Called');
-    let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    //let options = new RequestOptions({ headers: headers, method: 'get' });
-    //Access-Control-Allow-Origin: *
-    const options = { header: headers, params: new HttpParams({fromString: "name=Danny"}) };
-    this.httpClient.get(this.REST_API_SERVER, options).pipe(retry(3), catchError(this.handleError))
-    .map((response : Response) => response.json())
-    .subscribe((data) => {
-      this.schedule.push(data);
-    });
 
-  console.log('sendGetRequest Completed');
-
-       // Add safe, URL encoded_page parameter
-   //    const options = { params: new HttpParams({fromString: "name=Danny"}) };
-   //    return this.httpClient.get(this.REST_API_SERVER, options).pipe(retry(3), catchError(this.handleError));
-     }
-*/
-/*
-     public getShippingSchedule : Observable<ShipSchedule> {
-      console.log('sendGetRequest Called');
-      let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-      //let options = new RequestOptions({ headers: headers, method: 'get' });
-      //Access-Control-Allow-Origin: *
-      const options = { header: headers, params: new HttpParams({fromString: "name=Danny"}) };
-
-      return this.httpClient.get(this.REST_API_SERVER, options).pipe(retry(3), catchError(this.handleError))
-      .subscribe(
-      );
-     // .map((response : Response) => response.json()));
-     }
-*/
   sendGetRequest() : ShipSchedule[] {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams({}) };
@@ -219,14 +176,6 @@ addReefers( inPort: string)  {
 
 }
 
-/*
-setManualMode() {
-  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  const options = { header: headers, params: new HttpParams()};
-  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/manualmode', options).pipe(retry(3), catchError(this.handleError));
-
-}
-*/
 advanceDateByOneDay() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
@@ -254,11 +203,7 @@ getFleets()  {
 }
 setOrderTarget(request) {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  //const options = { header: headers, params: new HttpParams()};
- // const body : OrderTarget = {
-  //  target: orderTarget
 
- // }
   const params = request;
   return this.httpClient.post<String>(this.REST_API_SERVER+'/simulator/setsimordertarget',params).pipe(retry(3), catchError(this.handleError));
 
@@ -323,19 +268,7 @@ setSimulatorDelay(delayTime: number) {
   return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/delay',body, options).pipe(retry(3), catchError(this.handleError));
 
 }
-/*
-setOrderTarget(orderTarget: number) {
-  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  const options = { header: headers, params: new HttpParams()};
-  const body : OrderTarget = {
-    targ
-    et: orderTarget
 
-  }
-  return this.httpClient.post<string>(this.REST_API_SERVER+'/simulator/setsimordertarget',body, options).pipe(retry(3), catchError(this.handleError));
-
-}
-*/
 nextPage(request) {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   //const options = { header: headers, params: new HttpParams() };

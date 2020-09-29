@@ -21,6 +21,7 @@ import { OrderStats } from '../models/order-stats';
 import { OrderSimControls } from '../models/order-sim-controls';
 import { ReeferStats } from '../models/reefer-stats';
 import {  ReeferSimControls } from '../models/reefer-sim-controls';
+import { Process } from 'src/typings';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -32,7 +33,11 @@ const httpOptions = {
 export class RestService {
   schedule:ShipSchedule[] = [];
 
-  private REST_API_SERVER = GlobalConstants.restServerUrl; 
+//  private REST_API_SERVER = GlobalConstants.restServerUrl; 
+private REST_API_SERVER =`http://${process.env.REEFER_REST_HOST}:9080/`;
+ // restUrl: nprocess.env.REEFER_REST_HOST;
+// BASE_URL = `http://${process.env.REEFER_REST_HOST}/`;
+
   constructor(private httpClient: HttpClient) { }
 /*
   public sendGetRequest(){
@@ -120,6 +125,7 @@ getRoutes()  {
 
 }
 getActiveVoyages()  {
+  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REEFER_REST_HOST:"+this.REST_API_SERVER);
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams({}) };
 

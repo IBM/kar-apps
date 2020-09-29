@@ -30,7 +30,7 @@ var Stomp = require("stompjs");
   providedIn: 'root'
 })
 export class SocketService {
-
+  REST_API_SERVER =`http://${process.env.REEFER_REST_HOST}:9080/`;
   //private serverUrl = 'http://localhost:8080/socket'
   //private title = 'WebSockets chat';
   //private stompClient;
@@ -44,8 +44,9 @@ export class SocketService {
 //    let socket = new SockJs(`http://localhost:8080/websocket-backend/socket`);
 //    let socket = new SockJs(`http://localhost:8080/socket`);
     //let socket = new SockJs(`http://localhost:9000/socket`);
-    let socket = new SockJs( GlobalConstants.restServerUrl+`/socket`);
-    console.log('Connecting ...');
+  //  let socket = new SockJs( GlobalConstants.restServerUrl+`/socket`);
+    let socket = new SockJs( this.REST_API_SERVER+`/socket`);
+    console.log('REST HOST:'+this.REST_API_SERVER+'/socket Connecting ...');
     let stompClient = Stomp.over(socket);
     console.log('Stomp Connected');
     return stompClient;

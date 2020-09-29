@@ -22,6 +22,7 @@ import { OrderSimControls } from '../models/order-sim-controls';
 import { ReeferStats } from '../models/reefer-stats';
 import {  ReeferSimControls } from '../models/reefer-sim-controls';
 import { Process } from 'src/typings';
+import { stringToKeyValue } from '@angular/flex-layout/extended/typings/style/style-transforms';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -32,13 +33,25 @@ const httpOptions = {
 })
 export class RestService {
   schedule:ShipSchedule[] = [];
+ // private REST_HOST : string =`${process.env.REEFER_REST_HOST}/`;
 
 //  private REST_API_SERVER = GlobalConstants.restServerUrl; 
-private REST_API_SERVER =`http://${process.env.REEFER_REST_HOST}:9080/`;
+private REST_API_SERVER : string;
+
  // restUrl: nprocess.env.REEFER_REST_HOST;
 // BASE_URL = `http://${process.env.REEFER_REST_HOST}/`;
 
-  constructor(private httpClient: HttpClient) { }
+  constructor(private httpClient: HttpClient) { 
+    let rest_url:string;
+    //console.log("+++++++++++++++++++++++++++++REST_API_SERVER:"+GlobalConstants.REST_API_SERVER);
+    if ( GlobalConstants.REST_API_SERVER.includes("undefined")) {
+      rest_url = "http://localhost:9080";
+    } else {
+      rest_url = GlobalConstants.REST_API_SERVER;
+    }
+    this.REST_API_SERVER = rest_url; //"http://"+rest_host+":"+GlobalConstants.REST_PORT+"/";
+    console.log("+++++++++++++++++++++++++++++ REST_API_SERVER:::"+this.REST_API_SERVER);
+  }
 /*
   public sendGetRequest(){
     return this.httpClient.get(this.REST_API_SERVER);

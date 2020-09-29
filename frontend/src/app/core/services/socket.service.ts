@@ -30,12 +30,21 @@ var Stomp = require("stompjs");
   providedIn: 'root'
 })
 export class SocketService {
-  REST_API_SERVER =`http://${process.env.REEFER_REST_HOST}:9080/`;
+  private restUrl : string; //=`http://${process.env.REEFER_REST_HOST}:9080/`;
   //private serverUrl = 'http://localhost:8080/socket'
   //private title = 'WebSockets chat';
   //private stompClient;
 
   constructor(){
+    //let rest_url:string;
+    //console.log("+++++++++++++++++++++++++++++REST_API_SERVER:"+GlobalConstants.REST_API_SERVER);
+    if ( GlobalConstants.REST_API_SERVER.includes("undefined")) {
+      this.restUrl = "http://localhost:9080";
+    } else {
+      this.restUrl = GlobalConstants.REST_API_SERVER;
+    }
+    //this.REST_API_SERVER = rest_url; //"http://"+rest_host+":"+GlobalConstants.REST_PORT+"/";
+    console.log("+++++++++++++++++++++++++++++ REST URL:"+this.restUrl);
    // this.initializeWebSocketConnection();
   }
 
@@ -45,8 +54,8 @@ export class SocketService {
 //    let socket = new SockJs(`http://localhost:8080/socket`);
     //let socket = new SockJs(`http://localhost:9000/socket`);
   //  let socket = new SockJs( GlobalConstants.restServerUrl+`/socket`);
-    let socket = new SockJs( this.REST_API_SERVER+`/socket`);
-    console.log('REST HOST:'+this.REST_API_SERVER+'/socket Connecting ...');
+    let socket = new SockJs( this.restUrl+`/socket`);
+    console.log('REST HOST:'+this.restUrl+'/socket Connecting ...');
     let stompClient = Stomp.over(socket);
     console.log('Stomp Connected');
     return stompClient;

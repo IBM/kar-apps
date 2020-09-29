@@ -16,7 +16,6 @@ import com.ibm.research.kar.reeferserver.model.ShippingSchedule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -30,14 +29,13 @@ public class GuiController {
     private AtomicInteger spoiltOrderCount = new AtomicInteger();
     private ReeferStats reeferStats;
 
-    // private OrderStats orderStats = new OrderStats();
     private AtomicBoolean valuesChanged = new AtomicBoolean();
 
     public GuiController() {
         TimerTask timerTask = new GuiUpdateTask();
         // running timer task as daemon thread
         Timer timer = new Timer(true);
-        timer.scheduleAtFixedRate(timerTask, 0, 500);
+        timer.scheduleAtFixedRate(timerTask, 0, 100);
         System.out.println("TimerTask started");
     }
 

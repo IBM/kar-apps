@@ -85,8 +85,14 @@ public class GuiController {
                         spoiltOrderCount.get());
                 System.out.println(
                         "GuiController.run()................................. Orders Spoilt:" + spoiltOrderCount.get());
-                template.convertAndSend("/topic/orders/stats", orderStats);
-                template.convertAndSend("/topic/reefers/stats", reeferStats);
+                if ( orderStats != null ) {
+                    template.convertAndSend("/topic/orders/stats", orderStats);
+                }
+                
+                if ( reeferStats != null ) {
+                    template.convertAndSend("/topic/reefers/stats", reeferStats);
+                }
+               // template.convertAndSend("/topic/reefers/stats", reeferStats);
                 valuesChanged.set(false);
             }
 

@@ -200,25 +200,36 @@ public class OrderService extends AbstractPersistentService {
     private void voyageDeparted(String voyageId) {
         System.out.println("OrderService.voyageDeparted() - voyage:" + voyageId);
         JsonValue bookedOrders = get(Constants.BOOKED_ORDERS_KEY);
-        JsonArray bookedOrderArray = bookedOrders.asJsonArray();
-        moveBookedOrdersToActive(voyageId);
-        JsonArrayBuilder newbookedOrderArray = Json.createArrayBuilder();
-        JsonArrayBuilder activeOrderbuilder = Json.createArrayBuilder(get(Constants.ACTIVE_ORDERS_KEY).asJsonArray());
-        System.out.println(voyageId + "--------------- OrderService.voyageDeparted() number of booked orders "
-                + bookedOrderArray.size());
-        Iterator<JsonValue> it = bookedOrderArray.iterator();
-        // move booked voyage orders to active
-        while (it.hasNext()) {
-            JsonValue v = it.next();
-            if (voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY))) {
-                activeOrderbuilder.add(v);
-            } else {
-                newbookedOrderArray.add(v);
-            }
-        }
+        if ( bookedOrders != null ) {
+            JsonArray bookedOrderArray = bookedOrders.asJsonArray();
+            if ( bookedOrderArray != null) {
+                moveBookedOrdersToActive(voyageId);
+                JsonValue orders = get(Constants.ACTIVE_ORDERS_KEY);
 
-        set(Constants.ACTIVE_ORDERS_KEY, activeOrderbuilder.build());
-        set(Constants.BOOKED_ORDERS_KEY, newbookedOrderArray.build());
+                if ( orders != null ) {
+                    JsonArrayBuilder newbookedOrderArray = Json.createArrayBuilder();
+                    JsonArrayBuilder activeOrderbuilder = Json.createArrayBuilder(orders.asJsonArray());
+                    System.out.println(voyageId + "--------------- OrderService.voyageDeparted() number of booked orders "
+                            + bookedOrderArray.size());
+                    Iterator<JsonValue> it = bookedOrderArray.iterator();
+                    // move booked voyage orders to active
+                    while (it.hasNext()) {
+                        JsonValue v = it.next();
+                        if (voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY))) {
+                            activeOrderbuilder.add(v);
+                        } else {
+                            newbookedOrderArray.add(v);
+                        }
+                    }
+            
+                    set(Constants.ACTIVE_ORDERS_KEY, activeOrderbuilder.build());
+                    set(Constants.BOOKED_ORDERS_KEY, newbookedOrderArray.build());
+                }
+
+            }
+ 
+        }
+ 
     }
 
     private void voyageArrived(String voyageId) {

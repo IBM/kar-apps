@@ -33,20 +33,9 @@ const httpOptions = {
 })
 export class RestService {
   schedule:ShipSchedule[] = [];
- 
-  private REST_API_SERVER : string;
-
+  private REST_API_SERVER = GlobalConstants.restServerUrl; 
   constructor(private httpClient: HttpClient) { 
-    let rest_url:string;
-    
-    if ( GlobalConstants.REST_API_SERVER.includes("undefined")) {
-      rest_url = "http://localhost:9080";
-    } else {
-      rest_url = GlobalConstants.REST_API_SERVER;
-    }
-    this.REST_API_SERVER = rest_url; 
-    console.log("+++++++++++++++++++++++++++++ REST_API_SERVER:::"+this.REST_API_SERVER);
-  }
+}
 
   sendGetRequest() : ShipSchedule[] {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

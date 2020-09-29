@@ -133,10 +133,10 @@
                 <copy todir="${project.basedir}/src/main/webapp/WEB-INF">
                   <fileset dir="${project.basedir}/src/main/WEB-INF"/>
                 </copy>
-				<condition property="reeferRestHost" value="${env.REEFER_REST_HOST}" else="localhost">
+				<!--condition property="reeferRestHost" value="${env.REEFER_REST_HOST}" else="localhost">
     				<isset property="env.REEFER_REST_HOST" />
 				</condition>
-                <replace file="${project.basedir}/src/main/webapp/index.html" token="REEFER_REST_HOST" value="${reeferRestHost}"/>
+                <replace file="${project.basedir}/src/main/webapp/index.html" token="REEFER_REST_HOST" value="${reeferRestHost}"/-->
               </tasks>
             </configuration>
             <goals>

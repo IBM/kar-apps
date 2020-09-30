@@ -430,7 +430,7 @@ public class ReeferProvisionerActor extends BaseActor {
 
     private void replaceSpoiltReefer(ReeferDTO reefer) {
         List<ReeferDTO> replacementReefer = ReeferAllocator.allocateReefers(reeferMasterInventory,
-                Constants.REEFER_CAPACITY, String.valueOf(reefer.getId()), reefer.getVoyageId());
+                Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId());
         // there should only be one reefer replacement
         if (replacementReefer.size() > 0) {
             messageReeferActorReserve(replacementReefer.get(0));

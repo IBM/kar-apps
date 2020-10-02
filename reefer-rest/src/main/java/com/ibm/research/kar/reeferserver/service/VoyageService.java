@@ -11,6 +11,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
+import javax.swing.tree.VariableHeightLayoutCache;
 import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
@@ -22,8 +23,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class VoyageService extends AbstractPersistentService {
-
+    public enum VoyageStatus {
+        PENDING,DEPARTED,ARRIVED;
+    }
     Map<String, Set<Order>> voyageOrders = new HashMap<>();
+    Map<String, VoyageStatus > voyageStatus = new HashMap<>();
 
     public void addOrderToVoyage(Order order) {
 
@@ -55,9 +59,16 @@ public class VoyageService extends AbstractPersistentService {
             return Collections.emptySet();
         }
     }
+    public void voyageDeparted(String voyageId) {
 
+        voyageStatus.put(voyageId, VoyageStatus.DEPARTED);
+
+    }
+    public VoyageStatus getVoyageStatus(String voyageId) {
+        return voyageStatus.get(voyageId);
+    }
     public void voyageEnded(String voyageId) {
-
+        voyageStatus.put(voyageId, VoyageStatus.ARRIVED);
         if (voyageOrders.containsKey(voyageId)) {
             Set<Order> orders = voyageOrders.get(voyageId);
             System.out.println("VoyageService.voyageEnded() - voyage orders:" + orders.size());

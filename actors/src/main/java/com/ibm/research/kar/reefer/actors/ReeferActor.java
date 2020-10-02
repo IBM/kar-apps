@@ -54,8 +54,6 @@ public class ReeferActor extends BaseActor {
      * @param reeferProperties
      */
     public void setState(JsonObject reeferProperties) {
-        System.out.println("ReeferActor.setState() - ID:" + this.getId());
-
         try {
             if (reeferProperties.containsKey(ReeferState.MAX_CAPACITY_KEY)) {
                 set(this, ReeferState.MAX_CAPACITY_KEY,

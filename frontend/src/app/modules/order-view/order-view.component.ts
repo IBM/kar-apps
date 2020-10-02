@@ -95,7 +95,7 @@ export class OrderViewComponent implements OnInit {
       stompClient.subscribe('/topic/orders/stats', (event:any) => {
         if ( event.body) {
           let orderStats : OrderStats;
-          console.log("-------- Orders Update:"+event.body);
+         // console.log("-------- Orders Update:"+event.body);
           orderStats = JSON.parse(event.body);
           this.spoiltOrders = orderStats.spoiltOrderCount;
           this.futureOrders = orderStats.futureOrderCount;
@@ -107,7 +107,7 @@ export class OrderViewComponent implements OnInit {
         stompClient.subscribe('/topic/orders', (event:any) => {
           if ( event.body) {
             let order: Order;
-            console.log("-------- Paginator Index:"+this.paginator.pageIndex);
+          //  console.log("-------- Paginator Index:"+this.paginator.pageIndex);
 
             this.dataSource.data.forEach(row => console.log(row.id));
             // Add the order to the HEAD only when we are on the 
@@ -156,14 +156,14 @@ export class OrderViewComponent implements OnInit {
   ngOnInit(): void {
    
      this.restService.getOrderTargetAndSimDelay().subscribe((data) => {
-      console.log(">>>> Order Target from the Simulator delay:"+data.delay+" target:"+data.target);
+   //   console.log(">>>> Order Target from the Simulator delay:"+data.delay+" target:"+data.target);
      
       if ( data.target > 0 || data.delay > 0 ) {
         this.createOrderManually = true;
-        console.log("++++++++++++++ Enable CreateOrder Button");
+        //console.log("++++++++++++++ Enable CreateOrder Button");
       }else {
         this.createOrderManually = false;
-        console.log("++++++++++++++ Disable CreateOrder Button");
+      //  console.log("++++++++++++++ Disable CreateOrder Button");
       }
       this.orderTarget = data.target;
 
@@ -194,7 +194,7 @@ export class OrderViewComponent implements OnInit {
   showInTransitOrders(event) {
     console.log("Click >>>>> showInTransitOrders() ");
     this.restService.getActiveOrders().subscribe((data) => {
-      console.log(data);
+     // console.log(data);
       this.dataSource.data = data;
     
     this.dataSource.paginator = this.paginator;
@@ -209,7 +209,7 @@ export class OrderViewComponent implements OnInit {
   showFutureOrders() {
     console.log("Click >>>>> showFutureOrders()");
     this.restService.getBookedOrders().subscribe((data) => {
-      console.log(data);
+  //    console.log(data);
       this.dataSource.data = data;
     
     this.dataSource.paginator = this.paginator;
@@ -223,7 +223,7 @@ export class OrderViewComponent implements OnInit {
   showSpoiltOrders() {
     console.log("Click >>>>> showSpoiltOrders()");
     this.restService.getSpoiltOrders().subscribe((data) => {
-      console.log(data);
+   //   console.log(data);
       this.dataSource.data = data;
     
     this.dataSource.paginator = this.paginator;
@@ -243,7 +243,7 @@ export class OrderViewComponent implements OnInit {
     request['updateFrequency'] = this.orderUpdates.toString();
   
     this.restService.setOrderSimControls(request).subscribe((data) => {
-      console.log(data);
+ //     console.log(data);
       if ( this.orderTarget == 0 ) {
         this.createOrderManually = true;
       } else {
@@ -256,7 +256,7 @@ export class OrderViewComponent implements OnInit {
     console.log('>>>>>>>>>>>>>nextOrder called');
     
     this.restService.createOrder().subscribe((data) => {
-      console.log(data);
+   //   console.log(data);
       //this.date = data.substr(0,10);
     });
     
@@ -338,7 +338,7 @@ let filterFunction = function (data: any, filter: string): boolean {
     }
   }
 
-  console.log(searchTerms);
+//  console.log(searchTerms);
 
   let nameSearch = () => {
     let found = false;

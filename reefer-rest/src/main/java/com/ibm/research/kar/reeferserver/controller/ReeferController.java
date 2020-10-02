@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @CrossOrigin("*")
 public class ReeferController {
-	private int inventorySize = 0;
+	private int reeferInventorySize = 0;
 	@Autowired
 	private ReeferService reeferService;
 	@Autowired
@@ -51,8 +51,11 @@ public class ReeferController {
 			fleetMaxCapacity += route.getVessel().getMaxCapacity();
 			fleet.add(route.getVessel().getName());
 		}
+		System.out.println("RestController.init() - Fleet Size:"+fleet.size()+" Max Fleet Capacity:"+fleetMaxCapacity);
 		// increase total by additional 40% to ensure we always have reefers available
-		inventorySize = Double.valueOf(fleet.size() * fleetMaxCapacity * 0.4).intValue();
+		reeferInventorySize = Double.valueOf(fleet.size() * fleetMaxCapacity * 0.4).intValue();
+		//double factor = 1.0;
+		//reeferInventorySize = Double.valueOf(fleet.size() * fleetMaxCapacity * factor).intValue();
 	}
 
 	@PostMapping("/reefers")
@@ -96,7 +99,7 @@ public class ReeferController {
 
 	@GetMapping("/reefers/inventory/size")
 	public int getReeferInventorySize() {
-		return inventorySize;
+		return reeferInventorySize;
 	}
 
 	@GetMapping("/reefers/{port}")

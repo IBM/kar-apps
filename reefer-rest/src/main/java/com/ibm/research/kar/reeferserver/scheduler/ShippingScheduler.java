@@ -55,6 +55,7 @@ public class ShippingScheduler {
 
          // the shipping schedule is generated for one year from now
         final Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(departureDate);
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> YearFromNow:"+yearFromNow);
         int staggerInitialShipDepartures = 0;
         LinkedList<Voyage> sortedSchedule = new LinkedList<>();
         for (final Route route : routes) {

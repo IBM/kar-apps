@@ -97,7 +97,7 @@ public class OrderService extends AbstractPersistentService {
         } else {
             bookedOrderArrayBuilder = Json.createArrayBuilder();
             JsonArray orderList = bookedOrders.asJsonArray();
-            System.out.println("OrderService.createOrder - cached order list size:" + orderList.size());
+            System.out.println("OrderService.createOrder - booked order list size:" + orderList.size());
             // since orderList is immutable we need copy current booked orders into a new
             // list and then add our new order to it. Could not find a way around this.
             // Attempt to modify the list from Kar causes UnsuportedOpertion exception.
@@ -127,15 +127,15 @@ public class OrderService extends AbstractPersistentService {
     public int getOrders(String orderKindKey) {
         try {
             JsonValue o = get(orderKindKey);
-            System.out.println("OrderService.getOrders() -" + orderKindKey + " orders: o=" + o);
+           // System.out.println("OrderService.getOrders() -" + orderKindKey + " orders: o=" + o);
             if (o == null) {
                 o = Json.createArrayBuilder().build();
-                System.out.println("OrderService.getOrders() - NEW LIST FOR BOOKED ORDERS ");
+            //    System.out.println("OrderService.getOrders() - NEW LIST FOR BOOKED ORDERS ");
                 set(orderKindKey, o);
             }
             JsonArray orderArray = o.asJsonArray();
-            System.out.println(
-                    "OrderService.getOrders() - " + orderKindKey + " orders:" + orderArray.size());
+          //  System.out.println(
+         //           "OrderService.getOrders() - " + orderKindKey + " orders:" + orderArray.size());
             return orderArray.size();
         } catch (Exception e) {
             e.printStackTrace();
@@ -234,44 +234,47 @@ public class OrderService extends AbstractPersistentService {
 
     private void voyageArrived(String voyageId) {
         JsonValue activeOrders = get(Constants.ACTIVE_ORDERS_KEY);
-        JsonArray activeOrderArray = activeOrders.asJsonArray();
-        // JsonArrayBuilder newSpoiltOrderArray =
-        // Json.createArrayBuilder(activeOrderArray);
-        List<JsonValue> newList = new ArrayList<>();
-
-        JsonValue spoiltOrders = get(Constants.SPOILT_ORDERS_KEY);
-        JsonArray spoiltOrderArray = spoiltOrders.asJsonArray();
-        spoiltOrderArray.forEach(value -> {
-            newList.add(value);
-        });
-
-        JsonArrayBuilder activeOrderArrayBuilder = Json.createArrayBuilder();
-        removeActiveOrders(voyageId);
-        Iterator<JsonValue> it = activeOrderArray.iterator();
-        // move booked voyage orders to active
-        while (it.hasNext()) {
-            JsonValue v = it.next();
-            // skip orders which have just been delivered (voyage arrived)
-            if (!voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY))) {
-                activeOrderArrayBuilder.add(v);
-
-            } else {
-                removeOrderFromSpoiltList(newList, v.asJsonObject().getString(Constants.ORDER_ID_KEY));
+        if ( activeOrders != null ) {
+            JsonArray activeOrderArray = activeOrders.asJsonArray();
+            // JsonArrayBuilder newSpoiltOrderArray =
+            // Json.createArrayBuilder(activeOrderArray);
+            List<JsonValue> newList = new ArrayList<>();
+    
+            JsonValue spoiltOrders = get(Constants.SPOILT_ORDERS_KEY);
+            JsonArray spoiltOrderArray = spoiltOrders.asJsonArray();
+            spoiltOrderArray.forEach(value -> {
+                newList.add(value);
+            });
+    
+            JsonArrayBuilder activeOrderArrayBuilder = Json.createArrayBuilder();
+            removeActiveOrders(voyageId);
+            Iterator<JsonValue> it = activeOrderArray.iterator();
+            // move booked voyage orders to active
+            while (it.hasNext()) {
+                JsonValue v = it.next();
+                // skip orders which have just been delivered (voyage arrived)
+                if (!voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY))) {
+                    activeOrderArrayBuilder.add(v);
+    
+                } else {
+                    removeOrderFromSpoiltList(newList, v.asJsonObject().getString(Constants.ORDER_ID_KEY));
+                }
             }
+            JsonArray orders = activeOrderArrayBuilder.build();
+            System.out.println("................................. OrderService.voyageArrived() - voyageId:" + voyageId
+                    + " - Saving Active Voyages - Count:" + orders.size());
+            set(Constants.ACTIVE_ORDERS_KEY, orders);
+    
+            JsonArrayBuilder newSpoiltOrderArrayBuilder = Json.createArrayBuilder();
+            newList.forEach(value -> {
+                newSpoiltOrderArrayBuilder.add(value);
+            });
+            JsonArray al = newSpoiltOrderArrayBuilder.build();
+            System.out.println("................................. OrderService.voyageArrived() - voyageId:" + voyageId
+                    + " - Saving SpoiltOrders List -" + al.toString());
+            set(Constants.SPOILT_ORDERS_KEY, al);
         }
-        JsonArray orders = activeOrderArrayBuilder.build();
-        System.out.println("................................. OrderService.voyageArrived() - voyageId:" + voyageId
-                + " - Saving Active Voyages - Count:" + orders.size());
-        set(Constants.ACTIVE_ORDERS_KEY, orders);
 
-        JsonArrayBuilder newSpoiltOrderArrayBuilder = Json.createArrayBuilder();
-        newList.forEach(value -> {
-            newSpoiltOrderArrayBuilder.add(value);
-        });
-        JsonArray al = newSpoiltOrderArrayBuilder.build();
-        System.out.println("................................. OrderService.voyageArrived() - voyageId:" + voyageId
-                + " - Saving SpoiltOrders List -" + al.toString());
-        set(Constants.SPOILT_ORDERS_KEY, al);
     }
 
     private void removeOrderFromSpoiltList(List<JsonValue> spoiltOrderArray, String orderId) {

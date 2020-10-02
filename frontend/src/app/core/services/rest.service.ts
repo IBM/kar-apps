@@ -43,14 +43,14 @@ export class RestService {
 
    this.httpClient.get<ShipSchedule[]>(this.REST_API_SERVER+'/schedules', options).pipe(retry(3), catchError(this.handleError))
   .subscribe(
-    res => console.log(res),
+    res => console.log(),
     res => {
       this.schedule.push(res);
     }
 
 
     );
-    console.log(this.schedule);
+   // console.log(this.schedule);
     return this.schedule;
 
 }
@@ -84,7 +84,7 @@ getRoutes()  {
 
 }
 getActiveVoyages()  {
-  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REEFER_REST_HOST:"+this.REST_API_SERVER);
+  //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REEFER_REST_HOST:"+this.REST_API_SERVER);
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams({}) };
 
@@ -154,7 +154,7 @@ getAllReefers()  {
 }
 addReefers( inPort: string)  {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  console.log("addReefers() --- port:"+inPort)
+ // console.log("addReefers() --- port:"+inPort)
 
   const options = { header: headers, params: new HttpParams()}; //params : new HttpParams() };
   const body : Addreefers = {

@@ -7,6 +7,7 @@ import static com.ibm.research.kar.Kar.restPost;
 import java.io.StringReader;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -33,6 +34,7 @@ import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
+import com.ibm.research.kar.reeferserver.service.VoyageService.VoyageStatus;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -144,31 +146,37 @@ public class VoyageController {
       JsonObject req = jsonReader.readObject();
       voyageId = req.getString("voyageId");
       if (req.containsKey("daysAtSea")) {
+        System.out.println("VoyageController.updateVoyageState() voyageId=" + voyageId+" Voyage Status:"+voyageService.getVoyageStatus(voyageId));
         daysAtSea = req.getInt("daysAtSea");
         Voyage voyage = shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
         Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysAtSea);
-        if (shipCurrentDate.equals(Instant.parse(voyage.getArrivalDate()))
-            || shipCurrentDate.isAfter(Instant.parse(voyage.getArrivalDate()))) {
+        if ( (shipCurrentDate.equals(Instant.parse(voyage.getArrivalDate()))
+            || shipCurrentDate.isAfter(Instant.parse(voyage.getArrivalDate()))
+            && !VoyageStatus.ARRIVED.equals(voyageService.getVoyageStatus(voyageId)))) {
           orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED, daysAtSea);
           System.out.println("VoyageController.updateVoyageState() voyageId=" + voyageId
               + " has ARRIVED ------------------------------------------------------");
           voyageService.voyageEnded(voyageId);
         } else {
 
-          if (shipDeparted(daysAtSea)) {
+          if (shipDeparted(daysAtSea) && !VoyageStatus.DEPARTED.equals(voyageService.getVoyageStatus(voyageId))) {
             System.out.println("VoyageController.updateVoyageState() voyageId=" + voyageId
                 + " has DEPARTED ------------------------------------------------------");
             Set<Order> orders = voyageService.getOrders(voyageId);
-            orders.forEach(order -> {
-              ActorRef orderActor = Kar.actorRef(ReeferAppConfig.OrderActorName, order.getId());
-              JsonObject params = Json.createObjectBuilder().build();
-              System.out.println("VoyageController.updateVoyageState() voyageId=" + order.getVoyageId()
-                  + " Notifying Order Actor of departure - OrderID:" + order.getId());
-              actorCall(orderActor, "departed", params);
-            });
 
+            orders.forEach(order -> {
+                order.setStatus(OrderStatus.INTRANSIT.name().toLowerCase());
+                ActorRef orderActor = Kar.actorRef(ReeferAppConfig.OrderActorName, order.getId());
+                JsonObject params = Json.createObjectBuilder().build();
+                System.out.println("VoyageController.updateVoyageState() voyageId=" + order.getVoyageId()
+                    + " Notifying Order Actor of departure - OrderID:" + order.getId());
+                actorCall(orderActor, "departed", params);
+              });
+          
+            voyageService.voyageDeparted(voyageId);
+
+            orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT, daysAtSea);
           }
-          orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT, daysAtSea);
           // OrderStats stats = orderService.getOrderStats();
 
           // gui.updateInTransitOrderCount(stats.getInTransitOrderCount());
@@ -195,6 +203,7 @@ public class VoyageController {
     } catch (Exception e) {
       e.printStackTrace();
     }
+    System.out.println("VoyageController.updateVoyageState() - done");
   }
 
   @GetMapping("/voyage/routes")
@@ -252,9 +261,7 @@ public class VoyageController {
     }
     gui.updateInTransitOrderCount(totalActiveOrders);
 
-    int futureOrderCount = orderService.getOrders("booked-orders");
-
-    gui.updateFutureOrderCount(futureOrderCount);
+    gui.updateFutureOrderCount(orderService.getOrders("booked-orders"));
 
     gui.updateSpoiltOrderCount(orderService.getOrders(Constants.SPOILT_ORDERS_KEY));
     

@@ -45,13 +45,13 @@ export class ReeferViewComponent implements OnInit {
 
   constructor(private dialog: MatDialog, private restService: RestService, private webSocketService : SocketService ) {
     this.restService.getReeferControls().subscribe((data) => {
-      console.log(data);
+  //    console.log(data);
       this.failureRate = data.failureRate;
       this.updateFrequency = data.updateFrequency;
       
     });
     this.restService.getReeferStats().subscribe((data) => {
-      console.log(data);
+     // console.log(data);
 
       this.totalReefers = data.total;
       this.totalBookedReefers = data.totalBooked;

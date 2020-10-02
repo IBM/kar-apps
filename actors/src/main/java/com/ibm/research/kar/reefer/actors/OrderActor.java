@@ -25,21 +25,14 @@ import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.OrderStatus;
 
-import io.jaegertracing.internal.samplers.ConstSampler;
-
 @Actor
 public class OrderActor extends BaseActor {
 
     @Activate
     public void init() {
-        System.out.println("OrderActor.init() called id:" + getId() + " type:" + this.getType());
-        
         JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
-        System.out.println(
-                "OrderActor.init() - Order Id:" + getId() + " cached state:" + state + " type:" + this.getType());
-        
         Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
-        System.out.println("OrderActor.init() - Order Id:" + getId() + " fetched submap of size:" + reeferMap.size());
+        System.out.println("OrderActor.init() - Order Id:" + getId() +  " state:" + state +" fetched submap of size:" + reeferMap.size());
     }
 
     @Remote

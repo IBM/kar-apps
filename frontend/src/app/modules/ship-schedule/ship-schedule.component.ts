@@ -68,7 +68,7 @@ export class ShipScheduleComponent implements OnInit {
       this.date = data.substr(0,10);
     });
     this.restService.getSimulatorDelay().subscribe((data) => {
-      console.log(data);
+     // console.log(data);
       this.rate = data;
       if ( this.rate > 0 ) {
         this.autoSimButtonLabel = "STOP";
@@ -118,7 +118,7 @@ export class ShipScheduleComponent implements OnInit {
 //        console.log(">>>>>>>>"+v);
 //      }
       //let ships: Ship[] = fleet[0].ships;
-      console.log(voyages);
+      //console.log(voyages);
       this.voyageDataSource.data = voyages; 
       });
       //this.shipDataSource.data = this.getFleets()[0].ship;
@@ -127,7 +127,7 @@ export class ShipScheduleComponent implements OnInit {
   }
 
   nextDay() {
-    console.log('>>>>>>>>>>>>>nextDay called');
+    //console.log('>>>>>>>>>>>>>nextDay called');
     this.restService.advanceDateByOneDay().subscribe((data) => {
       console.log("nextDay() - Current Date:" + data.substr(0,10));
       this.date = data.substr(0,10);

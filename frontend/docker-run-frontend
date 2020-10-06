@@ -1,0 +1,1 @@
+docker run --rm -p 9088:9088 us.icr.io/research/kar-dev/reefer/frontend

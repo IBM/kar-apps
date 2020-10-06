@@ -1,9 +1,0 @@
-export KAR_LOCAL_MODE=true
-export KAR_APP=reefer
-export KAR_EXTRA_ARGS="-actors order,reefer,voyage,reefer-provisioner"
-export KAFKA_BROKERS=192.168.1.19:31093
-export KAFKA_VERSION=2.4.0
-export REDIS_HOST=192.168.1.19
-export REDIS_PORT=31379
-export REDIS_PASSWORD=passw0rd
-podman run --rm -e KAR* -e KAFKA* -e REDIS* us.icr.io/research/kar-dev/reefer/actors

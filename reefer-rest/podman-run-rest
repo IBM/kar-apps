@@ -1,9 +1,0 @@
-export KAR_LOCAL_MODE=true
-export KAR_APP=reefer
-export KAR_EXTRA_ARGS="-app_port 9080 -app reefer -service reeferservice"
-export KAFKA_BROKERS=192.168.1.19:31093
-export KAFKA_VERSION=2.4.0
-export REDIS_HOST=192.168.1.19
-export REDIS_PORT=31379
-export REDIS_PASSWORD=passw0rd
-podman run --rm -e KAR* -e KAFKA* -e REDIS* -p 9080:9080 us.icr.io/research/kar-dev/reefer/reefer-rest

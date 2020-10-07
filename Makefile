@@ -12,7 +12,7 @@ REEFER_ACTORS=$(DOCKER_IMAGE_PREFIX)reefer/actors:$(DOCKER_IMAGE_TAG)
 REEFER_SIMULATORS=$(DOCKER_IMAGE_PREFIX)reefer/simulators:$(DOCKER_IMAGE_TAG)
 REEFER_REST=$(DOCKER_IMAGE_PREFIX)reefer/reefer-rest:$(DOCKER_IMAGE_TAG)
 
-all: reeferActors reeferBuilder reeferSimulators reeferRest reeferFrontend
+build: reeferActors reeferBuilder reeferSimulators reeferRest reeferFrontend
 
 reeferFrontend:
 	cd frontend && docker build --build-arg JAVA_BUILDER=$(KAR_JAVA_SDK) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_FRONTEND) .
@@ -29,13 +29,15 @@ reeferSimulators:
 reeferRest:
 	cd reefer-rest && docker build --build-arg JAVA_BUILDER=$(REEFER_BUILDER) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_REST) .
 
-# dockerPushExamples:
+
+# dockerPushReeferImages:
 # 	docker push $(REEFER_FRONTEND)
 # 	docker push $(REEFER_ACTORS)
+# 	docker push $(REEFER_BUILDER)
 # 	docker push $(REEFER_SIMULATOR)
 # 	docker push $(REEFER_REST)
 
 #dockerBuildAndPush:
-#	make dockerPushExamples
+#	make dockerPushReeferImages
 
 .PHONY: docker

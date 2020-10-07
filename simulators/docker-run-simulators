@@ -1,1 +1,0 @@
-docker run --network="host" -e KAR_SIDECAR_IN_CONTAINER=true -e KAR_APP=reefer -e KAFKA_BROKERS -e KAFKA_VERSION -e REDIS_HOST -e REDIS_PORT -e REDIS_PASSWORD -e KAR_EXTRA_ARGS="-app_port 7080 -service simservice -actors simhelper" -p 7080:7080 us.icr.io/research/kar-dev/reefer/simulators

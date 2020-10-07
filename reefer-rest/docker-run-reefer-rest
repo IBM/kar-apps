@@ -1,1 +1,0 @@
-docker run --network="host" -e KAR_SIDECAR_IN_CONTAINER=true -e KAR_APP=reefer -e KAFKA_BROKERS -e KAFKA_VERSION -e REDIS_HOST -e REDIS_PORT -e REDIS_PASSWORD -e KAR_EXTRA_ARGS="-app_port 9080 -service reeferservice" -p 9080:9080 us.icr.io/research/kar-dev/reefer/reefer-rest

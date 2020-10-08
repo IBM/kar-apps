@@ -8,7 +8,7 @@ services:
     environment:
       KAR_SIDECAR_IN_CONTAINER: "true"
       KAR_APP: reefer
-      KAFKA_BROKERS:  ${KAFKA_DEPLOY_HOST:-localhost}
+      KAFKA_BROKERS:  ${KAFKA_HOST:-localhost}:${KAFKA_PORT:-31093}
       KAFKA_VERSION:  ${KAFKA_VERSION:-2.4.0}
       REDIS_HOST:     ${REDIS_HOST:-localhost}
       REDIS_PORT:     ${REDIS_PORT:-31379}
@@ -23,7 +23,7 @@ services:
     environment:
       KAR_SIDECAR_IN_CONTAINER: "true"
       KAR_APP: reefer
-      KAFKA_BROKERS:  ${KAFKA_DEPLOY_HOST:-localhost}
+      KAFKA_BROKERS:  ${KAFKA_HOST:-localhost}:${KAFKA_PORT:-31093}
       KAFKA_VERSION:  ${KAFKA_VERSION:-2.4.0}
       REDIS_HOST:     ${REDIS_HOST:-localhost}
       REDIS_PORT:     ${REDIS_PORT:-31379}
@@ -36,7 +36,7 @@ services:
     environment:
       KAR_SIDECAR_IN_CONTAINER: "true"
       KAR_APP: reefer
-      KAFKA_BROKERS:  ${KAFKA_DEPLOY_HOST:-localhost}
+      KAFKA_BROKERS:  ${KAFKA_HOST:-localhost}:${KAFKA_PORT:-31093}
       KAFKA_VERSION:  ${KAFKA_VERSION:-2.4.0}
       REDIS_HOST:     ${REDIS_HOST:-localhost}
       REDIS_PORT:     ${REDIS_PORT:-31379}

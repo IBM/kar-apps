@@ -21,24 +21,38 @@ Its main responsibility is to provide drivers for Reefer App use cases. Currentl
 ## Reefer Deployment
 
 ### Prereqs
-- maven - version 3.6.2+
-- KAR framework
-- Kind - version 0.8.1+. 
- 
+- maven version 3.6.2+  
+- access to KAR published artifacts or KAR artifacts built locally
+- docker-compose or Kind version 0.8.1+
 
-### Quick Start
+  
+### Quick Start with docker-compose  
+```
+# clone Reefer application
+clone https://github.ibm.com/cwiklik/reefer-app.git
+
+# build docker images locally
+cd reefer-app
+make build
+
+# start reefer application servers
+scripts/reefer-compose-start.sh
+```
+
+
+### Quick Start without docker-compose  
 ```
 # build KAR java SDK in [KAR install dir]/sdk/java/kar-java
 mvn clean install
 
 # deploy KAR dependencies Kafka and Redis by either ...
-# ... running them in kind
-[KAR install dir]/scripts/setup-kind-kar-macos.sh
-# ... or running them in docker-compose
+# ... running them in docker-compose
 [KAR install dir]/scripts/docker-compose-start.sh
+# ... or running them in kind
+[KAR install dir]/scripts/setup-kind-kar-macos.sh
 
 # export Kafka and Redis specific env vars by running
-[KAR install dir]/scripts/kar-kind-env.sh
+[KAR install dir]/scripts/kar-env-local.sh
 
 # clone Reefer application
 clone https://github.ibm.com/cwiklik/reefer-app.git

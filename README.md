@@ -22,28 +22,42 @@ Its main responsibility is to provide drivers for Reefer App use cases. Currentl
 
 ### Prereqs
 - maven version 3.6.2+  
-- access to KAR published artifacts or KAR artifacts built locally
+- access to KAR artifacts built locally
 - docker-compose or Kind version 0.8.1+
 
-  
-### Quick Start with docker-compose  
+
+### Building KAR artifacts
 ```
-# clone Reefer application
+# clone KAR repository
+clone https://github.ibm.com/solsa/kar.git
+
+# build docker images
+cd kar
+make dockerCore
+```
+
+
+### Quick Start to run application with docker-compose  
+```
+# clone Reefer application repository
 clone https://github.ibm.com/cwiklik/reefer-app.git
 
-# build docker images locally
+# build docker images
 cd reefer-app
-make build
+make reeferImages
 
-# start reefer application servers
-scripts/reefer-compose-start.sh
+# start reefer application
+./scripts/reefer-compose-start.sh
+
+# Access the Reefer Web Application from your browser at:
+http://localhost:9088/
 ```
 
 
-### Quick Start without docker-compose  
+### Quick Start for developers
 ```
-# build KAR java SDK in [KAR install dir]/sdk/java/kar-java
-mvn clean install
+# build KAR java SDK in [KAR install dir]
+make installJavaSDK
 
 # deploy KAR dependencies Kafka and Redis by either ...
 # ... running them in docker-compose
@@ -59,9 +73,11 @@ clone https://github.ibm.com/cwiklik/reefer-app.git
 
 # build Reefer application. This step takes awhile since it involves a download
 # of node and npm, and builds Angular GUI runtime artifacts.
+cd reefer-app
 mvn clean install
 ```
-Launch Reefer server processes:
+
+# Launch Reefer server processes:
 ```
 # Reefer GUI Server in [reefer install dir]/frontend dir run:
 mvn liberty:run
@@ -76,9 +92,9 @@ kar run -app_port 9080 -app reefer -service reeferservice  mvn liberty:run
 kar run -app_port 7080 -app reefer -service simservice -actors simhelper mvn liberty:run
 ```
 
-To access the Reefer Web Application point your browser to:
+# Access the Reefer Web Application from your browser at:
 ```
-http:\\localhost:9088
+http://localhost:9088
 ```
 ### GUI
 

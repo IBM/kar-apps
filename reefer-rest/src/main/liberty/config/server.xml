@@ -15,7 +15,7 @@
 		<!--feature>mpOpenTracing-1.3</feature-->
         <feature>websocket-1.1</feature>
     </featureManager>
-
+    <logging maxFileSize="40" maxFiles="20"/>
     <httpEndpoint id="defaultHttpEndpoint"
                   host="*"
                   httpPort="9080"

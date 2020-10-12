@@ -304,9 +304,9 @@ public class ReeferProvisionerActor extends BaseActor {
 
     @Remote
     public JsonObject updateInTransit(JsonObject message) {
-        System.out.println("ReeferProvisionerActor.updateInTransit() - message:" + message);
         JsonObjectBuilder reply = Json.createObjectBuilder();
         int newInTransit = message.getInt("in-transit");
+        System.out.println("ReeferProvisionerActor.updateInTransit() - message:" + message+" update reefers in transit:"+newInTransit);
         super.decrementAndSave(this, Constants.TOTAL_BOOKED_KEY, newInTransit);
         super.incrementAndSave(this, Constants.TOTAL_INTRANSIT_KEY, newInTransit);
         updateRest();
@@ -489,18 +489,21 @@ public class ReeferProvisionerActor extends BaseActor {
 
     @Remote
     public JsonObject unreserveReefers(JsonObject message) {
-        System.out.println("ReeferProvisioner.unreserveReefers() called - message:" + message);
         JsonObjectBuilder reply = Json.createObjectBuilder();
-
-        JsonArray reeferIds = message.getJsonArray(Constants.REEFERS_KEY);
-        for (JsonValue reeferId : reeferIds) {
-            unreserveReefer(Integer.valueOf(((JsonString) reeferId).getString()));
+        try {
+            JsonArray reeferIds = message.getJsonArray(Constants.REEFERS_KEY);
+            for (JsonValue reeferId : reeferIds) {
+                unreserveReefer(Integer.valueOf(((JsonString) reeferId).getString()));
+            }
+            updateRest();
+            JsonValue totalBooked = get(this, Constants.TOTAL_BOOKED_KEY);
+            JsonValue totalInTransit = get(this, Constants.TOTAL_INTRANSIT_KEY);
+            System.out.println("ReeferProvisionerActor.unreserveReefers() - released reefers " + " total booked: "
+                    + totalBooked + " totalInTransit:" + totalInTransit);
+        } catch( Throwable e ) {
+            e.printStackTrace();
         }
-        updateRest();
-        JsonValue totalBooked = get(this, Constants.TOTAL_BOOKED_KEY);
-        JsonValue totalInTransit = get(this, Constants.TOTAL_INTRANSIT_KEY);
-        System.out.println("ReeferProvisionerActor.unreserverReefers() - released reefers " + " total booked: "
-                + totalBooked + " totalInTransit:" + totalInTransit);
+ 
         return reply.build();
     }
 

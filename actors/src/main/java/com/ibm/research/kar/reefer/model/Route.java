@@ -1,13 +1,13 @@
 
 package com.ibm.research.kar.reefer.model;
-
+import java.time.Instant;
 public class Route {
     private Ship vessel;
     private String originPort;
     private String destinationPort;
     private int daysAtSea;
     private int daysAtPort;
-    
+    private Instant lastArrival;
     public Route() {
         super();
     }
@@ -18,8 +18,12 @@ public class Route {
         this.daysAtSea = daysAtSea;
         this.daysAtPort = daysAtPort;
     }
-
-
+    public void setLastArrival(Instant date) {
+        this.lastArrival = date;
+    }
+    public Instant getLastArrival() {
+        return this.lastArrival;
+    }
     public Ship getVessel() {
         return vessel;
     }

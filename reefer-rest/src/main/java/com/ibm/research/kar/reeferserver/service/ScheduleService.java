@@ -6,6 +6,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
+import java.util.Collections;
+import java.util.Comparator;
+
 import com.ibm.research.kar.reefer.common.error.RouteNotFoundException;
 import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
@@ -24,9 +27,6 @@ public class ScheduleService {
 
     private static final int THRESHOLD_IN_DAYS = 100;
 
-    @Value("classpath:routes.json")
-    private Resource routesJsonResource;
-
     @Autowired
     private ShippingScheduler scheduler;
 
@@ -36,7 +36,7 @@ public class ScheduleService {
     public List<Route> getRoutes() {
 
         try {
-            routes = scheduler.getRoutes(routesJsonResource.getInputStream());
+            routes = scheduler.getRoutes();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -54,17 +54,34 @@ public class ScheduleService {
             if (routes.isEmpty()) {
                 getRoutes();
             }
-            Instant routeLastArrivalDate = getLastVoyageDateForRoute(routes.get(0));
-            System.out.println("ScheduleService() - generateNextSchedule() routeLastArrivalDate="
-                    + routeLastArrivalDate.toString());
-            if (TimeUtils.getInstance().getDaysBetween(date, routeLastArrivalDate) < THRESHOLD_IN_DAYS) {
-                System.out.println(
-                        "ScheduleService() - generateNextSchedule() Replenishing Master Schedule with new voyages");
-                // generate new schedule for the next year starting at routeLastArrivalDate
-                masterSchedule.addAll(scheduler.generateSchedule(routeLastArrivalDate));
+            LinkedList<Voyage> sortedSchedule = new LinkedList<>();
+            StringBuilder sb = new StringBuilder("date "+date+"\n");
+            for( Route route : routes ) {
+                long daysBetween = TimeUtils.getInstance().getDaysBetween(date, route.getLastArrival());
+                sb.append(route.getVessel().getId()).append(" last arrival date:").
+                append(route.getLastArrival()).append(" daysBetween: ").
+                append(daysBetween).append("\n");
+                if (route.getLastArrival() != null && daysBetween < THRESHOLD_IN_DAYS) {
+                    Instant endDate = TimeUtils.getInstance().futureDate( route.getLastArrival(), 60);
+                    Instant departureDate = TimeUtils.getInstance().futureDate(route.getLastArrival(), 2);
+                    Instant lastDate = 
+                        scheduler.generateShipSchedule(route, departureDate, sortedSchedule, endDate);
+                    route.setLastArrival(lastDate);
+                }
             }
-        } catch (RouteNotFoundException e) {
-            e.printStackTrace();
+            System.out.println(sb.toString());
+            
+            sb.setLength(0);
+
+            if ( !sortedSchedule.isEmpty() ) {
+                masterSchedule.addAll(sortedSchedule);
+                Collections.sort(masterSchedule,new SchedulerComp());
+                masterSchedule.forEach(voyage -> {
+                    sb.append("\nMasterSchedule------->").append(voyage.getId()).append(" SailDate: ").append(voyage.getSailDate()).
+                    append(" arrivalDate: ").append(voyage.getArrivalDate()).append("\n");
+                });
+                System.out.println(sb.toString());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -105,10 +122,9 @@ public class ScheduleService {
         List<Voyage> schedule = new ArrayList<>();
         if (masterSchedule.isEmpty()) {
             try {
-                scheduler.initialize(routesJsonResource.getInputStream());
+                scheduler.getRoutes();
                 masterSchedule = scheduler.generateSchedule();
             } catch (Exception e) {
-                // !!!!!!!!!!!!!!!!!!!!!! HANDLE THIS
                 e.printStackTrace();
             }
         }
@@ -127,10 +143,9 @@ public class ScheduleService {
         if (masterSchedule.isEmpty()) {
             try {
                 System.out.println("getMatchingSchedule - Master Schedule is empty, generating new one");
-                scheduler.initialize(routesJsonResource.getInputStream());
+                scheduler.getRoutes();
                 masterSchedule = scheduler.generateSchedule();
             } catch (Exception e) {
-                // !!!!!!!!!!!!!!!!!!!!!! HANDLE THIS
                 e.printStackTrace();
             }
         }
@@ -157,17 +172,27 @@ public class ScheduleService {
         List<Voyage> activeSchedule = new ArrayList<>();
         if (masterSchedule.isEmpty()) {
             try {
-                scheduler.initialize(routesJsonResource.getInputStream());
+                scheduler.getRoutes();
                 masterSchedule = scheduler.generateSchedule();
             } catch (Exception e) {
-                // !!!!!!!!!!!!!!!!!!!!!! HANDLE THIS
                 e.printStackTrace();
             }
         }
+        StringBuilder sb2 = new StringBuilder();
+        masterSchedule.forEach(voyage -> {
+            sb2.append("\n/////// master schedule - voyage:").append(voyage.getId()).append(" Current Date:").
+            append(currentDate).append(" SailDate:").append(voyage.getSailDateObject()).append(" DaysAtSea:").
+            append(voyage.getRoute().getDaysAtSea()).append(" Origin:").append(voyage.getRoute().getOriginPort()).
+            append(" Destination:").append(voyage.getRoute().getDestinationPort());
+
+        });
+
+        System.out.println(sb2.toString());
         for (Voyage voyage : masterSchedule) {
             Instant arrivalDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(),
                     voyage.getRoute().getDaysAtSea() + voyage.getRoute().getDaysAtPort());
 
+            System.out.println(".... getActiveSchedule() - voyage:"+voyage.getId()+" Current Date:"+currentDate+" SailDate:"+voyage.getSailDateObject());
             if (voyage.getSailDateObject().isAfter(currentDate)) {
                 // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate
                 // we just stop iterating since all voyagaes sail in the future.
@@ -185,7 +210,7 @@ public class ScheduleService {
 
     public List<Voyage> get() {
         try {
-            scheduler.initialize(routesJsonResource.getInputStream());
+            scheduler.getRoutes();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -234,5 +259,15 @@ public class ScheduleService {
                 "VoyageID:" + voyageId + " Unable to book ship due to lack of capacity. Current capacity:"
                         + voyage.getRoute().getVessel().getFreeCapacity() + " Order reefer count:" + reeferCount);
     }
-
+    class SchedulerComp implements Comparator<Voyage>{
+ 
+        @Override
+        public int compare(Voyage v1, Voyage v2) {
+            if ( v1.getSailDateObject().isAfter(v2.getSailDateObject()) ) {
+                return 1;
+            } else {
+                return -1;
+            }
+        }
+    }
 }

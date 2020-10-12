@@ -49,7 +49,7 @@ make reeferImages
 # start reefer application
 ./scripts/reefer-compose-start.sh
 
-# Access the Reefer Web Application from your browser at:
+# After 30-60 seconds, access the Reefer Web Application from your browser at:
 http://localhost:9088/
 ```
 

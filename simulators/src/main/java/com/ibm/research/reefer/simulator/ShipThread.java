@@ -36,6 +36,7 @@ public class ShipThread extends Thread {
   String[] activekeys;
   int sleeptime;
   JsonValue currentDate;
+  long last_snapshot;
 
   public void run() {
     if (0 == SimulatorService.unitdelay.intValue()) {
@@ -49,10 +50,15 @@ public class ShipThread extends Thread {
     int nextevent = 0;
     activemap = new LinkedHashMap<String,JsonObject>();
     sleeptime=1000 * SimulatorService.unitdelay.intValue();
+    last_snapshot = System.nanoTime();
 
     while (running) {
+      long snapshot = System.nanoTime();
+      long delta = snapshot - last_snapshot;
+      last_snapshot = snapshot;
       System.out.println(
-              "shipthread: " + Thread.currentThread().getId() + ": running " + ++loopcnt + " nextevent= "+nextevent);
+              "shipthread: " + Thread.currentThread().getId() + ": running " + ++loopcnt + " nextevent===> "+nextevent
+              + "  sleeptime= " + sleeptime + "ms last delta= " + delta/1000000 + "ms");
 
       if (!SimulatorService.reeferRestRunning.get()) {
         System.out.println(
@@ -64,7 +70,7 @@ public class ShipThread extends Thread {
           Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
           currentDate = response.readEntity(JsonValue.class);
           SimulatorService.currentDate.set(currentDate);
-          System.out.println("shipthread: New time = " + currentDate.toString());
+          System.out.println("shipthread: New time ======> " + currentDate.toString());
 
           // tell other threads to wake up
           Kar.restPost("simservice", "simulator/newday", JsonValue.NULL);
@@ -75,7 +81,7 @@ public class ShipThread extends Thread {
           System.out.println(
                   "shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
 
-          // send ship positions to all active voyages
+          // compute ship positions to send to all active voyages
           Instant ed = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
           for (JsonValue v : activeVoyages.asJsonArray()) {
             String id = v.asJsonObject().getString("id");
@@ -87,6 +93,7 @@ public class ShipThread extends Thread {
             activemap.put(id,message);
           }
 
+          // compute number of ships to update on each iteration
           activekeys = activemap.keySet().toArray(new String[activemap.size()]);
           voyages_per_event = activemap.size()/events_per_day;
           // spread out any extras as well

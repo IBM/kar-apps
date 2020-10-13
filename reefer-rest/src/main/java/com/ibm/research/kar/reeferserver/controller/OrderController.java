@@ -55,6 +55,12 @@ public class OrderController {
 	@Autowired
 	private GuiController gui;
 
+	/**
+	 * Convert json order to OrderProperties
+	 * 
+	 * @param orderMsg - jason encoded message
+	 * @return OrderProperties instance
+	 */
 	private OrderProperties jsonToOrderProperties(String orderMsg) {
 		OrderProperties orderProperties = new OrderProperties();
 		String voyageId = "";
@@ -85,10 +91,16 @@ public class OrderController {
 		return orderProperties;
 	}
 
-
+    /**
+	 * Called to update the GUI spoil count when and an order is spoilt
+	 * 
+	 * message - json encoded message
+	 * @param 
+	 * @throws IOException
+	 */
 	@PostMapping("/orders/spoilt")
-	public void orderSpoilt(@RequestBody String op) throws IOException {
-		try (JsonReader jsonReader = Json.createReader(new StringReader(op))) {
+	public void orderSpoilt(@RequestBody String message) throws IOException {
+		try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
 
 			JsonObject req = jsonReader.readObject();
 			String spoiltOrderId = req.getString(Constants.ORDER_ID_KEY);
@@ -99,12 +111,18 @@ public class OrderController {
 			e.printStackTrace();
 		}
 	}
-
+    /**
+	 * Called to create an order using properties in the message. 
+	 * 
+	 * @param message - json encoded message
+	 * @return
+	 * @throws IOException
+	 */
 	@PostMapping("/orders")
-	public OrderProperties bookOrder(@RequestBody String op) throws IOException {
-		System.out.println("OrderController.bookOrder - Called -" + op);
+	public OrderProperties bookOrder(@RequestBody String message) throws IOException {
+		System.out.println("OrderController.bookOrder - Called -" + message);
 		// get Java POJO with order properties from json messages
-		OrderProperties orderProperties = jsonToOrderProperties(op);
+		OrderProperties orderProperties = jsonToOrderProperties(message);
 		try {
 
 			Order order = orderService.createOrder(orderProperties);
@@ -116,35 +134,41 @@ public class OrderController {
 			JsonObjectBuilder orderObject = Json.createObjectBuilder();
 			orderObject.add("order", ordersProps.build());
 			JsonObject params = orderObject.build();
+
 			ActorRef orderActor = actorRef(ReeferAppConfig.OrderActorName, order.getId());
+			// call Order actor to create the order
 			JsonValue reply = actorCall(orderActor, "createOrder", params);
 			System.out.println("Order Actor reply:" + reply);
+			
 			order.setStatus(OrderStatus.BOOKED.getLabel());
+
 			JsonArray reefers = reply.asJsonObject().getJsonObject("booking").getJsonArray("reefers");
 			int shipFreeCapacity = scheduleService.updateFreeCapacity(order.getVoyageId(), reefers.size());
+			
 			simulatorService.updateVoyageCapacity(order.getVoyageId(), shipFreeCapacity);
 			voyageService.addOrderToVoyage(order);
 			int futureOrderCount = orderService.getOrders("booked-orders");
 			gui.updateFutureOrderCount(futureOrderCount);
-		} catch (ActorMethodNotFoundException ee) {
-			ee.printStackTrace();
-			// return Json.createObjectBuilder().add("status",
-			// OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
-			// order.getId()).build();
-
 		} catch (Exception ee) {
 			ee.printStackTrace();
 		}
 		return orderProperties;
 	}
-
+    /**
+	 * Returns a list of voyages that are currently at sea
+	 * 
+	 * @return
+	 */
 	@GetMapping("/orders/list/active")
 	public List<Order> getActiveOrderList() {
 		System.out.println("OrderController.getActiveOrderList() - Got New Request");
-
 		return orderService.getActiveOrderList();
 	}
 
+	/**
+	 * Returns a list of voyages that have been booked but not yet at sea
+	 * @return
+	 */
 	@GetMapping("/orders/list/booked")
 	public List<Order> getBookedOrderList() {
 		System.out.println("OrderController.getBookedOrderList() - Got New Request");
@@ -152,6 +176,10 @@ public class OrderController {
 		return orderService.getBookedOrderList();
 	}
 
+	/**
+	 * Returns a list of spoilt orders
+	 * @return
+	 */
 	@GetMapping("/orders/list/spoilt")
 	public List<Order> getSpoiltOrderList() {
 		System.out.println("OrderController.getSpoiltOrderList() - Got New Request");

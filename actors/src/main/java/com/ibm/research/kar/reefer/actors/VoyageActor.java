@@ -25,11 +25,21 @@ public class VoyageActor extends BaseActor {
     public void init() {
         System.out.println("VoyageActor.init() actorID:" + this.getId());
     }
-
+    /**
+     * Returns this voyage orders
+     * 
+     * @return Order Map
+     */
     private Map<String, JsonValue> loadOrders() {
         return super.getSubMap(this, Constants.VOYAGE_ORDERS_KEY);
     }
 
+    /**
+     * Called when ship position changes while in-transit
+     * 
+     * @param message - Json encoded message containing daysAtSea value
+     * @return
+     */
     @Remote
     public JsonValue changePosition(JsonObject message) {
         System.out.println("VoyageActor.changePosition() called Id:"+getId()+" " + message.toString());
@@ -37,7 +47,7 @@ public class VoyageActor extends BaseActor {
         int daysAtSea = message.getInt("daysAtSea");
         JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).add("daysAtSea", daysAtSea).build();
         try {
-
+            /// Notifiy REST of the position change
             restPost("reeferservice", "/voyage/update", params);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).build();
         } catch (Exception e) {
@@ -46,22 +56,37 @@ public class VoyageActor extends BaseActor {
         }
 
     }
-
+    /**
+     * Returns all orders associted with this voyage
+     * 
+     * @return The list of Orders
+     */
     @Remote
     public JsonObject getVoyageOrders() {
         System.out.println("VoyageActor.getVoyageOrders() called " + getId() );
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                 .add("orders", Json.createArrayBuilder(loadOrders().values()).build()).build();
     }
-
+    /**
+     * Returns number of orders associated with this voyage
+     * 
+     * @param message
+     * @return
+     */
     @Remote
     public JsonObject getVoyageOrderCount(JsonObject message) {
         System.out.println("VoyageActor.getVoyageOrderCount() called " + getId() );
-        Map<String, JsonValue> orders = loadOrders();
-        System.out.println(" VoyageActor.getVoyageOrderCount() called " + getId() +" Orders:"+orders.size());
-        return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add("orders", orders.size()).build();
+        //Map<String, JsonValue> orders = loadOrders();
+        int orderCount = super.getSubMapSize(this, Constants.VOYAGE_ORDERS_KEY);
+        System.out.println(" VoyageActor.getVoyageOrderCount() called " + getId() +" Orders:"+orderCount);
+        return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add("orders", orderCount).build();
     }
-
+    /**
+     * Called to change voyage state
+     * 
+     * @param message Json encoded message containing new status
+     * @return
+     */
     @Remote
     public JsonObject changeState(JsonObject message) {
         System.out.println("VoyageActor.changeState() called " + getId() );
@@ -69,13 +94,19 @@ public class VoyageActor extends BaseActor {
         super.set(this, Constants.STATUS_KEY, value);
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).build();
     }
-
+    /**
+     * Called to book a voyage for a given order.
+     * 
+     * @param message Json encoded order properties
+     * @return
+     */
     @Remote
     public JsonObject reserve(JsonObject message) {
         JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
+        int orderCount = super.getSubMapSize(this, Constants.VOYAGE_ORDERS_KEY);
 
         System.out.println("VoyageActor.reserve() called Id:"+getId() +" "+ message.toString() + " OrderID:" + order.getId()
-                + " Orders size=" + loadOrders().size());
+                + " Orders size=" + orderCount);
 
         try {
             // Book reefers for this order thru the ReeferProvisioner
@@ -83,12 +114,12 @@ public class VoyageActor extends BaseActor {
                     actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "bookReefers", message);
             if (reefersBooked(bookingStatus)) {
-
+                // add new order to this voyage order list
                 super.addToSubMap(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
                         Json.createValue(order.getId()));
 
                 set(this, Constants.STATUS_KEY, Json.createValue("Pending"));
-
+                // return reefer list to the caller
                 return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                         .add(Constants.REEFERS_KEY, bookingStatus.asJsonObject().getJsonArray(Constants.REEFERS_KEY))
                         .add(JsonOrder.OrderKey, order.getAsObject()).build();

@@ -75,11 +75,12 @@ public class TimeController {
         System.out.println("TimeController.advance() ***************************************** NEXT DAY "
                 + time.toString() + " ***************************************************************");
         try {
-
+            // On a day change generate a future schedule if necessary. The new schedule is generated if
+            // we reached a configured threshold of days before the end of current schedule.
             schduleService.generateNextSchedule(time);
             JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(time.toString()))
                     .build();
-
+            // Reefers on maintenance are freed automatically after a configurable number of days passes.
             Kar.actorCall(Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "releaseReefersfromMaintenance", message);
         } catch (Exception e) {

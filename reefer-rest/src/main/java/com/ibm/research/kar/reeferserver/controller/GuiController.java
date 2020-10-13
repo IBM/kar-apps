@@ -33,10 +33,10 @@ public class GuiController {
 
     public GuiController() {
         TimerTask timerTask = new GuiUpdateTask();
-        // running timer task as daemon thread
+        // running timer task as daemon thread. It updates
+        // the GUI counts at regular intervals
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(timerTask, 0, 100);
-        System.out.println("TimerTask started");
     }
 
     public void sendReefersUpdate(List<Reefer> reefers) {
@@ -90,7 +90,6 @@ public class GuiController {
                 if ( reeferStats != null ) {
                     template.convertAndSend("/topic/reefers/stats", reeferStats);
                 }
-               // template.convertAndSend("/topic/reefers/stats", reeferStats);
                 valuesChanged.set(false);
             }
 

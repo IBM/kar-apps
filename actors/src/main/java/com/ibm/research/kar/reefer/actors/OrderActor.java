@@ -34,12 +34,16 @@ public class OrderActor extends BaseActor {
         Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
         System.out.println("OrderActor.init() - Order Id:" + getId() +  " state:" + state +" fetched submap of size:" + reeferMap.size());
     }
-
+    /**
+     * Called when an order is delivered (ie.ship arrived at the destination port).
+     * 
+     * @param message
+     * @return
+     */
     @Remote
     public JsonObject delivered(JsonObject message) {
-        JsonValue voyageId = Kar.actorGetState(this, "voyageId");
-        System.out.println(voyageId + " orderActor.delivered() called- Actor ID:" + getId()
-                + " type:" + this.getType());
+        JsonValue voyageId = Kar.actorGetState(this, Constants.VOYAGE_ID_KEY);
+        System.out.println(voyageId + " orderActor.delivered() called- Actor ID:" + getId());
         try {
             // fetch all reefers in this order
             Map<String, JsonValue> reeferMap = super.getSubMap(this,  Constants.REEFER_MAP_KEY);
@@ -57,29 +61,38 @@ public class OrderActor extends BaseActor {
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {
             e.printStackTrace();
-            return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "VOYAGE_ID_MISSING")
+            return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "OrderActor - Failure while handling order delivery")
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         }
     }
-
+    /**
+     * Called when ship departs from orgin port
+     * 
+     * @param message - json encoded message
+     * @return
+     */
     @Remote
     public JsonObject departed(JsonObject message) {
-        JsonValue voyage = get(this, "voyageId");
+        JsonValue voyage = get(this, Constants.VOYAGE_ID_KEY);
         System.out.println("OrderActor.departed() called- Actor ID:" + getId()
-                + " type:" + this.getType() + " voyage:" + voyage);
+                + " voyage:" + voyage);
         try {
-            Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
+            //Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
+            int orderReeferCount = super.getSubMapSize(this, Constants.REEFER_MAP_KEY);
+
             saveOrderStatus(OrderStatus.INTRANSIT);
              // Notify ReeferProvisioner that the order is in-transit
-            if (!reeferMap.isEmpty()) {
+            //if (!reeferMap.isEmpty()) {
+            if (orderReeferCount > 0 ) {
 
                 ActorRef reeferProvisionerActor = Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
                         ReeferAppConfig.ReeferProvisionerId);
-                JsonObject params = Json.createObjectBuilder().add("in-transit", reeferMap.size()).build();
-                actorCall(reeferProvisionerActor, "updateInTransit", params);
+//                        JsonObject params = Json.createObjectBuilder().add("in-transit", reeferMap.size()).build();
+                        JsonObject params = Json.createObjectBuilder().add("in-transit", orderReeferCount).build();
+                        actorCall(reeferProvisionerActor, "updateInTransit", params);
 
                 System.out.println(voyage + " OrderActor.departed() - Order Id:" + getId()
-                        + " in-transit reefer list size:" + reeferMap.size());
+                        + " in-transit reefer list size:" + orderReeferCount);
             } else {
                 System.out.println(" OrderActor.departed() - Order Id:" + getId()
                         + " has no booked reefers");
@@ -91,7 +104,12 @@ public class OrderActor extends BaseActor {
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         }
     }
-
+    /**
+     * Called when a reefer anomaly is detected. 
+     * 
+     * @param message - json encoded message
+     * @return The state of the order 
+     */
     @Remote
     public JsonObject anomaly(JsonObject message) {
         // Reefer notifies the order on anomaly. The order returns its current state which will
@@ -108,7 +126,7 @@ public class OrderActor extends BaseActor {
     @Remote
     /*
      * Replace spoilt reefer with a good one. This is a use case where an order has not yet departed 
-     * but one of more of its reefers spoilt.
+     * but one of of its reefers spoilt.
      */
     public JsonObject replaceReefer(JsonObject message) {
         JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
@@ -119,6 +137,7 @@ public class OrderActor extends BaseActor {
         int replacementReeferId = message.getJsonNumber(Constants.REEFER_REPLACEMENT_ID_KEY).intValue();
         System.out.println("OrderActor.replaceReefer() called- Actor ID:" + getId()
                 + " replacing spoilt reefer:" + spoiltReeferId + " with a new one:" + replacementReeferId);
+        // reefer replace is a two step process (remove + add)
         super.removeFromSubMap(this,Constants.REEFER_MAP_KEY,String.valueOf(spoiltReeferId));
         super.addToSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(replacementReeferId), Json.createValue(replacementReeferId));
 
@@ -128,10 +147,18 @@ public class OrderActor extends BaseActor {
 
     @Remote
     public JsonObject reeferCount(JsonObject message) {
-        Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
-        return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, reeferMap.size()).build();
-    }
 
+        int orderReeferCount = super.getSubMapSize(this, Constants.REEFER_MAP_KEY);
+//        Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
+        return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, orderReeferCount).build();
+    //    return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, reeferMap.size()).build();
+}
+    /**
+     * Called to book a new order using properties included in the message
+     * 
+     * @param message Order properties
+     * @return
+     */
     @Remote
     public JsonObject createOrder(JsonObject message) {
         System.out.println("OrderActor.createOrder() called- Actor ID:" + this.getId() + " type:" + this.getType()
@@ -143,9 +170,10 @@ public class OrderActor extends BaseActor {
         try {
             // voyageId is mandatory
             if (order.containsKey(JsonOrder.VoyageIdKey)) {
-                JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
+           //     JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
                 
                 super.set(this, Constants.VOYAGE_ID_KEY, Json.createValue(order.getVoyageId()));
+                // Call Voyage actor to book the voyage for this order
                 JsonObject voyageBookingResult = bookVoyage(order.getVoyageId(), order);
                 System.out.println("OrderActor.createOrder() - Voyage Booked - Reply:" + voyageBookingResult);
                 if (voyageBooked(voyageBookingResult)) {
@@ -153,7 +181,7 @@ public class OrderActor extends BaseActor {
                     saveOrderStatus(OrderStatus.BOOKED);
         
                     System.out
-                            .println("OrderActor.createOrder() - Order Booked - saved order " + getId() + " state:" + state.toString());
+                            .println("OrderActor.createOrder() - Order Booked - saved order " + getId() + " state:" + OrderStatus.BOOKED);
                     return Json.createObjectBuilder().add(JsonOrder.OrderBookingKey, voyageBookingResult).build();
                 } else {
                     return voyageBookingResult;
@@ -181,7 +209,12 @@ public class OrderActor extends BaseActor {
     private boolean voyageBooked(JsonObject orderBookingStatus) {
         return orderBookingStatus.getString(Constants.STATUS_KEY).equals(Constants.OK);
     }
-
+    /**
+     * Called to persist reefer ids associated with this order
+     * 
+     * @param orderBookingStatus Contains reefer ids
+     * @throws Exception
+     */
     private void saveOrderReefers(JsonObject orderBookingStatus) throws Exception {
         JsonArray reefers = orderBookingStatus.getJsonArray(Constants.REEFERS_KEY);
         System.out.println("OrderActor.createOrder() - Order Booked - Reefers:" + reefers.size());
@@ -197,7 +230,13 @@ public class OrderActor extends BaseActor {
         }
         
     }
-
+    /**
+     * Called to book voyage for this order by messaging Voyage actor.
+     * 
+     * @param voyageId The voyage id
+     * @param order Json encoded order properties
+     * @return The voyage booking result
+     */
     private JsonObject bookVoyage(String voyageId, JsonOrder order) {
         try {
             JsonObject params = Json.createObjectBuilder().add(JsonOrder.OrderKey, order.getAsObject()).build();

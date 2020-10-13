@@ -57,6 +57,9 @@ public abstract class AbstractPersistence {
   protected Map<String, JsonValue> getSubMap(ActorRef ref,String subMapName) {
     return Kar.actorSubMapGet(ref, subMapName);
   }
+  protected int getSubMapSize(ActorRef ref,String subMapName) {
+    return Kar.actorSubMapSize(ref, subMapName);
+  }
   protected void removeFromSubMap(ActorRef ref,String subMapName, String subMapKey) {
     Kar.actorDeleteState(ref,subMapName,subMapKey);
   }

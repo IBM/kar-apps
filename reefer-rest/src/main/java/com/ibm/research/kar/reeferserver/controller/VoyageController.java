@@ -148,7 +148,7 @@ public class VoyageController {
     Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysAtSea);
 
     if ( voyageArrived(shipCurrentDate,voyage.getArrivalDate(), voyageId )) {
-      orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED, daysAtSea);
+      orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED);
       System.out.println("VoyageController.shipDepartedOrArrived() voyageId=" + voyageId
           + " has ARRIVED ------------------------------------------------------");
       voyageService.voyageEnded(voyageId);
@@ -168,7 +168,7 @@ public class VoyageController {
       
         voyageService.voyageDeparted(voyageId);
 
-        orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT, daysAtSea);
+        orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT);
       
     }
   }
@@ -265,9 +265,9 @@ public class VoyageController {
     }
     gui.updateInTransitOrderCount(totalActiveOrders);
 
-    gui.updateFutureOrderCount(orderService.getOrders("booked-orders"));
+    gui.updateFutureOrderCount(orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY)); //"booked-orders"));
 
-    gui.updateSpoiltOrderCount(orderService.getOrders(Constants.SPOILT_ORDERS_KEY));
+    gui.updateSpoiltOrderCount(orderService.getOrderCount(Constants.SPOILT_ORDERS_KEY));
     
     System.out
         .println("VoyageController.activeVoyages() - Done - Total Active Orders:"

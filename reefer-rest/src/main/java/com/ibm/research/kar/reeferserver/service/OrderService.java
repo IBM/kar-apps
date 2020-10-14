@@ -9,6 +9,7 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonValue;
+import javax.json.JsonObject;
 
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.Order;
@@ -20,122 +21,152 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class OrderService extends AbstractPersistentService {
-
+    // number of the most recent orders to return to the GUI
     private static int MaxOrdersToReturn = 10;
-    private List<Order> bookedOrders = new ArrayList<>();
-    private List<Order> activeOrders = new ArrayList<>();
-    private List<Order> spoiltOrders = new ArrayList<>();
-    private List<Order> onMaintenanceOrders = new ArrayList<>();
 
+    /**
+     * Returns N most recent active orders where N = MaxOrdersToReturn
+     * 
+     * @return- Most recent active orders
+     */
     public List<Order> getActiveOrderList() {
+        // private JsonArray getListAJsonArray(String orderListKind) {
+
+        List<JsonValue> activeOrders = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
+        List<Order> sublist;
         if (activeOrders.size() <= MaxOrdersToReturn) {
-            return Collections.unmodifiableList(activeOrders);
+            sublist = jsonToOrderList(activeOrders);
         } else {
-            return activeOrders.subList(activeOrders.size() - 10, activeOrders.size());
+            sublist = jsonToOrderList(
+                    activeOrders.subList(activeOrders.size() - MaxOrdersToReturn, activeOrders.size()));
         }
-
+        return sublist;
     }
 
+    /**
+     * Returns N most recent booked orders where N = MaxOrdersToReturn
+     * 
+     * @return Most recent booked orders
+     */
     public List<Order> getBookedOrderList() {
-        synchronized (bookedOrders) {
-            if (bookedOrders.size() <= MaxOrdersToReturn) {
-                return bookedOrders;
-            } else {
-                return bookedOrders.subList(bookedOrders.size() - 10, bookedOrders.size());
-            }
-
-        }
-
-    }
-
-    public List<Order> getSpoiltOrderList() {
-        synchronized (spoiltOrders) {
-            if (spoiltOrders.size() <= MaxOrdersToReturn) {
-                return spoiltOrders;
-            } else {
-                return spoiltOrders.subList(spoiltOrders.size() - 10, spoiltOrders.size());
-            }
-
-        }
-
-    }
-
-    public int orderSpoilt(String orderId) {
-        JsonValue spoiltOrdersList = get(Constants.SPOILT_ORDERS_KEY);
-        JsonArrayBuilder builder = null;
-        if (spoiltOrders != null && spoiltOrders != JsonValue.NULL) {
-            builder = Json.createArrayBuilder(spoiltOrdersList.asJsonArray());
+        List<JsonValue> bookedOrders = getListAJsonArray(Constants.BOOKED_ORDERS_KEY);
+        List<Order> sublist;
+        if (bookedOrders.size() <= MaxOrdersToReturn) {
+            sublist = jsonToOrderList(bookedOrders);
         } else {
-            builder = Json.createArrayBuilder();
+            sublist = jsonToOrderList(
+                    bookedOrders.subList(bookedOrders.size() - MaxOrdersToReturn, bookedOrders.size()));
         }
+        return sublist;
+    }
 
-        Iterator<Order> activeIterator = activeOrders.iterator();
+    /**
+     * Returns N most recent spoilt orders where N = MaxOrdersToReturn
+     * 
+     * @return Most recent spoilt orders
+     */
+    public List<Order> getSpoiltOrderList() {
+        List<JsonValue> spoiltOrders = getListAJsonArray(Constants.SPOILT_ORDERS_KEY);
+        List<Order> sublist;
+        if (spoiltOrders.size() <= MaxOrdersToReturn) {
+            sublist = jsonToOrderList(spoiltOrders);
+        } else {
+
+            sublist = jsonToOrderList(
+                    spoiltOrders.subList(spoiltOrders.size() - MaxOrdersToReturn, spoiltOrders.size()));
+        }
+        return sublist;
+    }
+
+    private List<Order> jsonToOrderList(List<JsonValue> jsonOrders) {
+        List<Order> orders = new ArrayList<>();
+        for (JsonValue v : jsonOrders) {
+            Order order = new Order(v.asJsonObject().getString(Constants.ORDER_ID_KEY), "", 0,
+                    v.asJsonObject().getString(Constants.VOYAGE_ID_KEY), "", new ArrayList());
+            orders.add(order);
+        }
+        return Collections.unmodifiableList(orders);
+    }
+
+    /**
+     * Called when an order with given id gets spoiled which means that one or more
+     * of its reefers became spoilt while in-transit.
+     * 
+     * @param orderId Order id which became spoilt
+     * @return Number of spoilt orders
+     */
+    public int orderSpoilt(String orderId) {
+        JsonArray activeOrdersArray = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
+
+        JsonArrayBuilder spoiltOrderBuilder = Json.createArrayBuilder(getListAJsonArray(Constants.SPOILT_ORDERS_KEY));
+
+        Iterator<JsonValue> activeIterator = activeOrdersArray.iterator();
+        // find the matching order which needs to move from active to spoilt list
         while (activeIterator.hasNext()) {
-            Order order = activeIterator.next();
-            if (orderId.equals(order.getId())) {
-
-                spoiltOrders.add(order);
-                JsonValue spoiltOrder = Json.createObjectBuilder().add("orderId", order.getId())
-                        .add("voyageId", order.getVoyageId()).build();
-                builder.add(spoiltOrder);
+            JsonObject order = activeIterator.next().asJsonObject();
+            if (orderId.equals(order.getString(Constants.ORDER_ID_KEY))) {
+                spoiltOrderBuilder.add(0, order);
                 break;
             }
         }
-        JsonArray spoiltList = builder.build();
+        JsonArray spoiltList = spoiltOrderBuilder.build();
+        System.out.println("OrderService.orderSpoilt() - spoilt order " + orderId + " active count:"
+                + activeOrdersArray.size() + " spoilt count:" + spoiltList.size());
+        // save new spoilt orders list in kar persistent storage
         set(Constants.SPOILT_ORDERS_KEY, spoiltList);
+
         return spoiltList.size();
     }
 
+    /**
+     * Called when a new order is received.
+     * 
+     * @param orderProperties Order properties
+     * @return new Order instance
+     */
     public Order createOrder(OrderProperties orderProperties) {
         Order order = new Order(orderProperties);
-        bookedOrders.add(order);
-        JsonArrayBuilder bookedOrderArrayBuilder = null;
-        // fetch booked orders from Kar
-        JsonValue bookedOrders = get(Constants.BOOKED_ORDERS_KEY);
-        if (bookedOrders == null) {
-            bookedOrderArrayBuilder = Json.createArrayBuilder();
-        } else {
-            bookedOrderArrayBuilder = Json.createArrayBuilder();
-            JsonArray orderList = bookedOrders.asJsonArray();
-            System.out.println("OrderService.createOrder - booked order list size:" + orderList.size());
-            // since orderList is immutable we need copy current booked orders into a new
-            // list and then add our new order to it. Could not find a way around this.
-            // Attempt to modify the list from Kar causes UnsuportedOpertion exception.
-            for (JsonValue savedOrder : orderList) {
-                bookedOrderArrayBuilder.add(savedOrder);
-            }
-        }
 
         JsonValue newOrder = Json.createObjectBuilder().add("orderId", order.getId())
                 .add("voyageId", order.getVoyageId()).build();
 
+        JsonArrayBuilder bookedOrderArrayBuilder = Json
+                .createArrayBuilder(getListAJsonArray(Constants.BOOKED_ORDERS_KEY));
         bookedOrderArrayBuilder.add(newOrder);
-        // once the build() is called the list is immutable
-        JsonArray orderArray = bookedOrderArrayBuilder.build();
-        // save the new booked orders list in Kar
-        set(Constants.BOOKED_ORDERS_KEY, orderArray);
+        JsonArray bookedOrdersArray = bookedOrderArrayBuilder.build();
+        set(Constants.BOOKED_ORDERS_KEY, bookedOrdersArray);
         System.out.println("OrderService.createOrder() - added future order id:" + order.getId() + " voyageId:"
-                + order.getVoyageId() + " booked Order:" + orderArray.size());
+                + order.getVoyageId() + " booked Order:" + bookedOrdersArray.size());
         return order;
     }
 
+    /**
+     * Returns aggregate counts for booked, active, spoilt and on-maintenance orders
+     * 
+     * @return order counts
+     */
     public OrderStats getOrderStats() {
-        return new OrderStats(getOrders(Constants.ACTIVE_ORDERS_KEY), getOrders(Constants.BOOKED_ORDERS_KEY),
-                getOrders(Constants.SPOILT_ORDERS_KEY));
+        return new OrderStats(getOrderCount(Constants.ACTIVE_ORDERS_KEY), getOrderCount(Constants.BOOKED_ORDERS_KEY),
+                getOrderCount(Constants.SPOILT_ORDERS_KEY));
     }
 
-    public int getOrders(String orderKindKey) {
+    /**
+     * Given the order list type return a count. For example if
+     * orderKindKey=Contstants.BOOKED_ORDERS_KEY the method returns total number of
+     * booked orders
+     * 
+     * @param orderKindKey - type of order list (active,booked,spoilt,
+     *                     on-maintenance)
+     * @return number of orders
+     */
+    public int getOrderCount(String orderListKindKey) {
         try {
-            JsonValue o = get(orderKindKey);
-           // System.out.println("OrderService.getOrders() -" + orderKindKey + " orders: o=" + o);
+            JsonValue o = get(orderListKindKey);
             if (o == null) {
                 o = Json.createArrayBuilder().build();
-            //    System.out.println("OrderService.getOrders() - NEW LIST FOR BOOKED ORDERS ");
-                set(orderKindKey, o);
+                set(orderListKindKey, o);
             }
             JsonArray orderArray = o.asJsonArray();
-          //  System.out.println(
-         //           "OrderService.getOrders() - " + orderKindKey + " orders:" + orderArray.size());
             return orderArray.size();
         } catch (Exception e) {
             e.printStackTrace();
@@ -143,166 +174,124 @@ public class OrderService extends AbstractPersistentService {
         return 0;
     }
 
-    public int getActiveOrders(String voyageId) {
+    private JsonArray toJsonArray(List<JsonValue> list) {
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        for (JsonValue v : list) {
+            arrayBuilder.add(v);
+        }
+        return arrayBuilder.build();
+    }
 
-        int voyageOrders = 0;
-        JsonValue activeOrders = get(Constants.ACTIVE_ORDERS_KEY);
-        JsonArray activeOrderArray = activeOrders.asJsonArray();
-        Iterator<JsonValue> it = activeOrderArray.iterator();
-        // move booked voyage orders to active
+    /**
+     * Called when a ship (in a voyage) departs from an origin port. Moves orders
+     * associated with a given voyage from booked to active list.
+     * 
+     * @param voyageId Voyage id
+     */
+    private void voyageDeparted(String voyageId) {
+        List<JsonValue> newBookedList = getMutableOrderList(Constants.BOOKED_ORDERS_KEY);
+        JsonArray newActiveList = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);// getMutableOrderList(Constants.ACTIVE_ORDERS_KEY);
+
+        JsonArrayBuilder activeOrderBuilder = Json.createArrayBuilder(newActiveList); // orders.asJsonArray());
+
+        // Move booked to active list
+        Iterator<JsonValue> it = newBookedList.iterator();
         while (it.hasNext()) {
             JsonValue v = it.next();
             if (voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY))) {
-                voyageOrders++;
-            }
-        }
-        return voyageOrders;
-    }
-
-    private void moveBookedOrdersToActive(String departedVoyageId) {
-        synchronized (bookedOrders) {
-            Iterator<Order> bookedIterator = bookedOrders.iterator();
-            while (bookedIterator.hasNext()) {
-                Order order = bookedIterator.next();
-
-                if (departedVoyageId.equals(order.getVoyageId())) {
-                    activeOrders.add(order);
-                    order.setStatus(OrderStatus.INTRANSIT.name().toLowerCase());
-                    bookedIterator.remove();
-                }
-            }
-        }
-
-    }
-
-    private void removeActiveOrders(String arrivedVoyageId) {
-        Iterator<Order> activeIterator = activeOrders.iterator();
-        while (activeIterator.hasNext()) {
-            Order order = activeIterator.next();
-            if (arrivedVoyageId.equals(order.getVoyageId())) {
-                activeIterator.remove();
-                removeSpoiltOrders(order.getId());
-            }
-        }
-    }
-
-    private void removeSpoiltOrders(String orderId) {
-        Iterator<Order> spoiltIterator = spoiltOrders.iterator();
-        while (spoiltIterator.hasNext()) {
-            Order order = spoiltIterator.next();
-            if (orderId.equals(order.getId())) {
-                spoiltIterator.remove();
-                break;
-            }
-        }
-    }
-
-    private void voyageDeparted(String voyageId) {
-        System.out.println("OrderService.voyageDeparted() - voyage:" + voyageId);
-        JsonValue bookedOrders = get(Constants.BOOKED_ORDERS_KEY);
-        if ( bookedOrders != null ) {
-            JsonArray bookedOrderArray = bookedOrders.asJsonArray();
-            if ( bookedOrderArray != null) {
-                moveBookedOrdersToActive(voyageId);
-                JsonValue orders = get(Constants.ACTIVE_ORDERS_KEY);
-
-                if ( orders != null ) {
-                    JsonArrayBuilder newbookedOrderArray = Json.createArrayBuilder();
-                    JsonArrayBuilder activeOrderbuilder = Json.createArrayBuilder(orders.asJsonArray());
-                    System.out.println(voyageId + "--------------- OrderService.voyageDeparted() number of booked orders "
-                            + bookedOrderArray.size());
-                    Iterator<JsonValue> it = bookedOrderArray.iterator();
-                    // move booked voyage orders to active
-                    while (it.hasNext()) {
-                        JsonValue v = it.next();
-                        if (voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY))) {
-                            activeOrderbuilder.add(v);
-                        } else {
-                            newbookedOrderArray.add(v);
-                        }
-                    }
-            
-                    set(Constants.ACTIVE_ORDERS_KEY, activeOrderbuilder.build());
-                    set(Constants.BOOKED_ORDERS_KEY, newbookedOrderArray.build());
-                }
-
-            }
- 
-        }
- 
-    }
-
-    private void voyageArrived(String voyageId) {
-        JsonValue activeOrders = get(Constants.ACTIVE_ORDERS_KEY);
-        if ( activeOrders != null ) {
-            JsonArray activeOrderArray = activeOrders.asJsonArray();
-            // JsonArrayBuilder newSpoiltOrderArray =
-            // Json.createArrayBuilder(activeOrderArray);
-            List<JsonValue> newList = new ArrayList<>();
-    
-            JsonValue spoiltOrders = get(Constants.SPOILT_ORDERS_KEY);
-            JsonArray spoiltOrderArray = spoiltOrders.asJsonArray();
-            spoiltOrderArray.forEach(value -> {
-                newList.add(value);
-            });
-    
-            JsonArrayBuilder activeOrderArrayBuilder = Json.createArrayBuilder();
-            removeActiveOrders(voyageId);
-            Iterator<JsonValue> it = activeOrderArray.iterator();
-            // move booked voyage orders to active
-            while (it.hasNext()) {
-                JsonValue v = it.next();
-                // skip orders which have just been delivered (voyage arrived)
-                if (!voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY))) {
-                    activeOrderArrayBuilder.add(v);
-    
-                } else {
-                    removeOrderFromSpoiltList(newList, v.asJsonObject().getString(Constants.ORDER_ID_KEY));
-                }
-            }
-            JsonArray orders = activeOrderArrayBuilder.build();
-            System.out.println("................................. OrderService.voyageArrived() - voyageId:" + voyageId
-                    + " - Saving Active Voyages - Count:" + orders.size());
-            set(Constants.ACTIVE_ORDERS_KEY, orders);
-    
-            JsonArrayBuilder newSpoiltOrderArrayBuilder = Json.createArrayBuilder();
-            newList.forEach(value -> {
-                newSpoiltOrderArrayBuilder.add(value);
-            });
-            JsonArray al = newSpoiltOrderArrayBuilder.build();
-            System.out.println("................................. OrderService.voyageArrived() - voyageId:" + voyageId
-                    + " - Saving SpoiltOrders List -" + al.toString());
-            set(Constants.SPOILT_ORDERS_KEY, al);
-        }
-
-    }
-
-    private void removeOrderFromSpoiltList(List<JsonValue> spoiltOrderArray, String orderId) {
-        // JsonArrayBuilder spoiltOrderArrayBuilder = Json.createArrayBuilder();
-
-        Iterator<JsonValue> it = spoiltOrderArray.iterator();
-        while (it.hasNext()) {
-            JsonValue v = it.next();
-            // skip orders which has just been delivered (voyage arrived)
-            if (orderId.equals(v.asJsonObject().getString(Constants.ORDER_ID_KEY))) {
+                activeOrderBuilder.add(v);
+                // remove from booked
                 it.remove();
             }
         }
-        // return spoiltOrderArrayBuilder.bui
+        JsonArray activeArray = activeOrderBuilder.build();
+        set(Constants.ACTIVE_ORDERS_KEY, activeArray);
+        set(Constants.BOOKED_ORDERS_KEY, toJsonArray(newBookedList));
+        System.out.println("OrderService.voyageDeparted() - voyage:" + voyageId + " booked voyage:"
+                + newBookedList.size() + " active voyages:" + activeArray.size());
+
     }
 
-    public void updateOrderStatus(String voyageId, OrderStatus status, int daysAtSea) {
+    private JsonArray getListAJsonArray(String orderListKind) {
+        JsonValue orders = get(orderListKind);
+        if (orders == null) {
+            return Json.createArrayBuilder().build();
+        } else {
+            return orders.asJsonArray();
+        }
+
+    }
+
+    private List<JsonValue> getMutableOrderList(String orderListKind) {
+        // create a new list for spoilt orders. We can modify this list to
+        // remove spoilt orders that have arrived at the destination port.
+        List<JsonValue> newList = new ArrayList<>();
+
+        // fetch inmutable list of spoilt order from Kar persistant storage
+        JsonArray orders = getListAJsonArray(orderListKind);
+        // copy spoilt orders from inmutable list to one that we can change
+        orders.forEach(value -> {
+            newList.add(value);
+        });
+        return newList;
+    }
+
+    private void removeVoyageOrdersFromList(String voyageId, List<JsonValue> orderList) {
+        Iterator<JsonValue> it = orderList.iterator();
+        while (it.hasNext()) {
+            // v.asJsonObject().getString(Constants.ORDER_ID_KEY)
+            JsonObject order = it.next().asJsonObject();
+            if (voyageId.equals(order.getString(Constants.VOYAGE_ID_KEY))) {
+                it.remove();
+            }
+        }
+    }
+
+    /**
+     * Called when a voyage ends at destination port. When a ship arrives it may
+     * have spoilt reefers aboard which went bad while in-transit. If even one
+     * reefer becomes spoilt in an order, for simplicity, we spoil an entire order.
+     * Removes voyage orders from both active and spoilt lists.
+     * 
+     * @param voyageId
+     */
+    private void voyageArrived(String voyageId) {
+
+        List<JsonValue> newSpoiltList = getMutableOrderList(Constants.SPOILT_ORDERS_KEY);
+        List<JsonValue> newActiveList = getMutableOrderList(Constants.ACTIVE_ORDERS_KEY);
+
+        // remove voyage orders from the spoilt list
+        removeVoyageOrdersFromList(voyageId, newSpoiltList);
+        // remive voyage orders from the active list
+        removeVoyageOrdersFromList(voyageId, newActiveList);
+
+        // save new spoilt list in the Kar persistent storage
+        set(Constants.SPOILT_ORDERS_KEY, toJsonArray(newSpoiltList));
+        // save new active list in the Kar persistent storage
+        set(Constants.ACTIVE_ORDERS_KEY, toJsonArray(newActiveList));
+
+        System.out.println("................................. OrderService.voyageArrived() - voyageId:" + voyageId
+                + " - Active Orders:" + newActiveList.size() + " Spoilt Orders:" + newSpoiltList.size());
+
+    }
+
+    /**
+     * Called when a voyage either departs its origin port or arrives at destination
+     * port.
+     * 
+     * @param voyageId Voyage id
+     * @param status   - Voyage status
+     */
+    public void updateOrderStatus(String voyageId, OrderStatus status) {
         System.out.println("OrderService.updateOrderStatus() - voyageId:" + voyageId + " Status:" + status);
         if (voyageId == null) {
             System.out.println("OrderService.updateOrderStatus() - voyageId is null, rejecting update request");
             return;
         }
-
-        if (status.equals(OrderStatus.DELIVERED)) {
+        if (OrderStatus.DELIVERED.equals(status)) {
             voyageArrived(voyageId);
-        } else if (status.equals(OrderStatus.INTRANSIT)) {
+        } else if (OrderStatus.INTRANSIT.equals(status)) {
             voyageDeparted(voyageId);
         }
     }
-
 }

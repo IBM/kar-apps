@@ -147,7 +147,7 @@ public class OrderController {
 			
 			simulatorService.updateVoyageCapacity(order.getVoyageId(), shipFreeCapacity);
 			voyageService.addOrderToVoyage(order);
-			int futureOrderCount = orderService.getOrders("booked-orders");
+			int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY); //"booked-orders");
 			gui.updateFutureOrderCount(futureOrderCount);
 		} catch (Exception ee) {
 			ee.printStackTrace();

@@ -70,7 +70,7 @@ public class ReeferAllocator {
                 ReeferDTO reefer = new ReeferDTO(index, ReeferState.State.ALLOCATED, orderId, voyageId);
                 reeferInventory[index] = reefer;
                 reefers.add(reefer);
-                System.out.println("+++++++++++++++++++++ ReeferId:"+index+" Added to order:"+orderId);
+                //System.out.println("+++++++++++++++++++++ ReeferId:"+index+" Added to order:"+orderId);
             }
         } catch(ReeferInventoryExhaustedException e) {
 

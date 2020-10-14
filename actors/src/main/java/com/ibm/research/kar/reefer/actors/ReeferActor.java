@@ -80,7 +80,7 @@ public class ReeferActor extends BaseActor {
      */
     @Remote
     public void reserve(JsonObject message) {
-        System.out.println("ReeferActor.reserve() called - Id:" + this.getId() + " message:" + message.toString());
+        //System.out.println("ReeferActor.reserve() called - Id:" + this.getId() + " message:" + message.toString());
         setState(message);
     }
     /**
@@ -89,7 +89,7 @@ public class ReeferActor extends BaseActor {
      */
     @Remote
     public void unreserve(JsonObject message) {
-        System.out.println("ReeferActor.unreserve() called - Id:" + this.getId());
+        //System.out.println("ReeferActor.unreserve() called - Id:" + this.getId());
         Kar.actorDeleteAllState(this);
     }
     /**
@@ -118,7 +118,7 @@ public class ReeferActor extends BaseActor {
      */
     @Remote
     public JsonValue anomaly(JsonObject message) {
-        System.out.println("ReeferActor.anomaly() called - Id:" + this.getId());
+        //System.out.println("ReeferActor.anomaly() called - Id:" + this.getId());
         JsonObjectBuilder propertiesBuilder = Json.createObjectBuilder();
         JsonObjectBuilder reply = Json.createObjectBuilder();
         // A reefer with an orderId is on a ship

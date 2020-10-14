@@ -58,7 +58,7 @@ public class ShipThread extends Thread {
       last_snapshot = snapshot;
       System.out.println(
               "shipthread: " + Thread.currentThread().getId() + ": running " + ++loopcnt + " nextevent===> "+nextevent
-              + "  sleeptime= " + sleeptime + "ms last delta= " + delta/1000000 + "ms");
+              + "  sleeptime= " + sleeptime + " last delta= " + delta/1000000);
 
       if (!SimulatorService.reeferRestRunning.get()) {
         System.out.println(
@@ -114,7 +114,7 @@ public class ShipThread extends Thread {
           if ( activemap.size() > voyages_updated) {
             String id = activekeys[voyages_updated++];
             JsonObject message = activemap.get(id);
-            Kar.actorCall(actorRef("voyage", id), "changePosition", message);
+            Kar.actorTell(actorRef("voyage", id), "changePosition", message);
             System.out.println("shipthread: updates voyageid: " + id + " with " + message.toString());
           }
         }
@@ -125,7 +125,9 @@ public class ShipThread extends Thread {
         nextevent = 0;
 
         // tell GUI to update active voyages
+        snapshot = System.nanoTime();
         Kar.restPost("reeferservice", "voyage/updateGui", currentDate);
+        System.out.println("shipthread: updateGui took " + (System.nanoTime()-snapshot)/1000000 + " ms");
       }
 
       try {

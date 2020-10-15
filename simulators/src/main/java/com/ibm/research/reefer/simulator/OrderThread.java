@@ -22,6 +22,10 @@ public class OrderThread extends Thread {
   Instant today;
 
   int ordersDoneToday = 0;
+  int ordersPerDay = 0;
+  long dayEndTime;
+  long totalOrderTime;
+  
 
   public void run() {
     if (0 == SimulatorService.unitdelay.intValue()
@@ -29,10 +33,6 @@ public class OrderThread extends Thread {
       oneshot = true;
     }
 
-    int ordersPerDay = SimulatorService.orderupdates.intValue();
-    if (ordersPerDay < 1) {
-      ordersPerDay = 1; 
-    }
     Thread.currentThread().setName("orderthread");
     SimulatorService.orderthreadcount.incrementAndGet();
     System.out.println(
@@ -60,10 +60,24 @@ public class OrderThread extends Thread {
         // compute the total order capacity, "ordercap" to be made today for each voyage
         // set the loop count for max number of orders to make for each voyage, "ordersPerDay"
         if (oneshot || !currentDate.equals((JsonValue) SimulatorService.currentDate.get())) {
+          dayEndTime = System.currentTimeMillis() + 1000* SimulatorService.unitdelay.intValue();
+          if (ordersDoneToday < ordersPerDay) {
+            System.out.println("orderthread: " + ordersDoneToday + " of " + ordersPerDay + " completed yesterday");
+          }
+          ordersDoneToday = 0;
+          totalOrderTime = 0;
+
           synchronized (SimulatorService.voyageFreeCap) {
             // clear so any order update between now and when the map is recreated are not lost
             SimulatorService.voyageFreeCap.clear();
           }
+
+          // pick up any changes
+          ordersPerDay = SimulatorService.orderupdates.intValue();
+          if (ordersPerDay < 1) {
+            ordersPerDay = 1; 
+          }
+
           // ... fetch all future voyages leaving in the next N days
           currentDate = (JsonValue) SimulatorService.currentDate.get();
           today = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
@@ -102,7 +116,6 @@ public class OrderThread extends Thread {
                 d_ordercap = (ordertarget * maxcap / 100.0 - (maxcap - freecap)) / daysbefore;
               }
               int ordercap = (int) Math.ceil(d_ordercap);
-              ordersDoneToday = 0;
 
               // fill map, picking up new freecap values since map was cleared
               if (SimulatorService.voyageFreeCap.containsKey(id)) {
@@ -122,6 +135,7 @@ public class OrderThread extends Thread {
         }
 
         if (ordersPerDay > ordersDoneToday++) {
+          long snapshot = System.currentTimeMillis();
           // create one order for every voyage below threshold
           for (Entry<String, FutureVoyage> entry : SimulatorService.voyageFreeCap.entrySet()) {
             // System.out.println(entry.getKey() + "/" + entry.getValue());
@@ -143,14 +157,31 @@ public class OrderThread extends Thread {
 //            		    	System.out.println("orderthread: no order for "+entry.getKey());
 //            		    }
           }
+          totalOrderTime += System.currentTimeMillis() - snapshot;
         }
       }
 
       // sleep if not a oneshot order command
       if (!oneshot) {
         try {
-          // finish orders in 3/4 day
-          Thread.sleep(3 * 1000 * SimulatorService.unitdelay.intValue() / (4 * ordersPerDay));
+          long timeToSleep = 990 * SimulatorService.unitdelay.intValue();
+          // compute next sleep time
+          if (SimulatorService.reeferRestRunning.get()) {
+            long timeRemaining = dayEndTime - System.currentTimeMillis();
+            long orderTimeRemaining = totalOrderTime/ordersDoneToday * (ordersPerDay-ordersDoneToday);
+            if (timeRemaining < 1 && orderTimeRemaining > 0) {
+              timeToSleep = 10; 
+            }
+            else if (orderTimeRemaining > 0 && timeRemaining > 0) {
+              timeToSleep = (timeRemaining - orderTimeRemaining) / (1 + ordersPerDay - ordersDoneToday);
+              timeToSleep = (timeToSleep < 10) ? 10 : timeToSleep;
+            }
+            else {
+              timeToSleep = 1000 * SimulatorService.unitdelay.intValue();
+            }
+            System.out.println("orderthread: timeRemaining="+timeRemaining+ " orderTimeRemaining="+orderTimeRemaining+" totalOrderTime="+totalOrderTime+" ordersDoneToday="+ordersDoneToday+" timeToSleep="+timeToSleep);
+          }
+          Thread.sleep(timeToSleep);
         } catch (InterruptedException e) {
 //            		System.out.println("orderthread: Interrupted Thread "+Thread.currentThread().getId());
         }

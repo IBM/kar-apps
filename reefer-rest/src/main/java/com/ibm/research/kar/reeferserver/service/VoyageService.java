@@ -30,7 +30,6 @@ public class VoyageService extends AbstractPersistentService {
     Map<String, VoyageStatus > voyageStatus = new HashMap<>();
 
     public void addOrderToVoyage(Order order) {
-
         Set<Order> orders;
         if (voyageOrders.containsKey(order.getVoyageId())) {
             orders = voyageOrders.get(order.getVoyageId());

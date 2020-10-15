@@ -178,6 +178,7 @@ public class ScheduleService {
                 e.printStackTrace();
             }
         }
+        /*
         StringBuilder sb2 = new StringBuilder();
         masterSchedule.forEach(voyage -> {
             sb2.append("\n/////// master schedule - voyage:").append(voyage.getId()).append(" Current Date:").
@@ -188,6 +189,7 @@ public class ScheduleService {
         });
 
         System.out.println(sb2.toString());
+        */
         for (Voyage voyage : masterSchedule) {
             Instant arrivalDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(),
                     voyage.getRoute().getDaysAtSea() + voyage.getRoute().getDaysAtPort());

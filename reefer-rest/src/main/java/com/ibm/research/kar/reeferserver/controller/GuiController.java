@@ -38,14 +38,17 @@ public class GuiController {
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(timerTask, 0, 100);
     }
-
+/*
     public void sendReefersUpdate(List<Reefer> reefers) {
         template.convertAndSend("/topic/reefers", reefers);
     }
-
+*/
     public void sendActiveVoyageUpdate(List<Voyage> voyages, String currentDate) {
+        long start = System.currentTimeMillis();
         ShippingSchedule schedule = new ShippingSchedule(voyages, currentDate);
         template.convertAndSend("/topic/voyages", schedule);
+        long end  = System.currentTimeMillis();
+        System.out.println("GuiController.sendActiveVoyageUpdate() - voyage update took "+(end-start)+" ms");
     }
 
     public void sendOrderUpdate(Order order) {

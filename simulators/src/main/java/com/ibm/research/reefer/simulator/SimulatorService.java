@@ -149,6 +149,9 @@ public class SimulatorService {
 
       startShipThread();
 
+      // get persistent value of ordertarget
+      JsonNumber ot = (JsonNumber) this.getOrInit(Json.createValue("ordertarget"));
+      ordertarget.set(ot.intValue());
       // if auto order enabled, start that thread too
       if (0 < ordertarget.intValue()) {
         try {

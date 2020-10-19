@@ -38,8 +38,6 @@ services:
   simulators:
     image: us.icr.io/research/kar-dev/reefer/simulators
     command: ["/bin/bash","-c","sleep 15 && /kar/bin/runner"]
-    ports:
-      - "7080:7080"
     environment:
       KAR_SIDECAR_IN_CONTAINER: "true"
       KAR_APP: reefer

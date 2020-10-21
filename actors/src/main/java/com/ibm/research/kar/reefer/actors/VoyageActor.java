@@ -117,7 +117,7 @@ public class VoyageActor extends BaseActor {
                 set(this, Constants.VOYAGE_STATUS_KEY, Json.createValue(VoyageStatus.DEPARTED.name()));
                 long snapshot = System.nanoTime();
                 processDepartedVoyage(voyage, daysAtSea);
-                System.out.println("VoyageController: voyageId=" + voyage.getId() + " order count: " +
+                System.out.println("VoyageActor.changePosition() voyageId=" + voyage.getId() + " order count: " +
                         loadOrders().size() + " departure processing: " + (System.nanoTime()-snapshot)/1000000);
             } else {
                 System.out.println("VoyageActor.changePosition() Updating REST - daysAtSea:" + daysAtSea);

@@ -17,7 +17,7 @@ import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 //import {  MatHorizontalStepper } from '@angular/material/stepper';
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
-
+import { HashLocationStrategy, LocationStrategy } from '@angular/common';
 import { SocketService } from './core/services/socket.service';
 //const config: SocketIoConfig = { url: 'http://localhost:3000', options: {} };
 
@@ -46,7 +46,7 @@ const  RestServerURL= 'http://localhost:9000';
     MatTableModule,
     //SocketIoModule.forRoot(config),
   ],
-  providers: [SocketService],
+  providers: [{provide:SocketService, useClass: SocketService}, {provide: LocationStrategy, useClass: HashLocationStrategy}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

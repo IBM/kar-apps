@@ -20,18 +20,19 @@ echo Deploying application with docker-compose ...
 
 docker-compose -f reefer-compose.yaml -p reefer up -d
 
-echo -n waiting for reefer-rest to be available ...
+echo -n waiting for reefer-rest to be available
 wait=1
 while [ $wait != 0 ]; do
     response=$(curl -s -H "Content-Type: application/json" -X POST http://localhost:9080/time/currentDate)
     if [ -n "$response" ]; then
-	echo $response | grep -e " "
+	echo $response | grep -e " " > /dev/null
 	w=$?
 	if [ $w != 0 ]; then
 	    wait=0
 	fi
     fi
-    sleep 1
+    echo -n '.'
+    sleep 2
 done
 
 echo " reefer backend available at http://$resthost:9088"

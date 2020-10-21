@@ -17,7 +17,7 @@ public class OrderThread extends Thread {
   boolean oneshot = false;
   int threadloops = 0;
   int ordertarget;
-  JsonValue currentDate = Json.createValue("");
+  JsonValue currentDate;
   JsonValue futureVoyages;
   Instant today;
 
@@ -25,6 +25,7 @@ public class OrderThread extends Thread {
   int ordersPerDay = 0;
   long dayEndTime;
   long totalOrderTime;
+  boolean startup = true;
   
 
   public void run() {
@@ -38,7 +39,18 @@ public class OrderThread extends Thread {
     System.out.println(
             "orderthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
 
-    // grab upcoming voyages
+    if (SimulatorService.reeferRestRunning.get()) {
+      // Make sure currentDate is set
+      if (null == SimulatorService.currentDate.get()) {
+        Response response = Kar.restPost("reeferservice", "time/currentDate", JsonValue.NULL);
+        currentDate = response.readEntity(JsonValue.class);
+        SimulatorService.currentDate.set(currentDate);
+      }
+      else {
+        currentDate = (JsonValue) SimulatorService.currentDate.get();
+      }
+    }
+
 
     while (running) {
       if (!oneshot) {
@@ -48,24 +60,22 @@ public class OrderThread extends Thread {
       if (!SimulatorService.reeferRestRunning.get()) {
 //        		System.out.println("orderthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
       } else {
-        // Make sure currentDate is set
-        if (null == SimulatorService.currentDate.get()) {
-          Response response = Kar.restPost("reeferservice", "time/currentDate", JsonValue.NULL);
-          currentDate = response.readEntity(JsonValue.class);
-          SimulatorService.currentDate.set(currentDate);
-        }
 
         // If new date ...
         // pull fresh list of voyages within the order window
         // compute the total order capacity, "ordercap" to be made today for each voyage
         // set the loop count for max number of orders to make for each voyage, "ordersPerDay"
-        if (oneshot || !currentDate.equals((JsonValue) SimulatorService.currentDate.get())) {
+        JsonValue date = (JsonValue) SimulatorService.currentDate.get();
+        if (startup || oneshot || !currentDate.equals(date)) {
           dayEndTime = System.currentTimeMillis() + 1000* SimulatorService.unitdelay.intValue();
           if (ordersDoneToday < ordersPerDay) {
             System.out.println("orderthread: " + ordersDoneToday + " of " + ordersPerDay + " completed yesterday");
           }
+          System.out.println("orderthread: new day = " + date.toString());
           ordersDoneToday = 0;
           totalOrderTime = 0;
+          startup = false;
+          currentDate = date;
 
           synchronized (SimulatorService.voyageFreeCap) {
             // clear so any order update between now and when the map is recreated are not lost
@@ -79,7 +89,6 @@ public class OrderThread extends Thread {
           }
 
           // ... fetch all future voyages leaving in the next N days
-          currentDate = (JsonValue) SimulatorService.currentDate.get();
           today = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
 
           int windowsize = SimulatorService.orderwindow.intValue();

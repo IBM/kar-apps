@@ -6,6 +6,16 @@ SCRIPTDIR=$(cd $(dirname "$0") && pwd)
 
 cd $SCRIPTDIR
 
+if [ ! -z "$AUTOSET_HOST" ]; then
+    export REST_HOST=$(host $(hostname) | cut -d' ' -f4)
+fi
+
+if [ -z "$REST_HOST" ]; then
+    resthost=localhost
+else
+    resthost=$REST_HOST
+fi
+
 echo Deploying application with docker-compose ...
 
 docker-compose -f reefer-compose.yaml -p reefer up -d
@@ -24,4 +34,4 @@ while [ $wait != 0 ]; do
     sleep 1
 done
 
-echo " reefer backend ready to sail"
+echo " reefer backend available at http://$resthost:9088"

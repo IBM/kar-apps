@@ -22,8 +22,8 @@
 		<version.maven-war-plugin>3.2.3</version.maven-war-plugin>
 		<!-- Liberty configuration -->
 		<liberty.embedded.version>20.0.0.5</liberty.embedded.version>
-		<liberty.var.default.http.port>8080</liberty.var.default.http.port>
-		<liberty.var.default.https.port>8443</liberty.var.default.https.port>
+		<liberty.var.default.http.port>${env.KAR_APP_PORT}</liberty.var.default.http.port>
+		<liberty.var.default.https.port>-1</liberty.var.default.https.port>
 		<liberty.var.app.context.root>/</liberty.var.app.context.root>
 		<!-- Jaeger tracing version -->
 		<!-- openliberty requires older version -->

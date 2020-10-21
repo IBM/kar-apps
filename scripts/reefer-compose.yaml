@@ -38,8 +38,6 @@ services:
   simulators:
     image: us.icr.io/research/kar-dev/reefer/simulators
     command: ["/bin/bash","-c","sleep 15 && /kar/bin/runner"]
-    ports:
-      - "7080:7080"
     environment:
       KAR_SIDECAR_IN_CONTAINER: "true"
       KAR_APP: reefer
@@ -69,7 +67,9 @@ services:
       - "redis"
   frontend:
     image: us.icr.io/research/kar-dev/reefer/frontend
-    command: ["/bin/bash","-c","sleep 15 && /kar/bin/runner"]
+    command: ["/bin/bash","-c","/kar/bin/fe-start.sh"]
+    environment:
+      REST_HOST:  ${REST_HOST-localhost}
     ports:
       - "9088:9088"
     depends_on:

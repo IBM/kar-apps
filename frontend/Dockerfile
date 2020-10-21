@@ -19,6 +19,7 @@ RUN mvn clean install
 FROM $JAVA_RUNTIME
 COPY --from=builder --chown=default:root /kar/app/target/reefer-frontend.war /opt/ol/wlp/usr/servers/defaultServer/apps
 COPY --from=builder --chown=default:root /kar/app/src/main/liberty/config/server.xml /opt/ol/wlp/usr/servers/defaultServer
+COPY fe-start.sh /kar/bin/fe-start.sh
 
 #
 # Run Open Liberty configure script.

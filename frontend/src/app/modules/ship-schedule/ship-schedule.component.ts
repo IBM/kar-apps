@@ -28,12 +28,12 @@ export class ShipScheduleComponent implements OnInit {
   voyageDataSource = new MatTableDataSource(this.voyages);
   @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   @ViewChild(MatSort, {static: true}) sort: MatSort;
-  @ViewChild(MatHorizontalStepper) stepper: MatHorizontalStepper;  
+  @ViewChild(MatHorizontalStepper) stepper: MatHorizontalStepper;
   expandedElement:Voyage | null;
 //  shipTableColumns: string[] = [ 'vessel', 'origin', 'destination', 'maxCapacity', 'freeCapacity', 'location'];
   shipTableColumns: string[] = [ 'vessel', 'progress', 'orders','maxCapacity', 'freeCapacity'];
 
-  constructor(private restService: RestService, private webSocketService : SocketService) { 
+  constructor(private restService: RestService, private webSocketService : SocketService) {
     let stompClient = this.webSocketService.connect();
     console.log('AppComponent - connected socket');
     stompClient.connect({}, frame => {
@@ -46,7 +46,9 @@ export class ShipScheduleComponent implements OnInit {
 
             //this.voyages = JSON.parse(event.body);
             this.voyages = schedule.voyages;
-            this.date = schedule.currentDate.substr(1,10);
+            let d = schedule.currentDate;
+            d = d.replace(/"/g,"");
+            this.date = d.substr(0,10); //schedule.currentDate.substr(1,10);
            // console.log('::::::'+this.voyages);
             this.voyageDataSource.data = this.voyages;
 
@@ -57,7 +59,7 @@ export class ShipScheduleComponent implements OnInit {
 
   }
   delayChange(event: any) {
- 
+
     let value = event.target.value;
     this.rate = Math.ceil(value/5)*5;
     console.log("Delay Change:"+this.rate);
@@ -78,7 +80,7 @@ export class ShipScheduleComponent implements OnInit {
     });
     this.getActiveVoyages();
   }
-  
+
   update(event: Event) {
     console.log("Click "+event);
     /*
@@ -119,7 +121,7 @@ export class ShipScheduleComponent implements OnInit {
 //      }
       //let ships: Ship[] = fleet[0].ships;
       //console.log(voyages);
-      this.voyageDataSource.data = voyages; 
+      this.voyageDataSource.data = voyages;
       });
       //this.shipDataSource.data = this.getFleets()[0].ship;
     //  this.voyageDataSource.sort = this.sort;

@@ -33,24 +33,34 @@ import com.ibm.research.kar.reefer.common.time.TimeUtils;
 
 @Actor
 public class VoyageActor extends BaseActor {
-
+    /**
+     * If Voyage info is not available in Kar persistent storage call REST
+     * to get it. The Voyage info includes details like daysAtSea, departure
+     * date, arrival date, etc
+     */
     @Activate
     public void init() {
         System.out.println("VoyageActor.init() actorID:" + this.getId());
         try {
+            // Check if Voyage info is not available in persistent store
             if (super.get(this, Constants.VOYAGE_INFO_KEY) == null) {
+                // call REST to fetch Voyage info
                 JsonObject voyageInfo = getVoyageInfo();
                 System.out.println("VoyageActor.init() id:" + getId() + " voyage info:" + voyageInfo);
+                // store Voyage info in persistent store
                 super.set(this, Constants.VOYAGE_INFO_KEY, voyageInfo);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
+    /**
+     * Call REST to get voyage information.
+     *
+     * @return - json encoded voyage info
+     */
     private JsonObject getVoyageInfo() {
-
         /// Ask REST voyage info
         Response response = restGet("reeferservice", "/voyage/info/" + getId());
         JsonValue jsonVoyage = response.readEntity(JsonValue.class);
@@ -79,6 +89,13 @@ public class VoyageActor extends BaseActor {
         return super.getSubMap(this, Constants.VOYAGE_ORDERS_KEY);
     }
 
+    /**
+     * Determines if ship arrived at the destination port or not. Ship arrives when
+     * current date = scheduled shipArrivalDate
+     * @param shipCurrentDate - current date
+     * @param voyage - voyage info
+     * @return - true if ship arrived, false otherwise
+     */
     private boolean shipArrived(Instant shipCurrentDate, Voyage voyage) { // String shipArrivalDate, String voyageId) {
         Instant scheduledArrivalDate = Instant.parse(voyage.getArrivalDate());
         return ((shipCurrentDate.equals(scheduledArrivalDate)
@@ -96,17 +113,15 @@ public class VoyageActor extends BaseActor {
         System.out.println("VoyageActor.changePosition() called Id:" + getId() + " " + message.toString() + " state:"
                 + getVoyageStatus());
         try {
+            // fetch json encoded voyage info
             JsonValue jsonVoyage = super.get(this, Constants.VOYAGE_INFO_KEY);
             Voyage voyage = JsonUtils.jsonToVoyage(jsonVoyage.asJsonObject());
 
-            int daysAtSea = message.getInt("daysAtSea");
+            int daysAtSea = message.getInt( Constants.VOYAGE_DAYSATSEA_KEY );
             Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysAtSea);
             System.out.println(
                     "VoyageActor.changePosition() voyage info:" + jsonVoyage + " ship current date:" + shipCurrentDate);
-
-            // fetch orders in this voyage
             String restMethodToCall = "";
-
             if (shipArrived(shipCurrentDate, voyage)) {
                 set(this, Constants.VOYAGE_STATUS_KEY, Json.createValue(VoyageStatus.ARRIVED.name()));
                 long snapshot = System.nanoTime();
@@ -119,7 +134,7 @@ public class VoyageActor extends BaseActor {
                 processDepartedVoyage(voyage, daysAtSea);
                 System.out.println("VoyageActor.changePosition() voyageId=" + voyage.getId() + " order count: " +
                         loadOrders().size() + " departure processing: " + (System.nanoTime()-snapshot)/1000000);
-            } else {
+            } else {  // voyage in transit
                 System.out.println("VoyageActor.changePosition() Updating REST - daysAtSea:" + daysAtSea);
                 // update REST voyage days at sea
                 messageRest("/voyage/update/position", daysAtSea);
@@ -133,48 +148,62 @@ public class VoyageActor extends BaseActor {
 
     }
 
+    /**
+     * Calls REST and Order actors when a ship arrives at the destination port
+     * @param voyage - Voyage info
+     * @param daysAtSea - ship days at sea
+     */
     private void processArrivedVoyage(Voyage voyage, int daysAtSea) {
         System.out.println("VoyageActor.changePosition() voyageId=" + voyage.getId()
                 + " has ARRIVED ------------------------------------------------------");
         messageRest("/voyage/update/delivered", daysAtSea);
-        Map<String, JsonValue> orders = loadOrders();
-
         // notify each order actor that the ship arrived
-        orders.values().forEach(order -> {
+        loadOrders().values().forEach(order -> {
             System.out.println("VoyageActor.changePosition() voyageId=" + voyage.getId()
                     + " Notifying Order Actor of arrival - OrderID:" + ((JsonString) order).getString());
             messageOrderActor(((JsonString) order).getString(), "delivered");
         });
 
     }
-
+    /**
+     * Calls REST and Order actors when a ship departs from the origin port
+     * @param voyage - Voyage info
+     * @param daysAtSea - ship days at sea
+     */
     private void processDepartedVoyage(Voyage voyage, int daysAtSea) {
         System.out.println("VoyageActor.changePosition() voyageId=" + voyage.getId()
                 + " has DEPARTED ------------------------------------------------------");
         messageRest("/voyage/update/departed", daysAtSea);
-        Map<String, JsonValue> orders = loadOrders();
-
-        orders.values().forEach(order -> {
+        loadOrders().values().forEach(order -> {
             System.out.println("VoyageActor.changePosition() voyageId=" + voyage.getId()
-                    + " Notifying Order Actor of departure - OrderID:" + ((JsonString) order).getString()); // JsonUtils.getString(order,
-                                                                                                            // Constants.ORDER_ID_KEY));
-
+                    + " Notifying Order Actor of departure - OrderID:" + ((JsonString) order).getString());
             messageOrderActor(((JsonString) order).getString(), "departed");
         });
 
     }
 
+    /**
+     * Update REST with ship position
+     * @param methodToCall -  REST API to call
+     * @param daysAtSea - ship days at sea
+     */
     private void messageRest(String methodToCall, int daysAtSea) {
         JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).add("daysAtSea", daysAtSea)
                 .build();
         try {
-            /// Notifiy REST of the position change
+            /// Notify REST of the position change
             restPost("reeferservice", methodToCall, params);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Call OrderActor when a ship carrying the order either departs or arrives
+     *
+     * @param orderId - order id
+     * @param methodToCall - actor method to call
+     */
     private void messageOrderActor(String orderId, String methodToCall) {
         ActorRef orderActor = Kar.actorRef(ReeferAppConfig.OrderActorName, orderId);
         JsonObject params = Json.createObjectBuilder().build();
@@ -184,7 +213,7 @@ public class VoyageActor extends BaseActor {
     }
 
     /**
-     * Returns all orders associted with this voyage
+     * Returns all orders associated with this voyage
      * 
      * @return The list of Orders
      */
@@ -204,7 +233,6 @@ public class VoyageActor extends BaseActor {
     @Remote
     public JsonObject getVoyageOrderCount(JsonObject message) {
         System.out.println("VoyageActor.getVoyageOrderCount() called " + getId());
-        // Map<String, JsonValue> orders = loadOrders();
         int orderCount = super.getSubMapSize(this, Constants.VOYAGE_ORDERS_KEY);
         System.out.println(" VoyageActor.getVoyageOrderCount() called " + getId() + " Orders:" + orderCount);
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add("orders", orderCount).build();
@@ -246,13 +274,14 @@ public class VoyageActor extends BaseActor {
     @Remote
     public JsonObject reserve(JsonObject message) {
         JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
+        // Current order count in this voyage
         int orderCount = super.getSubMapSize(this, Constants.VOYAGE_ORDERS_KEY);
 
         System.out.println("VoyageActor.reserve() called Id:" + getId() + " " + message.toString() + " OrderID:"
                 + order.getId() + " Orders size=" + orderCount);
 
         try {
-            // Book reefers for this order thru the ReeferProvisioner
+            // Book reefers for this order through the ReeferProvisioner
             JsonValue bookingStatus = actorCall(
                     actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "bookReefers", message);

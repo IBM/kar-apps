@@ -12,22 +12,22 @@
     {
         "originPort":"Miami, FL","destinationPort":"Bremen, DE","daysAtSea":13,"daysAtPort":1,
         "vessel":
-              { "name":"Black Pearl","position":0,"maxCapacity":150,"freeCapacity":150,"location":"AtPort"  }
+              { "name":"Black-Pearl","position":0,"maxCapacity":150,"freeCapacity":150,"location":"AtPort"  }
     },
     {
         "originPort":"Boston, MA","destinationPort":"London, GB","daysAtSea":12,"daysAtPort":1,
         "vessel":
-              { "name":"Santa Maria","position":0,"maxCapacity":225,"freeCapacity":225,"location":"AtPort"  }
+              { "name":"Santa-Maria","position":0,"maxCapacity":225,"freeCapacity":225,"location":"AtPort"  }
     },
     {
         "originPort":"Boston, MA","destinationPort":"Hamburg, DE","daysAtSea":13,"daysAtPort":1,
         "vessel":
-              { "name":"Andrea Gail","position":0,"maxCapacity":250,"freeCapacity":250,"location":"AtPort"  }
+              { "name":"Andrea-Gail","position":0,"maxCapacity":250,"freeCapacity":250,"location":"AtPort"  }
     },
     {
         "originPort":"New Orleans, LA","destinationPort":"Antwerp, BE","daysAtSea":15,"daysAtPort":1,
         "vessel":
-              { "name":"MOL Triumph","position":0,"maxCapacity":550,"freeCapacity":550,"location":"AtPort"  }
+              { "name":"MOL-Triumph","position":0,"maxCapacity":550,"freeCapacity":550,"location":"AtPort"  }
     },
     {
         "originPort":"New York, NY","destinationPort":"Antwerp, BE","daysAtSea":18,"daysAtPort":1,

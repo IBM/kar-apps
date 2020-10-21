@@ -3,6 +3,7 @@ package com.ibm.research.kar.reefer.model;
 import java.time.Instant;
 
 public class Voyage {
+    
     private String id;
     private Route route;
 

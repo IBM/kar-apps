@@ -55,12 +55,12 @@ public class ScheduleService {
                 getRoutes();
             }
             LinkedList<Voyage> sortedSchedule = new LinkedList<>();
-            StringBuilder sb = new StringBuilder("date "+date+"\n");
+//            StringBuilder sb = new StringBuilder("date "+date+"\n");
             for( Route route : routes ) {
                 long daysBetween = TimeUtils.getInstance().getDaysBetween(date, route.getLastArrival());
-                sb.append(route.getVessel().getId()).append(" last arrival date:").
-                append(route.getLastArrival()).append(" daysBetween: ").
-                append(daysBetween).append("\n");
+//                sb.append(route.getVessel().getId()).append(" last arrival date:").
+//                append(route.getLastArrival()).append(" daysBetween: ").
+//                append(daysBetween).append("\n");
                 if (route.getLastArrival() != null && daysBetween < THRESHOLD_IN_DAYS) {
                     Instant endDate = TimeUtils.getInstance().futureDate( route.getLastArrival(), 60);
                     Instant departureDate = TimeUtils.getInstance().futureDate(route.getLastArrival(), 2);
@@ -69,18 +69,18 @@ public class ScheduleService {
                     route.setLastArrival(lastDate);
                 }
             }
-            System.out.println(sb.toString());
+//            System.out.println(sb.toString());
             
-            sb.setLength(0);
+//            sb.setLength(0);
 
             if ( !sortedSchedule.isEmpty() ) {
                 masterSchedule.addAll(sortedSchedule);
                 Collections.sort(masterSchedule,new SchedulerComp());
-                masterSchedule.forEach(voyage -> {
-                    sb.append("\nMasterSchedule------->").append(voyage.getId()).append(" SailDate: ").append(voyage.getSailDate()).
-                    append(" arrivalDate: ").append(voyage.getArrivalDate()).append("\n");
-                });
-                System.out.println(sb.toString());
+//                masterSchedule.forEach(voyage -> {
+//                    sb.append("\nMasterSchedule------->").append(voyage.getId()).append(" SailDate: ").append(voyage.getSailDate()).
+//                    append(" arrivalDate: ").append(voyage.getArrivalDate()).append("\n");
+//                });
+//                System.out.println(sb.toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -109,7 +109,7 @@ public class ScheduleService {
                 voyage.getRoute().getVessel().setPosition(daysOutAtSea);
                 int progress = Math.round((daysOutAtSea / (float) voyage.getRoute().getDaysAtSea()) * 100);
                 voyage.getRoute().getVessel().setProgress(progress);
-                System.out.println("ScheduleService.updateDaysAtSea() - voyage:" + voyage.getId() + "daysOutAtSea:"
+                System.out.println("ScheduleService.updateDaysAtSea() - voyage:" + voyage.getId() + " daysOutAtSea:"
                         + voyage.getRoute().getVessel().getPosition() + " Progress:"
                         + voyage.getRoute().getVessel().getProgress());
                 return voyage;
@@ -194,7 +194,7 @@ public class ScheduleService {
             Instant arrivalDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(),
                     voyage.getRoute().getDaysAtSea() + voyage.getRoute().getDaysAtPort());
 
-            System.out.println(".... getActiveSchedule() - voyage:"+voyage.getId()+" Current Date:"+currentDate+" SailDate:"+voyage.getSailDateObject());
+//            System.out.println(".... getActiveSchedule() - voyage:"+voyage.getId()+" Current Date:"+currentDate+" SailDate:"+voyage.getSailDateObject());
             if (voyage.getSailDateObject().isAfter(currentDate)) {
                 // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate
                 // we just stop iterating since all voyagaes sail in the future.
@@ -247,13 +247,13 @@ public class ScheduleService {
         Voyage voyage = getVoyage(voyageId);
         if (voyage.getRoute().getVessel().getFreeCapacity() - reeferCount >= 0) {
 
-            System.out
-                    .println("ScheduleService.updateFreeCapacity() - Free Capacity Before:"
-                            + voyage.getRoute().getVessel().getFreeCapacity() + " Reefers to cargo:" + reeferCount);
+//            System.out
+//                    .println("ScheduleService.updateFreeCapacity() - Free Capacity Before:"
+//                            + voyage.getRoute().getVessel().getFreeCapacity() + " Reefers to cargo:" + reeferCount);
             voyage.getRoute().getVessel()
                     .setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity() - reeferCount);
             System.out
-                    .println("ScheduleService.updateFreeCapacity() - Free Capacity After:"
+                    .println("ScheduleService.updateFreeCapacity() - Vessel " +voyage.getRoute().getVessel().getName()+ " Updated Free Capacity "
                             + voyage.getRoute().getVessel().getFreeCapacity());
             return voyage.getRoute().getVessel().getFreeCapacity();
         }

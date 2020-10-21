@@ -69,4 +69,7 @@ public abstract class AbstractPersistence {
   protected void addSubMap(ActorRef ref,String subMapName, Map<String, JsonValue> subMap) {
     Kar.actorSetMultipleState(ref, subMapName, subMap);
   }
+  protected void clearState(ActorRef ref) {
+    Kar.actorDeleteAllState(ref);
+  }
 }

@@ -80,7 +80,7 @@ public class ReeferController {
 
 	@PostMapping("/reefers/stats/update")
 	public void updateGui(@RequestBody String stats) {
-		System.out.println("ReeferController.updateGui() ");
+		//System.out.println("ReeferController.updateGui() ");
 		try (JsonReader jsonReader = Json.createReader(new StringReader(stats))) {
 
 			JsonObject req = jsonReader.readObject();

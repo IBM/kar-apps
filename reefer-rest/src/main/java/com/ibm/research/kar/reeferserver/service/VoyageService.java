@@ -18,14 +18,13 @@ import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.model.Order;
+import com.ibm.research.kar.reefer.model.VoyageStatus;
 
 import org.springframework.stereotype.Component;
 
 @Component
 public class VoyageService extends AbstractPersistentService {
-    public enum VoyageStatus {
-        PENDING,DEPARTED,ARRIVED;
-    }
+ 
     Map<String, Set<Order>> voyageOrders = new HashMap<>();
     Map<String, VoyageStatus > voyageStatus = new HashMap<>();
 
@@ -44,14 +43,6 @@ public class VoyageService extends AbstractPersistentService {
     }
 
     public Set<Order> getOrders(String voyageId) {
-        /*
-         * the following calls fail with Timeout ActorRef voyageActor =
-         * Kar.actorRef("voyage", voyageId); JsonObject params =
-         * Json.createObjectBuilder().build(); JsonValue reply =
-         * Kar.actorCall(voyageActor, "getVoyageOrderCount", params);
-         * System.out.println("*************** VoyageService.getOrders() - voyage id:"
-         * +voyageId+" reply:"+reply);
-         */
         if (voyageOrders.containsKey(voyageId)) {
             return voyageOrders.get(voyageId);
         } else {
@@ -59,9 +50,7 @@ public class VoyageService extends AbstractPersistentService {
         }
     }
     public void voyageDeparted(String voyageId) {
-
         voyageStatus.put(voyageId, VoyageStatus.DEPARTED);
-
     }
     public VoyageStatus getVoyageStatus(String voyageId) {
         return voyageStatus.get(voyageId);
@@ -69,18 +58,7 @@ public class VoyageService extends AbstractPersistentService {
     public void voyageEnded(String voyageId) {
         voyageStatus.put(voyageId, VoyageStatus.ARRIVED);
         if (voyageOrders.containsKey(voyageId)) {
-            Set<Order> orders = voyageOrders.get(voyageId);
-            System.out.println("VoyageService.voyageEnded() - voyage orders:" + orders.size());
-            JsonObjectBuilder orderObject = Json.createObjectBuilder();
-            JsonObject params = orderObject.build();
-            orders.forEach(order -> {
-                System.out.println("VoyageService.voyageEnded() - calling OrderActor.delivered() Id:"
-                        + order.getId());
-                ActorRef orderActor = Kar.actorRef("order", order.getId());
-                JsonValue reply = Kar.actorCall(orderActor, "delivered", params);
-                System.out.println("Order Actor reply:" + reply);
-            });
-
+            // remove voyage orders
             for (Iterator<String> iterator = voyageOrders.keySet().iterator(); iterator.hasNext();) {
                 String key = iterator.next();
                 if (key.equals(voyageId)) {
@@ -88,16 +66,15 @@ public class VoyageService extends AbstractPersistentService {
                     break;
                 }
             }
-
         }
     }
 
     public int getVoyageOrderCount(String voyageId) {
         if (voyageOrders.containsKey(voyageId)) {
             return voyageOrders.get(voyageId).size();
+        } else {
+             return 0;
         }
-        return getOrders(voyageId).size();
-        // return 0;
     }
 
     public void nextDay() {
@@ -109,10 +86,6 @@ public class VoyageService extends AbstractPersistentService {
 
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-            // return Json.createObjectBuilder().add("status",
-            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
-            // order.getId()).build();
-
         } catch (Exception ee) {
             ee.printStackTrace();
         }
@@ -122,16 +95,12 @@ public class VoyageService extends AbstractPersistentService {
         System.out.println("VoyageService.changeDelay() - delay:" + delay);
         try {
             JsonObject delayArg = Json.createObjectBuilder().add("value", delay).build();
-            Response response = Kar.restPost("simservice", "simulator/setunitdelay", delayArg); // Json.createValue(delay));
+            Response response = Kar.restPost("simservice", "simulator/setunitdelay", delayArg); 
             JsonValue respValue = response.readEntity(JsonValue.class);
             System.out.println("VoyageService.getDelay() Sim Response = " + respValue);
 
         } catch (ActorMethodNotFoundException ee) {
             ee.printStackTrace();
-            // return Json.createObjectBuilder().add("status",
-            // OrderStatus.FAILED.name()).add("ERROR","INVALID_CALL").add(Order.IdKey,
-            // order.getId()).build();
-
         } catch (Exception ee) {
             ee.printStackTrace();
         }
@@ -139,7 +108,7 @@ public class VoyageService extends AbstractPersistentService {
 
     public int getDelay() throws Exception {
         System.out.println("VoyageService.getDelay()");
-        Response response = Kar.restGet("simservice", "simulator/getunitdelay"); // Json.createValue(delay));
+        Response response = Kar.restGet("simservice", "simulator/getunitdelay"); 
         JsonValue respValue = response.readEntity(JsonValue.class);
         System.out.println("VoyageService.getDelay() Sim Response = " + respValue);
 

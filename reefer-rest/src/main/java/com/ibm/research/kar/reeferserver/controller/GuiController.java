@@ -84,8 +84,8 @@ public class GuiController {
             if (valuesChanged.get()) {
                 OrderStats orderStats = new OrderStats(inTransitOrderCount.get(), futureOrderCount.get(),
                         spoiltOrderCount.get());
-                System.out.println(
-                        "GuiController.run()................................. Orders Spoilt:" + spoiltOrderCount.get());
+                //System.out.println(
+                //        "GuiController.run()................................. Orders Spoilt:" + spoiltOrderCount.get());
                 if ( orderStats != null ) {
                     template.convertAndSend("/topic/orders/stats", orderStats);
                 }

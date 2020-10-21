@@ -6,8 +6,17 @@ SCRIPTDIR=$(cd $(dirname "$0") && pwd)
 
 cd $SCRIPTDIR
 
-if [ ! -z "$AUTOSET_HOST" ]; then
-    export REST_HOST=$(host $(hostname) | cut -d' ' -f4)
+if [ -n "$REST_HOST" ] && [ "$REST_HOST" == "auto" ]; then
+   echo -n "trying to guess host ip ... "
+   REST_HOST=$(host $(hostname) | cut -d' ' -f4)
+   valid=$(echo $REST_HOST | egrep -e "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" > /dev/null)
+   if [ $? != 0 ]; then
+       echo nope
+       echo Please specify actual host ip address to use
+       exit
+   else
+     echo "found $REST_HOST"
+   fi
 fi
 
 if [ -z "$REST_HOST" ]; then

@@ -15,7 +15,9 @@ import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
-
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.annotations.Activate;
@@ -38,7 +40,7 @@ public class ReeferProvisionerActor extends BaseActor {
 
     private ReeferDTO[] reeferMasterInventory = null;
     // private JsonValue totalReeferInventory = null;
-
+    private AtomicBoolean valuesChanged = new AtomicBoolean();
     @Activate
     public void init() {
         //StringBuilder sb = new StringBuilder();
@@ -62,6 +64,11 @@ public class ReeferProvisionerActor extends BaseActor {
                     reeferMasterInventory[reefer.getInt(Constants.REEFER_ID_KEY)] = jsonObjectToReeferDTO(reefer);
                 }
             }
+            TimerTask timerTask = new RestUpdateTask();
+            // running timer task as daemon thread. It updates
+            // REST reefer counts at regular intervals (currently 200ms)
+            Timer timer = new Timer(true);
+            timer.scheduleAtFixedRate(timerTask, 0, 200);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -424,12 +431,16 @@ public class ReeferProvisionerActor extends BaseActor {
     }
 
     public void updateRest() {
-
+        // RestUpdateTask uses this to send updates to the REST
+        valuesChanged.set(true);
+/*
         try {
             Kar.restPost("reeferservice", "/reefers/stats/update", getReeferStats());
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+ */
     }
 
     private boolean releaseFromMaintenanceToday(ReeferDTO reefer, Instant today) {
@@ -553,5 +564,21 @@ public class ReeferProvisionerActor extends BaseActor {
         }
 
     }
+    private class RestUpdateTask extends TimerTask {
+        @Override
+        public void run() {
 
+            if (valuesChanged.get()) {
+
+                try {
+                    Kar.restPost("reeferservice", "/reefers/stats/update", getReeferStats());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                valuesChanged.set(false);
+            }
+
+        }
+    }
 }

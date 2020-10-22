@@ -192,7 +192,7 @@ public class VoyageController {
         + voyageService.getVoyageStatus(voyageId) + " daysAtSea: " + daysAtSea);
     if (daysAtSea > 0) {
       shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
-     // updateShipPositions(TimeUtils.getInstance().getCurrentDate().toString());
+      //updateShipPositions(TimeUtils.getInstance().getCurrentDate().toString());
     }
   }
 
@@ -286,7 +286,7 @@ public class VoyageController {
 
     return activeVoyages;
   }
-/*
+
   private void updateShipPositions(String currentDate) {
     long t1 = System.currentTimeMillis();
     List<Voyage> activeVoyages = activeVoyages();
@@ -295,7 +295,7 @@ public class VoyageController {
     gui.sendActiveVoyageUpdate(activeVoyages, currentDate);
   }
 
- */
+
   /**
    * Update the GUI
    */

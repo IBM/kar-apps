@@ -234,9 +234,7 @@ public class VoyageController {
   private void updateSimulator(String voyageId, int freeCapacity) {
     JsonObject params = Json.createObjectBuilder().add("voyageId", voyageId).add("freeCapacity", freeCapacity).build();
     try {
-
       restPost("simservice", "/simulator/updatevoyagecapacity", params);
-
     } catch (Exception e) {
       e.printStackTrace();
 

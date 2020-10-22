@@ -14,11 +14,9 @@ public class JsonOrder {
     public static final String OriginPortKey = "originPort";
     public static final String DestinationPortKey = "destinationPort";
     private JsonObject order;
- //   private String id;
 
     public JsonOrder(JsonObject order) {
         this.order = order; 
- //       id = Instant.now().toString();
     }
 
     public String getId() {

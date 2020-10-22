@@ -25,6 +25,12 @@ public class ShippingScheduler {
     @Value("classpath:routes.json")
     private Resource routesJsonResource;
 
+    /**
+     * Load voyages into memory from a config file
+     *
+     * @param routeConfigFile - voyage configuration file
+     * @throws Exception
+     */
     public void initialize(final InputStream routeConfigFile) throws Exception {
 
         final ObjectMapper mapper = new ObjectMapper();
@@ -43,12 +49,11 @@ public class ShippingScheduler {
 
     }
 
-    public List<Route> getRoutes(final InputStream routeConfigFile) throws Exception {
-        if (routes.isEmpty()) {
-            this.initialize(routeConfigFile);
-        }
-        return routes;
-    }
+    /**
+     *
+     * @return
+     * @throws Exception
+     */
     public List<Route> getRoutes() throws Exception {
         if ( routes.isEmpty() ) {
             this.initialize(routesJsonResource.getInputStream());
@@ -56,11 +61,23 @@ public class ShippingScheduler {
         return routes;
     }
 
+    /**
+     *
+     * @return
+     */
     public LinkedList<Voyage> generateSchedule() {
         // generate new schedule for one year ahead begining from next day
         return generateSchedule(TimeUtils.getInstance().getCurrentDate()); // .
     }
 
+    /**
+     *
+     * @param route
+     * @param departureDate
+     * @param sortedSchedule
+     * @param yearFromNow
+     * @return
+     */
     public Instant generateShipSchedule(Route route, Instant departureDate, LinkedList<Voyage> sortedSchedule, Instant yearFromNow) {
         Instant arrivalDate;
         while (departureDate.isBefore(yearFromNow)) {
@@ -78,8 +95,14 @@ public class ShippingScheduler {
         }
         // return the last arrival date for this ship. Needed to generate future schedule when
         // we run out of voyages 
-        return departureDate; //TimeUtils.getInstance().futureDate(departureDate, route.getDaysAtSea());
+        return departureDate;
     }
+
+    /**
+     *
+     * @param departureDate
+     * @return
+     */
     public LinkedList<Voyage> generateSchedule(Instant departureDate) {
         Instant arrivalDate;
 
@@ -105,6 +128,13 @@ public class ShippingScheduler {
         return sortedSchedule;
     }
 
+    /**
+     *
+     * @param sortedSchedule
+     * @param route
+     * @param departureDate
+     * @param returnVoyage
+     */
     private void addVoyageToSchedule(LinkedList<Voyage> sortedSchedule, final Route route, final Instant departureDate,
             final boolean returnVoyage) {
         int next = 0;
@@ -119,6 +149,13 @@ public class ShippingScheduler {
         sortedSchedule.add(next, newScheduledVoyage(route, departureDate, returnVoyage));
     }
 
+    /**
+     *
+     * @param route
+     * @param departureDate
+     * @param returnVoyage
+     * @return
+     */
     private Voyage newScheduledVoyage(final Route route, final Instant departureDate, final boolean returnVoyage) {
         Instant arrivalDate = TimeUtils.getInstance().futureDate(departureDate, route.getDaysAtSea());
         String originPort = route.getOriginPort();

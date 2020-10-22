@@ -32,18 +32,4 @@ public class ShippingSchedule implements Serializable {
         this.currentDate = currentDate;
     }
 
-    
-    /*
-    private List<Route> schedule;
-
-    public ShippingSchedule() {
-        super();
-    }
-    public List<Route> getSchedule() { 
-        return schedule; 
-    } 
-    public void setSchedule(List<Route> schedule) { 
-        this.schedule = schedule; 
-    }
-*/
  }

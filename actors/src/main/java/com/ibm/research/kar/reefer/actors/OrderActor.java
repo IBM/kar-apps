@@ -31,19 +31,18 @@ public class OrderActor extends BaseActor {
     @Activate
     public void init() {
         JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
-        // fetch reefers in this order
-        //Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
-        int orderCount = Kar.actorSubMapSize(this, Constants.REEFER_MAP_KEY );
+        // fetch reefer count in this order
+        int reeferCount = Kar.actorSubMapSize(this, Constants.REEFER_MAP_KEY);
 
         System.out.println("OrderActor.init() - Order Id:" + getId() + " state:" + state + " fetched submap of size:"
-                + orderCount); // reeferMap.size());
+                + reeferCount);
     }
 
     /**
      * Called when an order is delivered (ie.ship arrived at the destination port).
      * Fetch all reefers in this order and message ReeferProvisioner to release
      * them back to the inventory.
-     * 
+     *
      * @param message - json encoded params: voyageId
      * @return
      */
@@ -80,7 +79,7 @@ public class OrderActor extends BaseActor {
     /**
      * Called when ship departs from orgin port. Message ReeferProvisioner number
      * of reefers in this order so that it can update its counts
-     * 
+     *
      * @param message - json encoded message
      * @return
      */
@@ -116,14 +115,14 @@ public class OrderActor extends BaseActor {
 
     /**
      * Called when a reefer anomaly is detected.
-     * 
+     *
      * @param message - json encoded message
      * @return The state of the order
      */
     @Remote
     public JsonObject anomaly(JsonObject message) {
         // Reefer notifies the order on anomaly. The order returns its current state
-        // which will propagate to the ReeferProvisioner where the decision is made 
+        // which will propagate to the ReeferProvisioner where the decision is made
         // to either spoil the reefer or assign it to maintenance.
         JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
         System.out.println("OrderActor.anomaly() called- Actor ID:" + getId() + " type:" + this.getType() + " state:"
@@ -133,11 +132,15 @@ public class OrderActor extends BaseActor {
 
     }
 
-    @Remote
-    /*
+
+    /**
      * Replace spoilt reefer with a good one. This is a use case where an order has
      * not yet departed but one of of its reefers spoilt.
+     *
+     * @param message - json encoded message
+     * @return The state of the order
      */
+    @Remote
     public JsonObject replaceReefer(JsonObject message) {
         JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
         System.out.println("OrderActor.replaceReefer() called- Actor ID:" + getId() + " state:"
@@ -155,9 +158,10 @@ public class OrderActor extends BaseActor {
         return Json.createObjectBuilder().build();
 
     }
+
     /**
      * Return number of reefers in this order
-     * 
+     *
      * @param message
      * @return
      */
@@ -171,7 +175,7 @@ public class OrderActor extends BaseActor {
     /**
      * Called to book a new order using properties included in the message. Calls the VoyageActor
      * to allocate reefers and a ship to carry them.
-     * 
+     *
      * @param message Order properties
      * @return
      */
@@ -227,7 +231,7 @@ public class OrderActor extends BaseActor {
 
     /**
      * Called to persist reefer ids associated with this order
-     * 
+     *
      * @param orderBookingStatus Contains reefer ids
      * @throws Exception
      */
@@ -244,12 +248,11 @@ public class OrderActor extends BaseActor {
             System.out.println(
                     "OrderActor.createOrder() saved order " + getId() + " reefer list - size " + reeferMap.size());
         }
-
     }
 
     /**
      * Called to book voyage for this order by messaging Voyage actor.
-     * 
+     *
      * @param voyageId The voyage id
      * @param order    Json encoded order properties
      * @return The voyage booking result

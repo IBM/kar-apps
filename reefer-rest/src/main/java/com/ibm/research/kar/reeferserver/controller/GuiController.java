@@ -32,23 +32,20 @@ public class GuiController {
     private AtomicBoolean valuesChanged = new AtomicBoolean();
 
     public GuiController() {
+
         TimerTask timerTask = new GuiUpdateTask();
         // running timer task as daemon thread. It updates
         // the GUI counts at regular intervals
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(timerTask, 0, 100);
     }
-/*
-    public void sendReefersUpdate(List<Reefer> reefers) {
-        template.convertAndSend("/topic/reefers", reefers);
-    }
-*/
+
     public void sendActiveVoyageUpdate(List<Voyage> voyages, String currentDate) {
         long start = System.currentTimeMillis();
         ShippingSchedule schedule = new ShippingSchedule(voyages, currentDate);
         template.convertAndSend("/topic/voyages", schedule);
-        long end  = System.currentTimeMillis();
-        System.out.println("GuiController.sendActiveVoyageUpdate() - voyage update took "+(end-start)+" ms");
+        long end = System.currentTimeMillis();
+        System.out.println("GuiController.sendActiveVoyageUpdate() - voyage update took " + (end - start) + " ms");
     }
 
     public void sendOrderUpdate(Order order) {
@@ -74,7 +71,7 @@ public class GuiController {
     public void updateReeferStats(ReeferStats stats) {
         reeferStats = stats;
         valuesChanged.set(true);
-       
+
     }
 
     private class GuiUpdateTask extends TimerTask {
@@ -84,13 +81,11 @@ public class GuiController {
             if (valuesChanged.get()) {
                 OrderStats orderStats = new OrderStats(inTransitOrderCount.get(), futureOrderCount.get(),
                         spoiltOrderCount.get());
-                //System.out.println(
-                //        "GuiController.run()................................. Orders Spoilt:" + spoiltOrderCount.get());
-                if ( orderStats != null ) {
+                 if (orderStats != null) {
                     template.convertAndSend("/topic/orders/stats", orderStats);
                 }
-                
-                if ( reeferStats != null ) {
+
+                if (reeferStats != null) {
                     template.convertAndSend("/topic/reefers/stats", reeferStats);
                 }
                 valuesChanged.set(false);

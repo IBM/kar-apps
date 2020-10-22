@@ -54,8 +54,6 @@ public class ReeferController {
 		System.out.println("RestController.init() - Fleet Size:"+fleet.size()+" Max Fleet Capacity:"+fleetMaxCapacity);
 		// increase total by additional 40% to ensure we always have reefers available
 		reeferInventorySize = Double.valueOf(fleet.size() * fleetMaxCapacity * 0.4).intValue();
-		//double factor = 1.0;
-		//reeferInventorySize = Double.valueOf(fleet.size() * fleetMaxCapacity * factor).intValue();
 	}
 
 	@PostMapping("/reefers")

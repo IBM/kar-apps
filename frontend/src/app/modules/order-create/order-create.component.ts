@@ -47,34 +47,15 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   selectedDestinationPort : string;
   selectedProduct: string;
   productQty: number = 1000;
-  //shippingSchedule: ShipSchedule[] = []; //this.shipSchedule.getShippingSchedule();
   voyages: Voyage[];
-  //dataSource = new MatTableDataSource(this.shippingSchedule);
   dataSource = new MatTableDataSource(this.voyages);
-  //selection = new SelectionModel<ShipSchedule>(false, []);
   selection = new SelectionModel<Voyage>(false, []);
 
-/*
-  transactions$ = this.dataService.messages$.pipe(
-    //map(rows => rows.data),
-
-    catchError(error => { throw error; }),
-    tap({
-      error: error => console.log('[Live Table component] Error:', error),
-      complete: () => console.log('[Live Table component] Connection Closed')
-    }
-    )
-  );
-
-*/
-  //shippingSchedule: ShipSchedule;
   connected: Subscription;
   isConnected = false;
   date = new Date(new Date().setDate(new Date().getDate()+1));
-  //date : this.tomorrow;//  =  new  FormControl(new  Date());
 
   displayedColumns: string[] = ['select', 'voyageId', 'vessel', 'origin', 'destination','sailDate', 'transitTime', 'freeCapacity'];
-  //dataSource = new MatTableDataSource<ShipSchedule>(SHIPPING_SCHEDULE);
 
   messages: Subject<any>;
   @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
@@ -93,30 +74,12 @@ console.log("Date:"+this.date);
        this.originPorts.push(routeData.destinationPort);
        this.destinationPorts.push(routeData.destinationPort);
        this.destinationPorts.push(routeData.originPort);
-      // this.allPorts.push()
+
       });
       // remove duplicates
       this.originPorts = Array.from(new Set(this.originPorts));
-      //this.destinationPorts = this.originPorts;
       this.allPorts = this.originPorts;
-      /*
-     // var destinations = [];
-      data.map( routeData => {
-        this.destinationPorts.push(routeData.destinationPort);
-       // return route.destinationPort;
-      });
-*/
     });
-
-    /*
-    console.log('Connecting ...');
-    this.connected = dataService.connected().subscribe(status => {
-      this.isConnected = status;
-      console.log('status', status);
-      // this._changeDetectorRef.detectChanges()
-    });
-    */
-    //this.dataService.connect();
   }
   saveOrder(product: string, qty: number, origin: string, destination: string, row: Voyage) {
     const dialogConfig = new MatDialogConfig();
@@ -141,7 +104,6 @@ console.log("Date:"+this.date);
 
 
     dialogRef.afterClosed().subscribe(
-       // val => console.log("Dialog output:", val),
         val => this.bookOrder(val)
 
     );
@@ -166,9 +128,9 @@ console.log("Date:"+this.date);
   resetVoyages() {
     this.selectedOriginPort="";
     this.selectedDestinationPort="";
-    
+
     this.departureDate = new Date();
-    
+
     this.dataSource.data = [];
   }
   showOrderIdDialog(orderId: string) {
@@ -191,56 +153,18 @@ console.log("Date:"+this.date);
     );
   }
   connect() {
-    //this.dataService.initSocket();
-  //  console.log('Connecting ...');
-    //this.dataService.connect();
-    /*
-    this.connected = this.dataService.connected().subscribe(status => {
-      this.isConnected = status;
-      console.log('status', status);
-      // this._changeDetectorRef.detectChanges()
-    });
-    */
-  //  this.messages = <Subject<any>>this.dataService
-   //   .connect();
-      /*
-      .map((response: MessageEvent): any => {
-        console.log(response);
-        return response.data;
-      });
-*///
-    //  console.log(this.dataService);
-
-
-
-    // this.messages.next(`CONNECT: ${this.address}`);
-  }
+   }
 
   send() {
-   // this.connect();
+
     console.log('Sending Message');
-    // this.messageLog = [...this.messageLog, 'SENT: ' + this.message];
-    //this.messages.next(JSON.stringify('some message'));
-    //this.dataService.sendMessage('some message');
     this.restService.getSchedule();//sendGetRequest();
   }
   rowClicked(row: any): void {
     console.log(row);
 
   }
-/*
-  openDialog(): void {
-    const dialogRef = this.dialog.open(DialogOverviewExampleDialog, {
-      width: '250px',
-      data: {name: this.name, animal: this.animal}
-    });
 
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-      this.animal = result;
-    });
-  }
-*/
   adjustDestinationPorts(origin: any) {
     console.log(origin.value);
     console.log(this.allRoutes);
@@ -260,9 +184,6 @@ console.log("Date:"+this.date);
      });
      this.destinationPorts = destinations;
      console.log(this.destinationPorts);
- //   this.destinationPorts = this.allPorts.filter(function(destination) {
- //     return destination != origin.value;
- //   });
   };
   adjustOriginPorts(destination: any) {
     console.log(destination.value);
@@ -283,9 +204,6 @@ console.log("Date:"+this.date);
      });
      this.originPorts = origins;
      console.log(this.originPorts);
- //   this.destinationPorts = this.allPorts.filter(function(destination) {
- //     return destination != origin.value;
- //   });
   };
 
   selectedVoyage($event, row?: Voyage) {
@@ -329,19 +247,9 @@ console.log("Date:"+this.date);
 
   search() {
     console.log('search called - Origin:'+this.selectedOriginPort+' Destination:'+this.selectedDestinationPort);
-   // dataSource.set
-   // const data = this.dataSource.data;
-  // this.shippingSchedule = this.restService.getSchedule();
-    //this.dataSource.data = data;
     this.restService.getMatchingVoyages(this.selectedOriginPort, this.selectedDestinationPort,this.departureDate.toISOString()).subscribe((data) => {
       console.log(data);
       this.dataSource.data = data;
-     // this.dataSource.filter =this.selectedOriginPort && this.selectedDestinationPort;
-     /*
-      this.dataSource.data = data.filter( ss => {
-        return ss.origin === this.selectedOriginPort && ss.destination === this.selectedDestinationPort;
-      })
-*/
     }
 
     );
@@ -350,17 +258,14 @@ console.log("Date:"+this.date);
   ngOnInit(): void {
     this.restService.currentDate().subscribe((data) => {
       console.log("nextDay() - Current Date:" + data.substr(0,10));
-      // start the Date picker with tommorrow as the earliest date to order 
+      // start the Date picker with tommorrow as the earliest date to order
       this.date = new Date(new Date().setDate(new Date(data.toString()).getDate()+1));
     });
-   // this.dataService.initializeWebSocketConnection();
     this.dataSource.paginator = this.paginator;
    this.send();
-   // this.dataService.sendMessage(this.displayedColumns);
   }
   ngOnDestroy() {
     console.log('Closing WebSocket Connection');
-    //this.dataService.closeConnection();
   }
 }
 

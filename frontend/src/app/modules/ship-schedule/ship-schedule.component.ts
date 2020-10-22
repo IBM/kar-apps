@@ -30,7 +30,6 @@ export class ShipScheduleComponent implements OnInit {
   @ViewChild(MatSort, {static: true}) sort: MatSort;
   @ViewChild(MatHorizontalStepper) stepper: MatHorizontalStepper;
   expandedElement:Voyage | null;
-//  shipTableColumns: string[] = [ 'vessel', 'origin', 'destination', 'maxCapacity', 'freeCapacity', 'location'];
   shipTableColumns: string[] = [ 'vessel', 'progress', 'orders','maxCapacity', 'freeCapacity'];
 
   constructor(private restService: RestService, private webSocketService : SocketService) {
@@ -43,12 +42,11 @@ export class ShipScheduleComponent implements OnInit {
           if ( event.body) {
             let schedule: ActiveSchedule;
             schedule = JSON.parse(event.body);
-
-            //this.voyages = JSON.parse(event.body);
             this.voyages = schedule.voyages;
             let d = schedule.currentDate;
+            // strip quotation marks
             d = d.replace(/"/g,"");
-            this.date = d.substr(0,10); //schedule.currentDate.substr(1,10);
+            this.date = d.substr(0,10);
            // console.log('::::::'+this.voyages);
             this.voyageDataSource.data = this.voyages;
 
@@ -83,18 +81,6 @@ export class ShipScheduleComponent implements OnInit {
 
   update(event: Event) {
     console.log("Click "+event);
-    /*
-    if ( this.autoSimButtonLabel == "START") {
-      this.autoSimButtonLabel = "STOP";
-//      this.restService.setAutoMode(10).subscribe((data) => {
-//        console.log(data);
-//      });
-    } else if ( this.autoSimButtonLabel == "STOP") {
-      this.autoSimButtonLabel = "START";
-      this.rate = 0;
-      console.log("............ Stopping Ship Simulator - delay:"+this.rate);
-    }
-    */
     this.restService.setSimulatorDelay(this.rate).subscribe((data) => {
       console.log(data);
     });
@@ -105,41 +91,19 @@ export class ShipScheduleComponent implements OnInit {
     this.restService.getActiveVoyages().subscribe((data) => {
 
       let voyages: Voyage[] = data;
-      /*
-      voyages.forEach(function(voyage) {
-        var r : Route = voyage.route;
-
-        console.log(">>>>>>>>"+r.);
-      });
-*/
-     // Object.keys(voyages).forEach(key => {
-      //  console.log(">>>>>>>>"+voyages[key]);
-      //});
-//      for( var v of voyages ) {
-//       // var value = `${voyages[v]}`;
-//        console.log(">>>>>>>>"+v);
-//      }
-      //let ships: Ship[] = fleet[0].ships;
-      //console.log(voyages);
       this.voyageDataSource.data = voyages;
       });
-      //this.shipDataSource.data = this.getFleets()[0].ship;
-    //  this.voyageDataSource.sort = this.sort;
-    //  this.voyageDataSource.paginator = this.paginator;
   }
 
   nextDay() {
-    //console.log('>>>>>>>>>>>>>nextDay called');
     this.restService.advanceDateByOneDay().subscribe((data) => {
       console.log("nextDay() - Current Date:" + data.substr(0,10));
       this.date = data.substr(0,10);
     });
-   // this.getActiveVoyages();
+
   }
   calculateProgress(days: number, voyageDurationInDays: number) {
-   // console.log(" Days:"+days + " Total:"+voyageDurationInDays);
     let res =  Math.round( (days/voyageDurationInDays)*100);
-   // console.log(" Percent Complete:"+res);
     return res;
   }
 }

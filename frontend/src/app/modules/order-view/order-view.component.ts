@@ -9,7 +9,6 @@ import {MatSort, MatSortable} from '@angular/material/sort';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { SocketService } from 'src/app/core/services/socket.service';
 import { OrderStats } from 'src/app/core/models/order-stats';
-//import {CdkDetailRowDirective } from 'src/app/shared/components/cdk-detail-row.directive';
 
 
 @Component({
@@ -26,7 +25,7 @@ import { OrderStats } from 'src/app/core/models/order-stats';
 })
 export class OrderViewComponent implements OnInit {
   selection = new SelectionModel<Order>(false, []);
-  displayedColumns: string[] = ['select',  'id', 'customerId','status','product', 'productQty', 'voyageId'];//, 'origin', 'destination','sailDate', 'transitTime', 'voyageId', 'reeferIds'];
+  displayedColumns: string[] = ['select',  'id', 'customerId','status','product', 'productQty', 'voyageId'];
   orders: Order[] = [];
   orderTarget : number ;
   windowSize : number;
@@ -43,19 +42,13 @@ export class OrderViewComponent implements OnInit {
 
   autoSimButtonLabel: string = "Update";
   dataSource = new MatTableDataSource(this.orders);
- // isExpansionDetailRow = (i: number, row: Object) => row.hasOwnProperty('detailRow');
   public currentExpandedRow: any;
   //public expandRow: boolean = false;
   public expandedElement: boolean = true;
   @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
-  //@ViewChild(MatSort) sort: MatSort;
   @ViewChild(MatSort, {static: true}) sort: MatSort;
-  
-  //@ViewChild(MatTable) table: MatTable<any>;
 
-  //@Input() sorting: MatSortable;
-
-  constructor(private dialog: MatDialog, private restService: RestService, private webSocketService : SocketService) { 
+  constructor(private dialog: MatDialog, private restService: RestService, private webSocketService : SocketService) {
     this.restService.getOrderStats().subscribe((data) => {
       // console.log(data);
       this.inTransitOrders = data.inTransitOrderCount;
@@ -66,36 +59,10 @@ export class OrderViewComponent implements OnInit {
     console.log('OrderView - connected socket');
     stompClient.connect({}, frame => {
       console.log('OrderView - connected stompClient');
-/*
-      stompClient.subscribe('/topic/orders/intransit', (event:any) => {
-        if ( event.body) {
-          let orderCount : number;
-          console.log("-------- IntransitOrders Update:"+event.body);
-          orderCount = JSON.parse(event.body);
-          this.inTransitOrders = orderCount;
-        }
-      });
-      stompClient.subscribe('/topic/orders/future', (event:any) => {
-        if ( event.body) {
-          let orderCount : number;
-          console.log("-------- FutureOrders Update:"+event.body);
-          orderCount = JSON.parse(event.body);
-          this.futureOrders = orderCount;
-        }
-      });
-      stompClient.subscribe('/topic/orders/spoilt', (event:any) => {
-        if ( event.body) {
-          let orderCount : number;
-          console.log("-------- SpoiltOrders Update:"+event.body);
-          orderCount = JSON.parse(event.body);
-          this.spoiltOrders = orderCount;
-        }
-      });
-      */
+
       stompClient.subscribe('/topic/orders/stats', (event:any) => {
         if ( event.body) {
           let orderStats : OrderStats;
-         // console.log("-------- Orders Update:"+event.body);
           orderStats = JSON.parse(event.body);
           this.spoiltOrders = orderStats.spoiltOrderCount;
           this.futureOrders = orderStats.futureOrderCount;
@@ -107,10 +74,9 @@ export class OrderViewComponent implements OnInit {
         stompClient.subscribe('/topic/orders', (event:any) => {
           if ( event.body) {
             let order: Order;
-          //  console.log("-------- Paginator Index:"+this.paginator.pageIndex);
 
             this.dataSource.data.forEach(row => console.log(row.id));
-            // Add the order to the HEAD only when we are on the 
+            // Add the order to the HEAD only when we are on the
             // first page of orders else just ignore this update
             if ( this.paginator.pageIndex == 0) {
 
@@ -121,7 +87,6 @@ export class OrderViewComponent implements OnInit {
               const currentData = this.dataSource.data;
               currentData.unshift(order);
 
-              //console.log('::::::'+order);
               this.dataSource.data = currentData;
               this.dataSource.sort = this.sort;
             }
@@ -131,64 +96,32 @@ export class OrderViewComponent implements OnInit {
         });
 
     });
-    
 
-    
+
+
   }
 
   isExpansionDetailRow = (_, row: any) => row.hasOwnProperty('detailRow');
   explansionDetialRowCollection = new Array<any>();
-/*
-  public toggleDetailsRow(row: any): void {
-    this.expandRow = this.explansionDetialRowCollection.includes(row);
-    if(this.expandRow !== true) {
-      this.explansionDetialRowCollection.push(row);
-    } else {
-      // let index = this.explansionDetialRowCollection.findIndex(idRow => idRow.name === row.element.name);
-      let test = this.explansionDetialRowCollection[0].name;
-      this.explansionDetialRowCollection.forEach( (item, index) => {
-        if(item.position === row.position) this.explansionDetialRowCollection.splice(index, 1);
-      });
-      // this.explansionDetialRowCollection.splice(0, 1);
-    }
-  }
-  */
+
   ngOnInit(): void {
-   
+
      this.restService.getOrderTargetAndSimDelay().subscribe((data) => {
-   //   console.log(">>>> Order Target from the Simulator delay:"+data.delay+" target:"+data.target);
-     
+
       if ( data.target > 0 || data.delay > 0 ) {
         this.createOrderManually = true;
-        //console.log("++++++++++++++ Enable CreateOrder Button");
       }else {
         this.createOrderManually = false;
-      //  console.log("++++++++++++++ Disable CreateOrder Button");
       }
       this.orderTarget = data.target;
 
-      
+
     });
     this.restService.getOrderSimControls().subscribe((data) => {
       this.orderTarget = data.target;
       this.windowSize = data.window;
       this.orderUpdates = data.updateTarget;
     });
-/*
-    this.restService.getAllOrders().subscribe((data) => {
-      console.log(data);
-      this.dataSource.data = data;
-    //this.dataSource =  new MatTableDataSource(data);
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-
-     }
-
-
-    );
-    */
- //    this.dataSource.paginator = this.paginator;
- //    this.dataSource.sort = this.sort;
 
   }
   showInTransitOrders(event) {
@@ -196,7 +129,7 @@ export class OrderViewComponent implements OnInit {
     this.restService.getActiveOrders().subscribe((data) => {
      // console.log(data);
       this.dataSource.data = data;
-    
+
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     this.orderLabel = " ----------- In-Transit Orders ----------- ";
@@ -209,9 +142,8 @@ export class OrderViewComponent implements OnInit {
   showFutureOrders() {
     console.log("Click >>>>> showFutureOrders()");
     this.restService.getBookedOrders().subscribe((data) => {
-  //    console.log(data);
-      this.dataSource.data = data;
-    
+    this.dataSource.data = data;
+
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     this.orderLabel = " ----------- Future Orders ----------- ";
@@ -223,9 +155,9 @@ export class OrderViewComponent implements OnInit {
   showSpoiltOrders() {
     console.log("Click >>>>> showSpoiltOrders()");
     this.restService.getSpoiltOrders().subscribe((data) => {
-   //   console.log(data);
+
       this.dataSource.data = data;
-    
+
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     this.orderLabel = " ----------- Spoilt Orders ----------- ";
@@ -241,7 +173,7 @@ export class OrderViewComponent implements OnInit {
     request['target'] = this.orderTarget.toString();
     request['window'] = this.windowSize.toString();
     request['updateFrequency'] = this.orderUpdates.toString();
-  
+
     this.restService.setOrderSimControls(request).subscribe((data) => {
  //     console.log(data);
       if ( this.orderTarget == 0 ) {
@@ -250,34 +182,20 @@ export class OrderViewComponent implements OnInit {
         this.createOrderManually = false;
       }
     });
-    
+
   }
   nextOrder() {
     console.log('>>>>>>>>>>>>>nextOrder called');
-    
+
     this.restService.createOrder().subscribe((data) => {
    //   console.log(data);
       //this.date = data.substr(0,10);
     });
-    
+
    // this.getActiveVoyages();
   }
-  /*
-  orderTargetChange(event: any ) {
-    this.orderTarget = event.target.value;
-    if (this.orderTarget == 0 ) {
-      this.restService.setOrderTarget(0).subscribe((data) => {
-        console.log(data);
-      });
-    }
-  }
-  */
+
   selectedOrder($event, row?: Order) {
-  //  const numSelected = this.selection.selected.length;
-  //  if ($event.checked) {
-  //    console.log(row);
-  //    this.saveOrder(this.selectedProduct, 1000, this.selectedOriginPort, this.selectedDestinationPort,row);
-  //  }
 
   }
  /** Whether the number of selected elements matches the total number of rows. */
@@ -370,19 +288,9 @@ this.filterSelectObj.forEach((value, key) => {
 this.dataSource.filter = "";
 }
   private getTodos(request) {
-    /*
-    this.loading = true;
-    this.todoService.listTodos(request)
-      .subscribe(data => {
-        this.todos = data['content'];
-        this.totalElements = data['totalElements'];
-        this.loading = false;
-      }, error => {
-        this.loading = false;
-      });
-      */
+
   }
- 
+
   nextPage(event: PageEvent) {
     const request = {};
     console.log("PageEvent pageIndex:"+event.pageIndex.toString()+" Size:"+event.pageSize.toString()+" Paginator Index:"+      this.paginator.pageIndex);
@@ -390,7 +298,7 @@ this.dataSource.filter = "";
     request['size'] = event.pageSize.toString();
     this.restService.nextPage(request).subscribe((data) => {
       console.log(data);
-      //this.date = data.substr(0,10);
+
     });
   }
 }

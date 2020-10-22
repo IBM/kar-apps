@@ -155,9 +155,10 @@ public class VoyageController {
     String voyageId = JsonUtils.getVoyageId(message);
     System.out.println("VoyageController.delivered() - id:" + voyageId + " message:" + message);
     shipScheduleService.updateDaysAtSea(voyageId, JsonUtils.getDaysAtSea(message));
+    //updateShipPositions(TimeUtils.getInstance().getCurrentDate().toString());
     voyageService.voyageEnded(voyageId);
     orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED);
-    updateGui(TimeUtils.getInstance().getCurrentDate().toString());
+    //updateGui(TimeUtils.getInstance().getCurrentDate().toString());
   }
 
   /**
@@ -171,6 +172,7 @@ public class VoyageController {
     String voyageId = JsonUtils.getVoyageId(message);
     System.out.println("VoyageController.departed() - id:" + voyageId + " message:" + message);
     shipScheduleService.updateDaysAtSea(voyageId, JsonUtils.getDaysAtSea(message));
+    //updateShipPositions(TimeUtils.getInstance().getCurrentDate().toString());
     voyageService.voyageDeparted(voyageId);
     orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT);
   }
@@ -190,6 +192,7 @@ public class VoyageController {
         + voyageService.getVoyageStatus(voyageId) + " daysAtSea: " + daysAtSea);
     if (daysAtSea > 0) {
       shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
+     // updateShipPositions(TimeUtils.getInstance().getCurrentDate().toString());
     }
   }
 
@@ -283,20 +286,32 @@ public class VoyageController {
 
     return activeVoyages;
   }
+/*
+  private void updateShipPositions(String currentDate) {
+    long t1 = System.currentTimeMillis();
+    List<Voyage> activeVoyages = activeVoyages();
+    long e1 = System.currentTimeMillis();
+    System.out.println("VoyageController.updateGui() - ,,.. time to fetch active voyages " + (e1 - t1) + " ms");
+    gui.sendActiveVoyageUpdate(activeVoyages, currentDate);
+  }
 
+ */
   /**
    * Update the GUI
    */
 
   @PostMapping("/voyage/updateGui")
   public void updateGui(@RequestBody String currentDate) {
+
     long start = System.currentTimeMillis();
     System.out.println("VoyageController.updateGui() - updating GUI with active schedule - currentDate:" + currentDate);
+
     long t1 = System.currentTimeMillis();
     List<Voyage> activeVoyages = activeVoyages();
     long e1 = System.currentTimeMillis();
     System.out.println("VoyageController.updateGui() - ,,.. time to fetch active voyages " + (e1 - t1) + " ms");
     gui.sendActiveVoyageUpdate(activeVoyages, currentDate);
+
     long t2 = System.currentTimeMillis();
     int totalActiveOrders = 0;
     for (Voyage voyage : activeVoyages) {

@@ -37,22 +37,17 @@ export class ReeferViewComponent implements OnInit {
   createAnomalyManually: boolean;
   failureRate: number;
   updateFrequency : number;
-  //@ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   @ViewChild(MatSort, {static: true}) sort: MatSort;
-  //@ViewChildren(MatPaginator) paginator = new QueryList<MatPaginator>();
 
 
   constructor(private dialog: MatDialog, private restService: RestService, private webSocketService : SocketService ) {
     this.restService.getReeferControls().subscribe((data) => {
-  //    console.log(data);
-      this.failureRate = data.failureRate;
+       this.failureRate = data.failureRate;
       this.updateFrequency = data.updateFrequency;
-      
+
     });
     this.restService.getReeferStats().subscribe((data) => {
-     // console.log(data);
-
       this.totalReefers = data.total;
       this.totalBookedReefers = data.totalBooked;
       this.totalInTransitReefers = data.totalInTransit;
@@ -62,21 +57,9 @@ export class ReeferViewComponent implements OnInit {
 // Object to create Filter for
 		// Open connection with server socket
     let stompClient = this.webSocketService.connect();
-    //console.log('AppComponent - connected socket');
     stompClient.connect({}, frame => {
       console.log('ReeferView - connected socket');
-  // Subscribe to notification topic
-  /*
-        stompClient.subscribe('/topic/reefers', (event:any) => {
-          if ( event.body) {
-            this.reefers = JSON.parse(event.body);
-            console.log('::::::'+this.reefers);
-            this.reeferDataSource.data = this.reefers;
 
-          }
-
-        });
-        */
         stompClient.subscribe('/topic/reefers/stats', (event:any) => {
           if ( event.body) {
             this.reeferStats = JSON.parse(event.body);
@@ -89,37 +72,16 @@ export class ReeferViewComponent implements OnInit {
           }
 
         })
-        
+
     });
 
   }
 
 
   ngOnInit(): void {
-   /// this.portsDataSource.paginator = this.paginator.toArray()[0];
     this.reeferDataSource.paginator = this.paginator;
     this.reeferDataSource.sort = this.sort;
-/*
-    this.socketService.getMessages()
-    .subscribe((message: string) => {
-      console.log(message);
-      this.messageList.push(message);
-    });
-    */
-    /*
-    this.restService.getAllPorts().subscribe((data) => {
-      console.log(data);
 
-      this.portsDataSource.data = data;
-      });
-*/
-/*
-this.restService.getAllReefers().subscribe((data) => {
-  console.log(">>>>>>>>>"+data);
-
-  this.reeferDataSource.data = data;
-  });
-*/
   }
 
   public doFilter = (value: string) => {
@@ -139,7 +101,6 @@ this.restService.getAllReefers().subscribe((data) => {
   }
   // Called on Filter change
   filterChange(filter, event) {
-    //let filterValues = {}
     this.filterValues[filter.columnProp] = event.target.value.trim().toLowerCase()
     this.reeferDataSource.filter = JSON.stringify(this.filterValues)
   }

@@ -18,47 +18,38 @@
                        <mat-form-field appearance="fill">
                            <input matInput min="0" max="1000" step="1" ngStep="1"  name="windowSize" [(ngModel)]="windowSize" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
                            <mat-hint align="start">Future Time Window</mat-hint>
-                        </mat-form-field>  
+                        </mat-form-field>
                         <mat-form-field appearance="fill">
                         <input matInput min="0" max="20" step="1" ngStep="1"  name="orderUpdates" [(ngModel)]="orderUpdates" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
                         <mat-hint align="start">Order Updates per day</mat-hint>
-                        <!--input matInput min="0" max="1000" step="10" ngStep="10" (change)="orderTargetChange($event)" name="orderTarget" [(ngModel)]="orderTarget" type="number" placeholder="0" [style.fontSize.px]="'17'" required-->
-                          <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
-                          <!--mat-hint align="front">Choose target utilization^</mat-hint-->
+
                       </mat-form-field>
                       <button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateOrderSimulatorControlls($event)" mat-raised-button  color="primary"  [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button>
-                      <!--button fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="updateOrderTarget($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button -->
-                      <!--button [disabled]="orderTarget === 0"  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="toggleEnableDisable($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">{{autoSimButtonLabel}}</button-->
 
                   </div>
 
               </mat-card-content>
           </mat-card>
-          <!--mat-card fxFlex="1"> </mat-card-->
-          <mat-card fxFlex="20" >
-              <!--mat-card-header [style.backgroundColor]="'gainsboro'" [style.height.px]="'35'">
-                  <mat-card-title ></mat-card-title>
-              </mat-card-header-->
+           <mat-card fxFlex="20" >
+
               <mat-card-content class="advance" color="primary" style="margin:14px; padding:5px">
                   <div fxLayout="row" fxLayoutAlign="start center">
                       <app-personaldetails fxFlex="80%">
                           <button [disabled]="createOrderManually === false" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Orders</button>
-                          <!--button [disabled]="orderTarget > 0" (click)="nextOrder()" mat-raised-button  color="primary" [style.width]="'100%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Create Order</button-->
 
                       </app-personaldetails>
                       <app-personaldetails fxFlex="3%">
 
                       </app-personaldetails>
- 
+
                    </div>
 
               </mat-card-content>
 
-              <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
           </mat-card>
       </div>
 
-      
+
 
       <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
         <mat-card fxFlex="33"  style="backgroundColor:#9dade2;margin:35px; padding:25px">
@@ -68,21 +59,21 @@
                 <div fxLayout="row" fxLayoutAlign="center center" width="100%">
                     <div  >
                         <h1>In-Transit Orders</h1>
-    
+
                     </div>
                 </div>
                 <div fxLayout="row" fxLayoutAlign="center center" width="100%">
                     <div >
                         <mat-label [style.font-size]="'50px'">{{inTransitOrders}}</mat-label>
-    
+
                     </div>
                  </div>
                  <div fxLayout="row" fxLayoutAlign="center center">
                     <div >
                         <button  mat-button (click)="showInTransitOrders($event); " [style.font-size]="'20px'"> Click to view most recent orders</button><br />
                     </div>
-                    
-                    
+
+
                 </div>
             </mat-card-content>
         </mat-card>
@@ -92,52 +83,50 @@
                 <div fxLayout="row" fxLayoutAlign="center center">
                     <div class="example-container">
                         <h1>Future Orders</h1>
-    
+
                     </div>
                 </div>
                 <div fxLayout="row" fxLayoutAlign="center center">
                     <div >
                         <mat-label [style.font-size]="'50px'">{{futureOrders}}</mat-label>
-    
+
                     </div>
                  </div>
                  <div fxLayout="row" fxLayoutAlign="center center">
                     <div >
                         <button (click)="showFutureOrders()" [style.font-size]="'20px'"> Click to view most recent orders</button><br />
                     </div>
-                    
-                    
+
+
                 </div>
             </mat-card-content>
 
-            <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
         </mat-card>
         <mat-card fxFlex="33" style="backgroundColor:#9dade2;margin:35px; padding:25px">
             <mat-card-content class="advance" color="primary" >
                 <div fxLayout="row" fxLayoutAlign="center center">
                     <div class="example-container">
                         <h1>Spoilt Orders</h1>
-    
+
                     </div>
                  </div>
                  <div fxLayout="row" fxLayoutAlign="center center">
                     <div >
                         <mat-label [style.font-size]="'50px'">{{spoiltOrders}}</mat-label>
- 
+
                     </div>
-                    
-                    
+
+
                 </div>
                 <div fxLayout="row" fxLayoutAlign="center center">
                     <div >
                         <button (click)="showSpoiltOrders()" [style.font-size]="'20px'"> Click to view most recent orders</button><br />
                     </div>
-                    
-                    
+
+
                 </div>
             </mat-card-content>
 
-            <!--mat-hint align="end" [style.fontSize.px]="'10'">Move Ship One Day Ahead ^</mat-hint-->
         </mat-card>
     </div>
   </mat-card-content>

@@ -85,6 +85,7 @@ public class ReeferProvisionerActor extends BaseActor {
         set(this, Constants.TOTAL_REEFER_COUNT_KEY, Json.createValue(reeferMasterInventory.length));
         System.out.println(
                 "ReeferProvisionerActor.saveState() - reeferMasterInventory size:" + reeferMasterInventory.length);
+        updateRest();
     }
 
     @Remote

@@ -155,6 +155,7 @@
           <runtimeArtifact>
             <groupId>io.openliberty</groupId>
             <artifactId>openliberty-runtime</artifactId>
+             <version>20.0.0.10</version>
             <type>zip</type>
           </runtimeArtifact>
         </configuration>

@@ -20,8 +20,22 @@
 		<jackson.version>2.10.0</jackson.version>
 	</properties>
 
+
+	<dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.openliberty.features</groupId>
+                <artifactId>features-bom</artifactId>
+                <version>20.0.0.10</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+	</dependencyManagement>
+	
 	<dependencies>
-		<dependency>
+
+	  <dependency>
     		<groupId>org.springframework.boot</groupId>
     		<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
@@ -127,7 +141,13 @@
 				<artifactId>liberty-maven-plugin</artifactId>
 				<version>3.2</version>
 				<configuration>
-				
+
+			        <runtimeArtifact>
+                                      <groupId>io.openliberty</groupId>
+                                      <artifactId>openliberty-runtime</artifactId>
+				      <version>20.0.0.10</version>
+                                      <type>zip</type>
+                                </runtimeArtifact>
 				<appsDirectory>apps</appsDirectory>
 				<installAppPackages>spring-boot-project</installAppPackages>
 				<include>minify,runnable</include>

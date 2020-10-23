@@ -25,6 +25,12 @@ public class ReeferDTO {
         return id;
     }
 
+    public void reset() {
+        setState(State.UNALLOCATED);
+        this.orderId = "";
+        this.voyageId = "";
+        this.maintenanceReleaseDate = "";
+    }
 
     public State getState() {
         return state;

@@ -121,9 +121,8 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject anomaly(JsonObject message) {
-        // Reefer notifies the order on anomaly. The order returns its current state
-        // which will propagate to the ReeferProvisioner where the decision is made
-        // to either spoil the reefer or assign it to maintenance.
+        // ReeferProvisioner notifies the order on anomaly. The order returns its current state
+        // and the decision is made to either spoil the reefer or assign it to maintenance.
         JsonValue state = super.get(this, Constants.ORDER_STATUS_KEY);
         System.out.println("OrderActor.anomaly() called- Actor ID:" + getId() + " type:" + this.getType() + " state:"
                 + ((JsonString) state).getString());

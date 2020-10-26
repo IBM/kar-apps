@@ -93,6 +93,7 @@ public class OrderThread extends Thread {
 
           int windowsize = SimulatorService.orderwindow.intValue();
           Instant endday = today.plus(windowsize, ChronoUnit.DAYS);
+          endday = endday.minusSeconds(1);
           JsonObject message = Json.createObjectBuilder().add("startDate", today.toString())
                   .add("endDate", endday.toString()).build();
 

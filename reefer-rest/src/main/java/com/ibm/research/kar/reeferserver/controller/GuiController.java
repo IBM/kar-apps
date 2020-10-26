@@ -18,6 +18,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Updates the GUI using websockets. The order and reefer related counts are
+ * updated at regular intervals via a TimerTask.
+ */
 @RestController
 @CrossOrigin("*")
 public class GuiController {

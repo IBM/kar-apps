@@ -150,8 +150,8 @@ public class VoyageController {
    * @param message - json encoded params: daysAtSea, voyageId
    * @throws VoyageNotFoundException
    */
-  @PostMapping("/voyage/update/delivered")
-  public void delivered(@RequestBody String message) throws VoyageNotFoundException {
+  @PostMapping("/voyage/update/arrived")
+  public void arrived(@RequestBody String message) throws VoyageNotFoundException {
     String voyageId = JsonUtils.getVoyageId(message);
     System.out.println("VoyageController.delivered() - id:" + voyageId + " message:" + message);
     shipScheduleService.updateDaysAtSea(voyageId, JsonUtils.getDaysAtSea(message));

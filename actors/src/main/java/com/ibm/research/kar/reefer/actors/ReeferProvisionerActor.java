@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.annotations.Activate;
@@ -41,6 +42,7 @@ public class ReeferProvisionerActor extends BaseActor {
     private ReeferDTO[] reeferMasterInventory = null;
     // private JsonValue totalReeferInventory = null;
     private AtomicBoolean valuesChanged = new AtomicBoolean();
+
     @Activate
     public void init() {
         //StringBuilder sb = new StringBuilder();
@@ -92,9 +94,10 @@ public class ReeferProvisionerActor extends BaseActor {
     public JsonObject getStats(JsonObject message) {
         return getReeferStats();
     }
+
     /**
      * Release all reefers whose release date matches today's date
-     * 
+     *
      * @param message
      * @return
      */
@@ -134,25 +137,28 @@ public class ReeferProvisionerActor extends BaseActor {
 
         return Json.createObjectBuilder().build();
     }
-/**
- * Given numbers of reefers currently in-transit update total booked and total in-transit counts
- * 
- * @param message
- * @return
- */
+
+    /**
+     * Given numbers of reefers currently in-transit update total booked and total in-transit counts
+     *
+     * @param message
+     * @return
+     */
     @Remote
     public JsonObject updateInTransit(JsonObject message) {
         JsonObjectBuilder reply = Json.createObjectBuilder();
         int newInTransit = message.getInt("in-transit");
-        System.out.println("ReeferProvisionerActor.updateInTransit() - message:" + message+" update reefers in transit:"+newInTransit);
+        System.out.println("ReeferProvisionerActor.updateInTransit() - message:" + message + " update reefers in transit:" + newInTransit);
+        // subtract from booked and add to in-transit
         super.decrementAndSave(this, Constants.TOTAL_BOOKED_KEY, newInTransit);
         super.incrementAndSave(this, Constants.TOTAL_INTRANSIT_KEY, newInTransit);
         updateRest();
         return reply.build();
     }
+
     /**
      * Reserve enough reefers to fill with order products.
-     * 
+     *
      * @param message
      * @return
      */
@@ -193,9 +199,10 @@ public class ReeferProvisionerActor extends BaseActor {
                     .add(JsonOrder.IdKey, order.getId()).build();
         }
     }
+
     /**
      * Release given reefers back to inventory
-     * 
+     *
      * @param message
      * @return
      */
@@ -213,17 +220,18 @@ public class ReeferProvisionerActor extends BaseActor {
             JsonValue totalInTransit = get(this, Constants.TOTAL_INTRANSIT_KEY);
             System.out.println("ReeferProvisionerActor.unreserveReefers() - released reefers " + " total booked: "
                     + totalBooked + " totalInTransit:" + totalInTransit);
-        } catch( Throwable e ) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
- 
+
         return reply.build();
     }
-/**
- * Handle reefer anomaly
- * 
- * @param message
- */
+
+    /**
+     * Handle reefer anomaly
+     *
+     * @param message
+     */
     @Remote
     public void reeferAnomaly(JsonObject message) {
         int reeferId = message.getInt(Constants.REEFER_ID_KEY);
@@ -241,7 +249,7 @@ public class ReeferProvisionerActor extends BaseActor {
                         reeferToJsonObject(reeferMasterInventory[reeferId]));
             }
             ReeferDTO reefer = reeferMasterInventory[reeferId];
-            System.out.println("ReeferProvisionerActor.reeferAnomaly() - reeferId:" + reeferId+" Order ID:"+reefer.getOrderId());
+            System.out.println("ReeferProvisionerActor.reeferAnomaly() - reeferId:" + reeferId + " Order ID:" + reefer.getOrderId());
 
             JsonObject reply = handleAnomaly(reefer.getOrderId());
 
@@ -285,19 +293,20 @@ public class ReeferProvisionerActor extends BaseActor {
             ee.printStackTrace();
         }
     }
+
     private JsonObject handleAnomaly(String orderId) {
         JsonObjectBuilder propertiesBuilder = Json.createObjectBuilder();
         JsonObjectBuilder reply = Json.createObjectBuilder();
-        if ( orderId != null && orderId.length() > 0 ) {
+        if (orderId != null && orderId.length() > 0) {
             JsonObject orderReply = notifyOrderOfSpoilage(orderId);
             System.out.println("ReeferActor.handleAnomaly() - Id:" + this.getId()
                     + " Order Actor:" + orderId + " reply:" + orderReply);
-            if ( orderInTransit(orderReply) ) {
+            if (orderInTransit(orderReply)) {
                 // reefer in-transit becomes spoilt and will transition to on-maintenance when ship arrives in port
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name()).add(Constants.ORDER_STATUS_KEY,
                         OrderStatus.INTRANSIT.name());
-            } else if ( orderBooked(orderReply)) {
+            } else if (orderBooked(orderReply)) {
                 // Booked orders have not yet departed. Spoiled reefers must be replaced in such
                 // case.
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
@@ -309,23 +318,27 @@ public class ReeferProvisionerActor extends BaseActor {
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.MAINTENANCE.name());
             }
         } else {
-            // reefer neither booked nor in-transit goes on maintenance
+            // reefer not allocated yet
             propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.MAINTENANCE.name()));
             reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.MAINTENANCE.name());
         }
         return reply.build();
     }
-    private boolean orderBooked( JsonObject orderReply) {
+
+    private boolean orderBooked(JsonObject orderReply) {
         return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name());
     }
+
     private boolean orderInTransit(JsonObject orderReply) {
         return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.INTRANSIT.name());
     }
+
     private JsonObject notifyOrderOfSpoilage(String orderId) {
         ActorRef orderActor = Kar.actorRef(ReeferAppConfig.OrderActorName, orderId);
         JsonObject params = Json.createObjectBuilder().build();
         return actorCall(orderActor, "anomaly", params).asJsonObject();
     }
+
     private ReeferDTO jsonObjectToReeferDTO(JsonObject reefer) {
         ReeferDTO reeferDTO = new ReeferDTO(reefer.getInt(Constants.REEFER_ID_KEY),
                 ReeferState.State.valueOf(reefer.getString(Constants.REEFER_STATE_KEY)),
@@ -350,8 +363,8 @@ public class ReeferProvisionerActor extends BaseActor {
         }
         return reeferObjectBuilder.build();
     }
+
     /**
-     * 
      * @param inventorySize
      */
     private void initMasterInventory(int inventorySize) {
@@ -360,9 +373,9 @@ public class ReeferProvisionerActor extends BaseActor {
     }
 
     /**
-     * Calls REST service to fetch total number of reefers 
-     * 
-     * @return Total number of reefers 
+     * Calls REST service to fetch total number of reefers
+     *
+     * @return Total number of reefers
      */
     private int getReeferInventorySize() {
         Response response = Kar.restGet("reeferservice", "reefers/inventory/size");
@@ -371,11 +384,12 @@ public class ReeferProvisionerActor extends BaseActor {
         System.out.println("ReeferProvisionerActor.getReeferInventorySize() - Inventory Size:" + (JsonNumber) size);
         return ((JsonNumber) size).intValue();
     }
+
     /**
      * Calls Order actor to replace spoilt reefer
-     * 
-     * @param orderId - Id of an order which has spoilt 
-     * @param spoliedReeferId - Id of a reefer which has spoilt
+     *
+     * @param orderId             - Id of an order which has spoilt
+     * @param spoliedReeferId     - Id of a reefer which has spoilt
      * @param replacementReeferId - Id of reefer which will replace the spoilt one
      * @return
      */

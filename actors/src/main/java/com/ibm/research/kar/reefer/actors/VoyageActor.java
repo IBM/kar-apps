@@ -156,7 +156,7 @@ public class VoyageActor extends BaseActor {
     private void processArrivedVoyage(Voyage voyage, int daysAtSea) {
         System.out.println("VoyageActor.changePosition() voyageId=" + voyage.getId()
                 + " has ARRIVED ------------------------------------------------------");
-        messageRest("/voyage/update/delivered", daysAtSea);
+        messageRest("/voyage/update/arrived", daysAtSea);
         // notify each order actor that the ship arrived
         loadOrders().values().forEach(order -> {
             System.out.println("VoyageActor.changePosition() voyageId=" + voyage.getId()

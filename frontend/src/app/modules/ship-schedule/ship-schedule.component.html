@@ -7,7 +7,7 @@
                         <mat-card-title>Simulation Delay</mat-card-title>
                     <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
                 </mat-card-header>
-  
+
                 <mat-card-content>
                     <div class="example-container">
                         <mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill">
@@ -36,11 +36,11 @@
 
                         </app-personaldetails>
                         <app-personaldetails fxFlex="3%">
- 
+
                         </app-personaldetails>
                         <app-contactdetails fxFlex="47%">
                             <mat-card [style.backgroundColor]="'gainsboro'" [style.fontSize.px]="'20'"  style="border: 1px solid;">
-                                
+
                                 <mat-card-header [style.backgroundColor]="'gainsboro'" style="padding: 1px;margin:0 auto;text-align: center;justify-content: center" >
                                         <mat-card-title >Current Date</mat-card-title>
                                     <!--mat-card-subtitle>Subtitle</mat-card-subtitle-->
@@ -65,37 +65,37 @@
 <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="2px" class="stats-cards" >
     <div fxFlex="100">
         <div class="mat-elevation-z8" >
-       
+
             <div class="col m12 s12 mat-elevation-z8" style="margin-top:-10px;border-radius:4px; background: linear-gradient(60deg,#6d6fc0,#50649c); padding:5px">
                 <h2 class="white-text"> Active Voyages </h2>
-    
+
             </div>
-    
+
             <table [style.width]="'100%'" mat-table [dataSource]="voyageDataSource" multiTemplateDataRows matSort class="mat-elevation-z8">
-            
+
                 <ng-container matColumnDef="vessel">
                     <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header width ="15%" style="font-size: 16px;"> Vessel</th>
                     <td mat-cell *matCellDef="let element" style="font-size: 20px;font-style: italic;"> {{element.route.vessel.name}} </td>
                 </ng-container>
                 <ng-container  matColumnDef="progress">
                     <th mat-header-cell *matHeaderCellDef class="table-head-fix" style="font-size: 16px;" text-align: center>   Origin ------------------------------> Voyage Progress  ------------------------------> Destination </th>
-                    <td mat-cell *matCellDef="let element"> 
+                    <td mat-cell *matCellDef="let element">
                     <div>
                         <mat-card class="custom" fxFlex="25" [style.backgroundColor]="'#c5c4db'">
                             <mat-card-content class="progress"  style="margin:0 auto;text-align: center;justify-content: center">
                                 {{element.route.originPort}}<br><p style="font-size: 15px;">{{element.sailDate}}</p>
                             </mat-card-content>
-                            
+
                         </mat-card>
                         <mat-card class="progress" fxFlex="50"  >
 
                             <mat-card-content style="justify-content:center;align-items:center;" >
                                  <mat-progress-bar fxFlex value="{{element.route.vessel.progress}}">{{element.route.daysAtSea}}</mat-progress-bar>
-                                
+
                             </mat-card-content>
                         </mat-card>
                         <mat-card class="custom" fxFlex="25" [style.backgroundColor]="'#c5c4db'" >
- 
+
                             <mat-card-content class="progress"  style="text-align: center;align-items: center;">
                                 {{element.route.destinationPort}}<br><p style="font-size: 15px;">{{element.displayArrivalDate}}</p>
                             </mat-card-content>
@@ -103,24 +103,24 @@
 
 
 
-                    </div>    
-                    
-                    
+                    </div>
+
+
                     </td>
                 </ng-container>
                 <ng-container  matColumnDef="orders">
                     <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header width ="10%" style="font-size: 16px;text-align: center;align-items: center;"> Orders </th>
                     <td mat-cell *matCellDef="let element" style="font-size: 16px; text-align: center;"> {{element.orderCount}} </td>
-                </ng-container>   
+                </ng-container>
                 <ng-container  matColumnDef="maxCapacity">
                     <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header width ="10%" style="font-size: 16px;"> Max Capacity </th>
                     <td mat-cell *matCellDef="let element" style="font-size: 16px; text-align: center;"> {{element.route.vessel.maxCapacity}} </td>
-                </ng-container>    
+                </ng-container>
                 <ng-container  matColumnDef="freeCapacity">
                     <th mat-header-cell *matHeaderCellDef class="table-head-fix" mat-sort-header width ="10%" style="font-size: 16px;"> Free Capacity </th>
                     <td mat-cell *matCellDef="let element" style="font-size: 16px; text-align: center;"> {{element.route.vessel.freeCapacity}} </td>
                 </ng-container>
- 
+
                 <tr mat-header-row *matHeaderRowDef="shipTableColumns"></tr>
                 <tr mat-row *matRowDef="let row; columns: shipTableColumns;"  ></tr>
 
@@ -130,7 +130,7 @@
         </div>
     </div>
 </div>
-    
+
 
 
 

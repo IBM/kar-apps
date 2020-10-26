@@ -10,6 +10,14 @@ import { Route } from '@angular/compiler/src/core';
 import { SocketService } from 'src/app/core/services/socket.service';
 import { Console } from 'console';
 import { ActiveSchedule } from 'src/app/core/models/active-schedule';
+import {
+  trigger,
+  state,
+  style,
+  animate,
+  transition,
+  // ...
+} from '@angular/animations';
 
 @Component({
 //  animations: [appModuleAnimation()],
@@ -49,7 +57,6 @@ export class ShipScheduleComponent implements OnInit {
             this.date = d.substr(0,10);
            // console.log('::::::'+this.voyages);
             this.voyageDataSource.data = this.voyages;
-
           }
 
         })

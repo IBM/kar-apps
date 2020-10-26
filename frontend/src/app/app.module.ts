@@ -20,6 +20,7 @@ import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
 import { HashLocationStrategy, LocationStrategy } from '@angular/common';
 import { SocketService } from './core/services/socket.service';
 //const config: SocketIoConfig = { url: 'http://localhost:3000', options: {} };
+import {MatProgressBarModule} from '@angular/material/progress-bar';
 
 //declare var require: any;
 
@@ -44,6 +45,7 @@ const  RestServerURL= 'http://localhost:9000';
     MatFormFieldModule,
     MatInputModule,
     MatTableModule,
+    MatProgressBarModule,
     //SocketIoModule.forRoot(config),
   ],
   providers: [{provide:SocketService, useClass: SocketService}, {provide: LocationStrategy, useClass: HashLocationStrategy}],

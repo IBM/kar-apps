@@ -3,8 +3,12 @@ package com.ibm.research.reefer.simulator;
 import java.util.Arrays;
 import java.util.List;
 
-public class OrderStats {
+// Class for accumulating order statistics
+// Method for computing running mean and standard deviation from
+// "Note on a Method for Calculating Corrected Sums of Squares and Products"
+// B. P. Welford, Pages 419-420 | Published online: 30 Apr 2012
 
+public class OrderStats {
   private int successful_orders;
   private int failed_orders;
   private int missed_orders;
@@ -12,6 +16,7 @@ public class OrderStats {
   private double welford_newM;
   private double welford_oldS;
   private double welford_newS;
+  private int max_latency;
 
   public OrderStats() {
     this.successful_orders = 0;
@@ -21,9 +26,10 @@ public class OrderStats {
     this.welford_newM = 0.0;
     this.welford_oldS = 0.0;
     this.welford_newS = 0.0;
+    this.max_latency = 0;
   }
 
-  public OrderStats(int s, int f, int m, double om, double nm, double os, double ns) {
+  public OrderStats(int s, int f, int m, double om, double nm, double os, double ns, int ml) {
     this.successful_orders = s;
     this.failed_orders = f;
     this.missed_orders = m;
@@ -31,11 +37,15 @@ public class OrderStats {
     this.welford_newM = nm;
     this.welford_oldS = os;
     this.welford_newS = ns;
+    this.max_latency = ml;
   }
 
   public void addSuccessful(int latency) {
     synchronized (this) {
       successful_orders++;
+      if (latency > this.max_latency) {
+        this.max_latency = latency;
+      }
       if (successful_orders == 1) {
         welford_newM = welford_oldM = latency;
       }
@@ -80,6 +90,10 @@ public class OrderStats {
     return (successful_orders > 1) ? welford_newS/(successful_orders - 1) : 0.0;
   }
 
+  public int getMax() {
+    return this.max_latency;
+  }
+
   @Override
   public Object clone() {
     synchronized (this) {
@@ -87,7 +101,7 @@ public class OrderStats {
         return (OrderStats) super.clone();
       } catch (CloneNotSupportedException e) {
         return new OrderStats(this.successful_orders, this.failed_orders, this.missed_orders,
-                this.welford_oldM, this.welford_newM, this.welford_oldS, this.welford_newS);
+                this.welford_oldM, this.welford_newM, this.welford_oldS, this.welford_newS, this.max_latency);
       }
     }
   }
@@ -115,8 +129,8 @@ public class OrderStats {
     Object oss = os.clone();
     switch (args[0]) {
       case "successful" :  
-        System.out.println("n_good=" + ((OrderStats)oss).getSuccessful() + " mean="+ 
-                ((OrderStats)oss).getMean() + " stddev="+ ((OrderStats)oss).getStddev());
+        System.out.println("n_good=" + ((OrderStats)oss).getSuccessful() + " mean="+ ((OrderStats)oss).getMean() +
+                " stddev="+ ((OrderStats)oss).getStddev() + " max=" + ((OrderStats)oss).getMax());
         System.exit(0);
       case "failed" :
         System.out.println("n_failed=" + ((OrderStats)oss).getFailed());

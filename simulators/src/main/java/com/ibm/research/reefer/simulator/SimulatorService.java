@@ -44,6 +44,9 @@ public class SimulatorService {
   private Thread orderthread;
   private Thread reeferthread;
 
+  // keep statistics on simulator orders
+  public static OrderStats os = new OrderStats();
+
   // constructor
   public SimulatorService() {
 //		System.out.println("SimulatorService constructor!");
@@ -369,6 +372,9 @@ public class SimulatorService {
     return Json.createValue("rejected");
   }
 
+
+  // -------------------------------- Misc Controls --------------------------------
+
   // wake up order and reefer threads if sleeping
   public void newDay() {
     if (null != orderthread) {
@@ -393,6 +399,32 @@ public class SimulatorService {
       }
     }
     System.out.println("simulator: updated freeCapacity to " + freecap + " for voyage " + vid);
+  }
+
+  // grab current order stat values
+  public JsonValue getOrderStats() {
+    Object oss = os.clone();
+    System.out.println("simulator: getOrderStats n_good=" + ((OrderStats)oss).getSuccessful() + 
+            " mean=" + ((OrderStats)oss).getMean() + " stddev="+ ((OrderStats)oss).getStddev() +
+            " n_failed=" + ((OrderStats)oss).getFailed() + " n_missed=" + ((OrderStats)oss).getMissed());
+
+    int mean = (int) Math.floor(0.5+((OrderStats)oss).getMean());
+    int stddev = (int) Math.floor(0.5+((OrderStats)oss).getStddev());
+    
+    JsonObject ostats = Json.createObjectBuilder()
+            .add("successful", (JsonNumber) Json.createValue(((OrderStats)oss).getSuccessful()))
+            .add("mean",   (JsonNumber) Json.createValue(mean))
+            .add("max",    (JsonNumber) Json.createValue(((OrderStats)oss).getMax()))
+            .add("stddev", (JsonNumber) Json.createValue(stddev))
+            .add("failed", (JsonNumber) Json.createValue(((OrderStats)oss).getFailed()))
+            .add("missed", (JsonNumber) Json.createValue(((OrderStats)oss).getMissed()))
+            .build();
+    return ostats;
+  }
+
+  public void resetOrderStats() {
+    System.out.println("simulator: resetOrderStats called");
+    os = new OrderStats();
   }
 
 

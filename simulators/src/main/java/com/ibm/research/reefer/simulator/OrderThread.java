@@ -21,8 +21,8 @@ public class OrderThread extends Thread {
   JsonValue futureVoyages;
   Instant today;
 
-  int ordersDoneToday = 0;
-  int ordersPerDay = 0;
+  int updatesDoneToday = 0;
+  int updatesPerDay = 0;
   long dayEndTime;
   long totalOrderTime;
   boolean startup = true;
@@ -51,28 +51,36 @@ public class OrderThread extends Thread {
       }
     }
 
+    if (!oneshot) {
+      System.out.println("orderthread: waiting for new day");
+      try {
+        Thread.sleep(1000 * SimulatorService.unitdelay.intValue());
+      } catch (InterruptedException e) {
+        // nada
+      }
+    }
+
 
     while (running) {
-      if (!oneshot) {
-//        		System.out.println("orderthread: "+Thread.currentThread().getId()+": running "+ ++threadloops);
-      }
 
       if (!SimulatorService.reeferRestRunning.get()) {
 //        		System.out.println("orderthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
       } else {
 
         // If new date ...
+        // Count any missed orders from yesterday
         // pull fresh list of voyages within the order window
         // compute the total order capacity, "ordercap" to be made today for each voyage
-        // set the loop count for max number of orders to make for each voyage, "ordersPerDay"
+        // set the loop count for max number of orders to make for each voyage, "updatesPerDay"
         JsonValue date = (JsonValue) SimulatorService.currentDate.get();
         if (startup || oneshot || !currentDate.equals(date)) {
           dayEndTime = System.currentTimeMillis() + 1000* SimulatorService.unitdelay.intValue();
-          if (ordersDoneToday < ordersPerDay) {
-            System.out.println("orderthread: " + ordersDoneToday + " of " + ordersPerDay + " completed yesterday");
+          if (updatesDoneToday < updatesPerDay) {
+            SimulatorService.os.addMissed(updatesPerDay - updatesDoneToday);
+            System.out.println("orderthread: " + updatesDoneToday + " of " + updatesPerDay + " completed yesterday");
           }
           System.out.println("orderthread: new day = " + date.toString());
-          ordersDoneToday = 0;
+          updatesDoneToday = 0;
           totalOrderTime = 0;
           startup = false;
           currentDate = date;
@@ -83,18 +91,20 @@ public class OrderThread extends Thread {
           }
 
           // pick up any changes
-          ordersPerDay = SimulatorService.orderupdates.intValue();
-          if (ordersPerDay < 1) {
-            ordersPerDay = 1; 
+          updatesPerDay = SimulatorService.orderupdates.intValue();
+          if (updatesPerDay < 1) {
+            updatesPerDay = 1; 
           }
 
           // ... fetch all future voyages leaving in the next N days
           today = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
 
           int windowsize = SimulatorService.orderwindow.intValue();
-          Instant endday = today.plus(windowsize, ChronoUnit.DAYS);
+          // ignore voyages leaving today
+          Instant startday = today.plus(1, ChronoUnit.DAYS);
+          Instant endday = today.plus(1+windowsize, ChronoUnit.DAYS);
           endday = endday.minusSeconds(1);
-          JsonObject message = Json.createObjectBuilder().add("startDate", today.toString())
+          JsonObject message = Json.createObjectBuilder().add("startDate", startday.toString())
                   .add("endDate", endday.toString()).build();
 
           Response response = Kar.restPost("reeferservice", "voyage/inrange", message);
@@ -141,26 +151,32 @@ public class OrderThread extends Thread {
           }
           System.out.println("orderthread: dumping voyageFreeCap MAP ----------");
           SimulatorService.voyageFreeCap.forEach((key, value) -> System.out
-                  .println("orderthread " + key + " " + value.toString()));
+                  .println("orderthread: " + key + " " + value.toString()));
         }
 
-        if (ordersPerDay > ordersDoneToday++) {
+        // Update processing ...
+        if (updatesPerDay > updatesDoneToday++) {
           long snapshot = System.currentTimeMillis();
           // create one order for every voyage below threshold
           for (Entry<String, FutureVoyage> entry : SimulatorService.voyageFreeCap.entrySet()) {
             // System.out.println(entry.getKey() + "/" + entry.getValue());
             if (entry.getValue().orderCapacity > 0) {
               // divide orderCap into specified number of orders per day
-              int ordersize = (entry.getValue().orderCapacity * 1000) / ordersPerDay;
+              int ordersize = (entry.getValue().orderCapacity * 1000) / updatesPerDay;
               System.out.println(
                       "orderthread: create order size=" + ordersize + " for " + entry.getKey());
               JsonObject order = Json.createObjectBuilder().add("voyageId", entry.getKey())
                       .add("customerId", "simulator").add("product", "pseudoBanana")
                       .add("productQty", ordersize).build();
+              long ordersnap = System.nanoTime();
               Response response = Kar.restPost("reeferservice", "orders", order);
               JsonValue rsp = response.readEntity(JsonValue.class);
               if (null == rsp.asJsonObject().getString("voyageId")) {
+                SimulatorService.os.addFailed();
                 System.err.println("orderthread: error submitting order: "+ order.toString());
+              }
+              else {
+                SimulatorService.os.addSuccessful((int)((System.nanoTime()-ordersnap)/1000000));
               }
             }
 //            		    else {
@@ -178,18 +194,18 @@ public class OrderThread extends Thread {
           // compute next sleep time
           if (SimulatorService.reeferRestRunning.get()) {
             long timeRemaining = dayEndTime - System.currentTimeMillis();
-            long orderTimeRemaining = totalOrderTime/ordersDoneToday * (ordersPerDay-ordersDoneToday);
+            long orderTimeRemaining = totalOrderTime/updatesDoneToday * (updatesPerDay-updatesDoneToday);
             if (timeRemaining < 1 && orderTimeRemaining > 0) {
               timeToSleep = 10; 
             }
             else if (orderTimeRemaining > 0 && timeRemaining > 0) {
-              timeToSleep = (timeRemaining - orderTimeRemaining) / (1 + ordersPerDay - ordersDoneToday);
+              timeToSleep = (timeRemaining - orderTimeRemaining) / (1 + updatesPerDay - updatesDoneToday);
               timeToSleep = (timeToSleep < 10) ? 10 : timeToSleep;
             }
             else {
               timeToSleep = 1000 * SimulatorService.unitdelay.intValue();
             }
-            System.out.println("orderthread: timeRemaining="+timeRemaining+ " orderTimeRemaining="+orderTimeRemaining+" totalOrderTime="+totalOrderTime+" ordersDoneToday="+ordersDoneToday+" timeToSleep="+timeToSleep);
+            System.out.println("orderthread: timeRemaining="+timeRemaining+ " orderTimeRemaining="+orderTimeRemaining+" totalOrderTime="+totalOrderTime+" updatesDoneToday="+updatesDoneToday+" timeToSleep="+timeToSleep);
           }
           Thread.sleep(timeToSleep);
         } catch (InterruptedException e) {

@@ -176,7 +176,11 @@ public class OrderThread extends Thread {
                 System.err.println("orderthread: error submitting order: "+ order.toString());
               }
               else {
-                SimulatorService.os.addSuccessful((int)((System.nanoTime()-ordersnap)/1000000));
+                int otime = (int)((System.nanoTime()-ordersnap)/1000000);
+                if (SimulatorService.os.addSuccessful(otime)) {
+                  // orderstats indicates an outlier
+                  System.out.println("orderthread: order latency outlier "+ entry.getKey() +" ===> "+otime);
+                }
               }
             }
 //            		    else {

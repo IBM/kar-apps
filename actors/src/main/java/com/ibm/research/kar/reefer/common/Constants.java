@@ -28,6 +28,8 @@ public class Constants {
 
    public static final String ORDER_ID_KEY="orderId";
    public static final String ORDER_STATUS_KEY="order-status";
+   public static final String ORDER_KEY="order";
+
    public static final String VOYAGE_ORDER_MAP_KEY="voyage-order-map";
 
    // each reefer can hold up to 1000 product units. Simplifaction is that

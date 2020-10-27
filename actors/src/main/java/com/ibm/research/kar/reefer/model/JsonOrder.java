@@ -16,30 +16,35 @@ public class JsonOrder {
     private JsonObject order;
 
     public JsonOrder(JsonObject order) {
-        this.order = order; 
+        this.order = order;
     }
 
     public String getId() {
-        return order.getString(IdKey); //order.getString(IdKey);
+        return order.getString(IdKey);
     }
 
     public boolean containsKey(String key) {
         return order.containsKey(key);
     }
+
     public String getVoyageId() {
         return order.getString(VoyageIdKey);
     }
+
     public String getOriginPort() {
         return order.getString(OriginPortKey);
     }
+
     public String getDestinationPort() {
         return order.getString(DestinationPortKey);
     }
+
     public int getProductQty() {
         return order.getInt(ProductQtyKey);
     }
+
     public JsonObject getAsObject() {
         return order;
     }
-
 }
+

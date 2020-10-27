@@ -118,8 +118,8 @@ public class ReeferProvisionerActor extends BaseActor {
                     // get todays date
                     Instant today = Instant.parse(message.getString(Constants.DATE_KEY));
                     ReeferDTO reefer = reeferMasterInventory[((JsonNumber) reeferId).intValue()];
-                    System.out.println("ReeferProvisionerActor.releaseReefersfromMaintenance() - Checking if reefer ID:"
-                            + reeferId + " should go off maintenance today");
+                    //System.out.println("ReeferProvisionerActor.releaseReefersfromMaintenance() - Checking if reefer ID:"
+                    //        + reeferId + " should go off maintenance today - assigned release date:"+reefer.getMaintenanceReleaseDate());
                     // release reefer from maintenance if today matches reefer's assigned release date
                     if (releaseFromMaintenanceToday(reefer, today)) {
                         releaseFromMaintenance(reefer, today);
@@ -173,7 +173,7 @@ public class ReeferProvisionerActor extends BaseActor {
         }
         // wrap Json with POJO
         JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
-        System.out.println("ReeferProvisionerActor.bookReefers() called - Order:" + order.getId());
+        //System.out.println("ReeferProvisionerActor.bookReefers() called - Order:" + order.getId());
 
         if (order.containsKey(JsonOrder.ProductQtyKey)) {
             // allocate enough reefers to cary products in the order
@@ -301,7 +301,7 @@ public class ReeferProvisionerActor extends BaseActor {
             JsonObject orderReply = notifyOrderOfSpoilage(orderId);
             System.out.println("ReeferActor.handleAnomaly() - Id:" + this.getId()
                     + " Order Actor:" + orderId + " reply:" + orderReply);
-            if (orderInTransit(orderReply)) {
+            if (orderSpoilt(orderReply)) {
                 // reefer in-transit becomes spoilt and will transition to on-maintenance when ship arrives in port
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name()).add(Constants.ORDER_STATUS_KEY,
@@ -329,8 +329,8 @@ public class ReeferProvisionerActor extends BaseActor {
         return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name());
     }
 
-    private boolean orderInTransit(JsonObject orderReply) {
-        return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.INTRANSIT.name());
+    private boolean orderSpoilt(JsonObject orderReply) {
+        return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.SPOILT.name());
     }
 
     private JsonObject notifyOrderOfSpoilage(String orderId) {

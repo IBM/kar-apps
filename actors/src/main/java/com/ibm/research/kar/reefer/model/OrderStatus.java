@@ -7,6 +7,7 @@ public enum OrderStatus {
     INTRANSIT,
     DELIVERED,
     FAILED,
+    SPOILT,
     REEFERS_ASSIGNED,
     VOYAGE_ASSIGNED
 }

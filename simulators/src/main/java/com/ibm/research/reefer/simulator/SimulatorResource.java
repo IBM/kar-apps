@@ -203,6 +203,8 @@ public class SimulatorResource {
     }
   }
 
+//-------------------- Misc controls ----------------
+
   /**
    * For development, toggle connection with reefer-rest server
    */
@@ -221,10 +223,34 @@ public class SimulatorResource {
     simService.newDay();
   }
 
+  @GET
+  @Path("/getorderstats")
+  public JsonValue getorderstats() {
+    try {
+      return simService.getOrderStats();
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from getorderstats");
+      return Json.createValue(-1);
+    }
+  }
 
-  /**
-   * gets & sets reefer simulator control parameters
-   */
+  @POST
+  @Path("/resetorderstats")
+  public JsonValue resetorderstats() {
+    try {
+      simService.resetOrderStats();
+      return Json.createValue("accepted");
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from resetorderstats");
+      return Json.createValue("rejected");
+    }
+  }
+
+
+//-------------------- Reefer controls ----------------
+
   @GET
   @Path("/getreefercontrols")
   public JsonValue getreefercontrols() {

@@ -208,10 +208,10 @@ public class SimulatorService {
     // make sure persistent values are set
     JsonNumber ot = (JsonNumber) getOrInit(Json.createValue("ordertarget"));
     ordertarget.set(ot.intValue());
-    JsonNumber ou = (JsonNumber) getOrInit(Json.createValue("orderupdates"));
-    orderupdates.set(ou.intValue());
     JsonNumber ow = (JsonNumber) getOrInit(Json.createValue("orderwindow"));
     orderwindow.set(ow.intValue());
+    JsonNumber ou = (JsonNumber) getOrInit(Json.createValue("orderupdates"));
+    orderupdates.set(ou.intValue());
 
     (orderthread = new OrderThread()).start();
   }
@@ -219,8 +219,8 @@ public class SimulatorService {
   public JsonValue getOrderControls() {
     JsonObject oc = Json.createObjectBuilder()
             .add("ordertarget", (JsonNumber) getOrInit(Json.createValue("ordertarget")))
-            .add("orderupdates", (JsonNumber) getOrInit(Json.createValue("orderupdates")))
             .add("orderwindow", (JsonNumber) getOrInit(Json.createValue("orderwindow")))
+            .add("orderupdates", (JsonNumber) getOrInit(Json.createValue("orderupdates")))
             .build();
     return oc;
   }

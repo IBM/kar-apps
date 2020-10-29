@@ -12,49 +12,58 @@ public class OrderStats {
   private int successful_orders;
   private int failed_orders;
   private int missed_orders;
-  private double welford_oldM;
-  private double welford_newM;
-  private double welford_oldS;
-  private double welford_newS;
+  private double oldM;
+  private double newM;
+  private double oldS;
+  private double newS;
   private int max_latency;
+  private int outliers;
 
   public OrderStats() {
     this.successful_orders = 0;
     this.failed_orders = 0;
     this.missed_orders = 0;
-    this.welford_oldM = 0.0;
-    this.welford_newM = 0.0;
-    this.welford_oldS = 0.0;
-    this.welford_newS = 0.0;
+    this.oldM = 0.0;
+    this.newM = 0.0;
+    this.oldS = 0.0;
+    this.newS = 0.0;
     this.max_latency = 0;
+    this.outliers = 0;
   }
 
-  public OrderStats(int s, int f, int m, double om, double nm, double os, double ns, int ml) {
+  public OrderStats(int s, int f, int m, double om, double nm, double os, double ns, int ml, int or) {
     this.successful_orders = s;
     this.failed_orders = f;
     this.missed_orders = m;
-    this.welford_oldM = om;
-    this.welford_newM = nm;
-    this.welford_oldS = os;
-    this.welford_newS = ns;
+    this.oldM = om;
+    this.newM = nm;
+    this.oldS = os;
+    this.newS = ns;
     this.max_latency = ml;
+    this.outliers = or;
   }
 
-  public void addSuccessful(int latency) {
+  public boolean addSuccessful(int latency) {
     synchronized (this) {
-      successful_orders++;
       if (latency > this.max_latency) {
         this.max_latency = latency;
       }
+      if (latency > (getMean() + 5*getStddev()) && successful_orders > 10) {
+        outliers++;
+        return true;
+      }
+      successful_orders++;
       if (successful_orders == 1) {
-        welford_newM = welford_oldM = latency;
+        newM = oldM = latency;
+        oldS = 0.0;
       }
       else {
-        welford_newM = welford_oldM + (latency - welford_oldM)/successful_orders;
-        welford_newS = welford_oldS + (latency - welford_oldM)*(latency - welford_newM);
-        welford_oldM = welford_newM;
-        welford_oldS = welford_newS;
+        newM = oldM + (latency - oldM)/successful_orders;
+        newS = oldS + (latency - oldM)*(latency - newM);
+        oldM = newM;
+        oldS = newS;
       }
+      return false;
     }
   }
 
@@ -83,15 +92,23 @@ public class OrderStats {
   }
 
   public double getMean() {
-    return (successful_orders > 0) ? welford_newM : 0.0;
+    return (successful_orders > 0) ? newM : 0.0;
+  }
+
+  public double getVar() {
+    return (successful_orders > 1) ? newS/(successful_orders - 1) : 0.0;
   }
 
   public double getStddev() {
-    return (successful_orders > 1) ? welford_newS/(successful_orders - 1) : 0.0;
+    return Math.sqrt(getVar());
   }
 
   public int getMax() {
     return this.max_latency;
+  }
+
+  public int getOutliers() {
+    return this.outliers;
   }
 
   @Override
@@ -101,7 +118,7 @@ public class OrderStats {
         return (OrderStats) super.clone();
       } catch (CloneNotSupportedException e) {
         return new OrderStats(this.successful_orders, this.failed_orders, this.missed_orders,
-                this.welford_oldM, this.welford_newM, this.welford_oldS, this.welford_newS, this.max_latency);
+                this.oldM, this.newM, this.oldS, this.newS, this.max_latency, this.outliers);
       }
     }
   }

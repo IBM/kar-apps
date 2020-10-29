@@ -405,7 +405,7 @@ public class SimulatorService {
   public JsonValue getOrderStats() {
     Object oss = os.clone();
     System.out.println("simulator: getOrderStats n_good=" + ((OrderStats)oss).getSuccessful() + 
-            " mean=" + ((OrderStats)oss).getMean() + " stddev="+ ((OrderStats)oss).getStddev() +
+            " mean=" + ((OrderStats)oss).getMean() + // " stddev="+ ((OrderStats)oss).getStddev() +
             " n_failed=" + ((OrderStats)oss).getFailed() + " n_missed=" + ((OrderStats)oss).getMissed());
 
     int mean = (int) Math.floor(0.5+((OrderStats)oss).getMean());
@@ -414,8 +414,9 @@ public class SimulatorService {
     JsonObject ostats = Json.createObjectBuilder()
             .add("successful", (JsonNumber) Json.createValue(((OrderStats)oss).getSuccessful()))
             .add("mean",   (JsonNumber) Json.createValue(mean))
-            .add("max",    (JsonNumber) Json.createValue(((OrderStats)oss).getMax()))
             .add("stddev", (JsonNumber) Json.createValue(stddev))
+            .add("max",    (JsonNumber) Json.createValue(((OrderStats)oss).getMax()))
+            .add("outliers", (JsonNumber) Json.createValue(((OrderStats)oss).getOutliers()))
             .add("failed", (JsonNumber) Json.createValue(((OrderStats)oss).getFailed()))
             .add("missed", (JsonNumber) Json.createValue(((OrderStats)oss).getMissed()))
             .build();

@@ -8,18 +8,15 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
-import javax.json.JsonString;
-import javax.json.JsonValue;
+import javax.json.*;
+import javax.json.bind.JsonbBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
+import com.ibm.research.kar.actor.annotations.Deactivate;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
@@ -33,25 +30,40 @@ public class OrderActor extends BaseActor {
     //     1. state: PENDING | BOOKED | INTRANSIT | SPOILT
     //     2. voyageId : voyage id the order is assigned to
     //     3. reefer map: map containing reefer ids assigned to this order
+
+    // wrapper containing order state
     private Order orderState = null;
     private static final Logger logger = Logger.getLogger(OrderActor.class.getName());
 
     @Activate
-    public void init() {
-        JsonValue jv = super.get(this, Constants.ORDER_KEY);
-        // instanceof is null safe
-        if (jv instanceof JsonObject) {
-            orderState = new Order(jv.asJsonObject());
-            Map<String, JsonValue> reeferMap = super.getSubMap(this, Constants.REEFER_MAP_KEY);
-            orderState.addReefers(reeferMap);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine(String.format("OrderActor.init() - orderId: %s state: %s voyageId: %s reefers: %d",
-                        getId(), orderState.getState(), orderState.getVoyageId(), orderState.getReeferMap().size()));
-
+    public void activate() {
+        Map<String, JsonValue> state = Kar.actorGetAllState(this);
+        try {
+            // initial actor invocation should handle no state
+            if (!state.isEmpty()) {
+                orderState = new Order(state);
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info(String.format("OrderActor.activate() - orderId: %s state: %s voyageId: %s reefers: %d",
+                            getId(), orderState.getState(), orderState.getVoyageId(), orderState.getReeferMap().size()));
+                }
             }
-         }
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "", e);
+        }
     }
-
+    /**
+     * Save actor's state when the instance is passivated. Currently just saves the
+     * actor's status and voyageId.
+     */
+    @Deactivate
+    public void deactivate() {
+        if (orderState != null) {
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            job.add(Constants.ORDER_STATUS_KEY, orderState.getState()).
+                    add(Constants.VOYAGE_ID_KEY, orderState.getVoyageId());
+            Kar.actorSetMultipleState(this, job.build());
+        }
+    }
     /**
      * Called when an order is delivered (ie.ship arrived at the destination port).
      * Calls ReeferProvisioner to release all reefers in this order.
@@ -96,7 +108,7 @@ public class OrderActor extends BaseActor {
     @Remote
     public JsonObject departed(JsonObject message) {
         try {
-            saveOrderStatus(OrderStatus.INTRANSIT);
+           changeOrderStatus(OrderStatus.INTRANSIT);
             // Notify ReeferProvisioner that the order is in-transit
             if (!orderState.getReeferMap().isEmpty()) {
                 ActorRef reeferProvisionerActor = Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
@@ -138,7 +150,7 @@ public class OrderActor extends BaseActor {
                 }
                 // if this order is in transit, change state to Spoilt
                 if (OrderStatus.INTRANSIT.equals(OrderStatus.valueOf(orderState.getStateAsString()))) {
-                    saveOrderStatus(OrderStatus.SPOILT);
+                    changeOrderStatus(OrderStatus.SPOILT);
                 }
                 state = orderState.getStateAsString();
             }
@@ -174,9 +186,7 @@ public class OrderActor extends BaseActor {
             super.removeFromSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(spoiltReeferId));
             super.addToSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(replacementReeferId),
                     Json.createValue(replacementReeferId));
-            // replace reefer map with the current one which just changed. Maps from Kar storage
-            // are immutable
-            orderState.addReefers(super.getSubMap(this, Constants.REEFER_MAP_KEY));
+            orderState.replaceReefer(spoiltReeferId, replacementReeferId);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {
@@ -217,7 +227,7 @@ public class OrderActor extends BaseActor {
             orderState = new Order(Json.createObjectBuilder().
                     add(Constants.ORDER_STATUS_KEY, OrderStatus.PENDING.name()).
                     add(Constants.VOYAGE_ID_KEY, Json.createValue(jsonOrder.getVoyageId())).build());
-            saveOrderStatus(OrderStatus.PENDING);
+            changeOrderStatus(OrderStatus.PENDING);
             // Call Voyage actor to book the voyage for this order. This call also
             // reserves reefers
             JsonObject voyageBookingResult = bookVoyage(jsonOrder);
@@ -226,7 +236,7 @@ public class OrderActor extends BaseActor {
             }
             if (voyageBooked(voyageBookingResult)) {
                 saveOrderReefers(voyageBookingResult);
-                saveOrderStatus(OrderStatus.BOOKED);
+                changeOrderStatus(OrderStatus.BOOKED);
                 if (logger.isLoggable(Level.INFO)) {
                     logger.info(String.format("OrderActor.createOrder() - orderId: %s saved - voyage: %s state: %s reefers: %d",
                             getId(), orderState.getVoyageId(), orderState.getStateAsString(), orderState.getReeferMap().size()));
@@ -244,10 +254,9 @@ public class OrderActor extends BaseActor {
 
     }
 
-    private void saveOrderStatus(OrderStatus state) {
+    private void changeOrderStatus(OrderStatus state) {
         JsonValue jv = Json.createValue(state.name());
         orderState.newState(jv);
-        super.set(this, Constants.ORDER_KEY, orderState.toJsonObject());
     }
 
     /**
@@ -273,10 +282,10 @@ public class OrderActor extends BaseActor {
             Map<String, JsonValue> reeferMap = new HashMap<>();
             reefers.forEach(reeferId -> {
                 reeferMap.put(String.valueOf(((JsonNumber) reeferId).intValue()), reeferId);
+                orderState.addReefer( ((JsonNumber) reeferId).intValue());
             });
             addSubMap(this, Constants.REEFER_MAP_KEY, reeferMap);
-            orderState.addReefers(reeferMap);
-        }
+         }
     }
 
     /**
@@ -299,8 +308,27 @@ public class OrderActor extends BaseActor {
     private class Order {
         JsonValue state = null;
         JsonValue voyageId = null;
-        Map<String, JsonValue> reeferMap = null;
+        Map<String, String> reeferMap = null;
 
+        public Order(Map<String, JsonValue> allState) {
+            try {
+                this.state = allState.get(Constants.ORDER_STATUS_KEY);
+                this.voyageId = allState.get(Constants.VOYAGE_ID_KEY);
+                if ( allState.containsKey(Constants.REEFER_MAP_KEY)) {
+                    JsonValue jv = allState.get(Constants.REEFER_MAP_KEY);
+                    // since we already have all reefers by calling actorGetAllState() above we can
+                    // deserialize them using Jackson's ObjectMapper. Alternatively, one can
+                    // use Kar.actorSubMapGet() which is an extra call.
+                    ObjectMapper mapper = new ObjectMapper();
+                    // deserialize json reefers into a HashMap
+                    Map<String,String> reeferMap = mapper.readValue(jv.toString(), HashMap.class);
+                    this.addReefers(reeferMap);
+                }
+            } catch(Exception e) {
+                logger.log(Level.WARNING,"",e);
+            }
+
+        }
         public Order(JsonObject jo) {
             this.state = jo.getJsonString(Constants.ORDER_STATUS_KEY);
             this.voyageId = jo.getJsonString(Constants.VOYAGE_ID_KEY);
@@ -318,14 +346,23 @@ public class OrderActor extends BaseActor {
             return voyageId;
         }
 
-        public Map<String, JsonValue> getReeferMap() {
+        public Map<String, String> getReeferMap() {
             return reeferMap;
         }
 
-        public void addReefers(Map<String, JsonValue> reeferMap) {
+        public void addReefers(Map<String, String> reeferMap) {
             this.reeferMap = reeferMap;
         }
-
+        public void addReefer(int reeferId) {
+            if ( this.reeferMap == null ) {
+                this.reeferMap = new HashMap<>();
+            }
+            this.reeferMap.put(String.valueOf(reeferId), String.valueOf(reeferId));
+        }
+        public void replaceReefer(int reeferId, int replacementReeferId) {
+            this.reeferMap.remove(reeferId);
+            this.addReefer(replacementReeferId);
+        }
         public void newState(JsonValue state) {
             this.state = state;
         }

@@ -20,8 +20,6 @@ public class Voyage {
         this.displayArrivalDate = arrivalDate.substring(0,10);
         this.sailDate = sailDateObject.toString().substring(0,10);
         this.id = String.format("%s-%s",route.getVessel().getName(),this.sailDateObject.toString()).replaceAll("/","-");
-        System.out.println("Voyage.ctor() - voyage:"+id+" From:"+route.getOriginPort()+" To:"+route.getDestinationPort()+" SailDate:"+sailDate+" ArrivalDate:"+arrivalDate+" DaysAtSea:"+route.getDaysAtSea());
-
     }
     public String getId() {
         return id;

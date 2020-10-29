@@ -48,7 +48,8 @@ public class OrderStats {
       if (latency > this.max_latency) {
         this.max_latency = latency;
       }
-      if (latency > (getMean() + 5*getStddev()) && successful_orders > 10) {
+      double thresh = ( 3*getMean() > getMean()+5*getStddev() ) ? 3*getMean() : getMean()+5*getStddev(); 
+      if (latency > thresh && successful_orders > 10) {
         outliers++;
         return true;
       }

@@ -404,12 +404,13 @@ public class SimulatorService {
   // grab current order stat values
   public JsonValue getOrderStats() {
     Object oss = os.clone();
-    System.out.println("simulator: getOrderStats n_good=" + ((OrderStats)oss).getSuccessful() + 
-            " mean=" + ((OrderStats)oss).getMean() + // " stddev="+ ((OrderStats)oss).getStddev() +
-            " n_failed=" + ((OrderStats)oss).getFailed() + " n_missed=" + ((OrderStats)oss).getMissed());
+    System.out.println("simulator: getOrderStats successful=" + ((OrderStats)oss).getSuccessful() + 
+            " mean=" + ((OrderStats)oss).getMean() + " stddev=" + ((OrderStats)oss).getStddev() +
+            " max=" +  ((OrderStats)oss).getMax() + " outliers=" + ((OrderStats)oss).getOutliers() +
+            " failed=" + ((OrderStats)oss).getFailed() + " missed=" + ((OrderStats)oss).getMissed());
 
-    int mean = (int) Math.floor(0.5+((OrderStats)oss).getMean());
-    int stddev = (int) Math.floor(0.5+((OrderStats)oss).getStddev());
+    double mean   = Math.floor(10.0 * ((OrderStats)oss).getMean()) / 10.0;
+    double stddev = Math.floor(10.0 * ((OrderStats)oss).getStddev()) / 10.0;
     
     JsonObject ostats = Json.createObjectBuilder()
             .add("successful", (JsonNumber) Json.createValue(((OrderStats)oss).getSuccessful()))

@@ -10,7 +10,11 @@ The simulator state on server start is:
 
 Useful simulator commands below.  
 
-To enable/disable simulator connection to reefer-rest server from command line, done anytime:  
+Given access to the simulator service port on ${host}, curl can be used for access. For example,
+to disable/enable simulator access to reefer-rest server from the command line:  
+curl -s -H "Content-Type: application/json" -X POST http://${host}:7080/simulator/togglereeferrest  
+
+A simpler approach is to use the Kar CLI:  
 kar rest -app reefer post simservice simulator/togglereeferrest  
 
 To advance time in manual-time mode...  
@@ -61,6 +65,10 @@ Monitoring of missed orders, failed orders, and statistics on latency for succes
 A Kar client is provided that periodically dumps order stats: monitor-stats.sh.
 The stats can be reset at any time with:  
 kar rest -app reefer post simservice simulator/resetorderstats   
-2. As of now a running simulator server supports hot method replace.  
+2. If the reefer app is deployed using reefer-compose-start.sh, Kar's environment is not exposed outside the pod.
+For this scenario the monitor is automatically run inside the pod; dump the monitor's container log to see output.
+Here the stats can be reset by exec'ing into the simulator container and issuing the command:  
+/kar/bin/kar rest -app reefer post simservice simulator/resetorderstats   
+3. As of now a running simulator server supports hot method replace.  
 **Best to stop auto mode before activating by updating simulator class files with service running**  
 Simulator threads left running in auto from before replace are killed by advancetime or start/stop auto mode.

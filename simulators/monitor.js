@@ -26,6 +26,9 @@ function url (service, route) {
 
 async function main () {
   var sleep=60
+  if ( process.env.ORDERSTATS_DELAY ) {
+    sleep=process.env.ORDERSTATS_DELAY
+  }
   if ( process.argv[2] ) {
     sleep=process.argv[2]
   }

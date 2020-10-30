@@ -50,6 +50,22 @@ services:
     depends_on:
       - "kafka"
       - "redis"
+  monitor:
+    image: us.icr.io/research/kar-dev/reefer/monitor
+    command: ["/bin/sh","-c","sleep 15 && /kar/bin/runner"]
+    environment:
+      KAR_SIDECAR_IN_CONTAINER: "true"
+      KAR_APP: reefer
+      KAFKA_BROKERS:  kafka:31093
+      KAFKA_VERSION:  2.4.0
+      REDIS_HOST:     redis
+      REDIS_PORT:     31379
+      REDIS_PASSWORD: passw0rd
+      KAR_EXTRA_ARGS: -app_port 7082
+      ORDERSTATS_DELAY: ${ORDERSTATS_DELAY:-60}
+    depends_on:
+      - "kafka"
+      - "redis"
   actors:
     image: us.icr.io/research/kar-dev/reefer/actors
     command: ["/bin/bash","-c","sleep 15 && /kar/bin/runner"]

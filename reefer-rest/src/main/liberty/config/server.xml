@@ -20,7 +20,7 @@
                   host="*"
                   httpPort="9080"
                   httpsPort="9443" />
-    <logging consoleLogLevel="INFO" traceSpecification="*=fine:com.ibm.research.kar.reefer.*=fine" maxFileSize="40" maxFiles="20"/>
+    <logging consoleLogLevel="INFO" traceSpecification="*=warn:com.ibm.research.kar.reefer.*=fine" maxFileSize="40" maxFiles="20"/>
 
     <springBootApplication id="reefer-server"
                            location="thin-reefer-server-0.0.1-SNAPSHOT.jar"

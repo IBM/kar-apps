@@ -16,7 +16,7 @@
 	<variable name="default.https.port" defaultValue="-1" />
 
     <!--logging consoleLogLevel="INFO" messageSource="message,trace" traceSpecification="{module}={level}"maxFileSize="40" maxFiles="20"/-->
-	<logging consoleLogLevel="INFO" traceSpecification="*=fine:com.ibm.research.kar.reefer.*=fine" maxFileSize="40" maxFiles="20"/>
+	<logging consoleLogLevel="INFO" traceSpecification="*=warn:com.ibm.research.kar.reefer.*=fine" maxFileSize="40" maxFiles="20"/>
 
 
 	<httpEndpoint httpPort="${default.http.port}"

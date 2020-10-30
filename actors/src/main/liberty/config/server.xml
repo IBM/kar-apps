@@ -15,7 +15,8 @@
 	<variable name="default.http.port" defaultValue="${env.KAR_APP_PORT}" />
 	<variable name="default.https.port" defaultValue="-1" />
 
-    <logging consoleLogLevel="INFO" messageSource="message,trace" maxFileSize="40" maxFiles="20"/>
+    <!--logging consoleLogLevel="INFO" messageSource="message,trace" traceSpecification="{module}={level}"maxFileSize="40" maxFiles="20"/-->
+	<logging consoleLogLevel="INFO" traceSpecification="*=fine:com.ibm.research.kar.reefer.*=fine" maxFileSize="40" maxFiles="20"/>
 
 
 	<httpEndpoint httpPort="${default.http.port}"

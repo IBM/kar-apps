@@ -104,8 +104,10 @@ public class VoyageActor extends BaseActor {
      */
     @Remote
     public JsonValue changePosition(JsonObject message) {
-        logger.info("VoyageActor.changePosition() called Id:" + getId() + " " + message.toString() + " state:"
-                + getVoyageStatus());
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("VoyageActor.changePosition() called Id:" + getId() + " " + message.toString() + " state:"
+                    + getVoyageStatus());
+        }
         try {
             Voyage voyage = JsonUtils.jsonToVoyage(voyageInfo);
             // the simulator advances ship position

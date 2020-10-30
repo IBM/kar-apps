@@ -6,6 +6,8 @@ import static com.ibm.research.kar.Kar.actorRef;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -17,6 +19,7 @@ import javax.json.JsonValue;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.actors.VoyageActor;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
@@ -55,6 +58,7 @@ public class OrderController {
 	@Autowired
 	private GuiController gui;
 
+	private static final Logger logger = Logger.getLogger(OrderController.class.getName());
 	/**
 	 * Convert json order to OrderProperties
 	 * 
@@ -82,11 +86,8 @@ public class OrderController {
 			orderProperties.setVoyageId(voyageId);
 			orderProperties.setOriginPort(voyage.getRoute().getOriginPort());
 			orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
-		} catch (VoyageNotFoundException e) {
-			System.out.println(
-					"OrderController.orderDetails() - voyage " + voyageId + " not found in the shipping schedule");
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.log(Level.WARNING,"",e);
 		}
 		return orderProperties;
 	}
@@ -105,10 +106,12 @@ public class OrderController {
 			JsonObject req = jsonReader.readObject();
 			String spoiltOrderId = req.getString(Constants.ORDER_ID_KEY);
 			int totalSpoiltOrders = orderService.orderSpoilt(spoiltOrderId);
-			System.out.println("OrderController.orderSpoilt()................................. Orders Spoilt:"+totalSpoiltOrders);
+			if ( logger.isLoggable(Level.INFO)) {
+				logger.info("OrderController.orderSpoilt() - order id:"+ spoiltOrderId+" has spoilt. Total spoilt orders:"+totalSpoiltOrders);
+			}
 			gui.updateSpoiltOrderCount(totalSpoiltOrders);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.log(Level.WARNING,"",e);
 		}
 	}
     /**
@@ -120,7 +123,9 @@ public class OrderController {
 	 */
 	@PostMapping("/orders")
 	public OrderProperties bookOrder(@RequestBody String message) throws IOException {
-		System.out.println("OrderController.bookOrder - Called -" + message);
+		if ( logger.isLoggable(Level.FINE)) {
+			logger.fine("OrderController.bookOrder - Called -" + message);
+		}
 		// get Java POJO with order properties from json messages
 		OrderProperties orderProperties = jsonToOrderProperties(message);
 		try {
@@ -138,19 +143,21 @@ public class OrderController {
 			ActorRef orderActor = actorRef(ReeferAppConfig.OrderActorName, order.getId());
 			// call Order actor to create the order
 			JsonValue reply = actorCall(orderActor, "createOrder", params);
-			System.out.println("Order Actor reply:" + reply);
-			
+			if ( logger.isLoggable(Level.FINE)) {
+				logger.fine("OrderController.bookOrder - Order Actor reply:" + reply);
+			}
 			order.setStatus(OrderStatus.BOOKED.getLabel());
-
+			// extract reefer ids assigned to the order
 			JsonArray reefers = reply.asJsonObject().getJsonObject("booking").getJsonArray("reefers");
+			// reduce ship free capacity by the number of reefers
 			int shipFreeCapacity = scheduleService.updateFreeCapacity(order.getVoyageId(), reefers.size());
 			
 			simulatorService.updateVoyageCapacity(order.getVoyageId(), shipFreeCapacity);
 			voyageService.addOrderToVoyage(order);
-			int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY); //"booked-orders");
+			int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY);
 			gui.updateFutureOrderCount(futureOrderCount);
-		} catch (Exception ee) {
-			ee.printStackTrace();
+		} catch (Exception e) {
+			logger.log(Level.WARNING,"",e);
 		}
 		return orderProperties;
 	}
@@ -161,7 +168,6 @@ public class OrderController {
 	 */
 	@GetMapping("/orders/list/active")
 	public List<Order> getActiveOrderList() {
-		System.out.println("OrderController.getActiveOrderList() - Got New Request");
 		return orderService.getActiveOrderList();
 	}
 
@@ -171,8 +177,6 @@ public class OrderController {
 	 */
 	@GetMapping("/orders/list/booked")
 	public List<Order> getBookedOrderList() {
-		System.out.println("OrderController.getBookedOrderList() - Got New Request");
-
 		return orderService.getBookedOrderList();
 	}
 
@@ -182,29 +186,16 @@ public class OrderController {
 	 */
 	@GetMapping("/orders/list/spoilt")
 	public List<Order> getSpoiltOrderList() {
-		System.out.println("OrderController.getSpoiltOrderList() - Got New Request");
-
 		return orderService.getSpoiltOrderList();
 	}
 
+	/**
+	 * Returns order related counts
+	 *
+	 * @return
+	 */
 	@GetMapping("/orders/stats")
 	public OrderStats getOrderStats() {
-		System.out.println("OrderController.getOrderStats() - Got New Request");
-
 		return orderService.getOrderStats();
 	}
-
-	/**
-	 * Implements server side pagination for the front end. Currently just a stub
-	 * 
-	 * @param page - page index
-	 * @param size - items per page
-	 */
-	@PostMapping("/orders/nextpage")
-	public void nextPage(@RequestParam(name = "page", defaultValue = "0") int page,
-			@RequestParam(name = "size", defaultValue = "10") int size) {
-		System.out.println("OrderController.nextPage() - Page:" + page + " Size:" + size);
-
-	}
-
 }

@@ -5,6 +5,8 @@ import java.io.StringReader;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.json.Json;
@@ -40,7 +42,7 @@ public class ReeferController {
 	private GuiController gui;
 	@Autowired
 	private ScheduleService shipScheduleService;
-
+	private static final Logger logger = Logger.getLogger(ReeferController.class.getName());
 	@PostConstruct
 	public void init() {
 		List<Route> routes = shipScheduleService.getRoutes();
@@ -51,16 +53,15 @@ public class ReeferController {
 			fleetMaxCapacity += route.getVessel().getMaxCapacity();
 			fleet.add(route.getVessel().getName());
 		}
-		System.out.println("RestController.init() - Fleet Size:"+fleet.size()+" Max Fleet Capacity:"+fleetMaxCapacity);
+		if ( logger.isLoggable(Level.INFO)) {
+			logger.info("RestController.init() - Fleet Size:"+fleet.size()+" Max Fleet Capacity:"+fleetMaxCapacity);
+		}
 		// increase total by additional 40% to ensure we always have reefers available
 		reeferInventorySize = Double.valueOf(fleet.size() * fleetMaxCapacity * 0.4).intValue();
 	}
 
 	@PostMapping("/reefers")
 	public List<Port> addReefers(@RequestBody ReeferSupply reeferAdd) throws IOException {
-		System.out.println("addReefers() Called - port:" + reeferAdd.getPort() + " howMany:"
-				+ reeferAdd.getReeferInventoryCount());
-
 		reeferService.addPortReefers(reeferAdd.getPort(), reeferAdd.getReeferInventoryCount());
 		portService.incrementReefersAtPort(reeferAdd.getPort(), reeferAdd.getReeferInventoryCount());
 		return portService.getPorts();
@@ -78,11 +79,8 @@ public class ReeferController {
 
 	@PostMapping("/reefers/stats/update")
 	public void updateGui(@RequestBody String stats) {
-		System.out.println("ReeferController.updateGui() stats:"+stats);
 		try (JsonReader jsonReader = Json.createReader(new StringReader(stats))) {
-
 			JsonObject req = jsonReader.readObject();
-
 			int total = req.getInt("total");
 			int totalBooked = req.getInt("totalBooked");
 			int totalInTransit = req.getInt("totalInTransit");
@@ -90,9 +88,8 @@ public class ReeferController {
 			int totalOnMaintenance = req.getInt("totalOnMaintenance");
 			gui.updateReeferStats(new ReeferStats(total, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance));
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.log(Level.WARNING,"",e);
 		}
-
 	}
 
 	@GetMapping("/reefers/inventory/size")

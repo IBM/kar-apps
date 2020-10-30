@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -20,13 +22,15 @@ import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.VoyageStatus;
 
+import com.ibm.research.kar.reeferserver.controller.VoyageController;
 import org.springframework.stereotype.Component;
 
 @Component
 public class VoyageService extends AbstractPersistentService {
  
-    Map<String, Set<Order>> voyageOrders = new HashMap<>();
-    Map<String, VoyageStatus > voyageStatus = new HashMap<>();
+    private Map<String, Set<Order>> voyageOrders = new HashMap<>();
+    private Map<String, VoyageStatus > voyageStatus = new HashMap<>();
+    private static final Logger logger = Logger.getLogger(VoyageService.class.getName());
 
     public void addOrderToVoyage(Order order) {
         Set<Order> orders;
@@ -37,9 +41,10 @@ public class VoyageService extends AbstractPersistentService {
             voyageOrders.put(order.getVoyageId(), orders);
         }
         orders.add(order);
-        System.out.println("VoyageService.addOrderToVoyage()-Added Order to Voyage:" + order.getVoyageId()
-                + " Order Count:" + orders.size());
-
+        if ( logger.isLoggable(Level.INFO)) {
+            logger.info("VoyageService.addOrderToVoyage()-Added Order to Voyage:" + order.getVoyageId()
+                    + " Order Count:" + orders.size());
+        }
     }
 
     public Set<Order> getOrders(String voyageId) {
@@ -78,41 +83,30 @@ public class VoyageService extends AbstractPersistentService {
     }
 
     public void nextDay() {
-        System.out.println("VoyageService.nextDay()");
         try {
             Response response = Kar.restPost("simservice", "simulator/advancetime", JsonValue.NULL);
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("Response = " + respValue);
-
-        } catch (ActorMethodNotFoundException ee) {
-            ee.printStackTrace();
-        } catch (Exception ee) {
-            ee.printStackTrace();
+            if ( logger.isLoggable(Level.INFO)) {
+                logger.info("VoyageService.nextDay() - simulator reply:"+respValue);
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING,"",e);
         }
     }
 
     public void changeDelay(int delay) {
-        System.out.println("VoyageService.changeDelay() - delay:" + delay);
         try {
             JsonObject delayArg = Json.createObjectBuilder().add("value", delay).build();
             Response response = Kar.restPost("simservice", "simulator/setunitdelay", delayArg); 
             JsonValue respValue = response.readEntity(JsonValue.class);
-            System.out.println("VoyageService.getDelay() Sim Response = " + respValue);
-
-        } catch (ActorMethodNotFoundException ee) {
-            ee.printStackTrace();
-        } catch (Exception ee) {
-            ee.printStackTrace();
+        } catch (Exception e) {
+            logger.log(Level.WARNING,"",e);
         }
     }
 
     public int getDelay() throws Exception {
-        System.out.println("VoyageService.getDelay()");
-        Response response = Kar.restGet("simservice", "simulator/getunitdelay"); 
+        Response response = Kar.restGet("simservice", "simulator/getunitdelay");
         JsonValue respValue = response.readEntity(JsonValue.class);
-        System.out.println("VoyageService.getDelay() Sim Response = " + respValue);
-
         return Integer.parseInt(respValue.toString());
-
     }
 }

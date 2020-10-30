@@ -2,6 +2,8 @@ package com.ibm.research.kar.reeferserver.controller;
 
 import java.io.StringReader;
 import java.time.Instant;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -30,18 +32,17 @@ public class SimulatorController {
   @Autowired
   private SimulatorService simulatorService;
 
+  private static final Logger logger = Logger.getLogger(SimulatorController.class.getName());
+
   @PostMapping("/simulator/delay")
   public Instant shipSimulatorDelay(@RequestBody String delay) {
-    System.out.println("SimulatorController.shipSimulatorDelay() - delay " + delay);
     int delayTime = 0;
     try (JsonReader jsonReader = Json.createReader(new StringReader(delay))) {
 
       JsonObject req = jsonReader.readObject();
       delayTime = req.getInt("delay");
-      System.out.println("SimulatorController.shipSimulatorDelay() - delayTime " + delayTime);
-
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.log(Level.WARNING,"",e);
     }
     voyageService.changeDelay(delayTime);
     return TimeUtils.getInstance().getCurrentDate();
@@ -49,110 +50,86 @@ public class SimulatorController {
 
   @PostMapping("/simulator/createorder")
   public void createOrder() {
-    System.out.println("SimulatorController.createOrder() ");
-    simulatorService.createOrder();
+     simulatorService.createOrder();
   }
 
   @PostMapping("/simulator/getdelay")
   public int getShipSimulatorDelay() {
-    System.out.println("SimulatorController.getShipSimulatorDelay() ");
     try {
       return voyageService.getDelay();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.log(Level.WARNING,"",e);
     }
     return -1;
   }
 
   @GetMapping("/simulator/getdelayandtarget")
   public DelayTarget getDelayAndTarget() {
-    System.out.println("SimulatorController.getDelayAndTarget() ");
     try {
       int delay = voyageService.getDelay();
       int target = simulatorService.getSimOrderTarget();
       return new DelayTarget(delay, target);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.log(Level.WARNING,"",e);
     }
     return new DelayTarget();
   }
 
   @PostMapping("/simulator/getsimordertarget")
   public int getSimOrderTarget() {
-    System.out.println("SimulatorControllertroller.getSimOrderTarget() ");
-
     return simulatorService.getSimOrderTarget();
   }
 
   @PostMapping("/simulator/setsimordertarget")
   public void setSimOrderTarget(@RequestBody String body) {
-    System.out.println("SimulatorController.setSimOrderTarget() - target " + body);
     int orderTarget = 0;
     try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
-
       JsonObject req = jsonReader.readObject();
-
       orderTarget = Integer.valueOf(req.getJsonString("target").toString().replace("\"", ""));
-      System.out.println("TimeConSimulatorControllertroller.setSimOrderTarget() - orderTarget " + orderTarget);
       simulatorService.setSimOrderTarget(orderTarget);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.log(Level.WARNING,"",e);
     }
   }
 
   @GetMapping("/simulator/controls")
   public ReeferSimControls getReeferSimulatorControls() {
-    System.out.println("SimulatorController.getReeferSimulatorControls() - Got New Request");
-
     return simulatorService.getReeferSimControls();
   }
 
   @PostMapping("/simulator/controls/update")
   public void updateReeferSimulatorControls(@RequestBody String body) {
-    System.out.println("SimulatorController.updateReeferSimulatorControls() - Got New Request");
     int failureRate = 0;
     int updateFrequency = 0;
     try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
-
       JsonObject req = jsonReader.readObject();
       failureRate = Integer.valueOf(req.getJsonString("failureRate").toString().replace("\"", ""));
       updateFrequency = Integer.valueOf(req.getJsonString("updateFrequency").toString().replace("\"", ""));
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.log(Level.WARNING,"",e);
     }
-
     simulatorService.updateReeferSimControls(new ReeferSimControls(failureRate, updateFrequency));
-
-    // return "OK";
   }
 
   @PostMapping("/simulator/setordersimcontrols")
   public void setOrderSimControls(@RequestBody String body) {
-    System.out.println("SimulatorController.setOrderSimControls() - target " + body);
     int orderTarget = 0;
     int orderWindow = 0;
     int updateFrequency = 0;
     try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
-
       JsonObject req = jsonReader.readObject();
-
       orderTarget = Integer.valueOf(req.getJsonString("target").toString().replace("\"", ""));
       orderWindow = Integer.valueOf(req.getJsonString("window").toString().replace("\"", ""));
       updateFrequency = Integer.valueOf(req.getJsonString("updateFrequency").toString().replace("\"", ""));
-      System.out.println("TimeConSimulatorControllertroller.setOrderSimControls() - target " + orderTarget + " window:"
-          + orderWindow + " updateFrequency:" + updateFrequency);
       simulatorService.updateOrderSimControls(orderTarget, orderWindow, updateFrequency);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.log(Level.WARNING,"",e);
     }
   }
 
   @GetMapping("/simulator/getordersimcontrols")
   public OrderSimControls getOrderSimControls() {
-    System.out.println("SimulatorController.getOrderSimControls() ");
     OrderSimControls controls = simulatorService.getOrderSimControls();
-    System.out.println("TimeConSimulatorControllertroller.getordersimcontrols() - target " + controls.getTarget()
-        + " window:" + controls.getWindow() + " updateFrequency:" + controls.getUpdateTarget());
     return controls;
   }
 

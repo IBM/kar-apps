@@ -7,9 +7,13 @@ import java.util.ArrayList;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import org.springframework.stereotype.Component;
 
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
@@ -24,6 +28,7 @@ public class ShippingScheduler {
     private List<Route> routes = new ArrayList<Route>();
     @Value("classpath:routes.json")
     private Resource routesJsonResource;
+    private static final Logger logger = Logger.getLogger(ScheduleService.class.getName());
 
     /**
      * Load voyages into memory from a config file
@@ -39,12 +44,13 @@ public class ShippingScheduler {
 
         try {
             routes = mapper.readValue(routeConfigFile, typeReference);
-            routes.forEach(route -> System.out.println("................Origin Port: " + route.getOriginPort()
-                    + " Ship:" + route.getVessel().getName() + " Ship Capacity:" + route.getVessel().getMaxCapacity())
-
-            );
-        } catch (final IOException e) {
-            System.out.println("Unable to save users: " + e.getMessage());
+            if (logger.isLoggable(Level.INFO)) {
+                routes.forEach(route -> logger.info("ShippingScheduler.initialize - Origin Port: " + route.getOriginPort()
+                        + " Ship:" + route.getVessel().getName() + " Ship Capacity:" + route.getVessel().getMaxCapacity())
+                );
+            }
+        } catch (IOException e) {
+            logger.log(Level.WARNING,"",e);
         }
 
     }
@@ -115,8 +121,9 @@ public class ShippingScheduler {
              Instant shipLastArrivalDate = 
                 generateShipSchedule(route, departureDate, sortedSchedule, yearFromNow);
             route.setLastArrival(shipLastArrivalDate);
-            System.out.println(">>>>>>>>> Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());    
-
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("ShippingScheduler.generateSchedule - Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());
+            }
             // initial ship departures staggered by 2 days (change this if necessary)
             staggerInitialShipDepartures += 2;
             // reset departure date to today+stagger (calculated above) so that the ships

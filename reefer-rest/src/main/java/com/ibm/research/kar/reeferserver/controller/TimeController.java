@@ -1,6 +1,8 @@
 package com.ibm.research.kar.reeferserver.controller;
 
 import java.time.Instant;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -26,21 +28,15 @@ public class TimeController {
     @Autowired
     private ScheduleService schduleService;
 
+    private static final Logger logger = Logger.getLogger(TimeController.class.getName());
     @PostMapping("/time/startDate")
     public Instant getStartDate() {
-        System.out.println("TimeController.getStartDate()");
-        Instant date = TimeUtils.getInstance().getStartDate();
-        System.out.println("TimeController.getStartDate() - Date:" + date.toString());
-        return date;
+        return TimeUtils.getInstance().getStartDate();
     }
 
     @PostMapping("/time/currentDate")
     public Instant getCurrentDate() {
-        System.out.println("TimeController.getCurrentDate()");
-        Instant date = TimeUtils.getInstance().getCurrentDate();
-        System.out.println("TimeController.getCurrentDate() - Date:" + date.toString());
-
-        return date;
+        return TimeUtils.getInstance().getCurrentDate();
     }
 
     /*
@@ -49,8 +45,6 @@ public class TimeController {
      */
     @PostMapping("/time/nextDay")
     public Instant nextDay() {
-        System.out.println("TimeController.nextDay()");
-
         voyageService.nextDay();
         String date = "";
         try {
@@ -63,7 +57,7 @@ public class TimeController {
             Kar.actorCall(Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "releaseReefersfromMaintenance", message);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING,"",e);
         }
 
         return TimeUtils.getInstance().getCurrentDate();
@@ -72,8 +66,10 @@ public class TimeController {
     @PostMapping("/time/advance")
     public Instant advance() {
         Instant time = TimeUtils.getInstance().advanceDate(1);
-        System.out.println("TimeController.advance() ***************************************** NEXT DAY "
-                + time.toString() + " ***************************************************************");
+        if ( logger.isLoggable(Level.INFO)) {
+            logger.info("TimeController.advance() ***************************************** NEXT DAY "
+                    + time.toString() + " ***************************************************************");
+        }
         try {
             // On a day change generate a future schedule if necessary. The new schedule is generated if
             // we reached a configured threshold of days before the end of current schedule.
@@ -84,7 +80,7 @@ public class TimeController {
             Kar.actorCall(Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "releaseReefersfromMaintenance", message);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING,"",e);
         }
 
         return time;

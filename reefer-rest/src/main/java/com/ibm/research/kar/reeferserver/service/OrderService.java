@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -23,7 +25,7 @@ import org.springframework.stereotype.Service;
 public class OrderService extends AbstractPersistentService {
     // number of the most recent orders to return to the GUI
     private static int MaxOrdersToReturn = 10;
-
+    private static final Logger logger = Logger.getLogger(OrderService.class.getName());
     /**
      * Returns N most recent active orders where N = MaxOrdersToReturn
      * 
@@ -110,8 +112,10 @@ public class OrderService extends AbstractPersistentService {
             }
         }
         JsonArray spoiltList = spoiltOrderBuilder.build();
-        System.out.println("OrderService.orderSpoilt() - spoilt order " + orderId + " active count:"
-                + activeOrdersArray.size() + " spoilt count:" + spoiltList.size());
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("OrderService.orderSpoilt() - spoilt order " + orderId + " active count:"
+                    + activeOrdersArray.size() + " spoilt count:" + spoiltList.size());
+        }
         // save new spoilt orders list in kar persistent storage
         set(Constants.SPOILT_ORDERS_KEY, spoiltList);
 
@@ -135,8 +139,10 @@ public class OrderService extends AbstractPersistentService {
         bookedOrderArrayBuilder.add(newOrder);
         JsonArray bookedOrdersArray = bookedOrderArrayBuilder.build();
         set(Constants.BOOKED_ORDERS_KEY, bookedOrdersArray);
-        System.out.println("OrderService.createOrder() - added future order id:" + order.getId() + " voyageId:"
-                + order.getVoyageId() + " booked Order:" + bookedOrdersArray.size());
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("OrderService.createOrder() - added future order id:" + order.getId() + " voyageId:"
+                    + order.getVoyageId() + " booked Order:" + bookedOrdersArray.size());
+        }
         return order;
     }
 
@@ -207,9 +213,10 @@ public class OrderService extends AbstractPersistentService {
         JsonArray activeArray = activeOrderBuilder.build();
         set(Constants.ACTIVE_ORDERS_KEY, activeArray);
         set(Constants.BOOKED_ORDERS_KEY, toJsonArray(newBookedList));
-        System.out.println("OrderService.voyageDeparted() - voyage:" + voyageId + " booked voyage:"
-                + newBookedList.size() + " active voyages:" + activeArray.size());
-
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("OrderService.voyageDeparted() - voyage:" + voyageId + " booked voyage:"
+                    + newBookedList.size() + " active voyages:" + activeArray.size());
+        }
     }
 
     private JsonArray getListAJsonArray(String orderListKind) {
@@ -269,10 +276,10 @@ public class OrderService extends AbstractPersistentService {
         set(Constants.SPOILT_ORDERS_KEY, toJsonArray(newSpoiltList));
         // save new active list in the Kar persistent storage
         set(Constants.ACTIVE_ORDERS_KEY, toJsonArray(newActiveList));
-
-        System.out.println("................................. OrderService.voyageArrived() - voyageId:" + voyageId
-                + " - Active Orders:" + newActiveList.size() + " Spoilt Orders:" + newSpoiltList.size());
-
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("OrderService.voyageArrived() - voyageId:" + voyageId
+                    + " - Active Orders:" + newActiveList.size() + " Spoilt Orders:" + newSpoiltList.size());
+        }
     }
 
     /**
@@ -283,9 +290,13 @@ public class OrderService extends AbstractPersistentService {
      * @param status   - Voyage status
      */
     public void updateOrderStatus(String voyageId, OrderStatus status) {
-        System.out.println("OrderService.updateOrderStatus() - voyageId:" + voyageId + " Status:" + status);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("OrderService.updateOrderStatus() - voyageId:" + voyageId + " Status:" + status);
+        }
         if (voyageId == null) {
-            System.out.println("OrderService.updateOrderStatus() - voyageId is null, rejecting update request");
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("OrderService.updateOrderStatus() - voyageId is null, rejecting update request");
+            }
             return;
         }
         if (OrderStatus.DELIVERED.equals(status)) {

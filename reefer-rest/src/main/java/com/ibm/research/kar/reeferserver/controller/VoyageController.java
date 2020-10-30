@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -56,6 +58,7 @@ public class VoyageController {
   private VoyageService voyageService;
   @Autowired
   private GuiController gui;
+  private static final Logger logger = Logger.getLogger(VoyageController.class.getName());
 
   /**
    * Returns voyages matching given originPort, destinationPort and departure date
@@ -65,7 +68,6 @@ public class VoyageController {
    */
   @PostMapping("/voyage/matching")
   public List<Voyage> getMatchingVoyages(@RequestBody String message) {
-    System.out.println("VoyageController.getMatchingVoyages()");
     String originPort = "";
     String destinationPort = "";
     Instant date = null;
@@ -77,10 +79,12 @@ public class VoyageController {
       destinationPort = req.getString("destination");
       String departureDate = req.getString("departureDate");
       date = Instant.parse(departureDate);
-      System.out.println("VoyageController.getMatchingVoyages() - origin:" + originPort + " destination:"
-          + destinationPort + " date:" + departureDate);
+      if ( logger.isLoggable(Level.INFO)) {
+        logger.info("VoyageController.getMatchingVoyages() - origin:" + originPort + " destination:"
+                + destinationPort + " date:" + departureDate);
+      }
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.log(Level.WARNING,"",e);
     }
     return shipScheduleService.getMatchingSchedule(originPort, destinationPort, date);
   }
@@ -93,8 +97,6 @@ public class VoyageController {
    */
   @PostMapping("/voyage/inrange")
   public List<Voyage> getVoyagesInRange(@RequestBody String message) {
-    System.out.println("VoyageController.getVoyagesInRange()");
-
     Instant startDate;
     Instant endDate;
 
@@ -103,10 +105,12 @@ public class VoyageController {
       JsonObject req = jsonReader.readObject();
       startDate = Instant.parse(req.getString("startDate"));
       endDate = Instant.parse(req.getString("endDate"));
-      System.out.println("VoyageController.getVoyagesInRange() - startDate:" + startDate.toString() + " endDate:"
-          + endDate.toString());
+      if ( logger.isLoggable(Level.INFO)) {
+        logger.info("VoyageController.getVoyagesInRange() - startDate:" + startDate.toString() + " endDate:"
+                + endDate.toString());
+      }
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.log(Level.WARNING,"",e);
       return new ArrayList<Voyage>();
     }
     return shipScheduleService.getMatchingSchedule(startDate, endDate);
@@ -119,27 +123,21 @@ public class VoyageController {
    */
   @GetMapping("/voyage/active")
   public List<Voyage> getActiveVoyages() {
-    System.out.println("VoyageController.getActiveVoyages()");
-
     return activeVoyages();
   }
 
   @GetMapping("/voyage/upcoming")
   public List<Voyage> getShippingSchedule() {
-    System.out.println("VoyageController.getShippingSchedule()");
     return shipScheduleService.get();
   }
 
   @GetMapping("/voyage/state/{id}")
   public Voyage getVoyageState(@PathVariable("id") String id) throws VoyageNotFoundException {
-    System.out.println("VoyageController.getVoyageState()");
     return shipScheduleService.getVoyage(id);
   }
 
   @GetMapping("/voyage/info/{id}")
   public Voyage getVoyage(@PathVariable("id") String id) throws VoyageNotFoundException {
-    System.out.println("VoyageController.getVoyage()");
-
     return shipScheduleService.getVoyage(id);
 
   }
@@ -153,12 +151,12 @@ public class VoyageController {
   @PostMapping("/voyage/update/arrived")
   public void arrived(@RequestBody String message) throws VoyageNotFoundException {
     String voyageId = JsonUtils.getVoyageId(message);
-    System.out.println("VoyageController.delivered() - id:" + voyageId + " message:" + message);
+    if ( logger.isLoggable(Level.INFO)) {
+      logger.info("VoyageController.delivered() - id:" + voyageId + " message:" + message);
+    }
     shipScheduleService.updateDaysAtSea(voyageId, JsonUtils.getDaysAtSea(message));
-    //updateShipPositions(TimeUtils.getInstance().getCurrentDate().toString());
     voyageService.voyageEnded(voyageId);
     orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED);
-    //updateGui(TimeUtils.getInstance().getCurrentDate().toString());
   }
 
   /**
@@ -170,9 +168,10 @@ public class VoyageController {
   @PostMapping("/voyage/update/departed")
   public void departed(@RequestBody String message) throws VoyageNotFoundException {
     String voyageId = JsonUtils.getVoyageId(message);
-    System.out.println("VoyageController.departed() - id:" + voyageId + " message:" + message);
+    if ( logger.isLoggable(Level.INFO)) {
+      logger.info("VoyageController.departed() - id:" + voyageId + " message:" + message);
+    }
     shipScheduleService.updateDaysAtSea(voyageId, JsonUtils.getDaysAtSea(message));
-    //updateShipPositions(TimeUtils.getInstance().getCurrentDate().toString());
     voyageService.voyageDeparted(voyageId);
     orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT);
   }
@@ -185,14 +184,14 @@ public class VoyageController {
    */
   @PostMapping("/voyage/update/position")
   public void updateShipPosition(@RequestBody String message) throws VoyageNotFoundException {
-    System.out.println("VoyageController.updateShipPosition() " + message);
     String voyageId = JsonUtils.getVoyageId(message);
     int daysAtSea = JsonUtils.getDaysAtSea(message);
-    System.out.println("VoyageController.updateShipPosition() voyageId=" + voyageId + " Voyage Status:"
-        + voyageService.getVoyageStatus(voyageId) + " daysAtSea: " + daysAtSea);
-    if (daysAtSea > 0) {
+    if ( logger.isLoggable(Level.INFO)) {
+      logger.info("VoyageController.updateShipPosition() voyageId=" + voyageId + " Voyage Status:"
+              + voyageService.getVoyageStatus(voyageId) + " daysAtSea: " + daysAtSea);
+    }
+     if (daysAtSea > 0) {
       shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
-      //updateShipPositions(TimeUtils.getInstance().getCurrentDate().toString());
     }
   }
 
@@ -204,22 +203,19 @@ public class VoyageController {
    */
   @PostMapping("/voyage/update")
   public void updateReeferInventory(@RequestBody String message) throws VoyageNotFoundException {
-    System.out.println("VoyageController.updateReeferInventory() " + message);
-
-    // update can either be related to ship movement or reefer inventory change
-    try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
+     try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
       JsonObject req = jsonReader.readObject();
       String voyageId = req.getString("voyageId");
-
-      System.out.println("VoyageController.updateReeferInventory() voyageId=" + voyageId + " Voyage Status:"
-          + voyageService.getVoyageStatus(voyageId));
-
+       if ( logger.isLoggable(Level.FINE)) {
+         logger.fine("VoyageController.updateReeferInventory() voyageId=" + voyageId + " Voyage Status:"
+                 + voyageService.getVoyageStatus(voyageId));
+       }
       if (req.containsKey("reeferCount")) {
         reeferInventoryChange(req);
       }
 
     } catch (Exception e) {
-      e.printStackTrace();
+       logger.log(Level.WARNING,"",e);
     }
   }
 
@@ -230,7 +226,6 @@ public class VoyageController {
    */
   @GetMapping("/voyage/routes")
   public List<Route> getRoutes() {
-    System.out.println("VoyageController.getRoutes()");
     return shipScheduleService.getRoutes();
   }
 
@@ -239,8 +234,7 @@ public class VoyageController {
     try {
       restPost("simservice", "/simulator/updatevoyagecapacity", params);
     } catch (Exception e) {
-      e.printStackTrace();
-
+      logger.log(Level.WARNING,"",e);
     }
 
   }
@@ -248,13 +242,8 @@ public class VoyageController {
   private void reeferInventoryChange(JsonObject req) throws VoyageNotFoundException, ShipCapacityExceeded {
     int reeferCount = req.getInt("reeferCount");
     String voyageId = req.getString("voyageId");
-
-    System.out.println("VoyageController.updateVoyageState() reeferCount=" + reeferCount);
-
     int shipFreeCapacity = shipScheduleService.updateFreeCapacity(voyageId, reeferCount);
     updateSimulator(voyageId, shipFreeCapacity);
-
-    System.out.println("VoyageController.updateVoyageState() - Ship booked - Ship free capacity:" + shipFreeCapacity);
   }
 
   /**
@@ -274,27 +263,16 @@ public class VoyageController {
    */
   private List<Voyage> activeVoyages() {
     List<Voyage> activeVoyages = shipScheduleService.getActiveSchedule();
-    System.out.println("VoyageController.activeVoyages() - active voyages:" + activeVoyages.size());
     try {
-
       for (Voyage voyage : activeVoyages) {
         voyage.setOrderCount(voyageOrders(voyage.getId()));
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.log(Level.WARNING,"",e);
     }
 
     return activeVoyages;
   }
-
-  private void updateShipPositions(String currentDate) {
-    long t1 = System.currentTimeMillis();
-    List<Voyage> activeVoyages = activeVoyages();
-    long e1 = System.currentTimeMillis();
-    System.out.println("VoyageController.updateGui() - ,,.. time to fetch active voyages " + (e1 - t1) + " ms");
-    gui.sendActiveVoyageUpdate(activeVoyages, currentDate);
-  }
-
 
   /**
    * Update the GUI
@@ -304,12 +282,16 @@ public class VoyageController {
   public void updateGui(@RequestBody String currentDate) {
 
     long start = System.currentTimeMillis();
-    System.out.println("VoyageController.updateGui() - updating GUI with active schedule - currentDate:" + currentDate);
+    if ( logger.isLoggable(Level.FINE)) {
+      logger.fine("VoyageController.updateGui() - updating GUI with active schedule - currentDate:" + currentDate);
+    }
 
     long t1 = System.currentTimeMillis();
     List<Voyage> activeVoyages = activeVoyages();
     long e1 = System.currentTimeMillis();
-    System.out.println("VoyageController.updateGui() - ,,.. time to fetch active voyages " + (e1 - t1) + " ms");
+    if ( logger.isLoggable(Level.FINE)) {
+      logger.fine("VoyageController.updateGui() - ,,.. time to fetch active voyages " + (e1 - t1) + " ms");
+    }
     gui.sendActiveVoyageUpdate(activeVoyages, currentDate);
 
     long t2 = System.currentTimeMillis();
@@ -318,26 +300,35 @@ public class VoyageController {
       totalActiveOrders += voyage.getOrderCount();
     }
     long e2 = System.currentTimeMillis();
-    System.out.println("VoyageController.updateGui() - ,,.. time to total voyage orders " + (e2 - t2) + " ms");
+
+    if ( logger.isLoggable(Level.FINE)) {
+      logger.fine("VoyageController.updateGui() - ,,.. time to total voyage orders " + (e2 - t2) + " ms");
+    }
     long t3 = System.currentTimeMillis();
     gui.updateInTransitOrderCount(totalActiveOrders);
     long e3 = System.currentTimeMillis();
-    System.out
-        .println("VoyageController.updateGui() - ,,.. time to total update in-transit orders " + (e3 - t3) + " ms");
+    if ( logger.isLoggable(Level.FINE)) {
+      logger.fine("VoyageController.updateGui() - ,,.. time to total update in-transit orders " + (e3 - t3) + " ms");
+    }
 
     long t4 = System.currentTimeMillis();
     gui.updateFutureOrderCount(orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY)); // "booked-orders"));
     long e4 = System.currentTimeMillis();
-    System.out.println("VoyageController.updateGui() - ,,.. time to total update future orders " + (e4 - t4) + " ms");
+    if ( logger.isLoggable(Level.FINE)) {
+      logger.fine("VoyageController.updateGui() - ,,.. time to total update future orders " + (e4 - t4) + " ms");
+    }
 
     long t5 = System.currentTimeMillis();
     gui.updateSpoiltOrderCount(orderService.getOrderCount(Constants.SPOILT_ORDERS_KEY));
     long e5 = System.currentTimeMillis();
-    System.out.println("VoyageController.updateGui() - ,,.. time to total update spoilt orders " + (e5 - t5) + " ms");
+    if ( logger.isLoggable(Level.FINE)) {
+      logger.fine("VoyageController.updateGui() - ,,.. time to total update spoilt orders " + (e5 - t5) + " ms");
+    }
     long end = System.currentTimeMillis();
-    System.out.println("VoyageController.activeVoyages() - ,,.. Done - Total Active Orders:" + totalActiveOrders
-        + " voyage updateGui took " + (end - start) + " ms");
-
+    if ( logger.isLoggable(Level.FINE)) {
+      logger.fine("VoyageController.activeVoyages() - ,,.. Done - Total Active Orders:" + totalActiveOrders
+              + " voyage updateGui took " + (end - start) + " ms");
+    }
   }
 
 }

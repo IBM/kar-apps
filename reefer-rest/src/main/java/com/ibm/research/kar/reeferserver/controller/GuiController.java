@@ -5,6 +5,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.OrderStats;
@@ -34,7 +36,7 @@ public class GuiController {
     private ReeferStats reeferStats;
 
     private AtomicBoolean valuesChanged = new AtomicBoolean();
-
+    private static final Logger logger = Logger.getLogger(GuiController.class.getName());
     public GuiController() {
 
         TimerTask timerTask = new GuiUpdateTask();
@@ -49,7 +51,9 @@ public class GuiController {
         ShippingSchedule schedule = new ShippingSchedule(voyages, currentDate);
         template.convertAndSend("/topic/voyages", schedule);
         long end = System.currentTimeMillis();
-        System.out.println("GuiController.sendActiveVoyageUpdate() - voyage update took " + (end - start) + " ms");
+        if ( logger.isLoggable(Level.INFO)) {
+            logger.info("GuiController.sendActiveVoyageUpdate() - voyage update took " + (end - start) + " ms");
+        }
     }
 
     public void sendOrderUpdate(Order order) {

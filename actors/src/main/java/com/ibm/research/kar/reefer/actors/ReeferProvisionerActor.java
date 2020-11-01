@@ -146,6 +146,9 @@ public class ReeferProvisionerActor extends BaseActor {
      */
     @Remote
     public JsonObject releaseReefersfromMaintenance(JsonObject message) {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("ReeferProvisionerActor.releaseReefersfromMaintenance() - message:" + message);
+        }
         try {
             if (!onMaintenanceMap.isEmpty()) {
                 Iterator<String> it = onMaintenanceMap.values().iterator();
@@ -202,7 +205,6 @@ public class ReeferProvisionerActor extends BaseActor {
      */
     @Remote
     public JsonObject bookReefers(JsonObject message) {
-
         // lazily initialize master reefer inventory list on the first call.
         // This is fast since all we do is just creating an array of
         // fixed size
@@ -216,13 +218,14 @@ public class ReeferProvisionerActor extends BaseActor {
             List<ReeferDTO> orderReefers = ReeferAllocator.allocateReefers(reeferMasterInventory, order.getProductQty(),
                     order.getId(), order.getVoyageId());
             // need an array to hold reeferIds which will be included in the reply
-            JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+           JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+            Map<String, JsonValue> map = new HashMap<>();
             // book each reefer
             for (ReeferDTO reefer : orderReefers) {
                 arrayBuilder.add(reefer.getId());
-                super.addToSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(reefer.getId()),
-                        reeferToJsonObject(reefer));
+                map.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
             }
+            Kar.actorSetMultipleState(this,Constants.REEFER_MAP_KEY,map );
             bookedTotalCount.addAndGet(orderReefers.size());
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("ReeferProvisionerActor.bookReefers())- Order:" + order.getId() + " reefer count:"
@@ -230,7 +233,6 @@ public class ReeferProvisionerActor extends BaseActor {
             }
             // forces update thread to send reefer counts
             valuesChanged.set(true);
-
             return Json.createObjectBuilder().add("status", "OK").add("reefers", arrayBuilder.build())
                     .add(JsonOrder.OrderKey, order.getAsObject()).build();
         } else {
@@ -460,7 +462,7 @@ public class ReeferProvisionerActor extends BaseActor {
         if (reefer.getMaintenanceReleaseDate() == null) {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(
-                        "ReeferProvisionerActor.releaseFromMaintenance() - maintenance release date not set for reefer:"
+                        "ReeferProvisionerActor.releaseFromMaintenanceToday() - maintenance release date not set for reefer:"
                                 + reefer.getId() + " state:" + reefer.getState().name() + " not booked yet");
             }
             return false;
@@ -475,7 +477,7 @@ public class ReeferProvisionerActor extends BaseActor {
 
     private void releaseFromMaintenance(ReeferDTO reefer, Instant today) {
         if (logger.isLoggable(Level.INFO)) {
-            logger.info("ReeferProvisioner.releaseReefersfromMaintenance() - releasing reefer:" + reefer.getId()
+            logger.info("ReeferProvisioner.releasefromMaintenance() - releasing reefer:" + reefer.getId()
                     + " from maintenance. Today:" + today + " reefer release date:" + reefer.getMaintenanceReleaseDate()
                     + " state:" + reefer.getState().name());
         }

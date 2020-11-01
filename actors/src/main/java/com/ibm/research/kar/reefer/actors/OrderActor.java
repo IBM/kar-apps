@@ -64,6 +64,7 @@ public class OrderActor extends BaseActor {
             Kar.actorSetMultipleState(this, job.build());
         }
     }
+
     /**
      * Called when an order is delivered (ie.ship arrived at the destination port).
      * Calls ReeferProvisioner to release all reefers in this order.
@@ -74,17 +75,20 @@ public class OrderActor extends BaseActor {
     @Remote
     public JsonObject delivered(JsonObject message) {
         try {
+
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(String.format("OrderActor.delivered() -  orderId: %s voyageId: %s reefers: %d ",
-                        getId(), orderState.getVoyageId(), orderState.getReeferMap().size()));
+                        getId(), orderState.getVoyageId(), orderState.getReeferMap() == null ? 0 : orderState.getReeferMap().size()));
+            }
+            if (orderState.getReeferMap() != null) {
+                // pass reefer ids to the ProvisionerActor
+                JsonArrayBuilder reefersToRelease = Json.createArrayBuilder(orderState.getReeferMap().keySet());
+                // message the ReeferProvisionerActor to release reefers in a given list
+                actorCall(actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+                        "unreserveReefers",
+                        Json.createObjectBuilder().add(Constants.REEFERS_KEY, reefersToRelease).build());
             }
 
-            // pass reefer ids to the ProvisionerActor
-            JsonArrayBuilder reefersToRelease = Json.createArrayBuilder(orderState.getReeferMap().keySet());
-            // message the ReeferProvisionerActor to release reefers in a given list
-            actorCall(actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
-                    "unreserveReefers",
-                    Json.createObjectBuilder().add(Constants.REEFERS_KEY, reefersToRelease).build());
             // as soon as the order is delivered and reefers are released we clear actor
             // state
             Kar.actorDeleteAllState(this);
@@ -108,7 +112,7 @@ public class OrderActor extends BaseActor {
     @Remote
     public JsonObject departed(JsonObject message) {
         try {
-           changeOrderStatus(OrderStatus.INTRANSIT);
+            changeOrderStatus(OrderStatus.INTRANSIT);
             // Notify ReeferProvisioner that the order is in-transit
             if (!orderState.getReeferMap().isEmpty()) {
                 ActorRef reeferProvisionerActor = Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
@@ -282,10 +286,10 @@ public class OrderActor extends BaseActor {
             Map<String, JsonValue> reeferMap = new HashMap<>();
             reefers.forEach(reeferId -> {
                 reeferMap.put(String.valueOf(((JsonNumber) reeferId).intValue()), reeferId);
-                orderState.addReefer( ((JsonNumber) reeferId).intValue());
+                orderState.addReefer(((JsonNumber) reeferId).intValue());
             });
             addSubMap(this, Constants.REEFER_MAP_KEY, reeferMap);
-         }
+        }
     }
 
     /**
@@ -314,18 +318,18 @@ public class OrderActor extends BaseActor {
             try {
                 this.state = allState.get(Constants.ORDER_STATUS_KEY);
                 this.voyageId = allState.get(Constants.VOYAGE_ID_KEY);
-                if ( allState.containsKey(Constants.REEFER_MAP_KEY)) {
+                if (allState.containsKey(Constants.REEFER_MAP_KEY)) {
                     JsonValue jv = allState.get(Constants.REEFER_MAP_KEY);
                     // since we already have all reefers by calling actorGetAllState() above we can
                     // deserialize them using Jackson's ObjectMapper. Alternatively, one can
                     // use Kar.actorSubMapGet() which is an extra call.
                     ObjectMapper mapper = new ObjectMapper();
                     // deserialize json reefers into a HashMap
-                    Map<String,String> reeferMap = mapper.readValue(jv.toString(), HashMap.class);
-                    this.addReefers(reeferMap);
+                    Map<String, String> reeferMap = mapper.readValue(jv.toString(), HashMap.class);
+                     this.addReefers(reeferMap);
                 }
-            } catch(Exception e) {
-                logger.log(Level.WARNING,"",e);
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "", e);
             }
 
         }
@@ -354,7 +358,7 @@ public class OrderActor extends BaseActor {
             this.reeferMap = reeferMap;
         }
         public void addReefer(int reeferId) {
-            if ( this.reeferMap == null ) {
+            if (this.reeferMap == null) {
                 this.reeferMap = new HashMap<>();
             }
             this.reeferMap.put(String.valueOf(reeferId), String.valueOf(reeferId));

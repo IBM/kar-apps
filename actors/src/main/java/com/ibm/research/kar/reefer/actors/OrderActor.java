@@ -238,7 +238,8 @@ public class OrderActor extends BaseActor {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(String.format("OrderActor.createOrder() - orderId: %s VoyageActor reply: %s", getId(), voyageBookingResult));
             }
-            if (voyageBooked(voyageBookingResult)) {
+            // Check if voyage has been booked
+            if (voyageBookingResult.getString(Constants.STATUS_KEY).equals(Constants.OK)) {
                 saveOrderReefers(voyageBookingResult);
                 changeOrderStatus(OrderStatus.BOOKED);
                 if (logger.isLoggable(Level.INFO)) {
@@ -261,16 +262,6 @@ public class OrderActor extends BaseActor {
     private void changeOrderStatus(OrderStatus state) {
         JsonValue jv = Json.createValue(state.name());
         orderState.newState(jv);
-    }
-
-    /**
-     * Returns status of voyage booking.
-     *
-     * @param orderBookingStatus - reply message from Voyage actor
-     * @return - true if voyage was booked, false otherwise
-     */
-    private boolean voyageBooked(JsonObject orderBookingStatus) {
-        return orderBookingStatus.getString(Constants.STATUS_KEY).equals(Constants.OK);
     }
 
     /**

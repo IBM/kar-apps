@@ -128,7 +128,9 @@ public class VoyageActor extends BaseActor {
                     logger.info("VoyageActor.changePosition() voyageId=" + voyage.getId() + " order count: " +
                             orders.size() + " arrival processing: " + (System.nanoTime() - snapshot) / 1000000);
                 }
-            } else if (shipDeparted(daysAtSea) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
+
+            } // check if ship departed its origin port
+            else if ((daysAtSea == 1) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
                 voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
                 long snapshot = System.nanoTime();
                 processDepartedVoyage(voyage, daysAtSea);
@@ -171,7 +173,8 @@ public class VoyageActor extends BaseActor {
             JsonValue bookingStatus = actorCall(
                     actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "bookReefers", message);
-            if (reefersBooked(bookingStatus)) {
+            // Check if ReeferProvisioner booked the reefers for this order.
+            if ( bookingStatus.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK) ) {
                 // add new order to this voyage order list
                 super.addToSubMap(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
                         Json.createValue(order.getId()));
@@ -262,26 +265,6 @@ public class VoyageActor extends BaseActor {
         ActorRef orderActor = Kar.actorRef(ReeferAppConfig.OrderActorName, orderId);
         JsonObject params = Json.createObjectBuilder().build();
         actorCall(orderActor, methodToCall, params);
-    }
-
-    /**
-     * Check if ReeferProvisioner booked the reefers for this order.
-     *
-     * @param bookingStatus - reply from ReeferProvisioner containing reefer booking status
-     * @return true if reefers booked, false otherwise
-     */
-    private boolean reefersBooked(JsonValue bookingStatus) {
-        return bookingStatus.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK);
-    }
-
-    /**
-     * Ship departs when its days at sea = 1
-     *
-     * @param daysAtSea - number of days at sea
-     * @return true if the ship departed, false otherwise
-     */
-    private boolean shipDeparted(int daysAtSea) {
-        return daysAtSea == 1;
     }
 
     /**

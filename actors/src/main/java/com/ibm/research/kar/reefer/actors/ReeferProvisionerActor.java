@@ -300,9 +300,9 @@ public class ReeferProvisionerActor extends BaseActor {
                     .valueOf(reply.getString(Constants.REEFER_STATE_KEY));
             // reefer becomes spoilt only while its on a voyage. On arrival, the reefer
             // moves from spoilt to maintenance
-            if (reeferSpoilt(state)) {
-                // check if spoilt order has been booked (but not on a voyage yet)
-                if (orderBooked(reply)) {
+            if (state.equals(ReeferState.State.SPOILT)) {
+                // check if the spoilt order has been booked (but not on a voyage yet)
+                if (reply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name())) {
                     setReeferOnMaintenance(reefer, message.getString(Constants.DATE_KEY));
                     // Order has been booked but a reefer in it is spoilt. Remove spoilt reefer from
                     // the order and replace with a new one.
@@ -341,12 +341,14 @@ public class ReeferProvisionerActor extends BaseActor {
                 logger.info("ReeferActor.handleAnomaly() - Id:" + this.getId()
                         + " Order Actor:" + orderId + " reply:" + orderReply);
             }
-            if (orderSpoilt(orderReply)) {
+            // check if order has spoilt (true if order spoils while in transit)
+            if (orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.SPOILT.name())) {
                 // reefer in-transit becomes spoilt and will transition to on-maintenance when ship arrives in port
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name()).add(Constants.ORDER_STATUS_KEY,
                         OrderStatus.INTRANSIT.name());
-            } else if (orderBooked(orderReply)) {
+            } else // check if order has been booked
+                if ( orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name()) ){
                 // Booked orders have not yet departed. Spoiled reefers must be replaced in such
                 // case.
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
@@ -363,14 +365,6 @@ public class ReeferProvisionerActor extends BaseActor {
             reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.MAINTENANCE.name());
         }
         return reply.build();
-    }
-
-    private boolean orderBooked(JsonObject orderReply) {
-        return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name());
-    }
-
-    private boolean orderSpoilt(JsonObject orderReply) {
-        return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.SPOILT.name());
     }
 
     private JsonObject notifyOrderOfSpoilage(String orderId) {
@@ -504,11 +498,6 @@ public class ReeferProvisionerActor extends BaseActor {
         super.addToSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(reefer.getId()), jo);
     }
 
-    private boolean orderBooked(JsonValue orderStatus) {
-        return OrderStatus.BOOKED
-                .equals(OrderStatus.valueOf(orderStatus.asJsonObject().getString(Constants.ORDER_STATUS_KEY)));
-    }
-
     private void replaceSpoiltReefer(ReeferDTO reefer) {
         List<ReeferDTO> replacementReefer = ReeferAllocator.allocateReefers(reeferMasterInventory,
                 Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId());
@@ -535,14 +524,6 @@ public class ReeferProvisionerActor extends BaseActor {
                     + " total:" + totalReeferInventory);
         }
     }
-
-    private boolean reeferSpoilt(ReeferState.State state) {
-        if (state.equals(ReeferState.State.SPOILT)) {
-            return true;
-        }
-        return false;
-    }
-
 
     private void unreserveReefer(int reeferId) {
         if (reeferMasterInventory[Integer.valueOf(reeferId)] != null) {

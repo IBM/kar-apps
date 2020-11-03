@@ -57,7 +57,8 @@ public class OrderActor extends BaseActor {
      */
     @Deactivate
     public void deactivate() {
-        if (orderState != null) {
+        // don't save state if the order has been delivered
+        if (orderState != null && !OrderStatus.DELIVERED.name().equals(orderState.getStateAsString()) ){
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.ORDER_STATUS_KEY, orderState.getState()).
                     add(Constants.VOYAGE_ID_KEY, orderState.getVoyageId());
@@ -88,7 +89,7 @@ public class OrderActor extends BaseActor {
                         "unreserveReefers",
                         Json.createObjectBuilder().add(Constants.REEFERS_KEY, reefersToRelease).build());
             }
-
+            changeOrderStatus(OrderStatus.DELIVERED);
             // as soon as the order is delivered and reefers are released we clear actor
             // state
             Kar.actorDeleteAllState(this);

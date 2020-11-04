@@ -356,7 +356,7 @@ public class OrderActor extends BaseActor {
             this.reeferMap.put(String.valueOf(reeferId), String.valueOf(reeferId));
         }
         public void replaceReefer(int reeferId, int replacementReeferId) {
-            this.reeferMap.remove(reeferId);
+            this.reeferMap.remove(String.valueOf(reeferId));
             this.addReefer(replacementReeferId);
         }
         public void newState(JsonValue state) {

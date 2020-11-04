@@ -307,11 +307,11 @@ public class ReeferProvisionerActor extends BaseActor {
                     // Order has been booked but a reefer in it is spoilt. Remove spoilt reefer from
                     // the order and replace with a new one.
                     replaceSpoiltReefer(reefer);
-                    bookedTotalCount.decrementAndGet();
+                   // bookedTotalCount.decrementAndGet();
                 } else {
                     spoiltTotalCount.incrementAndGet();
                     // reefer has spoilt while on a voyage
-                    changeReeferState(reefer, reeferId, ReeferState.State.SPOILT);//, Constants.TOTAL_SPOILT_KEY);
+                    changeReeferState(reefer, reeferId, ReeferState.State.SPOILT);
                     JsonObject orderId = Json.createObjectBuilder().add(Constants.ORDER_ID_KEY, reefer.getOrderId())
                             .build();
                     Kar.restPost("reeferservice", "/orders/spoilt", orderId);
@@ -333,7 +333,6 @@ public class ReeferProvisionerActor extends BaseActor {
     }
 
     private JsonObject handleAnomaly(String orderId) {
-        JsonObjectBuilder propertiesBuilder = Json.createObjectBuilder();
         JsonObjectBuilder reply = Json.createObjectBuilder();
         if (orderId != null && orderId.length() > 0) {
             JsonObject orderReply = notifyOrderOfSpoilage(orderId);
@@ -344,24 +343,20 @@ public class ReeferProvisionerActor extends BaseActor {
             // check if order has spoilt (true if order spoils while in transit)
             if (orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.SPOILT.name())) {
                 // reefer in-transit becomes spoilt and will transition to on-maintenance when ship arrives in port
-                propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name()).add(Constants.ORDER_STATUS_KEY,
                         OrderStatus.INTRANSIT.name());
             } else // check if order has been booked
                 if ( orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name()) ){
                 // Booked orders have not yet departed. Spoiled reefers must be replaced in such
                 // case.
-                propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name()).add(Constants.ORDER_STATUS_KEY,
                         OrderStatus.BOOKED.name());
             } else {
                 // reefer neither booked nor in-transit goes on maintenance
-                propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.MAINTENANCE.name()));
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.MAINTENANCE.name());
             }
         } else {
             // reefer not allocated yet
-            propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.MAINTENANCE.name()));
             reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.MAINTENANCE.name());
         }
         return reply.build();
@@ -534,7 +529,6 @@ public class ReeferProvisionerActor extends BaseActor {
                 setReeferOnMaintenance(reeferMasterInventory[reeferId],
                         TimeUtils.getInstance().getCurrentDate().toString());
                 spoiltTotalCount.decrementAndGet();
-                inTransitTotalCount.decrementAndGet();
                 if (logger.isLoggable(Level.INFO)) {
                     logger.info("ReeferProvisioner.unreserveReefer() - spoilt reefer:" + reeferId
                             + " arrived - changed state to OnMaintenance");
@@ -543,7 +537,12 @@ public class ReeferProvisionerActor extends BaseActor {
                 reeferMasterInventory[reeferId].reset();
                 // remove reefer from kar storage
                 super.removeFromSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(reeferId));
-                inTransitTotalCount.decrementAndGet();
+            }
+            inTransitTotalCount.decrementAndGet();
+        } else {
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("ReeferProvisioner.unreserveReefer() - reefer:" + reeferId
+                        + " arrived but it has not been allocated");
             }
         }
 

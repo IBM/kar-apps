@@ -188,8 +188,8 @@ public class OrderActor extends BaseActor {
             }
 
             // reefer replace is a two step process (remove + add)
-            super.removeFromSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(spoiltReeferId));
-            super.addToSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(replacementReeferId),
+            Kar.actorDeleteState(this, Constants.REEFER_MAP_KEY, String.valueOf(spoiltReeferId));
+            Kar.actorSetState(this, Constants.REEFER_MAP_KEY, String.valueOf(replacementReeferId),
                     Json.createValue(replacementReeferId));
             orderState.replaceReefer(spoiltReeferId, replacementReeferId);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
@@ -280,7 +280,7 @@ public class OrderActor extends BaseActor {
                 reeferMap.put(String.valueOf(((JsonNumber) reeferId).intValue()), reeferId);
                 orderState.addReefer(((JsonNumber) reeferId).intValue());
             });
-            addSubMap(this, Constants.REEFER_MAP_KEY, reeferMap);
+            Kar.actorSetMultipleState(this, Constants.REEFER_MAP_KEY, reeferMap);
         }
     }
 

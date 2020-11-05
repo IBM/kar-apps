@@ -58,7 +58,7 @@ public class VoyageActor extends BaseActor {
                 Response response = restGet("reeferservice", "/voyage/info/" + getId());
                 voyageInfo = response.readEntity(JsonValue.class).asJsonObject();
                 // store static voyage information in Kar storage for reuse
-                super.set(this, Constants.VOYAGE_INFO_KEY, voyageInfo);
+                Kar.actorSetState(this, Constants.VOYAGE_INFO_KEY, voyageInfo);
             } else {
 
                 if (state.containsKey(Constants.VOYAGE_INFO_KEY)) {
@@ -90,7 +90,7 @@ public class VoyageActor extends BaseActor {
     @Deactivate
     public void deactivate() {
         if (voyageStatus != null) {
-            super.set(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
+            Kar.actorSetState(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
         }
     }
 
@@ -176,7 +176,7 @@ public class VoyageActor extends BaseActor {
             // Check if ReeferProvisioner booked the reefers for this order.
             if ( bookingStatus.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK) ) {
                 // add new order to this voyage order list
-                super.addToSubMap(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
+                Kar.actorSetState(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
                         Json.createValue(order.getId()));
                 orders.put(String.valueOf(order.getId()), String.valueOf((order.getId())));
                 // reload order map since there is a change. Local orders map is not mutable

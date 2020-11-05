@@ -73,7 +73,7 @@ public class ReeferProvisionerActor extends BaseActor {
                 if (state.containsKey(Constants.TOTAL_REEFER_COUNT_KEY)) {
                     totalReeferInventory = state.get(Constants.TOTAL_REEFER_COUNT_KEY);
                     // fetch reefer map
-                    Map<String, JsonValue> reeferInventory = super.getSubMap(this, Constants.REEFER_MAP_KEY);
+                    Map<String, JsonValue> reeferInventory = Kar.actorSubMapGet(this, Constants.REEFER_MAP_KEY);
                     if (logger.isLoggable(Level.INFO)) {
                         logger.info("ReeferProvisionerActor.init() - Fetched size of the reefer inventory:"
                                 + reeferInventory.size());
@@ -287,7 +287,7 @@ public class ReeferProvisionerActor extends BaseActor {
             }
             if (reeferMasterInventory[reeferId] == null) {
                 reeferMasterInventory[reeferId] = new ReeferDTO(reeferId, ReeferState.State.UNALLOCATED, "", "");
-                super.addToSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(reeferId),
+                Kar.actorSetState(this, Constants.REEFER_MAP_KEY, String.valueOf(reeferId),
                         reeferToJsonObject(reeferMasterInventory[reeferId]));
             }
             ReeferDTO reefer = reeferMasterInventory[reeferId];
@@ -475,7 +475,7 @@ public class ReeferProvisionerActor extends BaseActor {
         reefer.setMaintenanceReleaseDate(null);
         updateStore(reefer);
 
-        super.removeFromSubMap(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reefer.getId()));
+        Kar.actorDeleteState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reefer.getId()));
     }
 
     private void setReeferOnMaintenance(ReeferDTO reefer, String today) {
@@ -483,14 +483,14 @@ public class ReeferProvisionerActor extends BaseActor {
         reefer.setMaintenanceReleaseDate(today);
         reefer.setState(State.MAINTENANCE);
         updateStore(reefer);
-        super.addToSubMap(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reefer.getId()),
+        Kar.actorSetState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reefer.getId()),
                 Json.createValue(reefer.getId()));
         onMaintenanceMap.put(String.valueOf(reefer.getId()), String.valueOf(reefer.getId()));
     }
 
     private void updateStore(ReeferDTO reefer) {
         JsonObject jo = reeferToJsonObject(reefer);
-        super.addToSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(reefer.getId()), jo);
+        Kar.actorSetState(this, Constants.REEFER_MAP_KEY, String.valueOf(reefer.getId()), jo);
     }
 
     private void replaceSpoiltReefer(ReeferDTO reefer) {
@@ -536,7 +536,7 @@ public class ReeferProvisionerActor extends BaseActor {
             } else {
                 reeferMasterInventory[reeferId].reset();
                 // remove reefer from kar storage
-                super.removeFromSubMap(this, Constants.REEFER_MAP_KEY, String.valueOf(reeferId));
+                Kar.actorDeleteState(this, Constants.REEFER_MAP_KEY, String.valueOf(reeferId));
             }
             inTransitTotalCount.decrementAndGet();
         } else {

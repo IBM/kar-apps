@@ -55,19 +55,19 @@ public class ReeferActor extends BaseActor {
     public void setState(JsonObject reeferProperties) {
         try {
             if (reeferProperties.containsKey(ReeferState.MAX_CAPACITY_KEY)) {
-                set(this, ReeferState.MAX_CAPACITY_KEY,
+                Kar.actorSetState(this, ReeferState.MAX_CAPACITY_KEY,
                         Json.createValue(reeferProperties.getInt(ReeferState.MAX_CAPACITY_KEY)));
             }
             if (reeferProperties.containsKey(ReeferState.ORDER_ID_KEY)) {
-                set(this, ReeferState.ORDER_ID_KEY,
+                Kar.actorSetState(this, ReeferState.ORDER_ID_KEY,
                         Json.createValue(reeferProperties.getString(ReeferState.ORDER_ID_KEY)));
             }
             if (reeferProperties.containsKey(ReeferState.VOYAGE_ID_KEY)) {
-                set(this, ReeferState.VOYAGE_ID_KEY,
+                Kar.actorSetState(this, ReeferState.VOYAGE_ID_KEY,
                         Json.createValue(reeferProperties.getString(ReeferState.VOYAGE_ID_KEY)));
             }
             if (reeferProperties.containsKey(ReeferState.STATE_KEY)) {
-                set(this, ReeferState.STATE_KEY, Json.createValue(reeferProperties.getString(ReeferState.STATE_KEY)));
+                Kar.actorSetState(this, ReeferState.STATE_KEY, Json.createValue(reeferProperties.getString(ReeferState.STATE_KEY)));
             }
 
         } catch (Exception e) {
@@ -122,7 +122,7 @@ public class ReeferActor extends BaseActor {
         JsonObjectBuilder propertiesBuilder = Json.createObjectBuilder();
         JsonObjectBuilder reply = Json.createObjectBuilder();
         // A reefer with an orderId is on a ship
-        JsonValue jsonOrderId = get(this, ReeferState.ORDER_ID_KEY);
+        JsonValue jsonOrderId = stateMap.get(ReeferState.ORDER_ID_KEY);
         if (jsonOrderId != null && jsonOrderId != JsonValue.NULL && jsonOrderId.toString().length() > 0) {
             System.out.println("ReeferActor.anomaly() - Id:" + this.getId()
                     + " Assigned to Order Id:" + ((JsonString) jsonOrderId).getString()

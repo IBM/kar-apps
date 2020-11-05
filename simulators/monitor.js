@@ -38,7 +38,14 @@ async function main () {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     })
-    const objdly = await unitdelay.json()
+    const restext = await unitdelay.text()
+    // at startup liberty may respond with garbage string before app is ready to serve
+    // a valid unitdelay response will never include a space
+    if ( restext.includes(' ') ) {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      continue
+    }
+    const objdly = JSON.parse(restext)
 
     const orderctl = await fetch(url('simservice', 'simulator/getordercontrols'), {
       method: 'GET',

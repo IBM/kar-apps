@@ -143,6 +143,7 @@ public class OrderService extends AbstractPersistentService {
             logger.info("OrderService.createOrder() - added future order id:" + order.getId() + " voyageId:"
                     + order.getVoyageId() + " booked Order:" + bookedOrdersArray.size());
         }
+        orderProperties.setOrderId(order.getId());
         return order;
     }
 

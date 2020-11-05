@@ -131,7 +131,6 @@ public class OrderController {
 		try {
 
 			Order order = orderService.createOrder(orderProperties);
-			orderProperties.setOrderId(order.getId());
 			JsonObjectBuilder ordersProps = Json.createObjectBuilder();
 			ordersProps.add("orderId", order.getId()).add("orderVoyageId", order.getVoyageId()).add("orderProductQty",
 					order.getProductQty());

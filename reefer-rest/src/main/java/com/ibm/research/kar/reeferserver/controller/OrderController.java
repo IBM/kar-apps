@@ -131,12 +131,12 @@ public class OrderController {
 		try {
 
 			Order order = orderService.createOrder(orderProperties);
-			JsonObjectBuilder ordersProps = Json.createObjectBuilder();
-			ordersProps.add("orderId", order.getId()).add("orderVoyageId", order.getVoyageId()).add("orderProductQty",
+			JsonObjectBuilder orderParamsBuilder = Json.createObjectBuilder();
+			orderParamsBuilder.add("orderId", order.getId()).add("orderVoyageId", order.getVoyageId()).add("orderProductQty",
 					order.getProductQty());
 
 			JsonObjectBuilder orderObject = Json.createObjectBuilder();
-			orderObject.add("order", ordersProps.build());
+			orderObject.add("order", orderParamsBuilder.build());
 			JsonObject params = orderObject.build();
 
 			ActorRef orderActor = actorRef(ReeferAppConfig.OrderActorName, order.getId());

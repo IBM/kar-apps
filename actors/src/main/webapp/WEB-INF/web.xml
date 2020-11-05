@@ -19,7 +19,7 @@
 			com.ibm.research.kar.reefer.actors.ReeferActor,
 			com.ibm.research.kar.reefer.actors.VoyageActor,
 			com.ibm.research.kar.reefer.actors.ReeferProvisionerActor,
-			com.ibm.research.kar.reefer.actors.RestHelper;
+			com.ibm.research.kar.reefer.actors.RestHelper
 		</param-value>
 	</context-param>
 		<context-param>

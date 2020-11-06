@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reefer-actors
+  labels:
+    name: reefer-actors
+spec:
+  replicas: {{ .Values.reefer.actors.replicas }}
+  selector:
+    matchLabels:
+      name: reefer-actors
+  template:
+    metadata:
+      labels:
+        name: reefer-actors
+      annotations:
+        kar.ibm.com/app: reefer
+        kar.ibm.com/actors: order,reefer,voyage,reefer-provisioner
+        kar.ibm.com/verbose: {{ .Values.kar.verbose }}
+        kar.ibm.com/appPort: {{ .Values.reefer.actors.port | quote }}
+    spec:
+      containers:
+      - name: app
+        image: {{ .Values.reefer.actors.image }}
+        ports:
+        - name: app
+          containerPort: {{ .Values.reefer.actors.port }}

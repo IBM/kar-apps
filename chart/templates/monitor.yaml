@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reefer-monitor
+  labels:
+    name: reefer-monitor
+spec:
+  replicas: {{ .Values.reefer.monitor.replicas }}
+  selector:
+    matchLabels:
+      name: reefer-monitor
+  template:
+    metadata:
+      labels:
+        name: reefer-monitor
+      annotations:
+        kar.ibm.com/app: reefer
+        kar.ibm.com/verbose: {{ .Values.kar.verbose }}
+        kar.ibm.com/appPort: {{ .Values.reefer.monitor.port | quote }}
+    spec:
+      volumes:
+      - name: runtime-config
+        secret:
+          secretName: kar.ibm.com.runtime-config
+      containers:
+      - name: app
+        image: {{ .Values.reefer.monitor.image }}
+        ports:
+        - name: app
+          containerPort: {{ .Values.reefer.monitor.port }}
+        volumeMounts:
+        - mountPath: /var/run/secrets/kar.ibm.com
+          name: runtime-config
+          readOnly: true

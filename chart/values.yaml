@@ -1,0 +1,32 @@
+ingress:
+  apiHostName: reefer.dgrove-iks-uuid.us-south.containers.appdomain.cloud
+  apiHostPort: 443
+  apiHostProto: https
+  domain: reefer.dgrove-iks-uuid.us-south.containers.appdomain.cloud
+  tls:
+    secretname: dgrove-iks-uuid
+
+kar:
+  verbose: info
+
+reefer:
+  rest:
+    image: us.icr.io/research/kar-dev/reefer/reefer-rest
+    port: 9080
+    replicas: 1
+
+  simulator:
+    image: us.icr.io/research/kar-dev/reefer/simulators
+    port: 7080
+    replicas: 1
+
+  monitor:
+    image: us.icr.io/research/kar-dev/reefer/monitor
+    port: 7082
+    replicas: 1
+
+  actors:
+    image: us.icr.io/research/kar-dev/reefer/actors
+    port: 8080
+    replicas: 1
+

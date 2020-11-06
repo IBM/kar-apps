@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reefer-simulators
+  labels:
+    name: reefer-simulators
+spec:
+  replicas: {{ .Values.reefer.simulator.replicas }}
+  selector:
+    matchLabels:
+      name: reefer-simulators
+  template:
+    metadata:
+      labels:
+        name: reefer-simulators
+      annotations:
+        kar.ibm.com/app: reefer
+        kar.ibm.com/service: simservice
+        kar.ibm.com/actors: simhelper
+        kar.ibm.com/verbose: {{ .Values.kar.verbose }}
+        kar.ibm.com/appPort: {{ .Values.reefer.simulator.port | quote }}
+    spec:
+      containers:
+      - name: app
+        image: {{ .Values.reefer.simulator.image }}
+        ports:
+        - name: app
+          containerPort: {{ .Values.reefer.simulator.port }}

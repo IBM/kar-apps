@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reefer-rest
+  labels:
+    name: reefer-rest
+spec:
+  replicas: {{ .Values.reefer.rest.replicas }}
+  selector:
+    matchLabels:
+      name: reefer-rest
+  template:
+    metadata:
+      labels:
+        name: reefer-rest
+      annotations:
+        kar.ibm.com/app: reefer
+        kar.ibm.com/service: reeferservice
+        kar.ibm.com/verbose: {{ .Values.kar.verbose }}
+        kar.ibm.com/appPort: {{ .Values.reefer.rest.port | quote }}
+    spec:
+      containers:
+      - name: app
+        image: {{ .Values.reefer.rest.image }}
+        ports:
+        - name: app
+          containerPort: {{ .Values.reefer.rest.port }}

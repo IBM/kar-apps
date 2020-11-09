@@ -139,7 +139,6 @@ public class VoyageController {
   @GetMapping("/voyage/info/{id}")
   public Voyage getVoyage(@PathVariable("id") String id) throws VoyageNotFoundException {
     return shipScheduleService.getVoyage(id);
-
   }
 
   /**
@@ -275,60 +274,23 @@ public class VoyageController {
   }
 
   /**
-   * Update the GUI
+   * Update GUI order counts
    */
 
   @PostMapping("/voyage/updateGui")
   public void updateGui(@RequestBody String currentDate) {
-
-    long start = System.currentTimeMillis();
     if ( logger.isLoggable(Level.FINE)) {
       logger.fine("VoyageController.updateGui() - updating GUI with active schedule - currentDate:" + currentDate);
     }
-
-    long t1 = System.currentTimeMillis();
     List<Voyage> activeVoyages = activeVoyages();
-    long e1 = System.currentTimeMillis();
-    if ( logger.isLoggable(Level.FINE)) {
-      logger.fine("VoyageController.updateGui() - ,,.. time to fetch active voyages " + (e1 - t1) + " ms");
-    }
     gui.sendActiveVoyageUpdate(activeVoyages, currentDate);
-
-    long t2 = System.currentTimeMillis();
     int totalActiveOrders = 0;
     for (Voyage voyage : activeVoyages) {
       totalActiveOrders += voyage.getOrderCount();
     }
-    long e2 = System.currentTimeMillis();
-
-    if ( logger.isLoggable(Level.FINE)) {
-      logger.fine("VoyageController.updateGui() - ,,.. time to total voyage orders " + (e2 - t2) + " ms");
-    }
-    long t3 = System.currentTimeMillis();
     gui.updateInTransitOrderCount(totalActiveOrders);
-    long e3 = System.currentTimeMillis();
-    if ( logger.isLoggable(Level.FINE)) {
-      logger.fine("VoyageController.updateGui() - ,,.. time to total update in-transit orders " + (e3 - t3) + " ms");
-    }
-
-    long t4 = System.currentTimeMillis();
-    gui.updateFutureOrderCount(orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY)); // "booked-orders"));
-    long e4 = System.currentTimeMillis();
-    if ( logger.isLoggable(Level.FINE)) {
-      logger.fine("VoyageController.updateGui() - ,,.. time to total update future orders " + (e4 - t4) + " ms");
-    }
-
-    long t5 = System.currentTimeMillis();
+    gui.updateFutureOrderCount(orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY));
     gui.updateSpoiltOrderCount(orderService.getOrderCount(Constants.SPOILT_ORDERS_KEY));
-    long e5 = System.currentTimeMillis();
-    if ( logger.isLoggable(Level.FINE)) {
-      logger.fine("VoyageController.updateGui() - ,,.. time to total update spoilt orders " + (e5 - t5) + " ms");
-    }
-    long end = System.currentTimeMillis();
-    if ( logger.isLoggable(Level.FINE)) {
-      logger.fine("VoyageController.activeVoyages() - ,,.. Done - Total Active Orders:" + totalActiveOrders
-              + " voyage updateGui took " + (end - start) + " ms");
-    }
   }
 
 }

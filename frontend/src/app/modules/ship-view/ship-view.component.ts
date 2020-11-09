@@ -38,7 +38,7 @@ export class ShipViewComponent implements OnInit {
       let fleet: Fleet[] = data;
       let ships: Ship[] = fleet[0].ships;
       console.log(ships);
-      this.shipDataSource.data = ships; //data[0].ship;
+      this.shipDataSource.data = ships;
       });
       //this.shipDataSource.data = this.getFleets()[0].ship;
       this.shipDataSource.sort = this.sort;

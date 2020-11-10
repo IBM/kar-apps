@@ -291,7 +291,14 @@ public class ReeferProvisionerActor extends BaseActor {
                         reeferToJsonObject(reeferMasterInventory[reeferId]));
             }
             ReeferDTO reefer = reeferMasterInventory[reeferId];
-            JsonObject reply = handleAnomaly(reefer.getOrderId());
+
+            // check if reefer went bad already. The simulator randomly selects reefers for anomalies and may select
+            // same reefer within a short amount of time
+            if ( reefer.getState().equals(State.MAINTENANCE) || reefer.getState().equals(State.SPOILT)) {
+                return;
+            }
+
+	        JsonObject reply = handleAnomaly(reefer.getOrderId());
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(
                         "ReeferProvisionerActor.reeferAnomaly() - reeferId:" + reeferId + " order actor Id: "+reefer.getOrderId()+" booking reply:" + reply);
@@ -303,13 +310,17 @@ public class ReeferProvisionerActor extends BaseActor {
             if (state.equals(ReeferState.State.SPOILT)) {
                 // check if the spoilt order has been booked (but not on a voyage yet)
                 if (reply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name())) {
-                    setReeferOnMaintenance(reefer, message.getString(Constants.DATE_KEY));
                     // Order has been booked but a reefer in it is spoilt. Remove spoilt reefer from
                     // the order and replace with a new one.
                     replaceSpoiltReefer(reefer);
-                   // bookedTotalCount.decrementAndGet();
+                    setReeferOnMaintenance(reefer, message.getString(Constants.DATE_KEY));
                 } else {
                     spoiltTotalCount.incrementAndGet();
+                    if (logger.isLoggable(Level.INFO)) {
+                      logger.info(
+			           "EEEE ReeferProvisionerActor.reeferAnomaly() - reeferId:" + reeferId + " has spoilt - total spoilt reefers: "+spoiltTotalCount.get());
+                    ß }
+
                     // reefer has spoilt while on a voyage
                     changeReeferState(reefer, reeferId, ReeferState.State.SPOILT);
                     JsonObject orderId = Json.createObjectBuilder().add(Constants.ORDER_ID_KEY, reefer.getOrderId())
@@ -530,10 +541,13 @@ public class ReeferProvisionerActor extends BaseActor {
                         TimeUtils.getInstance().getCurrentDate().toString());
                 spoiltTotalCount.decrementAndGet();
                 if (logger.isLoggable(Level.INFO)) {
-                    logger.info("ReeferProvisioner.unreserveReefer() - spoilt reefer:" + reeferId
-                            + " arrived - changed state to OnMaintenance");
+                    logger.info("EEEE ReeferProvisioner.unreserveReefer() - spoilt reefer:" + reeferId
+				+ " arrived - changed state to OnMaintenance - total spoilt reefers:"+spoiltTotalCount.get());
                 }
             } else {
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info("EEEE ReeferProvisioner.unreserveReefer() - releasing reefer:" + reeferId);
+                }
                 reeferMasterInventory[reeferId].reset();
                 // remove reefer from kar storage
                 Kar.actorDeleteState(this, Constants.REEFER_MAP_KEY, String.valueOf(reeferId));
@@ -564,8 +578,7 @@ public class ReeferProvisionerActor extends BaseActor {
                 }
 
                 valuesChanged.set(false);
-            }
-
-        }
+	    }
+           }
     }
 }

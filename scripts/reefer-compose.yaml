@@ -85,7 +85,7 @@ services:
     image: us.icr.io/research/kar-dev/reefer/frontend
     command: ["/bin/bash","-c","/kar/bin/fe-start.sh"]
     environment:
-      REST_HOST:  ${REST_HOST-localhost}
+      REST_URL:  ${REST_URL-http://localhost:9080}
     ports:
       - "9088:9088"
     depends_on:

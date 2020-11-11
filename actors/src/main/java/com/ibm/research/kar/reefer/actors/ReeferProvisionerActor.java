@@ -316,11 +316,6 @@ public class ReeferProvisionerActor extends BaseActor {
                     setReeferOnMaintenance(reefer, message.getString(Constants.DATE_KEY));
                 } else {
                     spoiltTotalCount.incrementAndGet();
-                    if (logger.isLoggable(Level.INFO)) {
-                      logger.info(
-			           "EEEE ReeferProvisionerActor.reeferAnomaly() - reeferId:" + reeferId + " has spoilt - total spoilt reefers: "+spoiltTotalCount.get());
-                     }
-
                     // reefer has spoilt while on a voyage
                     changeReeferState(reefer, reeferId, ReeferState.State.SPOILT);
                     JsonObject orderId = Json.createObjectBuilder().add(Constants.ORDER_ID_KEY, reefer.getOrderId())
@@ -541,12 +536,12 @@ public class ReeferProvisionerActor extends BaseActor {
                         TimeUtils.getInstance().getCurrentDate().toString());
                 spoiltTotalCount.decrementAndGet();
                 if (logger.isLoggable(Level.INFO)) {
-                    logger.info("EEEE ReeferProvisioner.unreserveReefer() - spoilt reefer:" + reeferId
+                    logger.info("ReeferProvisioner.unreserveReefer() - spoilt reefer:" + reeferId
 				+ " arrived - changed state to OnMaintenance - total spoilt reefers:"+spoiltTotalCount.get());
                 }
             } else {
                 if (logger.isLoggable(Level.INFO)) {
-                    logger.info("EEEE ReeferProvisioner.unreserveReefer() - releasing reefer:" + reeferId);
+                    logger.info("ReeferProvisioner.unreserveReefer() - releasing reefer:" + reeferId);
                 }
                 reeferMasterInventory[reeferId].reset();
                 // remove reefer from kar storage

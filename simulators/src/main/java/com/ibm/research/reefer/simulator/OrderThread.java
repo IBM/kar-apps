@@ -169,9 +169,15 @@ public class OrderThread extends Thread {
                       .add("customerId", "simulator").add("product", "pseudoBanana")
                       .add("productQty", ordersize).build();
               long ordersnap = System.nanoTime();
-              Response response = Kar.restPost("reeferservice", "orders", order);
-              JsonValue rsp = response.readEntity(JsonValue.class);
-              if (null == rsp.asJsonObject().getString("voyageId")) {
+              JsonValue rsp = null;
+              try {
+                Response response = Kar.restPost("reeferservice", "orders", order);
+                rsp = response.readEntity(JsonValue.class);
+              }
+              catch (Exception e) {
+                System.err.println("orderthread: error posting order "+ e.toString());
+              }
+              if (null == rsp || null == rsp.asJsonObject().getString("voyageId")) {
                 SimulatorService.os.addFailed();
                 System.err.println("orderthread: error submitting order: "+ order.toString());
               }

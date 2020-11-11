@@ -109,7 +109,7 @@ public class ReeferThread extends Thread {
             System.out.println("reeferthread: alerting provisioner about anomaly in reefer_"+reeferid);
             try {
               actorCall(reeferProvisionerActor, "reeferAnomaly", params);
-            } catch (ActorException e) {
+            } catch (Exception e) {
               System.err.println("reeferthread: error sending anomaly "+ e.toString());
             }
           }

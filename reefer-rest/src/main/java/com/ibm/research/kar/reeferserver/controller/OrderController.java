@@ -105,11 +105,13 @@ public class OrderController {
 
 			JsonObject req = jsonReader.readObject();
 			String spoiltOrderId = req.getString(Constants.ORDER_ID_KEY);
-			int totalSpoiltOrders = orderService.orderSpoilt(spoiltOrderId);
-			if ( logger.isLoggable(Level.INFO)) {
-				logger.info("OrderController.orderSpoilt() - order id:"+ spoiltOrderId+" has spoilt. Total spoilt orders:"+totalSpoiltOrders);
+			if ( !orderService.orderAlreadySpoilt(spoiltOrderId)) {
+				int totalSpoiltOrders = orderService.orderSpoilt(spoiltOrderId);
+				if ( logger.isLoggable(Level.INFO)) {
+					logger.info("OrderController.orderSpoilt() - order id:"+ spoiltOrderId+" has spoilt. Total spoilt orders:"+totalSpoiltOrders);
+				}
+				gui.updateSpoiltOrderCount(totalSpoiltOrders);
 			}
-			gui.updateSpoiltOrderCount(totalSpoiltOrders);
 		} catch (Exception e) {
 			logger.log(Level.WARNING,"",e);
 		}

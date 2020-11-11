@@ -114,7 +114,7 @@ public class OrderService extends AbstractPersistentService {
         JsonArray spoiltList = spoiltOrderBuilder.build();
         if (logger.isLoggable(Level.INFO)) {
             logger.info("OrderService.orderSpoilt() - spoilt order " + orderId + " active count:"
-                    + activeOrdersArray.size() + " spoilt count:" + spoiltList.size());
+                    + activeOrdersArray.size() + " spoilt count:" + spoiltList.size()+" spoiltList:"+spoiltList);
         }
         // save new spoilt orders list in kar persistent storage
         set(Constants.SPOILT_ORDERS_KEY, spoiltList);
@@ -122,6 +122,24 @@ public class OrderService extends AbstractPersistentService {
         return spoiltList.size();
     }
 
+    /**
+     * Checks is a given order is already in the spoilt list
+     *
+     * @param orderId - Order
+     * @return true if order already spoilt
+     */
+    public boolean orderAlreadySpoilt(String orderId) {
+        JsonArray spoiltOrdersArray = getListAJsonArray(Constants.SPOILT_ORDERS_KEY);
+        Iterator<JsonValue> spoiltIterator = spoiltOrdersArray.iterator();
+        while (spoiltIterator.hasNext()) {
+            JsonObject order = spoiltIterator.next().asJsonObject();
+            if (orderId.equals(order.getString(Constants.ORDER_ID_KEY))) {
+               return true;
+            }
+        }
+        return false;
+    }
+    
     /**
      * Called when a new order is received.
      * 

@@ -62,6 +62,7 @@ services:
       REDIS_PORT:     31379
       REDIS_PASSWORD: passw0rd
       KAR_EXTRA_ARGS: -app_port 7082
+      KAR_APP_PORT:   7082
       ORDERSTATS_DELAY: ${ORDERSTATS_DELAY:-60}
     depends_on:
       - "kafka"

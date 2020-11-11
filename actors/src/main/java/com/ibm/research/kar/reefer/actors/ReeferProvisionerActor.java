@@ -319,7 +319,7 @@ public class ReeferProvisionerActor extends BaseActor {
                     if (logger.isLoggable(Level.INFO)) {
                       logger.info(
 			           "EEEE ReeferProvisionerActor.reeferAnomaly() - reeferId:" + reeferId + " has spoilt - total spoilt reefers: "+spoiltTotalCount.get());
-                    ß }
+                     }
 
                     // reefer has spoilt while on a voyage
                     changeReeferState(reefer, reeferId, ReeferState.State.SPOILT);

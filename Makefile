@@ -36,12 +36,12 @@ reeferRest:
 	cd reefer-rest && docker build --build-arg JAVA_BUILDER=$(REEFER_BUILDER) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_REST) .
 
 
-# dockerPushReeferImages:
-# 	docker push $(REEFER_FRONTEND)
-# 	docker push $(REEFER_ACTORS)
-# 	docker push $(REEFER_BUILDER)
-# 	docker push $(REEFER_SIMULATOR)
-# 	docker push $(REEFER_REST)
+pushReeferImages:
+	docker push $(REEFER_FRONTEND)
+	docker push $(REEFER_ACTORS)
+	docker push $(REEFER_MONITOR)
+	docker push $(REEFER_SIMULATORS)
+	docker push $(REEFER_REST)
 
 #dockerBuildAndPush:
 #	make dockerPushReeferImages

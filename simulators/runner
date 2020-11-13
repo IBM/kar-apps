@@ -1,0 +1,13 @@
+#!/bin/sh
+
+cd /kar/app
+
+if [ -n "$OTHER" ]; then
+    exec node "$OTHER" &
+fi
+
+if [ -z "$KAR_SIDECAR_IN_CONTAINER" ]; then
+    exec node "$MAIN"
+else
+    exec /kar/bin/kar run -app $KAR_APP $KAR_EXTRA_ARGS node "$MAIN"
+fi

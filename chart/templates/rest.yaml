@@ -1,3 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: reefer-rest
+  labels:
+    name: reefer-rest
+spec:
+  selector:
+    name: reefer-rest
+  ports:
+    - name: app
+      port: {{ .Values.reefer.rest.port }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:

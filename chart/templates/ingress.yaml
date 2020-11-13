@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: reefer-ingress
+spec:
+  tls:
+  - hosts:
+    - reefer-rest.{{ .Values.ingress.subdomain }}
+    - reefer-frontend.{{ .Values.ingress.subdomain }}
+    secretName: {{ .Values.ingress.tls.secretname }}
+  rules:
+  - host: reefer-rest.{{ .Values.ingress.subdomain }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: reefer-rest
+          servicePort: {{ .Values.reefer.rest.port }}
+  - host: reefer-frontend.{{ .Values.ingress.subdomain }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: reefer-frontend
+          servicePort: {{ .Values.reefer.frontend.port }}

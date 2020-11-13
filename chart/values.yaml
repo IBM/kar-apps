@@ -1,15 +1,18 @@
 ingress:
-  apiHostName: reefer.dgrove-iks-uuid.us-south.containers.appdomain.cloud
-  apiHostPort: 443
-  apiHostProto: https
-  domain: reefer.dgrove-iks-uuid.us-south.containers.appdomain.cloud
+  subdomain: my-clusters-subdomain
   tls:
-    secretname: dgrove-iks-uuid
+    secretname: my-clusters-tls-secret
 
 kar:
   verbose: info
+  imagePullSecret: kar.ibm.com.image-pull
 
 reefer:
+  frontend:
+    image: us.icr.io/research/kar-dev/reefer/frontend
+    port: 9088
+    replicas: 1
+
   rest:
     image: us.icr.io/research/kar-dev/reefer/reefer-rest
     port: 9080

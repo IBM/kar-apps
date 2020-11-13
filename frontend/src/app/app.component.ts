@@ -12,7 +12,7 @@ export class AppComponent {
   //public notifications = 0;
 
     constructor(private webSocketService: SocketService) {
-
+/*
 		// Open connection with server socket
         let stompClient = this.webSocketService.connect();
         //console.log('AppComponent - connected socket');
@@ -26,6 +26,6 @@ export class AppComponent {
                 console.log('Got new notification');
             })
         });
-
+*/
     }
 }

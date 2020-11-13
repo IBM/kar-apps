@@ -10,6 +10,7 @@ import { Route } from '@angular/compiler/src/core';
 import { SocketService } from 'src/app/core/services/socket.service';
 import { Console } from 'console';
 import { ActiveSchedule } from 'src/app/core/models/active-schedule';
+import { GlobalConstants } from 'src/app/shared/global-constants';
 import {
   trigger,
   state,
@@ -18,6 +19,9 @@ import {
   transition,
   // ...
 } from '@angular/animations';
+
+var SockJs = require("sockjs-client");
+var Stomp = require("stompjs");
 
 @Component({
 //  animations: [appModuleAnimation()],
@@ -39,29 +43,45 @@ export class ShipScheduleComponent implements OnInit {
   @ViewChild(MatHorizontalStepper) stepper: MatHorizontalStepper;
   expandedElement:Voyage | null;
   shipTableColumns: string[] = [ 'vessel', 'progress', 'orders','maxCapacity', 'freeCapacity'];
+  stompClient:any;
+  webSocket: SocketService;
 
   constructor(private restService: RestService, private webSocketService : SocketService) {
-    let stompClient = this.webSocketService.connect();
-    console.log('AppComponent - connected socket');
-    stompClient.connect({}, frame => {
-      console.log('ActiveVoyageView - connected stompClient');
-  // Subscribe to notification topic
-        stompClient.subscribe('/topic/voyages', (event:any) => {
-          if ( event.body) {
-            let schedule: ActiveSchedule;
-            schedule = JSON.parse(event.body);
-            this.voyages = schedule.voyages;
-            let d = schedule.currentDate;
-            // strip quotation marks
-            d = d.replace(/"/g,"");
-            this.date = d.substr(0,10);
-           // console.log('::::::'+this.voyages);
-            this.voyageDataSource.data = this.voyages;
-          }
+    this.webSocket = webSocketService;
+  }
 
-        })
-    });
+  connect() {
+    this.stompClient = this.webSocket.connect();
+    this.stompClient.connect({}, frame => {
+       console.log('ShipScheduleComponent - waiting for events on /topic/voyages');
+       // Subscribe to notification topic
+          this.stompClient.subscribe('/topic/voyages', (event:any) => {
 
+            if ( event.body) {
+              let schedule: ActiveSchedule;
+              schedule = JSON.parse(event.body);
+              this.voyages = schedule.voyages;
+              let d = schedule.currentDate;
+              // strip quotation marks
+              d = d.replace(/"/g,"");
+              this.date = d.substr(0,10);
+             // console.log('::::::'+this.voyages);
+              this.voyageDataSource.data = this.voyages;
+            }
+
+          })
+    // call bind to be able to use it in errorCallBack method. If not
+    // done, this is undefined in errorCallBack.
+    }, this.errorCallBack.bind(this));
+
+  }
+  errorCallBack(error) {
+     console.log("ShipScheduleComponent.errorCallBack() - Websocket connection closed -> " + error)
+     // retries connection every 2s
+     setTimeout(() => {
+        console.log("ShipScheduleComponent.errorCallBack() - retrying connection every 2s .... ");
+        this.connect();
+     }, 2000);
   }
   delayChange(event: any) {
 
@@ -70,6 +90,10 @@ export class ShipScheduleComponent implements OnInit {
     console.log("Delay Change:"+this.rate);
   }
   ngOnInit(): void {
+
+   // connect to back end server via Websocket
+   this.connect();
+
     this.restService.currentDate().subscribe((data) => {
       console.log("nextDay() - Current Date:" + data.substr(0,10));
       this.date = data.substr(0,10);

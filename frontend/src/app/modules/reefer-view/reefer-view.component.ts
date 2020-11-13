@@ -39,9 +39,11 @@ export class ReeferViewComponent implements OnInit {
   updateFrequency : number;
   @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   @ViewChild(MatSort, {static: true}) sort: MatSort;
-
+  webSocket: SocketService;
 
   constructor(private dialog: MatDialog, private restService: RestService, private webSocketService : SocketService ) {
+    this.webSocket = webSocketService;
+
     this.restService.getReeferControls().subscribe((data) => {
        this.failureRate = data.failureRate;
       this.updateFrequency = data.updateFrequency;
@@ -54,31 +56,39 @@ export class ReeferViewComponent implements OnInit {
       this.totalSpoiltReefers = data.totalSpoilt;
       this.totalOnMaintenanceReefers = data.totalOnMaintenance;
       });
-// Object to create Filter for
-		// Open connection with server socket
-    let stompClient = this.webSocketService.connect();
-    stompClient.connect({}, frame => {
-      console.log('ReeferView - connected socket');
-
-        stompClient.subscribe('/topic/reefers/stats', (event:any) => {
-          if ( event.body) {
-            this.reeferStats = JSON.parse(event.body);
-            //console.log('::::::'+this.reeferStats);
-            this.totalReefers = this.reeferStats.total;
-            this.totalBookedReefers = this.reeferStats.totalBooked;
-            this.totalInTransitReefers = this.reeferStats.totalInTransit;
-            this.totalSpoiltReefers = this.reeferStats.totalSpoilt;
-            this.totalOnMaintenanceReefers = this.reeferStats.totalOnMaintenance;
-          }
-
-        })
-
-    });
 
   }
+  connect() {
+  		// Open connection with server socket
+      let stompClient = this.webSocketService.connect();
+      stompClient.connect({}, frame => {
+          console.log('ReeferViewComponent - waiting for events on /topic/reefers/stats');
+          stompClient.subscribe('/topic/reefers/stats', (event:any) => {
+            if ( event.body) {
+              this.reeferStats = JSON.parse(event.body);
+              //console.log('::::::'+this.reeferStats);
+              this.totalReefers = this.reeferStats.total;
+              this.totalBookedReefers = this.reeferStats.totalBooked;
+              this.totalInTransitReefers = this.reeferStats.totalInTransit;
+              this.totalSpoiltReefers = this.reeferStats.totalSpoilt;
+              this.totalOnMaintenanceReefers = this.reeferStats.totalOnMaintenance;
+            }
 
+          })
 
+      }, this.errorCallBack.bind(this));
+
+  }
+  errorCallBack(error) {
+     console.log("ReeferViewComponent.errorCallBack() - Websocket connection closed -> " + error)
+     // retries connection every 2s
+     setTimeout(() => {
+        console.log("ReeferViewComponent.errorCallBack() - retrying connection every 2s .... ");
+        this.connect();
+     }, 2000);
+  }
   ngOnInit(): void {
+    this.connect();
     this.reeferDataSource.paginator = this.paginator;
     this.reeferDataSource.sort = this.sort;
 

@@ -48,64 +48,78 @@ export class OrderViewComponent implements OnInit {
   @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   @ViewChild(MatSort, {static: true}) sort: MatSort;
 
+  isExpansionDetailRow = (_, row: any) => row.hasOwnProperty('detailRow');
+  explansionDetialRowCollection = new Array<any>();
+
+  webSocket: SocketService;
+
   constructor(private dialog: MatDialog, private restService: RestService, private webSocketService : SocketService) {
+   this.webSocket = webSocketService;
+
     this.restService.getOrderStats().subscribe((data) => {
       // console.log(data);
       this.inTransitOrders = data.inTransitOrderCount;
       this.futureOrders = data.futureOrderCount;
       this.spoiltOrders = data.spoiltOrderCount;
     });
-    let stompClient = this.webSocketService.connect();
-    console.log('OrderView - connected socket');
-    stompClient.connect({}, frame => {
-      console.log('OrderView - connected stompClient');
-
-      stompClient.subscribe('/topic/orders/stats', (event:any) => {
-        if ( event.body) {
-          let orderStats : OrderStats;
-          orderStats = JSON.parse(event.body);
-          this.spoiltOrders = orderStats.spoiltOrderCount;
-          this.futureOrders = orderStats.futureOrderCount;
-          this.inTransitOrders = orderStats.inTransitOrderCount;
-        }
-      });
-
-  // Subscribe to notification topic
-        stompClient.subscribe('/topic/orders', (event:any) => {
-          if ( event.body) {
-            let order: Order;
-
-            this.dataSource.data.forEach(row => console.log(row.id));
-            // Add the order to the HEAD only when we are on the
-            // first page of orders else just ignore this update
-            if ( this.paginator.pageIndex == 0) {
-
-              order = JSON.parse(event.body);
-
-              // The following two lines of code are required
-              // to add new order to the HEAD of the list
-              const currentData = this.dataSource.data;
-              currentData.unshift(order);
-
-              this.dataSource.data = currentData;
-              this.dataSource.sort = this.sort;
-            }
-
-          }
-
-        });
-
-    });
-
-
 
   }
 
-  isExpansionDetailRow = (_, row: any) => row.hasOwnProperty('detailRow');
-  explansionDetialRowCollection = new Array<any>();
+
+
+  connect() {
+      let stompClient = this.webSocketService.connect();
+     // console.log('OrderView - connected socket');
+      stompClient.connect({}, frame => {
+        console.log('OrderViewComponent - waiting for events on /topic/orders/stats');
+        stompClient.subscribe('/topic/orders/stats', (event:any) => {
+
+          if ( event.body) {
+            let orderStats : OrderStats;
+            orderStats = JSON.parse(event.body);
+            this.spoiltOrders = orderStats.spoiltOrderCount;
+            this.futureOrders = orderStats.futureOrderCount;
+            this.inTransitOrders = orderStats.inTransitOrderCount;
+          }
+        });
+
+    // Subscribe to notification topic
+        stompClient.subscribe('/topic/orders', (event:any) => {
+          if ( event.body) {
+              let order: Order;
+              this.dataSource.data.forEach(row => console.log(row.id));
+              // Add the order to the HEAD only when we are on the
+              // first page of orders else just ignore this update
+              if ( this.paginator.pageIndex == 0) {
+                order = JSON.parse(event.body);
+                // The following two lines of code are required
+                // to add new order to the HEAD of the list
+                const currentData = this.dataSource.data;
+                currentData.unshift(order);
+
+                this.dataSource.data = currentData;
+                this.dataSource.sort = this.sort;
+              }
+
+            }
+
+          });
+
+      }, this.errorCallBack.bind(this));
+  }
+
+  errorCallBack(error) {
+     console.log("OrderViewComponent.errorCallBack() - Websocket connection closed -> " + error)
+     // retries connection every 2s
+     setTimeout(() => {
+        console.log("OrderViewComponent.errorCallBack() - retrying connection every 2s .... ");
+        this.connect();
+     }, 2000);
+  }
 
   ngOnInit(): void {
-
+     // connect to back end server via Websocket
+     this.connect();
      this.restService.getOrderTargetAndSimDelay().subscribe((data) => {
 
       if ( data.target > 0 || data.delay > 0 ) {

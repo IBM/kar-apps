@@ -213,5 +213,4 @@ if [ -n "$restart_frontend" ]; then
 
     echo "restarting reefer-frontend"
     ibmcloud ce app update --name reefer-frontend
-    fi
 fi

@@ -48,7 +48,7 @@ public class OrderActor extends BaseActor {
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "OrderActor.activate() - Error - orderId "+getId()+" ", e);
         }
     }
     /**
@@ -57,13 +57,18 @@ public class OrderActor extends BaseActor {
      */
     @Deactivate
     public void deactivate() {
-        // don't save state if the order has been delivered
-        if (orderState != null && !OrderStatus.DELIVERED.name().equals(orderState.getStateAsString()) ){
-            JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.ORDER_STATUS_KEY, orderState.getState()).
-                    add(Constants.VOYAGE_ID_KEY, orderState.getVoyageId());
-            Kar.actorSetMultipleState(this, job.build());
+        try {
+            // don't save state if the order has been delivered
+            if (orderState != null && !OrderStatus.DELIVERED.name().equals(orderState.getStateAsString()) ){
+                JsonObjectBuilder job = Json.createObjectBuilder();
+                job.add(Constants.ORDER_STATUS_KEY, orderState.getState()).
+                        add(Constants.VOYAGE_ID_KEY, orderState.getVoyageId());
+                Kar.actorSetMultipleState(this, job.build());
+            }
+        } catch( Exception e) {
+            logger.log(Level.WARNING, "OrderActor.deactivate() - Error - orderId "+getId()+" ", e);
         }
+
     }
 
     /**
@@ -96,7 +101,7 @@ public class OrderActor extends BaseActor {
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "OrderActor.delivered() - Error - orderId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED")
                     .add("ERROR", "OrderActor - Failure while handling order delivery")
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
@@ -128,7 +133,7 @@ public class OrderActor extends BaseActor {
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "OrderActor.departed() - Error - orderId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         }
@@ -163,7 +168,7 @@ public class OrderActor extends BaseActor {
             return Json.createObjectBuilder().add(Constants.ORDER_STATUS_KEY, state)
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "OrderActor.anomaly() - Error - orderId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         }
@@ -195,7 +200,7 @@ public class OrderActor extends BaseActor {
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "OrderActor.replaceReefer() - Error - orderId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         }
@@ -210,7 +215,11 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject reeferCount(JsonObject message) {
-        return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, orderState.getReeferMap().size()).build();
+        try {
+            return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, orderState.getReeferMap().size()).build();
+        } catch( Exception e) {
+            return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, -1).build();
+        }
     }
 
     /**
@@ -252,7 +261,7 @@ public class OrderActor extends BaseActor {
                 return voyageBookingResult;
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "OrderActor.createOrder() - Error - orderId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Exception")
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
 

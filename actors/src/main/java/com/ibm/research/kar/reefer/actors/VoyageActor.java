@@ -79,7 +79,7 @@ public class VoyageActor extends BaseActor {
 
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "VoyageActor.init() - Error - voyageId "+getId()+" ", e);
         }
     }
 
@@ -147,7 +147,7 @@ public class VoyageActor extends BaseActor {
             }
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).build();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "VoyageActor.changePosition() - Error - voyageId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Exception")
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         }
@@ -188,7 +188,7 @@ public class VoyageActor extends BaseActor {
                 return bookingStatus.asJsonObject();
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "VoyageActor.reserve() - Error - voyageId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Exception")
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         }

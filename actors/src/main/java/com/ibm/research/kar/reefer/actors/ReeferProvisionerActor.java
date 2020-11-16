@@ -109,7 +109,7 @@ public class ReeferProvisionerActor extends BaseActor {
             Timer timer = new Timer(true);
             timer.scheduleAtFixedRate(timerTask, 0, 100);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "ReeferProvisioner.activate() - Error ", e);
         }
 
     }
@@ -119,6 +119,11 @@ public class ReeferProvisionerActor extends BaseActor {
      */
     @Deactivate
     public void deactivate() {
+        try {
+
+        } catch( Exception e) {
+            logger.log(Level.WARNING, "ReeferProvisioner.deactivate() - Error ", e);
+        }
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount.intValue())).
                 add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount.intValue())).
@@ -167,7 +172,7 @@ public class ReeferProvisionerActor extends BaseActor {
                 valuesChanged.set(true);
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "ReeferProvisioner.releaseReefersfromMaintenance() - Error ", e);
         }
         return Json.createObjectBuilder().build();
     }
@@ -181,19 +186,24 @@ public class ReeferProvisionerActor extends BaseActor {
     @Remote
     public JsonObject updateInTransit(JsonObject message) {
         JsonObjectBuilder reply = Json.createObjectBuilder();
-        int newInTransit = message.getInt("in-transit");
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("ReeferProvisionerActor.updateInTransit() - message:" + message + " update reefers in transit:" + newInTransit);
-        }
-        if ((bookedTotalCount.get() - newInTransit) >= 0) {
-            // subtract from booked and add to in-transit
-            bookedTotalCount.addAndGet(-newInTransit);
-        } else {
-            bookedTotalCount.set(0);
+        try {
+            int newInTransit = message.getInt("in-transit");
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("ReeferProvisionerActor.updateInTransit() - message:" + message + " update reefers in transit:" + newInTransit);
+            }
+            if ((bookedTotalCount.get() - newInTransit) >= 0) {
+                // subtract from booked and add to in-transit
+                bookedTotalCount.addAndGet(-newInTransit);
+            } else {
+                bookedTotalCount.set(0);
+            }
+
+            inTransitTotalCount.addAndGet(newInTransit);
+            valuesChanged.set(true);
+        } catch( Exception e) {
+            logger.log(Level.WARNING, "ReeferProvisioner.updateInTransit() - Error ", e);
         }
 
-        inTransitTotalCount.addAndGet(newInTransit);
-        valuesChanged.set(true);
         return reply.build();
     }
 
@@ -205,40 +215,47 @@ public class ReeferProvisionerActor extends BaseActor {
      */
     @Remote
     public JsonObject bookReefers(JsonObject message) {
-        // lazily initialize master reefer inventory list on the first call.
-        // This is fast since all we do is just creating an array of
-        // fixed size
-        if (reeferMasterInventory == null) {
-            initMasterInventory(getReeferInventorySize());
-        }
-        // wrap Json with POJO
-        JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
-        if (order.containsKey(JsonOrder.ProductQtyKey)) {
-            // allocate enough reefers to cary products in the order
-            List<ReeferDTO> orderReefers = ReeferAllocator.allocateReefers(reeferMasterInventory, order.getProductQty(),
-                    order.getId(), order.getVoyageId());
-            // need an array to hold reeferIds which will be included in the reply
-           JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-            Map<String, JsonValue> map = new HashMap<>();
-            // book each reefer
-            for (ReeferDTO reefer : orderReefers) {
-                arrayBuilder.add(reefer.getId());
-                map.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
+        try {
+            // lazily initialize master reefer inventory list on the first call.
+            // This is fast since all we do is just creating an array of
+            // fixed size
+            if (reeferMasterInventory == null) {
+                initMasterInventory(getReeferInventorySize());
             }
-            Kar.actorSetMultipleState(this,Constants.REEFER_MAP_KEY,map );
-            bookedTotalCount.addAndGet(orderReefers.size());
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("ReeferProvisionerActor.bookReefers())- Order:" + order.getId() + " reefer count:"
-                        + orderReefers.size());
+            // wrap Json with POJO
+            JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
+            if (order.containsKey(JsonOrder.ProductQtyKey)) {
+                // allocate enough reefers to cary products in the order
+                List<ReeferDTO> orderReefers = ReeferAllocator.allocateReefers(reeferMasterInventory, order.getProductQty(),
+                        order.getId(), order.getVoyageId());
+                // need an array to hold reeferIds which will be included in the reply
+                JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+                Map<String, JsonValue> map = new HashMap<>();
+                // book each reefer
+                for (ReeferDTO reefer : orderReefers) {
+                    arrayBuilder.add(reefer.getId());
+                    map.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
+                }
+                Kar.actorSetMultipleState(this,Constants.REEFER_MAP_KEY,map );
+                bookedTotalCount.addAndGet(orderReefers.size());
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("ReeferProvisionerActor.bookReefers())- Order:" + order.getId() + " reefer count:"
+                            + orderReefers.size());
+                }
+                // forces update thread to send reefer counts
+                valuesChanged.set(true);
+                return Json.createObjectBuilder().add("status", "OK").add("reefers", arrayBuilder.build())
+                        .add(JsonOrder.OrderKey, order.getAsObject()).build();
+            } else {
+                return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "ProductQuantityMissing")
+                        .add(JsonOrder.IdKey, order.getId()).build();
             }
-            // forces update thread to send reefer counts
-            valuesChanged.set(true);
-            return Json.createObjectBuilder().add("status", "OK").add("reefers", arrayBuilder.build())
-                    .add(JsonOrder.OrderKey, order.getAsObject()).build();
-        } else {
-            return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "ProductQuantityMissing")
-                    .add(JsonOrder.IdKey, order.getId()).build();
+        } catch( Exception e) {
+            logger.log(Level.WARNING, "ReeferProvisioner.bookReefers() - Error ", e);
+            return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
+                    .add(JsonOrder.IdKey, "").build();
         }
+
     }
 
     /**
@@ -263,7 +280,7 @@ public class ReeferProvisionerActor extends BaseActor {
                         + bookedTotalCount.get() + " totalInTransit:" + inTransitTotalCount.get());
             }
         } catch (Throwable e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "ReeferProvisioner.unreserveReefers() - Error ", e);
         }
 
         return reply.build();
@@ -334,7 +351,7 @@ public class ReeferProvisionerActor extends BaseActor {
             // forces update thread to send reefer counts
             valuesChanged.set(true);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "ReeferProvisioner.reeferAnomaly() - Error ", e);
         }
     }
 

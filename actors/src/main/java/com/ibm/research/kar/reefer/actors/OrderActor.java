@@ -137,6 +137,10 @@ public class OrderActor extends BaseActor {
                 ActorRef reeferProvisionerActor = Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
                         ReeferAppConfig.ReeferProvisionerId);
                 JsonObject params = Json.createObjectBuilder().add("in-transit", orderState.getReeferMap().size()).build();
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info(
+                            "OrderActor.departed() - calling ReeferProvisionerActor updateInTransit - order:"+getId());
+                }
                 actorCall(reeferProvisionerActor, "updateInTransit", params);
                 if (logger.isLoggable(Level.INFO)) {
                     logger.info(String.format("OrderActor.departed() - orderId: %s voyageId: %s in-transit reefers: %d",

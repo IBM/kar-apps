@@ -148,15 +148,16 @@ private int counter=0;
             return getReeferStats();
         } catch( Exception e) {
             logger.log(Level.WARNING, "ReeferProvisioner.getStats() - Error ", e);
+            return Json.createObjectBuilder().add("total", -1).add("totalBooked", -1)
+                    .add("totalInTransit", -1).add("totalSpoilt", -10)
+                    .add("totalOnMaintenance", -1).build();
         } finally {
 
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(
                         "ReeferProvisionerActor.getStats() - exit");
             }
-            return Json.createObjectBuilder().add("total", -1).add("totalBooked", -1)
-                    .add("totalInTransit", -1).add("totalSpoilt", -10)
-                    .add("totalOnMaintenance", -1).build();
+
         }
     }
 
@@ -319,7 +320,14 @@ private int counter=0;
         try {
             // extract reefer ids we need to release
             JsonArray reeferIds = message.getJsonArray(Constants.REEFERS_KEY);
+            boolean first = true;  // log the first reefer being released
             for (JsonValue reeferId : reeferIds) {
+                if ( first ) {
+                    first = false;
+                    if (logger.isLoggable(Level.INFO)) {
+                        logger.info("ReeferProvisionerActor.unreserveReefers() - releasing reefer " + ((JsonString) reeferId).getString());
+                    }
+                }
                 unreserveReefer(Integer.valueOf(((JsonString) reeferId).getString()));
             }
             // forces update thread to send reefer counts
@@ -353,6 +361,12 @@ private int counter=0;
         }
         int reeferId = message.getInt(Constants.REEFER_ID_KEY);
 
+        // check if given reeferIs is within valid range. The reeferId is used as an index in
+        // reeferMasterInventory array which is 0-based.
+        if ( reeferId < 0 || reeferId > reeferMasterInventory.length ) {
+            // ignore bad ids
+            return;
+        }
         try {
             // lazily initialize master reefer inventory list on the first call.
             // This is fast since all we do is just creating an array of
@@ -373,11 +387,18 @@ private int counter=0;
                 return;
             }
 
-	        JsonObject reply = handleAnomaly(reefer.getOrderId());
+
             if (logger.isLoggable(Level.INFO)) {
-                logger.info(
-                        "ReeferProvisionerActor.reeferAnomaly() - reeferId:" + reeferId + " order actor Id: "+reefer.getOrderId()+" booking reply:" + reply);
+                if ( reefer.getOrderId() == null || reefer.getOrderId().length() > 0) {
+                    logger.info(
+                            "ReeferProvisionerActor.reeferAnomaly() - reeferId:" + reeferId + " assigned to order: "+reefer.getOrderId());
+                } else {
+                    logger.info(
+                            "ReeferProvisionerActor.reeferAnomaly() - reeferId:" + reeferId + " not assigned to order yet");
+                }
             }
+            JsonObject reply = handleAnomaly(reefer.getOrderId());
+
             ReeferState.State state = ReeferState.State
                     .valueOf(reply.getString(Constants.REEFER_STATE_KEY));
             // reefer becomes spoilt only while its on a voyage. On arrival, the reefer
@@ -421,9 +442,13 @@ private int counter=0;
     private JsonObject handleAnomaly(String orderId) {
         JsonObjectBuilder reply = Json.createObjectBuilder();
         if (orderId != null && orderId.length() > 0) {
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("ReeferProvisionerActor.handleAnomaly() - Id:" + this.getId()
+                        + " notifying OrderActor:" + orderId + " of spoilage");
+            }
             JsonObject orderReply = notifyOrderOfSpoilage(orderId);
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("ReeferActor.handleAnomaly() - Id:" + this.getId()
+                logger.info("ReeferProvisionerActor.handleAnomaly() - Id:" + this.getId()
                         + " Order Actor:" + orderId + " reply:" + orderReply);
             }
             // check if order has spoilt (true if order spoils while in transit)
@@ -569,9 +594,10 @@ private int counter=0;
         reefer.setMaintenanceReleaseDate(today);
         reefer.setState(State.MAINTENANCE);
         updateStore(reefer);
-        Kar.actorSetState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reefer.getId()),
-                Json.createValue(reefer.getId()));
-        onMaintenanceMap.put(String.valueOf(reefer.getId()), String.valueOf(reefer.getId()));
+        String reeferId = String.valueOf(reefer.getId());
+        Kar.actorSetState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, reeferId,
+                Json.createValue(reeferId));
+        onMaintenanceMap.put(reeferId, reeferId);
     }
 
     private void updateStore(ReeferDTO reefer) {
@@ -585,7 +611,7 @@ private int counter=0;
         // there should only be one reefer replacement
         if (replacementReefer.size() > 0) {
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("ReeferProvisionerActor.replaceSpoiltReefer() - notifying order actor to replace reeferId:"
+                logger.info("ReeferProvisionerActor.replaceSpoiltReefer() - notifying order actor "+reefer.getOrderId()+ " to replace reeferId:"
                         + reefer.getId() + " with:" + replacementReefer.get(0).getId());
             }
             messageOrderActorReplaceReefer(reefer.getOrderId(), reefer.getId(), replacementReefer.get(0).getId());

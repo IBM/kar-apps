@@ -82,7 +82,7 @@ public class OrderActor extends BaseActor {
     public JsonObject delivered(JsonObject message) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info(
-                    "OrderActor.delivered() - entry");
+                    "OrderActor.delivered() - entry - id:"+getId());
         }
         try {
 
@@ -112,7 +112,7 @@ public class OrderActor extends BaseActor {
         } finally {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(
-                        "OrderActor.delivered() - exit");
+                        "OrderActor.delivered() - exit id:"+getId());
             }
         }
     }
@@ -128,7 +128,7 @@ public class OrderActor extends BaseActor {
     public JsonObject departed(JsonObject message) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info(
-                    "OrderActor.departed() - entry");
+                    "OrderActor.departed() - entry id:"+getId());
         }
         try {
             changeOrderStatus(OrderStatus.INTRANSIT);
@@ -156,7 +156,7 @@ public class OrderActor extends BaseActor {
         } finally {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(
-                        "OrderActor.departed() - exit");
+                        "OrderActor.departed() - exit id:"+getId());
             }
         }
     }
@@ -171,7 +171,7 @@ public class OrderActor extends BaseActor {
     public JsonObject anomaly(JsonObject message) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info(
-                    "OrderActor.anomaly() - entry");
+                    "OrderActor.anomaly() - entry id:"+getId());
         }
         try {
             // ReeferProvisioner notifies the order on anomaly. The order returns its current state
@@ -200,7 +200,7 @@ public class OrderActor extends BaseActor {
         } finally {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(
-                        "OrderActor.anomaly() - exit");
+                        "OrderActor.anomaly() - exit id:"+getId());
             }
         }
     }
@@ -217,7 +217,7 @@ public class OrderActor extends BaseActor {
     public JsonObject replaceReefer(JsonObject message) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info(
-                    "OrderActor.replaceReefer() - entry");
+                    "OrderActor.replaceReefer() - entry id:"+getId());
         }
         try {
             int spoiltReeferId = message.getJsonNumber(Constants.REEFER_ID_KEY).intValue();
@@ -241,7 +241,7 @@ public class OrderActor extends BaseActor {
         } finally {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(
-                        "OrderActor.replaceReefer() - exit");
+                        "OrderActor.replaceReefer() - exit id:"+getId());
             }
         }
 
@@ -257,7 +257,7 @@ public class OrderActor extends BaseActor {
     public JsonObject reeferCount(JsonObject message) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info(
-                    "OrderActor.reeferCount() - entry");
+                    "OrderActor.reeferCount() - entry id:"+getId());
         }
         try {
             return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, orderState.getReeferMap().size()).build();
@@ -266,7 +266,7 @@ public class OrderActor extends BaseActor {
         } finally {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(
-                        "OrderActor.reeferCount() - exit");
+                        "OrderActor.reeferCount() - exit id:"+getId());
             }
         }
     }
@@ -282,7 +282,7 @@ public class OrderActor extends BaseActor {
     public JsonObject createOrder(JsonObject message) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info(
-                    "OrderActor.createOrder() - entry");
+                    "OrderActor.createOrder() - entry id:"+getId());
         }
         if (logger.isLoggable(Level.INFO)) {
             logger.info(String.format("OrderActor.createOrder() - orderId: %s message: %s", getId(), message));
@@ -321,7 +321,7 @@ public class OrderActor extends BaseActor {
         } finally {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info(
-                        "OrderActor.createOrder() - exit");
+                        "OrderActor.createOrder() - exit id:"+getId());
             }
         }
 

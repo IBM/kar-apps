@@ -363,7 +363,7 @@ private int counter=0;
 
         // check if given reeferIs is within valid range. The reeferId is used as an index in
         // reeferMasterInventory array which is 0-based.
-        if ( reeferId < 0 || reeferId > reeferMasterInventory.length ) {
+        if ( reeferId < 0 || reeferId >= reeferMasterInventory.length ) {
             // ignore bad ids
             return;
         }

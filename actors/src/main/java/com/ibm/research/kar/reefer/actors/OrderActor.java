@@ -80,6 +80,10 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject delivered(JsonObject message) {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info(
+                    "OrderActor.delivered() - entry");
+        }
         try {
 
             if (logger.isLoggable(Level.INFO)) {
@@ -105,6 +109,11 @@ public class OrderActor extends BaseActor {
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED")
                     .add("ERROR", "OrderActor - Failure while handling order delivery")
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
+        } finally {
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info(
+                        "OrderActor.delivered() - exit");
+            }
         }
     }
 
@@ -117,6 +126,10 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject departed(JsonObject message) {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info(
+                    "OrderActor.departed() - entry");
+        }
         try {
             changeOrderStatus(OrderStatus.INTRANSIT);
             // Notify ReeferProvisioner that the order is in-transit
@@ -136,6 +149,11 @@ public class OrderActor extends BaseActor {
             logger.log(Level.WARNING, "OrderActor.departed() - Error - orderId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
+        } finally {
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info(
+                        "OrderActor.departed() - exit");
+            }
         }
     }
 
@@ -147,6 +165,10 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject anomaly(JsonObject message) {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info(
+                    "OrderActor.anomaly() - entry");
+        }
         try {
             // ReeferProvisioner notifies the order on anomaly. The order returns its current state
             // and the decision is made to either spoil the reefer or assign it to maintenance.
@@ -171,6 +193,11 @@ public class OrderActor extends BaseActor {
             logger.log(Level.WARNING, "OrderActor.anomaly() - Error - orderId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
+        } finally {
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info(
+                        "OrderActor.anomaly() - exit");
+            }
         }
     }
 
@@ -184,6 +211,10 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject replaceReefer(JsonObject message) {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info(
+                    "OrderActor.replaceReefer() - entry");
+        }
         try {
             int spoiltReeferId = message.getJsonNumber(Constants.REEFER_ID_KEY).intValue();
             int replacementReeferId = message.getJsonNumber(Constants.REEFER_REPLACEMENT_ID_KEY).intValue();
@@ -203,6 +234,11 @@ public class OrderActor extends BaseActor {
             logger.log(Level.WARNING, "OrderActor.replaceReefer() - Error - orderId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
+        } finally {
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info(
+                        "OrderActor.replaceReefer() - exit");
+            }
         }
 
     }
@@ -215,10 +251,19 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject reeferCount(JsonObject message) {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info(
+                    "OrderActor.reeferCount() - entry");
+        }
         try {
             return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, orderState.getReeferMap().size()).build();
         } catch( Exception e) {
             return Json.createObjectBuilder().add(Constants.TOTAL_REEFER_COUNT_KEY, -1).build();
+        } finally {
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info(
+                        "OrderActor.reeferCount() - exit");
+            }
         }
     }
 
@@ -231,6 +276,10 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject createOrder(JsonObject message) {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info(
+                    "OrderActor.createOrder() - entry");
+        }
         if (logger.isLoggable(Level.INFO)) {
             logger.info(String.format("OrderActor.createOrder() - orderId: %s message: %s", getId(), message));
         }
@@ -265,6 +314,11 @@ public class OrderActor extends BaseActor {
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Exception")
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
 
+        } finally {
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info(
+                        "OrderActor.createOrder() - exit");
+            }
         }
 
     }

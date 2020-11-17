@@ -84,7 +84,7 @@ public class ReeferThread extends Thread {
           Random rand = new Random();
           for (int i=0; i<reefersToBreak; i++) {
             // ignore possibility that same reefer receives multiple anomalies
-            r2b[i] = rand.nextInt(inventorySize) + 1;
+            r2b[i] = rand.nextInt(inventorySize);
           }
 
           updatesPerDay = SimulatorService.reeferupdates.get();

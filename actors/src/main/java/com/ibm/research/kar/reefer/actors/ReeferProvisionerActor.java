@@ -1,6 +1,7 @@
 package com.ibm.research.kar.reefer.actors;
 
 import static com.ibm.research.kar.Kar.actorCall;
+import static com.ibm.research.kar.Kar.actorTell;
 
 import java.time.Instant;
 import java.util.*;
@@ -533,11 +534,11 @@ private int counter=0;
      * @param replacementReeferId - Id of reefer which will replace the spoilt one
      * @return
      */
-    private JsonObject messageOrderActorReplaceReefer(String orderId, int spoiltReeferId, int replacementReeferId) {
+    private void messageOrderActorReplaceReefer(String orderId, int spoiltReeferId, int replacementReeferId) {
         ActorRef orderActor = Kar.actorRef(ReeferAppConfig.OrderActorName, orderId);
         JsonObject params = Json.createObjectBuilder().add(Constants.REEFER_ID_KEY, spoiltReeferId)
                 .add(Constants.REEFER_REPLACEMENT_ID_KEY, replacementReeferId).build();
-        return actorCall(orderActor, "replaceReefer", params).asJsonObject();
+        actorTell(orderActor, "replaceReefer", params);
     }
 
     private JsonObject getReeferStats() {

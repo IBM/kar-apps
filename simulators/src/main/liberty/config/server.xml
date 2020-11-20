@@ -15,6 +15,8 @@
   <variable name="default.http.port" defaultValue="7080"/>
   <variable name="default.https.port" defaultValue="7443"/>
 
+  <logging consoleLogLevel="WARNING" traceSpecification="*=warning:com.ibm.research.reefer.*=warning" maxFileSize="20" maxFiles="5"/>
+
   <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
                 id="defaultHttpEndpoint" host="*" />
 

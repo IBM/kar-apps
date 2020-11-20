@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonNumber;
@@ -16,6 +18,7 @@ import javax.json.JsonValue;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
+
 
 /**
  * At simulator startup time advance set to manual mode, UnitDelay = 0
@@ -43,13 +46,13 @@ public class SimulatorService {
   private Thread shipthread;
   private Thread orderthread;
   private Thread reeferthread;
+  private static final Logger logger = Logger.getLogger(SimulatorService.class.getName());
 
   // keep statistics on simulator orders
   public static OrderStats os = new OrderStats();
 
   // constructor
   public SimulatorService() {
-//		System.out.println("SimulatorService constructor!");
   }
 
   public JsonValue toggleReeferRest() {
@@ -194,7 +197,7 @@ public class SimulatorService {
         }
         return Json.createValue("accepted");
       }
-      System.out.println("simulator: advanceTime rejected: unitdelay=" + unitdelay.get()
+      logger.warning("simulator: advanceTime rejected: unitdelay=" + unitdelay.get()
               + " shipthreadcount=" + shipthreadcount.get()
               + " orderthreadcount=" + orderthreadcount.get()
               + " reeferthreadcount=" + reeferthreadcount.get());
@@ -287,7 +290,9 @@ public class SimulatorService {
     newval = newval.intValue() < 30 ? newval : (JsonNumber) Json.createValue(30);
     orderupdates.set(newval.intValue());
     this.set(Json.createValue("orderupdates"), newval);
-    System.out.println("simulator: orderupdates set=" + newval.intValue());
+    if (logger.isLoggable(Level.INFO)) {
+      logger.info("simulator: orderupdates set=" + newval.intValue());
+    }
     return newval;
   }
 
@@ -308,7 +313,9 @@ public class SimulatorService {
     newval = newval.intValue() < 28 ? newval : (JsonNumber) Json.createValue(28);
     orderwindow.set(newval.intValue());
     this.set(Json.createValue("orderwindow"), newval);
-    System.out.println("simulator: orderwindow set=" + newval.intValue());
+    if (logger.isLoggable(Level.INFO)) {
+      logger.info("simulator: orderwindow set=" + newval.intValue());
+    }
     return newval;
   }
 
@@ -339,7 +346,9 @@ public class SimulatorService {
         }
         ordertarget.set(newval.intValue());
         this.set(Json.createValue("ordertarget"), newval);
-        System.out.println("simulator: ordertarget set=" + newval.intValue());
+        if (logger.isLoggable(Level.INFO)) {
+          logger.info("simulator: ordertarget set=" + newval.intValue());
+        }
         return Json.createValue("accepted");
       }
 
@@ -352,9 +361,11 @@ public class SimulatorService {
       if (0 == orderthreadcount.get() && 0 < unitdelay.intValue()) {
         startOrderThread();
       } else {
-        System.out.println("simulator: ordertarget set=" + ordertarget.get()
-                + " but thread not started. orderthreadcount=" + orderthreadcount.get()
-                + " unitdelay=" + unitdelay.intValue());
+        if (logger.isLoggable(Level.INFO)) {
+          logger.info("simulator: ordertarget set=" + ordertarget.get()
+          + " but thread not started. orderthreadcount=" + orderthreadcount.get()
+          + " unitdelay=" + unitdelay.intValue());
+        }
       }
 
       return Json.createValue("accepted");
@@ -367,8 +378,7 @@ public class SimulatorService {
       startOrderThread();
       return Json.createValue("accepted");
     }
-    System.out
-            .println("simulator: createOrder rejected: orderthreadcount=" + orderthreadcount.get());
+    logger.warning("simulator: createOrder rejected: orderthreadcount=" + orderthreadcount.get());
     return Json.createValue("rejected");
   }
 
@@ -398,16 +408,20 @@ public class SimulatorService {
         voyageFreeCap.put(vid, new FutureVoyage(0, 0, freecap, 0, 0));
       }
     }
-    System.out.println("simulator: updated freeCapacity to " + freecap + " for voyage " + vid);
+    if (logger.isLoggable(Level.FINE)) {
+      logger.fine("simulator: updated freeCapacity to " + freecap + " for voyage " + vid);
+    }
   }
 
   // grab current order stat values
   public JsonValue getOrderStats() {
     Object oss = os.clone();
-    System.out.println("simulator: getOrderStats successful=" + ((OrderStats)oss).getSuccessful() + 
-            " mean=" + ((OrderStats)oss).getMean() + " stddev=" + ((OrderStats)oss).getStddev() +
-            " max=" +  ((OrderStats)oss).getMax() + " outliers=" + ((OrderStats)oss).getOutliers() +
-            " failed=" + ((OrderStats)oss).getFailed() + " missed=" + ((OrderStats)oss).getMissed());
+    if (logger.isLoggable(Level.INFO)) {
+      logger.info("simulator: getOrderStats successful=" + ((OrderStats)oss).getSuccessful() +
+              " mean=" + ((OrderStats)oss).getMean() + " stddev=" + ((OrderStats)oss).getStddev() +
+              " max=" +  ((OrderStats)oss).getMax() + " outliers=" + ((OrderStats)oss).getOutliers() +
+              " failed=" + ((OrderStats)oss).getFailed() + " missed=" + ((OrderStats)oss).getMissed());
+    }
 
     double mean   = Math.floor(10.0 * ((OrderStats)oss).getMean()) / 10.0;
     double stddev = Math.floor(10.0 * ((OrderStats)oss).getStddev()) / 10.0;
@@ -425,7 +439,9 @@ public class SimulatorService {
   }
 
   public void resetOrderStats() {
-    System.out.println("simulator: resetOrderStats called");
+    if (logger.isLoggable(Level.INFO)) {
+      logger.info("simulator: resetOrderStats called");
+    }
     os = new OrderStats();
   }
 
@@ -510,7 +526,9 @@ public class SimulatorService {
         }
         failuretarget.set(newval.intValue());
         this.set(Json.createValue("failuretarget"), newval);
-        System.out.println("simulator: failuretarget set=" + newval.intValue());
+        if (logger.isLoggable(Level.INFO)) {
+          logger.info("simulator: failuretarget set=" + newval.intValue());
+        }
         return Json.createValue("accepted");
       }
 
@@ -523,9 +541,11 @@ public class SimulatorService {
       if (0 == reeferthreadcount.get() && 0 < unitdelay.intValue()) {
         startReeferThread();
       } else {
-        System.out.println("simulator: failuretarget set=" + failuretarget.get()
-                + " but thread not started. reeferthreadcount=" + reeferthreadcount.get()
-                + " unitdelay=" + unitdelay.intValue());
+        if (logger.isLoggable(Level.INFO)) {
+          logger.info("simulator: failuretarget set=" + failuretarget.get()
+          + " but thread not started. reeferthreadcount=" + reeferthreadcount.get()
+          + " unitdelay=" + unitdelay.intValue());
+        }
       }
 
       return Json.createValue("accepted");
@@ -549,7 +569,9 @@ public class SimulatorService {
     newval = newval.intValue() < 30 ? newval : (JsonNumber) Json.createValue(30);
     reeferupdates.set(newval.intValue());
     this.set(Json.createValue("reeferupdates"), newval);
-    System.out.println("simulator: reeferupdates set=" + newval.intValue());
+    if (logger.isLoggable(Level.INFO)) {
+      logger.info("simulator: reeferupdates set=" + newval.intValue());
+    }
     return newval;
   }
 
@@ -559,8 +581,7 @@ public class SimulatorService {
       startReeferThread();
       return Json.createValue("accepted");
     }
-    System.out
-            .println("simulator: createAnomaly rejected: reeferthreadcount=" + reeferthreadcount.get());
+    logger.warning("simulator: createAnomaly rejected: reeferthreadcount=" + reeferthreadcount.get());
     return Json.createValue("rejected");
   }
 

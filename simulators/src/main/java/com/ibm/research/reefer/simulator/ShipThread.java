@@ -13,6 +13,8 @@ import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 // Ship Simulator thread functions
 // 1. tell REST to update world time
@@ -37,6 +39,7 @@ public class ShipThread extends Thread {
   int sleeptime;
   JsonValue currentDate;
   long last_snapshot;
+  private static final Logger logger = Logger.getLogger(ShipThread.class.getName());
 
   public void run() {
     if (0 == SimulatorService.unitdelay.intValue()) {
@@ -45,8 +48,9 @@ public class ShipThread extends Thread {
 
     Thread.currentThread().setName("shipthread");
     SimulatorService.shipthreadcount.incrementAndGet();
-    System.out.println(
-            "shipthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
+    if (logger.isLoggable(Level.INFO)) {
+      logger.info("shipthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
+    }
     int nextevent = 0;
     activemap = new LinkedHashMap<String,JsonObject>();
     sleeptime=1000 * SimulatorService.unitdelay.intValue();
@@ -56,13 +60,13 @@ public class ShipThread extends Thread {
       long snapshot = System.nanoTime();
       long delta = snapshot - last_snapshot;
       last_snapshot = snapshot;
-      System.out.println(
-              "shipthread: " + Thread.currentThread().getId() + ": running " + ++loopcnt + " nextevent===> "+nextevent
-              + "  sleeptime= " + sleeptime + " last delta= " + delta/1000000);
+      if (logger.isLoggable(Level.FINE)) {
+        logger.fine("shipthread: " + Thread.currentThread().getId() + ": running " + ++loopcnt + " nextevent===> "+nextevent
+                + "  sleeptime= " + sleeptime + " last delta= " + delta/1000000);
+      }
 
       if (!SimulatorService.reeferRestRunning.get()) {
-        System.out.println(
-                "shipthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
+        logger.warning("shipthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
       } else {
         if (0 == nextevent) {
           // start of new day, tell REST to advance time
@@ -70,7 +74,9 @@ public class ShipThread extends Thread {
           Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
           currentDate = response.readEntity(JsonValue.class);
           SimulatorService.currentDate.set(currentDate);
-          System.out.println("shipthread: New time ======> " + currentDate.toString());
+          if (logger.isLoggable(Level.INFO)) {
+            logger.info("shipthread: New time ======> " + currentDate.toString());
+          }
 
           // tell other threads to wake up
           Kar.restPost("simservice", "simulator/newday", JsonValue.NULL);
@@ -78,8 +84,9 @@ public class ShipThread extends Thread {
           // fetch all active voyages from REST
           response = Kar.restGet("reeferservice", "voyage/active");
           JsonValue activeVoyages = response.readEntity(JsonValue.class);
-          System.out.println(
-                  "shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
+          if (logger.isLoggable(Level.INFO)) {
+            logger.info("shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
+          }
 
           // compute ship positions to send to all active voyages
           Instant ed = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
@@ -115,7 +122,9 @@ public class ShipThread extends Thread {
             String id = activekeys[voyages_updated++];
             JsonObject message = activemap.get(id);
             Kar.actorTell(actorRef("voyage", id), "changePosition", message);
-            System.out.println("shipthread: updates voyageid: " + id + " with " + message.toString());
+            if (logger.isLoggable(Level.FINE)) {
+              logger.fine("shipthread: updates voyageid: " + id + " with " + message.toString());
+            }
           }
         }
       }
@@ -127,7 +136,9 @@ public class ShipThread extends Thread {
         // tell GUI to update active voyages
         snapshot = System.nanoTime();
         Kar.restPost("reeferservice", "voyage/updateGui", currentDate);
-        System.out.println("shipthread: updateGui took " + (System.nanoTime()-snapshot)/1000000 + " ms");
+        if (logger.isLoggable(Level.FINE)) {
+          logger.fine("shipthread: updateGui took " + (System.nanoTime()-snapshot)/1000000 + " ms");
+        }
       }
 
       try {
@@ -139,12 +150,13 @@ public class ShipThread extends Thread {
       // check if auto mode turned off
       if ((nextevent==0 && (0 == SimulatorService.unitdelay.intValue() || oneshot)) || interrupted ) {
         SimulatorService.unitdelay.set(0);
-        System.out.println(
-                "shipthread: Stopping Thread " + Thread.currentThread().getId() + " LOUD HORN");
+        if (logger.isLoggable(Level.INFO)) {
+          logger.info("shipthread: Stopping Thread " + Thread.currentThread().getId() + " LOUD HORN");
+        }
         running = false;
 
         if (0 < SimulatorService.shipthreadcount.decrementAndGet()) {
-          System.err.println("shipthread: we have an extra thread running!");
+          logger.warning("shipthread: we have an extra thread running!");
         }
 
         // check for threads leftover from a hot method replace
@@ -152,7 +164,7 @@ public class ShipThread extends Thread {
         for (Thread thread : threadset) {
           if (thread.getName().equals("shipthread")
                   && thread.getId() != Thread.currentThread().getId()) {
-            System.out.println("shipthread: killing leftover threadid=" + thread.getId());
+            logger.warning("shipthread: killing leftover threadid=" + thread.getId());
             thread.interrupt();
           }
         }

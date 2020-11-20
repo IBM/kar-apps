@@ -11,6 +11,8 @@ import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class OrderThread extends Thread {
   boolean running = true;
@@ -26,6 +28,7 @@ public class OrderThread extends Thread {
   long dayEndTime;
   long totalOrderTime;
   boolean startup = true;
+  private static final Logger logger = Logger.getLogger(OrderThread.class.getName());
   
 
   public void run() {
@@ -36,8 +39,9 @@ public class OrderThread extends Thread {
 
     Thread.currentThread().setName("orderthread");
     SimulatorService.orderthreadcount.incrementAndGet();
-    System.out.println(
-            "orderthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
+    if (logger.isLoggable(Level.INFO)) {
+      logger.info("orderthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
+    }
 
     if (SimulatorService.reeferRestRunning.get()) {
       // Make sure currentDate is set
@@ -52,7 +56,9 @@ public class OrderThread extends Thread {
     }
 
     if (!oneshot) {
-      System.out.println("orderthread: waiting for new day");
+      if (logger.isLoggable(Level.FINE)) {
+        logger.fine("orderthread: waiting for new day");
+      }
       try {
         Thread.sleep(1000 * SimulatorService.unitdelay.intValue());
       } catch (InterruptedException e) {
@@ -64,7 +70,7 @@ public class OrderThread extends Thread {
     while (running) {
 
       if (!SimulatorService.reeferRestRunning.get()) {
-//        		System.out.println("orderthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
+        logger.warning("orderthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
       } else {
 
         // If new date ...
@@ -77,9 +83,11 @@ public class OrderThread extends Thread {
           dayEndTime = System.currentTimeMillis() + 1000* SimulatorService.unitdelay.intValue();
           if (updatesDoneToday < updatesPerDay) {
             SimulatorService.os.addMissed(updatesPerDay - updatesDoneToday);
-            System.out.println("orderthread: " + updatesDoneToday + " of " + updatesPerDay + " completed yesterday");
+            logger.warning("orderthread: " + updatesDoneToday + " of " + updatesPerDay + " completed yesterday");
           }
-          System.out.println("orderthread: new day = " + date.toString());
+          if (logger.isLoggable(Level.FINE)) {
+            logger.fine("orderthread: new day = " + date.toString());
+          }
           updatesDoneToday = 0;
           totalOrderTime = 0;
           startup = false;
@@ -109,8 +117,9 @@ public class OrderThread extends Thread {
 
           Response response = Kar.restPost("reeferservice", "voyage/inrange", message);
           futureVoyages = response.readEntity(JsonValue.class);
-          System.out.println("orderthread: received " + futureVoyages.asJsonArray().size()
-                  + " future voyages");
+          if (logger.isLoggable(Level.INFO)) {
+            logger.info("orderthread: received " + futureVoyages.asJsonArray().size() + " future voyages");
+          }
 
           // ... create MAP of target voyages with computed freecap
           synchronized (SimulatorService.voyageFreeCap) {
@@ -149,9 +158,11 @@ public class OrderThread extends Thread {
               }
             }
           }
-          System.out.println("orderthread: dumping voyageFreeCap MAP ----------");
-          SimulatorService.voyageFreeCap.forEach((key, value) -> System.out
-                  .println("orderthread: " + key + " " + value.toString()));
+          if (logger.isLoggable(Level.FINE)) {
+            logger.fine("orderthread: dumping voyageFreeCap MAP ----------");
+            SimulatorService.voyageFreeCap.forEach((key, value) -> 
+              logger.fine("orderthread: " + key + " " + value.toString()));
+          }
         }
 
         // Update processing ...
@@ -163,8 +174,9 @@ public class OrderThread extends Thread {
             if (entry.getValue().orderCapacity > 0) {
               // divide orderCap into specified number of orders per day
               int ordersize = (entry.getValue().orderCapacity * 1000) / updatesPerDay;
-              System.out.println(
-                      "orderthread: create order size=" + ordersize + " for " + entry.getKey());
+              if (logger.isLoggable(Level.FINE)) {
+                logger.fine("orderthread: create order size=" + ordersize + " for " + entry.getKey());
+              }
               JsonObject order = Json.createObjectBuilder().add("voyageId", entry.getKey())
                       .add("customerId", "simulator").add("product", "pseudoBanana")
                       .add("productQty", ordersize).build();
@@ -175,23 +187,20 @@ public class OrderThread extends Thread {
                 rsp = response.readEntity(JsonValue.class);
               }
               catch (Exception e) {
-                System.err.println("orderthread: error posting order "+ e.toString());
+                logger.warning("orderthread: error posting order "+ e.toString());
               }
               if (null == rsp || null == rsp.asJsonObject().getString("voyageId")) {
                 SimulatorService.os.addFailed();
-                System.err.println("orderthread: error submitting order: "+ order.toString());
+                logger.warning("orderthread: bad response when submitting order: "+ order.toString());
               }
               else {
                 int otime = (int)((System.nanoTime()-ordersnap)/1000000);
                 if (SimulatorService.os.addSuccessful(otime)) {
                   // orderstats indicates an outlier
-                  System.out.println("orderthread: order latency outlier "+ entry.getKey() +" ===> "+otime);
+                  logger.warning("orderthread: order latency outlier "+ entry.getKey() +" ===> "+otime);
                 }
               }
             }
-//            		    else {
-//            		    	System.out.println("orderthread: no order for "+entry.getKey());
-//            		    }
           }
           totalOrderTime += System.currentTimeMillis() - snapshot;
         }
@@ -215,11 +224,14 @@ public class OrderThread extends Thread {
             else {
               timeToSleep = 1000 * SimulatorService.unitdelay.intValue();
             }
-            System.out.println("orderthread: timeRemaining="+timeRemaining+ " orderTimeRemaining="+orderTimeRemaining+" totalOrderTime="+totalOrderTime+" updatesDoneToday="+updatesDoneToday+" timeToSleep="+timeToSleep);
+            if (logger.isLoggable(Level.FINE)) {
+              logger.fine("orderthread: timeRemaining="+timeRemaining+ " orderTimeRemaining="+orderTimeRemaining+
+                      " totalOrderTime="+totalOrderTime+" updatesDoneToday="+updatesDoneToday+" timeToSleep="+timeToSleep);
+            }
           }
           Thread.sleep(timeToSleep);
         } catch (InterruptedException e) {
-//            		System.out.println("orderthread: Interrupted Thread "+Thread.currentThread().getId());
+          // this is expected
         }
       }
 
@@ -227,12 +239,13 @@ public class OrderThread extends Thread {
       synchronized (SimulatorService.ordertarget) {
         if (0 == SimulatorService.ordertarget.intValue()
                 || 0 == SimulatorService.unitdelay.intValue() || oneshot) {
-          System.out.println(
-                  "orderthread: Stopping Thread " + Thread.currentThread().getId() + " LOUD HORN");
+          if (logger.isLoggable(Level.INFO)) {
+            logger.info("orderthread: Stopping Thread " + Thread.currentThread().getId() + " LOUD HORN");
+          }
           running = false;
 
           if (0 < SimulatorService.orderthreadcount.decrementAndGet()) {
-            System.err.println("orderthread: we have an extra ship thread running!");
+            logger.warning("orderthread: we have an extra ship thread running!");
           }
 
           // check for threads leftover from a hot method replace
@@ -240,7 +253,7 @@ public class OrderThread extends Thread {
           for (Thread thread : threadset) {
             if (thread.getName().equals("orderthread")
                     && thread.getId() != Thread.currentThread().getId()) {
-              System.out.println("orderthread: killing leftover order threadid=" + thread.getId());
+              logger.warning("orderthread: killing leftover order threadid=" + thread.getId());
               thread.interrupt();
             }
           }

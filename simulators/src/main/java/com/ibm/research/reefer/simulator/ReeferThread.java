@@ -4,6 +4,8 @@ import static com.ibm.research.kar.Kar.actorCall;
 
 import java.util.Random;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonNumber;
@@ -13,7 +15,6 @@ import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
-import com.ibm.research.kar.actor.exceptions.ActorException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 
@@ -30,6 +31,7 @@ public class ReeferThread extends Thread {
   int updatesPerDay = 1;
   int anomaliesPerUpdate;
   int anomaliesDoneToday;
+  private static final Logger logger = Logger.getLogger(ReeferThread.class.getName());
 
   public void run() {
 
@@ -40,8 +42,9 @@ public class ReeferThread extends Thread {
 
     Thread.currentThread().setName("reeferthread");
     SimulatorService.reeferthreadcount.incrementAndGet();
-    System.out.println(
-            "reeferthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
+    if (logger.isLoggable(Level.INFO)) {
+      logger.info("reeferthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
+    }
 
     // If new day, get reefer inventory, anomaly target %,  and select reefers to break
     // Set number of anomalies per loop based on requested updates per day
@@ -49,11 +52,13 @@ public class ReeferThread extends Thread {
 
     while (running) {
       if (!oneshot) {
-//        		System.out.println("reeferthread: "+Thread.currentThread().getId()+": running "+ ++threadloops);
+        if (logger.isLoggable(Level.FINE)) {
+          logger.fine("reeferthread: "+Thread.currentThread().getId()+": running "+ ++threadloops);
+        }
       }
 
       if (!SimulatorService.reeferRestRunning.get()) {
-//        		System.out.println("reeferthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
+        logger.warning("reeferthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
       } else {
         // Make sure currentDate is set
         if (null == SimulatorService.currentDate.get()) {
@@ -74,11 +79,15 @@ public class ReeferThread extends Thread {
           // Get anomaly target for today
           if (oneshot) {
             reefersToBreak = 1;
-            System.out.println("reeferthread: oneshot generating 1 anomaly");
+            if (logger.isLoggable(Level.INFO)) {
+              logger.info("reeferthread: oneshot generating 1 anomaly");
+            }
           }
           else {
             reefersToBreak = (inventorySize * SimulatorService.failuretarget.get())/10000;
-            System.out.println("reeferthread: generating "+reefersToBreak+" anomalies for new day");
+            if (logger.isLoggable(Level.INFO)) {
+              logger.info("reeferthread: generating "+reefersToBreak+" anomalies for new day");
+            }
           }
           r2b = new int[reefersToBreak];
           Random rand = new Random();
@@ -106,11 +115,13 @@ public class ReeferThread extends Thread {
                     .add(Constants.DATE_KEY, currentDate)
                     .build();
 
-            System.out.println("reeferthread: alerting provisioner about anomaly in reefer_"+reeferid);
+            if (logger.isLoggable(Level.FINE)) {
+              logger.fine("reeferthread: alerting provisioner about anomaly in reefer_"+reeferid);
+            }
             try {
               actorCall(reeferProvisionerActor, "reeferAnomaly", params);
             } catch (Exception e) {
-              System.err.println("reeferthread: error sending anomaly "+ e.toString());
+              logger.warning("reeferthread: error sending anomaly "+ e.toString());
             }
           }
         }
@@ -128,12 +139,13 @@ public class ReeferThread extends Thread {
       // check if auto mode should be turned off
       if (0 == SimulatorService.failuretarget.intValue()
               || 0 == SimulatorService.unitdelay.intValue() || oneshot) {
-        System.out.println(
-                "reeferthread: Stopping Thread " + Thread.currentThread().getId() + " LOUD HORN");
+        if (logger.isLoggable(Level.INFO)) {
+          logger.info("reeferthread: Stopping Thread " + Thread.currentThread().getId() + " LOUD HORN");
+        }
         running = false;
 
         if (0 < SimulatorService.reeferthreadcount.decrementAndGet()) {
-          System.err.println("reeferthread: we have an extra reefer thread running!");
+          logger.warning("reeferthread: we have an extra reefer thread running!");
         }
 
         // check for threads leftover from a hot method replace
@@ -141,7 +153,7 @@ public class ReeferThread extends Thread {
         for (Thread thread : threadset) {
           if (thread.getName().equals("reeferthread")
                   && thread.getId() != Thread.currentThread().getId()) {
-            System.out.println("reeferthread: killing leftover reefer threadid=" + thread.getId());
+            logger.warning("reeferthread: killing leftover reefer threadid=" + thread.getId());
             thread.interrupt();
           }
         }

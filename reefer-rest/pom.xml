@@ -86,6 +86,11 @@
 		</dependency>
 
 		<!-- KAR SDK -->
+                <dependency>
+                        <groupId>com.ibm.research.kar</groupId>
+                        <artifactId>kar-rest-client</artifactId>
+                        <version>${version.kar-java-sdk}</version>
+                </dependency>
 		<dependency>
 			<groupId>com.ibm.research.kar</groupId>
 			<artifactId>kar-actor-runtime</artifactId>

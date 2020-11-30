@@ -313,10 +313,8 @@ public class OrderService extends AbstractPersistentService {
             logger.fine("OrderService.updateOrderStatus() - voyageId:" + voyageId + " Status:" + status);
         }
         if (voyageId == null) {
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("OrderService.updateOrderStatus() - voyageId is null, rejecting update request");
-            }
-            return;
+          logger.warning("OrderService.updateOrderStatus() - voyageId is null, rejecting update request");
+          return;
         }
         if (OrderStatus.DELIVERED.equals(status)) {
             voyageArrived(voyageId);

@@ -47,8 +47,8 @@ public class VoyageActor extends BaseActor {
     public void init() {
         // fetch actor state from Kar storage
         Map<String, JsonValue> state = Kar.actorGetAllState(this);
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info("VoyageActor.init() actorID:" + this.getId() + " all state" + state);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("VoyageActor.init() actorID:" + this.getId() + " all state" + state);
         }
 
         try {
@@ -104,8 +104,8 @@ public class VoyageActor extends BaseActor {
      */
     @Remote
     public JsonValue changePosition(JsonObject message) {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("VoyageActor.changePosition() called Id:" + getId() + " " + message.toString() + " state:"
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("VoyageActor.changePosition() called Id:" + getId() + " " + message.toString() + " state:"
                     + getVoyageStatus());
         }
         try {
@@ -114,8 +114,8 @@ public class VoyageActor extends BaseActor {
             int daysAtSea = message.getInt(Constants.VOYAGE_DAYSATSEA_KEY);
             // given ship sail date and current days at sea get ship's current date
             Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysAtSea);
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info(
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine(
                         "VoyageActor.changePosition() voyage info:" + voyageInfo + " ship current date:" + shipCurrentDate);
             }
             String restMethodToCall = "";
@@ -124,8 +124,8 @@ public class VoyageActor extends BaseActor {
                 voyageStatus = Json.createValue(VoyageStatus.ARRIVED.name());
                 long snapshot = System.nanoTime();
                 processArrivedVoyage(voyage, daysAtSea);
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info("VoyageActor.changePosition() voyageId=" + voyage.getId() + " order count: " +
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId() + " order count: " +
                             orders.size() + " arrival processing: " + (System.nanoTime() - snapshot) / 1000000);
                 }
 
@@ -134,13 +134,13 @@ public class VoyageActor extends BaseActor {
                 voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
                 long snapshot = System.nanoTime();
                 processDepartedVoyage(voyage, daysAtSea);
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info("VoyageActor.changePosition() voyageId=" + voyage.getId() + " order count: " +
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId() + " order count: " +
                             orders.size() + " departure processing: " + (System.nanoTime() - snapshot) / 1000000);
                 }
             } else {  // voyage in transi
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info("VoyageActor.changePosition() Updating REST - daysAtSea:" + daysAtSea);
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("VoyageActor.changePosition() Updating REST - daysAtSea:" + daysAtSea);
                 }
                 // update REST voyage days at sea
                 messageRest("/voyage/update/position", daysAtSea);
@@ -164,8 +164,8 @@ public class VoyageActor extends BaseActor {
     @Remote
     public JsonObject reserve(JsonObject message) {
         JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info("VoyageActor.reserve() called Id:" + getId() + " " + message.toString() + " OrderID:"
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("VoyageActor.reserve() called Id:" + getId() + " " + message.toString() + " OrderID:"
                     + order.getId() + " Orders size=" + orders.size());
         }
         try {
@@ -208,8 +208,8 @@ public class VoyageActor extends BaseActor {
         messageRest("/voyage/update/arrived", daysAtSea);
         // notify each order actor that the ship arrived
         orders.values().forEach(orderId -> {
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("VoyageActor.changePosition() voyageId=" + voyage.getId()
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId()
                         + " Notifying Order Actor of arrival - OrderID:" + orderId);
             }
             messageOrderActor("delivered", orderId);
@@ -229,8 +229,8 @@ public class VoyageActor extends BaseActor {
         }
         messageRest("/voyage/update/departed", daysAtSea);
         orders.values().forEach(orderId -> {
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("VoyageActor.changePosition() voyageId=" + voyage.getId()
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId()
                         + " Notifying Order Actor of departure - OrderID:" + orderId);
             }
             messageOrderActor("departed", orderId);

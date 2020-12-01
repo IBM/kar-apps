@@ -205,7 +205,6 @@ public class VoyageActor extends BaseActor {
             logger.info("VoyageActor.changePosition() voyageId=" + voyage.getId()
                     + " has ARRIVED ------------------------------------------------------");
         }
-        messageRest("/voyage/update/arrived", daysAtSea);
         // notify each order actor that the ship arrived
         orders.values().forEach(orderId -> {
             if (logger.isLoggable(Level.FINE)) {
@@ -214,6 +213,7 @@ public class VoyageActor extends BaseActor {
             }
             messageOrderActor("delivered", orderId);
         });
+        messageRest("/voyage/update/arrived", daysAtSea);
     }
 
     /**

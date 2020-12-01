@@ -79,7 +79,7 @@ public class OrderActor extends BaseActor {
      * @return
      */
     @Remote
-    public JsonObject delivered(JsonObject message) {
+    public JsonObject delivered() {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(
                     "OrderActor.delivered() - entry - id:"+getId());
@@ -125,7 +125,7 @@ public class OrderActor extends BaseActor {
      * @return
      */
     @Remote
-    public JsonObject departed(JsonObject message) {
+    public JsonObject departed() {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(
                     "OrderActor.departed() - entry id:"+getId());

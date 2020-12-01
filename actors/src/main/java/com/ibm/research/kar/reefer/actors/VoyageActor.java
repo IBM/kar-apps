@@ -108,6 +108,7 @@ public class VoyageActor extends BaseActor {
             logger.info("VoyageActor.changePosition() called Id:" + getId() + " " + message.toString() + " state:"
                     + getVoyageStatus());
         }
+
         try {
             Voyage voyage = JsonUtils.jsonToVoyage(voyageInfo);
             // the simulator advances ship position
@@ -128,7 +129,8 @@ public class VoyageActor extends BaseActor {
                     logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId() + " order count: " +
                             orders.size() + " arrival processing: " + (System.nanoTime() - snapshot) / 1000000);
                 }
-
+                // voyage arrived, no longer need the state
+                Kar.actorDeleteAllState(this);
             } // check if ship departed its origin port
             else if ((daysAtSea == 1) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
                 voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
@@ -138,7 +140,7 @@ public class VoyageActor extends BaseActor {
                     logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId() + " order count: " +
                             orders.size() + " departure processing: " + (System.nanoTime() - snapshot) / 1000000);
                 }
-            } else {  // voyage in transi
+            } else {  // voyage in transit
                 if (logger.isLoggable(Level.FINE)) {
                     logger.fine("VoyageActor.changePosition() Updating REST - daysAtSea:" + daysAtSea);
                 }
@@ -263,8 +265,8 @@ public class VoyageActor extends BaseActor {
      */
     private void messageOrderActor(String methodToCall, String orderId) {
         ActorRef orderActor = Kar.actorRef(ReeferAppConfig.OrderActorName, orderId);
-        JsonObject params = Json.createObjectBuilder().build();
-        actorCall(orderActor, methodToCall, params);
+      //  JsonObject params = Json.createObjectBuilder().build();
+        actorCall(orderActor, methodToCall);
     }
 
     /**

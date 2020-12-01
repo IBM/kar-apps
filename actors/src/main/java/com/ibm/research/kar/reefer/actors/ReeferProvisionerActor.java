@@ -629,8 +629,8 @@ public class ReeferProvisionerActor extends BaseActor {
         reefer.setState(State.UNALLOCATED);
         // clear off maintenance date
         reefer.setMaintenanceReleaseDate(null);
-        updateStore(reefer);
-
+       //updateStore(reefer);
+        Kar.actorDeleteState(this, Constants.REEFER_MAP_KEY, String.valueOf(reefer.getId()));
         Kar.actorDeleteState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reefer.getId()));
     }
 

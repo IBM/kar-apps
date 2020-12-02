@@ -194,7 +194,7 @@ public class OrderService extends AbstractPersistentService {
             JsonArray orderArray = o.asJsonArray();
             return orderArray.size();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, "OrderService.getOrderCount() - Error - ", e);
         }
         return 0;
     }
@@ -215,9 +215,9 @@ public class OrderService extends AbstractPersistentService {
      */
     private void voyageDeparted(String voyageId) {
         List<JsonValue> newBookedList = getMutableOrderList(Constants.BOOKED_ORDERS_KEY);
-        JsonArray newActiveList = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);// getMutableOrderList(Constants.ACTIVE_ORDERS_KEY);
+        JsonArray newActiveList = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
 
-        JsonArrayBuilder activeOrderBuilder = Json.createArrayBuilder(newActiveList); // orders.asJsonArray());
+        JsonArrayBuilder activeOrderBuilder = Json.createArrayBuilder(newActiveList);
 
         // Move booked to active list
         Iterator<JsonValue> it = newBookedList.iterator();
@@ -249,13 +249,11 @@ public class OrderService extends AbstractPersistentService {
     }
 
     private List<JsonValue> getMutableOrderList(String orderListKind) {
-        // create a new list for spoilt orders. We can modify this list to
-        // remove spoilt orders that have arrived at the destination port.
         List<JsonValue> newList = new ArrayList<>();
 
-        // fetch inmutable list of spoilt order from Kar persistant storage
+        // fetch immutable list of orders from Kar persistent storage
         JsonArray orders = getListAJsonArray(orderListKind);
-        // copy spoilt orders from inmutable list to one that we can change
+        // copy spoilt orders from immutable list to one that we can change
         orders.forEach(value -> {
             newList.add(value);
         });
@@ -265,7 +263,6 @@ public class OrderService extends AbstractPersistentService {
     private void removeVoyageOrdersFromList(String voyageId, List<JsonValue> orderList) {
         Iterator<JsonValue> it = orderList.iterator();
         while (it.hasNext()) {
-            // v.asJsonObject().getString(Constants.ORDER_ID_KEY)
             JsonObject order = it.next().asJsonObject();
             if (voyageId.equals(order.getString(Constants.VOYAGE_ID_KEY))) {
                 it.remove();
@@ -288,7 +285,7 @@ public class OrderService extends AbstractPersistentService {
 
         // remove voyage orders from the spoilt list
         removeVoyageOrdersFromList(voyageId, newSpoiltList);
-        // remive voyage orders from the active list
+        // remove voyage orders from the active list
         removeVoyageOrdersFromList(voyageId, newActiveList);
 
         // save new spoilt list in the Kar persistent storage

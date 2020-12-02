@@ -87,7 +87,7 @@ public class OrderController {
 			orderProperties.setOriginPort(voyage.getRoute().getOriginPort());
 			orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
 		} catch (Exception e) {
-			logger.log(Level.WARNING,"",e);
+			logger.log(Level.WARNING,e.getMessage(),e);
 		}
 		return orderProperties;
 	}
@@ -113,7 +113,7 @@ public class OrderController {
 				gui.updateSpoiltOrderCount(totalSpoiltOrders);
 			}
 		} catch (Exception e) {
-			logger.log(Level.WARNING,"",e);
+			logger.log(Level.WARNING,e.getMessage(),e);
 		}
 	}
     /**
@@ -158,7 +158,7 @@ public class OrderController {
 			int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY);
 			gui.updateFutureOrderCount(futureOrderCount);
 		} catch (Exception e) {
-			logger.log(Level.WARNING,"",e);
+			logger.log(Level.WARNING,e.getMessage(),e);
 		}
 		return orderProperties;
 	}

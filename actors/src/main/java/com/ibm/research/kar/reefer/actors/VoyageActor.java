@@ -89,7 +89,7 @@ public class VoyageActor extends BaseActor {
      */
     @Deactivate
     public void deactivate() {
-        if (voyageStatus != null && !voyageStatus.equals( VoyageStatus.ARRIVED)) {
+        if (voyageStatus != null && !((JsonString)voyageStatus).getString().equals( VoyageStatus.ARRIVED.name())) {
             Kar.actorSetState(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
         }
     }

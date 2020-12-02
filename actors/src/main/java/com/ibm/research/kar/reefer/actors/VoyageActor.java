@@ -89,7 +89,7 @@ public class VoyageActor extends BaseActor {
      */
     @Deactivate
     public void deactivate() {
-        if (voyageStatus != null) {
+        if (voyageStatus != null && !voyageStatus.equals( VoyageStatus.ARRIVED)) {
             Kar.actorSetState(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
         }
     }
@@ -229,7 +229,6 @@ public class VoyageActor extends BaseActor {
             logger.info("VoyageActor.changePosition() voyageId=" + voyage.getId()
                     + " has DEPARTED ------------------------------------------------------");
         }
-        messageRest("/voyage/update/departed", daysAtSea);
         orders.values().forEach(orderId -> {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId()
@@ -237,6 +236,7 @@ public class VoyageActor extends BaseActor {
             }
             messageOrderActor("departed", orderId);
         });
+        messageRest("/voyage/update/departed", daysAtSea);
 
     }
 

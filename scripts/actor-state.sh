@@ -6,4 +6,4 @@ if [ ! -d "node_modules" ]; then
     exit
 fi
 
-node actor-state.js $*
+node actor-state.js "$@"

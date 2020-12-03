@@ -40,6 +40,8 @@ async function keysAsync(arg) {
     }
 }
 
+// start of main
+
 client.on("error", function(error) {
   console.error(error);
 });
@@ -57,27 +59,26 @@ var argv = require('yargs/yargs')(process.argv.slice(2))
       },
       type: {
 	alias: 't',
-	description: 'Actor type or \'prefix*\'',
+	description: 'Actor type or type-prefix or \'*\'',
 	requiresArg: true,
 	required: true
       },
       id: {
 	alias: 'i',
-	description: 'Actor id'
+	description: 'Actor id  (if specified, type must be explicit)'
       }
     })
     .argv;
-
 
 if(argv.id) {
   if (argv.type.includes('*') ) {
     console.log('"type" argument cannot include wildcard when "id" is specified')
     process.exit(1)
   }
-  hgetallAsync('kar_reefer_main_state_' + argv.type + '_' + argv.id);
+  hgetallAsync('kar_' + argv.app + '_main_state_' + argv.type + '_' + argv.id);
 }
 else {
-  keysAsync('kar_reefer_main_state_'+argv.type+'*');
+  keysAsync('kar_' + argv.app + '_main_state_' + argv.type);
 }
 
 

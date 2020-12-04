@@ -122,6 +122,8 @@ public class VoyageActor extends BaseActor {
             String restMethodToCall = "";
             // if ship's current date matches arrival date, the ship arrived
             if (shipArrived(shipCurrentDate, voyage)) {
+                System.out.println("VoyageActor.changePosition() voyaged:" + getId() + " " + message.toString() + " ARRIVED");
+
                 voyageStatus = Json.createValue(VoyageStatus.ARRIVED.name());
                 long snapshot = System.nanoTime();
                 processArrivedVoyage(voyage, daysAtSea);
@@ -133,6 +135,7 @@ public class VoyageActor extends BaseActor {
                 Kar.actorDeleteAllState(this);
             } // check if ship departed its origin port
             else if ((daysAtSea == 1) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
+                System.out.println("VoyageActor.changePosition() voyaged:" + getId() + " " + message.toString() + " DEPARTED");
                 voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
                 long snapshot = System.nanoTime();
                 processDepartedVoyage(voyage, daysAtSea);

@@ -1,13 +1,8 @@
 package com.ibm.research.kar.reeferserver.service;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,7 +43,16 @@ public class ScheduleService {
         return routes;
 
     }
-
+    public Voyage getVoyage(String voyageId ) throws VoyageNotFoundException {
+        Iterator<Voyage> it = masterSchedule.iterator();
+        while(it.hasNext()) {
+            Voyage voyage = it.next();
+            if ( voyageId.equals(voyage.getId())) {
+                return voyage;
+            }
+        }
+        throw new VoyageNotFoundException("ScheduleService.getVoyage() - voyage:"+voyageId+" not found in MasterSchedule");
+    }
     public void generateNextSchedule(Instant date) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info("ScheduleService() - generateNextSchedule() ============================================ ");
@@ -255,7 +259,7 @@ public class ScheduleService {
 
         return new ArrayList<Voyage>(sortedSchedule);
     }
-
+/*
     public Voyage getVoyage(String voyageId) throws VoyageNotFoundException {
         for (Voyage voyage : masterSchedule) {
             if (voyage.getId().equals(voyageId)) {
@@ -264,7 +268,7 @@ public class ScheduleService {
         }
         throw new VoyageNotFoundException("Unable to find voyage with ID:" + voyageId);
     }
-
+*/
     public int updateFreeCapacity(String voyageId, int reeferCount)
             throws VoyageNotFoundException, ShipCapacityExceeded {
         Voyage voyage = getVoyage(voyageId);

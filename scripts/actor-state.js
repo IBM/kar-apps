@@ -78,7 +78,7 @@ if(argv.id) {
   hgetallAsync('kar_' + argv.app + '_main_state_' + argv.type + '_' + argv.id);
 }
 else {
-  keysAsync('kar_' + argv.app + '_main_state_' + argv.type);
+  keysAsync('kar_' + argv.app + '_main_state_' + argv.type+'*');
 }
 
 

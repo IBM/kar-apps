@@ -107,26 +107,31 @@ public class OrderService extends AbstractPersistentService {
      * @return Number of spoilt orders
      */
     public int orderSpoilt(String orderId) {
-        JsonArray activeOrdersArray = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
+        JsonArray spoiltList;
 
-        JsonArrayBuilder spoiltOrderBuilder = Json.createArrayBuilder(getListAJsonArray(Constants.SPOILT_ORDERS_KEY));
+        synchronized(OrderService.class) {
+            JsonArray activeOrdersArray = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
 
-        Iterator<JsonValue> activeIterator = activeOrdersArray.iterator();
-        // find the matching order which needs to move from active to spoilt list
-        while (activeIterator.hasNext()) {
-            JsonObject order = activeIterator.next().asJsonObject();
-            if (orderId.equals(order.getString(Constants.ORDER_ID_KEY))) {
-                spoiltOrderBuilder.add(0, order);
-                break;
+            JsonArrayBuilder spoiltOrderBuilder = Json.createArrayBuilder(getListAJsonArray(Constants.SPOILT_ORDERS_KEY));
+
+            Iterator<JsonValue> activeIterator = activeOrdersArray.iterator();
+            // find the matching order which needs to move from active to spoilt list
+            while (activeIterator.hasNext()) {
+                JsonObject order = activeIterator.next().asJsonObject();
+                if (orderId.equals(order.getString(Constants.ORDER_ID_KEY))) {
+                    spoiltOrderBuilder.add(0, order);
+                    break;
+                }
             }
+            spoiltList = spoiltOrderBuilder.build();
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("OrderService.orderSpoilt() - spoilt order " + orderId + " active count:"
+                        + activeOrdersArray.size() + " spoilt count:" + spoiltList.size()+" spoiltList:"+spoiltList);
+            }
+            // save new spoilt orders list in kar persistent storage
+            set(Constants.SPOILT_ORDERS_KEY, spoiltList);
+
         }
-        JsonArray spoiltList = spoiltOrderBuilder.build();
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info("OrderService.orderSpoilt() - spoilt order " + orderId + " active count:"
-                    + activeOrdersArray.size() + " spoilt count:" + spoiltList.size()+" spoiltList:"+spoiltList);
-        }
-        // save new spoilt orders list in kar persistent storage
-        set(Constants.SPOILT_ORDERS_KEY, spoiltList);
 
         return spoiltList.size();
     }
@@ -157,20 +162,22 @@ public class OrderService extends AbstractPersistentService {
      */
     public Order createOrder(OrderProperties orderProperties) {
         Order order = new Order(orderProperties);
+        synchronized(OrderService.class) {
+            JsonValue newOrder = Json.createObjectBuilder().add("orderId", order.getId())
+                    .add("voyageId", order.getVoyageId()).build();
 
-        JsonValue newOrder = Json.createObjectBuilder().add("orderId", order.getId())
-                .add("voyageId", order.getVoyageId()).build();
-
-        JsonArrayBuilder bookedOrderArrayBuilder = Json
-                .createArrayBuilder(getListAJsonArray(Constants.BOOKED_ORDERS_KEY));
-        bookedOrderArrayBuilder.add(newOrder);
-        JsonArray bookedOrdersArray = bookedOrderArrayBuilder.build();
-        set(Constants.BOOKED_ORDERS_KEY, bookedOrdersArray);
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info("OrderService.createOrder() - added future order id:" + order.getId() + " voyageId:"
-                    + order.getVoyageId() + " booked Order:" + bookedOrdersArray.size());
+            JsonArrayBuilder bookedOrderArrayBuilder = Json
+                    .createArrayBuilder(getListAJsonArray(Constants.BOOKED_ORDERS_KEY));
+            bookedOrderArrayBuilder.add(newOrder);
+            JsonArray bookedOrdersArray = bookedOrderArrayBuilder.build();
+            set(Constants.BOOKED_ORDERS_KEY, bookedOrdersArray);
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("OrderService.createOrder() - added future order id:" + order.getId() + " voyageId:"
+                        + order.getVoyageId() + " booked Order:" + bookedOrdersArray.size());
+            }
+            orderProperties.setOrderId(order.getId());
         }
-        orderProperties.setOrderId(order.getId());
+
         return order;
     }
     private void findVoyagesBeyondDepartureDate(JsonArray bookedOrders) throws VoyageNotFoundException {

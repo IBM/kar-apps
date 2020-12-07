@@ -217,17 +217,20 @@ public class OrderService extends AbstractPersistentService {
      * @return number of orders
      */
     public int getOrderCount(String orderListKindKey) {
-        try {
-            JsonValue o = get(orderListKindKey);
-            if (o == null) {
-                o = Json.createArrayBuilder().build();
-                set(orderListKindKey, o);
+        synchronized(OrderService.class) {
+            try {
+                JsonValue o = get(orderListKindKey);
+                if (o == null) {
+                    o = Json.createArrayBuilder().build();
+                    set(orderListKindKey, o);
+                }
+                JsonArray orderArray = o.asJsonArray();
+                return orderArray.size();
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "OrderService.getOrderCount() - Error - ", e);
             }
-            JsonArray orderArray = o.asJsonArray();
-            return orderArray.size();
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "OrderService.getOrderCount() - Error - ", e);
         }
+
         return 0;
     }
 
@@ -246,43 +249,46 @@ public class OrderService extends AbstractPersistentService {
      * @param voyageId Voyage id
      */
     private void voyageDeparted(String voyageId) {
-        List<JsonValue> newBookedList = getMutableOrderList(Constants.BOOKED_ORDERS_KEY);
-        JsonArray newActiveList = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
+        synchronized(OrderService.class) {
+            List<JsonValue> newBookedList = getMutableOrderList(Constants.BOOKED_ORDERS_KEY);
+            JsonArray newActiveList = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
 
-        JsonArrayBuilder activeOrderBuilder = Json.createArrayBuilder(newActiveList);
-        boolean voyageFound=false;
-        // Move booked to active list
-        Iterator<JsonValue> it = newBookedList.iterator();
-        while (it.hasNext()) {
-            JsonValue v = it.next();
-            if (voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY))) {
-                activeOrderBuilder.add(v);
-                // remove from booked
-                it.remove();
-                voyageFound = true;
+            JsonArrayBuilder activeOrderBuilder = Json.createArrayBuilder(newActiveList);
+            boolean voyageFound=false;
+            // Move booked to active list
+            Iterator<JsonValue> it = newBookedList.iterator();
+            while (it.hasNext()) {
+                JsonValue v = it.next();
+                if (voyageId.equals(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY))) {
+                    activeOrderBuilder.add(v);
+                    // remove from booked
+                    it.remove();
+                    voyageFound = true;
+                }
+            }
+            if ( !voyageFound) {
+                System.out.println("OrderService.voyageDeparted() - voyage:"+voyageId+" not in the booked list");
+            } else {
+                System.out.println("OrderService.voyageDeparted() - voyage:"+voyageId+" departed today:"+TimeUtils.getInstance().getCurrentDate());
+            }
+            JsonArray activeArray = activeOrderBuilder.build();
+            try {
+                set(Constants.ACTIVE_ORDERS_KEY, activeArray);
+                // findVoyagesBeyondArrivalDate(activeArray);
+
+                set(Constants.BOOKED_ORDERS_KEY, toJsonArray(newBookedList));
+                findVoyagesBeyondDepartureDate(toJsonArray(newBookedList));
+            } catch( VoyageNotFoundException e) {
+                logger.log(Level.WARNING,e.getMessage(),e);
+            }
+
+
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("OrderService.voyageDeparted() - voyage:" + voyageId + " booked voyage:"
+                        + newBookedList.size() + " active voyages:" + activeArray.size());
             }
         }
-        if ( !voyageFound) {
-            System.out.println("OrderService.voyageDeparted() - voyage:"+voyageId+" not in the booked list");
-        } else {
-            System.out.println("OrderService.voyageDeparted() - voyage:"+voyageId+" departed today:"+TimeUtils.getInstance().getCurrentDate());
-        }
-        JsonArray activeArray = activeOrderBuilder.build();
-        try {
-            set(Constants.ACTIVE_ORDERS_KEY, activeArray);
-           // findVoyagesBeyondArrivalDate(activeArray);
 
-            set(Constants.BOOKED_ORDERS_KEY, toJsonArray(newBookedList));
-            findVoyagesBeyondDepartureDate(toJsonArray(newBookedList));
-        } catch( VoyageNotFoundException e) {
-            logger.log(Level.WARNING,e.getMessage(),e);
-        }
-
-
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info("OrderService.voyageDeparted() - voyage:" + voyageId + " booked voyage:"
-                    + newBookedList.size() + " active voyages:" + activeArray.size());
-        }
     }
 
     private JsonArray getListAJsonArray(String orderListKind) {
@@ -326,31 +332,33 @@ public class OrderService extends AbstractPersistentService {
      * @param voyageId
      */
     private void voyageArrived(String voyageId) {
+        synchronized(OrderService.class) {
+            List<JsonValue> newSpoiltList = getMutableOrderList(Constants.SPOILT_ORDERS_KEY);
+            List<JsonValue> newActiveList = getMutableOrderList(Constants.ACTIVE_ORDERS_KEY);
 
-        List<JsonValue> newSpoiltList = getMutableOrderList(Constants.SPOILT_ORDERS_KEY);
-        List<JsonValue> newActiveList = getMutableOrderList(Constants.ACTIVE_ORDERS_KEY);
+            // remove voyage orders from the spoilt list
+            removeVoyageOrdersFromList(voyageId, newSpoiltList);
+            // remove voyage orders from the active list
+            removeVoyageOrdersFromList(voyageId, newActiveList);
+            System.out.println("OrderService.voyageArrived() - removed voyage:"+voyageId+" from in-transit list");
+            try {
+                // save new spoilt list in the Kar persistent storage
+                set(Constants.SPOILT_ORDERS_KEY, toJsonArray(newSpoiltList));
 
-        // remove voyage orders from the spoilt list
-        removeVoyageOrdersFromList(voyageId, newSpoiltList);
-        // remove voyage orders from the active list
-        removeVoyageOrdersFromList(voyageId, newActiveList);
-    System.out.println("OrderService.voyageArrived() - removed voyage:"+voyageId+" from in-transit list");
-        try {
-            // save new spoilt list in the Kar persistent storage
-            set(Constants.SPOILT_ORDERS_KEY, toJsonArray(newSpoiltList));
+                // save new active list in the Kar persistent storage
+                set(Constants.ACTIVE_ORDERS_KEY, toJsonArray(newActiveList));
+                findVoyagesBeyondArrivalDate(toJsonArray(newActiveList));
 
-            // save new active list in the Kar persistent storage
-            set(Constants.ACTIVE_ORDERS_KEY, toJsonArray(newActiveList));
-            findVoyagesBeyondArrivalDate(toJsonArray(newActiveList));
+            } catch( VoyageNotFoundException e ) {
+                logger.log(Level.WARNING,e.getMessage(),e);
+            }
 
-        } catch( VoyageNotFoundException e ) {
-            logger.log(Level.WARNING,e.getMessage(),e);
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("OrderService.voyageArrived() - voyageId:" + voyageId
+                        + " - Active Orders:" + newActiveList.size() + " Spoilt Orders:" + newSpoiltList.size());
+            }
         }
 
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info("OrderService.voyageArrived() - voyageId:" + voyageId
-                    + " - Active Orders:" + newActiveList.size() + " Spoilt Orders:" + newSpoiltList.size());
-        }
     }
 
     /**

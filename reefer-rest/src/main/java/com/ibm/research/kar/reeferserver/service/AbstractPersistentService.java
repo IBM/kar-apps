@@ -23,13 +23,12 @@ public abstract class AbstractPersistentService {
       // local utility to update local cache and persistent state
       protected JsonValue set(String key, JsonValue value) {
         JsonValue retValue;
-        synchronized( AbstractPersistentService.class) {
-            if (null == persistentData) {
-                persistentData = new HashMap<>();
-            }
-            persistentData.put(key, value);
-            retValue = Json.createValue(Kar.actorSetState(aref, key, value));
+        if (null == persistentData) {
+            persistentData = new HashMap<>();
         }
+        persistentData.put(key, value);
+        retValue = Json.createValue(Kar.actorSetState(aref, key, value));
+
         return retValue;
       }
       protected Map<String, JsonValue> getSubMap(String subMapName) {

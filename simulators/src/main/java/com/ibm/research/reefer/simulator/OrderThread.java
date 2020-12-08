@@ -197,7 +197,9 @@ public class OrderThread extends Thread {
                 int otime = (int)((System.nanoTime()-ordersnap)/1000000);
                 if (SimulatorService.os.addSuccessful(otime)) {
                   // orderstats indicates an outlier
-                  logger.warning("orderthread: order latency outlier "+ entry.getKey() +" ===> "+otime);
+                  String orderid = rsp.asJsonObject().getString("orderId");
+                  logger.warning("orderthread: order latency outlier voyage="+ entry.getKey() +
+                          " order="+orderid + " ===> "+otime);
                 }
               }
             }

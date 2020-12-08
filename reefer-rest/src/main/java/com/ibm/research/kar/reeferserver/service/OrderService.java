@@ -261,7 +261,6 @@ public class OrderService extends AbstractPersistentService {
             JsonArray newActiveList = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
 
             JsonArrayBuilder activeOrderBuilder = Json.createArrayBuilder(newActiveList);
-            boolean voyageFound=false;
             // Move booked to active list
             Iterator<JsonValue> it = newBookedList.iterator();
             while (it.hasNext()) {
@@ -270,13 +269,7 @@ public class OrderService extends AbstractPersistentService {
                     activeOrderBuilder.add(v);
                     // remove from booked
                     it.remove();
-                    voyageFound = true;
                 }
-            }
-            if ( !voyageFound) {
-                System.out.println("OrderService.voyageDeparted() - voyage:"+voyageId+" not in the booked list");
-            } else {
-                System.out.println("OrderService.voyageDeparted() - voyage:"+voyageId+" departed today:"+TimeUtils.getInstance().getCurrentDate());
             }
             JsonArray activeArray = activeOrderBuilder.build();
             try {
@@ -288,10 +281,9 @@ public class OrderService extends AbstractPersistentService {
             } catch( VoyageNotFoundException e) {
                 logger.log(Level.WARNING,e.getMessage(),e);
             }
-
-
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("OrderService.voyageDeparted() - voyage:" + voyageId + " booked voyage:"
+                logger.info("OrderService.voyageDeparted() - voyage:" + voyageId + " departed today:"+
+                        TimeUtils.getInstance().getCurrentDate()+" booked voyages:"
                         + newBookedList.size() + " active voyages:" + activeArray.size());
             }
         }
@@ -347,7 +339,6 @@ public class OrderService extends AbstractPersistentService {
             removeVoyageOrdersFromList(voyageId, newSpoiltList);
             // remove voyage orders from the active list
             removeVoyageOrdersFromList(voyageId, newActiveList);
-            System.out.println("OrderService.voyageArrived() - removed voyage:"+voyageId+" from in-transit list");
             try {
                 // save new spoilt list in the Kar persistent storage
                 set(Constants.SPOILT_ORDERS_KEY, toJsonArray(newSpoiltList));

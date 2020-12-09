@@ -6,9 +6,19 @@
 //
 
 const redis = require("redis");
-const client = redis.createClient({port: process.env.REDIS_PORT,
-				   host: process.env.REDIS_HOST,
-				   password: process.env.REDIS_PASSWORD});
+var client = null;
+if (process.env.REDIS_ENABLE_TLS) {
+  const ca = Buffer.from(process.env.REDIS_CERTIFICATE, 'base64').toString('utf-8')
+  const tls = {ca};
+  const redis_url = 'rediss://admin:' + process.env.REDIS_PASSWORD + '@' +
+	process.env.REDIS_HOST + ':' + process.env.REDIS_PORT;
+  client = redis.createClient(redis_url, {tls});
+}
+else {
+  client = redis.createClient({port: process.env.REDIS_PORT,
+ 			       host: process.env.REDIS_HOST,
+ 			       password: process.env.REDIS_PASSWORD});
+}
 const util = require('util');
 
 const hgetall = util.promisify(client.hgetall).bind(client);

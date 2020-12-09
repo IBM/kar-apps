@@ -68,7 +68,6 @@ public class VoyageService extends AbstractPersistentService {
                 String key = iterator.next();
                 if (key.equals(voyageId)) {
                     iterator.remove();
-                    break;
                 }
             }
         }

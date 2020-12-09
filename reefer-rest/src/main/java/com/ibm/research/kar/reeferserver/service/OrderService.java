@@ -281,8 +281,8 @@ public class OrderService extends AbstractPersistentService {
             } catch( VoyageNotFoundException e) {
                 logger.log(Level.WARNING,e.getMessage(),e);
             }
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("OrderService.voyageDeparted() - voyage:" + voyageId + " departed today:"+
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("OrderService.voyageDeparted() - voyage:" + voyageId + " departed today:"+
                         TimeUtils.getInstance().getCurrentDate()+" booked voyages:"
                         + newBookedList.size() + " active voyages:" + activeArray.size());
             }
@@ -351,8 +351,8 @@ public class OrderService extends AbstractPersistentService {
                 logger.log(Level.WARNING,e.getMessage(),e);
             }
 
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("OrderService.voyageArrived() - voyageId:" + voyageId
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("OrderService.voyageArrived() - voyageId:" + voyageId
                         + " - Active Orders:" + newActiveList.size() + " Spoilt Orders:" + newSpoiltList.size());
             }
         }

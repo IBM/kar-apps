@@ -1,8 +1,5 @@
 import { Component, OnInit, ViewChild, SystemJsNgModuleLoader } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { MatHorizontalStepper } from '@angular/material/stepper';
 import { Voyage } from 'src/app/core/models/voyage';
 import { RestService } from 'src/app/core/services/rest.service';
 import { RouteConfigLoadEnd } from '@angular/router';
@@ -24,7 +21,6 @@ var SockJs = require("sockjs-client");
 var Stomp = require("stompjs");
 
 @Component({
-//  animations: [appModuleAnimation()],
   selector: 'app-ship-schedule',
   templateUrl: './ship-schedule.component.html',
   styleUrls: ['./ship-schedule.component.scss']
@@ -38,9 +34,6 @@ export class ShipScheduleComponent implements OnInit {
   progressbarValue = 0;
   voyages: Voyage[] = [];
   voyageDataSource = new MatTableDataSource(this.voyages);
-  @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
-  @ViewChild(MatSort, {static: true}) sort: MatSort;
-  @ViewChild(MatHorizontalStepper) stepper: MatHorizontalStepper;
   expandedElement:Voyage | null;
   shipTableColumns: string[] = [ 'vessel', 'progress', 'orders','maxCapacity', 'freeCapacity'];
   stompClient:any;
@@ -53,7 +46,6 @@ export class ShipScheduleComponent implements OnInit {
   connect() {
     this.stompClient = this.webSocket.connect();
     this.stompClient.connect({}, frame => {
-       console.log('ShipScheduleComponent - waiting for events on /topic/voyages');
        // Subscribe to notification topic
           this.stompClient.subscribe('/topic/voyages', (event:any) => {
 
@@ -66,7 +58,8 @@ export class ShipScheduleComponent implements OnInit {
               d = d.replace(/"/g,"");
               this.date = d.substr(0,10);
              // console.log('::::::'+this.voyages);
-              this.voyageDataSource.data = this.voyages;
+            //  this.voyageDataSource.data = new MatTableDataSource(this.voyages);//this.voyages;
+               this.voyageDataSource = new MatTableDataSource(this.voyages);
             }
 
           })
@@ -94,10 +87,6 @@ export class ShipScheduleComponent implements OnInit {
    // connect to back end server via Websocket
    this.connect();
 
-    this.restService.currentDate().subscribe((data) => {
-      console.log("nextDay() - Current Date:" + data.substr(0,10));
-      this.date = data.substr(0,10);
-    });
     this.restService.getSimulatorDelay().subscribe((data) => {
      // console.log(data);
       this.rate = data;
@@ -107,7 +96,7 @@ export class ShipScheduleComponent implements OnInit {
         this.autoSimButtonLabel = "START";
       }
     });
-    this.getActiveVoyages();
+   // this.getActiveVoyages();
   }
 
   update(event: Event) {

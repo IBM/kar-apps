@@ -144,14 +144,8 @@ public class ScheduleService {
 
     public List<Voyage> getMatchingSchedule(Instant startDate, Instant endDate) {
         List<Voyage> schedule = new ArrayList<>();
-        if (masterSchedule.isEmpty()) {
-            try {
-                scheduler.getRoutes();
-                masterSchedule = scheduler.generateSchedule();
-            } catch (Exception e) {
-                logger.log(Level.WARNING,"",e);
-            }
-        }
+        createShipScheduleIfEmpty();
+
         for (Voyage voyage : masterSchedule) {
             if ((voyage.getSailDateObject().equals(startDate) || voyage.getSailDateObject().isAfter(startDate))
                     && (voyage.getSailDateObject().equals(endDate) || voyage.getSailDateObject().isBefore(endDate))) {
@@ -164,17 +158,7 @@ public class ScheduleService {
 
     public List<Voyage> getMatchingSchedule(String origin, String destination, Instant date) {
         List<Voyage> schedule = new ArrayList<>();
-        if (masterSchedule.isEmpty()) {
-            try {
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info("ScheduleService.getMatchingSchedule - Master Schedule is empty, generating new one");
-                }
-                scheduler.getRoutes();
-                masterSchedule = scheduler.generateSchedule();
-            } catch (Exception e) {
-                logger.log(Level.WARNING,"",e);
-            }
-        }
+        createShipScheduleIfEmpty();
         for (Voyage voyage : masterSchedule) {
 
             if ((voyage.getSailDateObject().equals(date) || voyage.getSailDateObject().isAfter(date))
@@ -198,14 +182,8 @@ public class ScheduleService {
     public List<Voyage> getActiveSchedule() {
         Instant currentDate = TimeUtils.getInstance().getCurrentDate();
         List<Voyage> activeSchedule = new ArrayList<>();
-        if (masterSchedule.isEmpty()) {
-            try {
-                scheduler.getRoutes();
-                masterSchedule = scheduler.generateSchedule();
-            } catch (Exception e) {
-                logger.log(Level.WARNING,"",e);
-            }
-        }
+
+        createShipScheduleIfEmpty();
         if (logger.isLoggable(Level.FINE)) {
             StringBuilder sb = new StringBuilder();
             masterSchedule.forEach(voyage -> {
@@ -236,39 +214,45 @@ public class ScheduleService {
         }
         return activeSchedule;
     }
+    private void createShipScheduleIfEmpty() {
+       synchronized(ScheduleService.class) {
+           if (masterSchedule.isEmpty()) {
+               try {
+                   scheduler.getRoutes();
+                   masterSchedule = scheduler.generateSchedule();
+               } catch (Exception e) {
+                   logger.log(Level.WARNING,"",e);
+               }
+           }
+       }
 
+    }
     public List<Voyage> get() {
         try {
             scheduler.getRoutes();
         } catch (Exception e) {
             logger.log(Level.WARNING,"",e);
         }
+        LinkedList<Voyage> sortedSchedule;
+        synchronized(ScheduleService.class) {
+            sortedSchedule = scheduler.generateSchedule();
+            if (masterSchedule.isEmpty()) {
+                masterSchedule.addAll(sortedSchedule);
+            } else {
+                Voyage lastVoyageFromMasterSchedule = masterSchedule.getLast();
 
-        LinkedList<Voyage> sortedSchedule = scheduler.generateSchedule();
-        if (masterSchedule.size() == 0) {
-            masterSchedule.addAll(sortedSchedule);
-        } else {
-            Voyage lastVoyageFromMasterSchedule = masterSchedule.getLast();
-
-            for (Voyage voyage : sortedSchedule) {
-                if (voyage.getSailDateObject().isAfter(lastVoyageFromMasterSchedule.getSailDateObject())) {
-                    masterSchedule.add(voyage);
+                for (Voyage voyage : sortedSchedule) {
+                    if (voyage.getSailDateObject().isAfter(lastVoyageFromMasterSchedule.getSailDateObject())) {
+                        masterSchedule.add(voyage);
+                    }
                 }
             }
         }
 
+
         return new ArrayList<Voyage>(sortedSchedule);
     }
-/*
-    public Voyage getVoyage(String voyageId) throws VoyageNotFoundException {
-        for (Voyage voyage : masterSchedule) {
-            if (voyage.getId().equals(voyageId)) {
-                return voyage;
-            }
-        }
-        throw new VoyageNotFoundException("Unable to find voyage with ID:" + voyageId);
-    }
-*/
+
     public int updateFreeCapacity(String voyageId, int reeferCount)
             throws VoyageNotFoundException, ShipCapacityExceeded {
         Voyage voyage = getVoyage(voyageId);

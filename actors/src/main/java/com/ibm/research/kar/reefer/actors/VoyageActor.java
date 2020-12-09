@@ -130,7 +130,7 @@ public class VoyageActor extends BaseActor {
                             orders.size() + " arrival processing: " + (System.nanoTime() - snapshot) / 1000000);
                 }
                 // voyage arrived, no longer need the state
-                Kar.actorDeleteAllState(this);
+                Kar.actorRemove(this);
             } // check if ship departed its origin port
             else if ((daysAtSea == 1) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
                 voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());

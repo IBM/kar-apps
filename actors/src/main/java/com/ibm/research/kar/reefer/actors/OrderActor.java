@@ -101,7 +101,7 @@ public class OrderActor extends BaseActor {
             changeOrderStatus(OrderStatus.DELIVERED);
             // as soon as the order is delivered and reefers are released we clear actor
             // state
-            Kar.actorDeleteAllState(this);
+            Kar.actorRemove(this);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {

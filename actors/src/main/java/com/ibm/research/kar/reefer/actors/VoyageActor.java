@@ -122,6 +122,10 @@ public class VoyageActor extends BaseActor {
             String restMethodToCall = "";
             // if ship's current date matches arrival date, the ship arrived
             if (shipArrived(shipCurrentDate, voyage)) {
+                // Arriving voyage must be in DEPARTED state
+                if ( !VoyageStatus.DEPARTED.equals( getVoyageStatus()) ) {
+                    logger.log(Level.WARNING,"VoyageActor.changePosition() - voyage:"+voyage.getId()+" arrived BUT its expected state is not DEPARTED. Instead it is "+getVoyageStatus());
+                }
                 voyageStatus = Json.createValue(VoyageStatus.ARRIVED.name());
                 long snapshot = System.nanoTime();
                 processArrivedVoyage(voyage, daysAtSea);

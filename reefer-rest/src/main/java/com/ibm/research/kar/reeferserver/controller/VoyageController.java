@@ -125,12 +125,12 @@ public class VoyageController {
   public List<Voyage> getActiveVoyages() {
     return activeVoyages();
   }
-
+/*
   @GetMapping("/voyage/upcoming")
   public List<Voyage> getShippingSchedule() {
     return shipScheduleService.get();
   }
-
+*/
   @GetMapping("/voyage/state/{id}")
   public Voyage getVoyageState(@PathVariable("id") String id) throws VoyageNotFoundException {
     return shipScheduleService.getVoyage(id);

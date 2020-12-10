@@ -144,8 +144,6 @@ public class ScheduleService {
 
     public List<Voyage> getMatchingSchedule(Instant startDate, Instant endDate) {
         List<Voyage> schedule = new ArrayList<>();
-        createShipScheduleIfEmpty();
-
         for (Voyage voyage : masterSchedule) {
             if ((voyage.getSailDateObject().equals(startDate) || voyage.getSailDateObject().isAfter(startDate))
                     && (voyage.getSailDateObject().equals(endDate) || voyage.getSailDateObject().isBefore(endDate))) {
@@ -158,7 +156,6 @@ public class ScheduleService {
 
     public List<Voyage> getMatchingSchedule(String origin, String destination, Instant date) {
         List<Voyage> schedule = new ArrayList<>();
-        createShipScheduleIfEmpty();
         for (Voyage voyage : masterSchedule) {
 
             if ((voyage.getSailDateObject().equals(date) || voyage.getSailDateObject().isAfter(date))
@@ -182,8 +179,6 @@ public class ScheduleService {
     public List<Voyage> getActiveSchedule() {
         Instant currentDate = TimeUtils.getInstance().getCurrentDate();
         List<Voyage> activeSchedule = new ArrayList<>();
-
-        createShipScheduleIfEmpty();
         if (logger.isLoggable(Level.FINE)) {
             StringBuilder sb = new StringBuilder();
             masterSchedule.forEach(voyage -> {
@@ -214,19 +209,16 @@ public class ScheduleService {
         }
         return activeSchedule;
     }
-    private void createShipScheduleIfEmpty() {
-       synchronized(ScheduleService.class) {
-           if (masterSchedule.isEmpty()) {
-               try {
-                   scheduler.getRoutes();
-                   masterSchedule = scheduler.generateSchedule();
-               } catch (Exception e) {
-                   logger.log(Level.WARNING,"",e);
-               }
-           }
-       }
-
+    public void generateShipSchedule() {
+        try {
+            scheduler.getRoutes();
+            masterSchedule = scheduler.generateSchedule();
+            System.out.println("ScheduleService.generateShipSchedule() - generated initial master schedule");
+        } catch (Exception e) {
+            logger.log(Level.WARNING,"",e);
+        }
     }
+
     public List<Voyage> get() {
         try {
             scheduler.getRoutes();

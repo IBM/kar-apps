@@ -18,7 +18,6 @@ public class ShipController {
 
 	@GetMapping("/fleets")
 	public List<Fleet> getAllFleets() {
-		System.out.println("getAllFleets() - Got New Request");
 		return fleetService.getFleets();
 	}
 }

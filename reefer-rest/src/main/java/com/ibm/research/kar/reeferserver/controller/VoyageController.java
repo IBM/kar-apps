@@ -303,8 +303,6 @@ public class VoyageController {
       int totalActiveOrders = 0;
       for (Voyage voyage : activeVoyages) {
         totalActiveOrders += voyage.getOrderCount();
-        if (voyage.getOrderCount() > 0) {
-        }
       }
       gui.updateInTransitOrderCount(totalActiveOrders);
       gui.updateFutureOrderCount(orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY));

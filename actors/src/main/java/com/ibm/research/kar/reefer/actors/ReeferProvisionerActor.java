@@ -339,7 +339,10 @@ public class ReeferProvisionerActor extends BaseActor {
             }
             // replace reefer map in kar storage
             Kar.actorSubMapClear(this,Constants.REEFER_MAP_KEY);
-            Kar.actorSetMultipleState(this,Constants.REEFER_MAP_KEY,map );
+            // if map is empty kar will complain
+            if ( !map.isEmpty() ) {
+                Kar.actorSetMultipleState(this,Constants.REEFER_MAP_KEY,map );
+            }
             // forces update thread to send reefer counts
             valuesChanged.set(true);
             if (logger.isLoggable(Level.FINE)) {
@@ -635,10 +638,7 @@ public class ReeferProvisionerActor extends BaseActor {
                     + " from maintenance. Today:" + today + " reefer release date:" + reefer.getMaintenanceReleaseDate()
                     + " state:" + reefer.getState().name());
         }
-        reefer.setState(State.UNALLOCATED);
-        // clear off maintenance date
-        reefer.setMaintenanceReleaseDate(null);
-       //updateStore(reefer);
+        reefer.reset();
         Kar.actorDeleteState(this, Constants.REEFER_MAP_KEY, String.valueOf(reefer.getId()));
         Kar.actorDeleteState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reefer.getId()));
     }
@@ -685,7 +685,7 @@ public class ReeferProvisionerActor extends BaseActor {
                     logger.fine("ReeferProvisioner.unreserveReefer() - spoilt reefer:" + reeferId
 				+ " arrived - changed state to OnMaintenance - total spoilt reefers:"+spoiltTotalCount.get());
                 }
-            } else {
+            } else if (!reeferMasterInventory[reeferId].getState().equals(State.MAINTENANCE)){
                 if (logger.isLoggable(Level.FINE)) {
                     logger.fine("ReeferProvisioner.unreserveReefer() - releasing reefer:" + reeferId);
                 }

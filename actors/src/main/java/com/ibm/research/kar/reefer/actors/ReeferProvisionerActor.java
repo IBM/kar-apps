@@ -371,7 +371,7 @@ public class ReeferProvisionerActor extends BaseActor {
                 if ( reefer != null ) {
                     if ( reefer.getVoyageId().equals(voyageId)) {
                         unreserveReefer(reefer.getId());
-                    } else {
+                    } else if (!reefer.getState().equals(State.UNALLOCATED)) {  // keep in-transit and booked in the store
                         map.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
                     }
                 }

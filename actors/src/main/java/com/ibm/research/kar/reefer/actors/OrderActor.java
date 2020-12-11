@@ -85,23 +85,10 @@ public class OrderActor extends BaseActor {
                     "OrderActor.delivered() - entry - id:"+getId());
         }
         try {
-
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine(String.format("OrderActor.delivered() -  orderId: %s voyageId: %s reefers: %d ",
                         getId(), orderState.getVoyageId(), orderState.getReeferMap() == null ? 0 : orderState.getReeferMap().size()));
             }
-            /*
-            if (orderState.getReeferMap() != null) {
-                // pass reefer ids to the ProvisionerActor
-                JsonArrayBuilder reefersToRelease = Json.createArrayBuilder(orderState.getReeferMap().keySet());
-                // message the ReeferProvisionerActor to release reefers in a given list
-                actorCall(actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
-                        "unreserveReefers",
-                        Json.createObjectBuilder().add(Constants.REEFERS_KEY, reefersToRelease).build());
-            }
-
-             */
-            changeOrderStatus(OrderStatus.DELIVERED);
             // as soon as the order is delivered and reefers are released we clear actor
             // state
             Kar.actorRemove(this);
@@ -135,24 +122,6 @@ public class OrderActor extends BaseActor {
         }
         try {
             changeOrderStatus(OrderStatus.INTRANSIT);
-            /*
-            // Notify ReeferProvisioner that the order is in-transit
-            if (!orderState.getReeferMap().isEmpty()) {
-                ActorRef reeferProvisionerActor = Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
-                        ReeferAppConfig.ReeferProvisionerId);
-                JsonObject params = Json.createObjectBuilder().add("in-transit", orderState.getReeferMap().size()).build();
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine(
-                            "OrderActor.departed() - calling ReeferProvisionerActor updateInTransit - order:"+getId());
-                }
-                actorCall(reeferProvisionerActor, "updateInTransit", params);
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine(String.format("OrderActor.departed() - orderId: %s voyageId: %s in-transit reefers: %d",
-                            getId(), orderState.getVoyageId(), orderState.getReeferMap().size()));
-                }
-            }
-
-             */
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {

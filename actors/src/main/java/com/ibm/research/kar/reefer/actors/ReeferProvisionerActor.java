@@ -259,6 +259,10 @@ public class ReeferProvisionerActor extends BaseActor {
                 if ( reefer != null ) {
                     if ( reefer.getVoyageId().equals(voyageId)) {
                         voyageReefersInTransitCount++;
+                        reefer.setState(State.INTRANSIT);
+                        // The INTRANSIT state is not currently being used in ReeferProvisioner. If it needs to be
+                        // checked save the reefer map to persist the change by first deleting reefer map in
+                        // kar storage and saving the updated map.
                     }
                 }
             }
@@ -270,6 +274,7 @@ public class ReeferProvisionerActor extends BaseActor {
                 // subtract from booked and add to in-transit
                 bookedTotalCount.addAndGet(-voyageReefersInTransitCount);
             } else {
+                logger.log(Level.WARNING, "ReeferProvisioner.voyageReefersDeparted() - unexpected underflow of bookedTotalCount which will result in negative value");
                 bookedTotalCount.set(0);
             }
 
@@ -346,49 +351,6 @@ public class ReeferProvisionerActor extends BaseActor {
 
     }
 
-    /**
-     * Release given reefers back to inventory
-     *
-     * @param message
-     * @return
-     */
-    @Remote
-    public JsonObject unreserveReefers(JsonObject message) {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine(
-                    "ReeferProvisionerActor.unreserveReefers() - entry");
-        }
-        JsonObjectBuilder reply = Json.createObjectBuilder();
-        try {
-            // extract reefer ids we need to release
-            JsonArray reeferIds = message.getJsonArray(Constants.REEFERS_KEY);
-            boolean first = true;  // log the first reefer being released
-            for (JsonValue reeferId : reeferIds) {
-                if ( first ) {
-                    first = false;
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.fine("ReeferProvisionerActor.unreserveReefers() - releasing reefer " + ((JsonString) reeferId).getString());
-                    }
-                }
-                unreserveReefer(Integer.valueOf(((JsonString) reeferId).getString()));
-            }
-            // forces update thread to send reefer counts
-            valuesChanged.set(true);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("ReeferProvisionerActor.unreserveReefers() - released reefers " + " total booked: "
-                        + bookedTotalCount.get() + " totalInTransit:" + inTransitTotalCount.get());
-            }
-        } catch (Throwable e) {
-            logger.log(Level.WARNING, "ReeferProvisioner.unreserveReefers() - Error ", e);
-        } finally {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine(
-                        "ReeferProvisionerActor.unreserveReefers() - exit");
-            }
-        }
-
-        return reply.build();
-    }
     /**
      * Release given reefers back to inventory
      *
@@ -767,8 +729,6 @@ public class ReeferProvisionerActor extends BaseActor {
                     logger.fine("ReeferProvisioner.unreserveReefer() - releasing reefer:" + reeferId);
                 }
                 reeferMasterInventory[reeferId].reset();
-                // remove reefer from kar storage
-      //          Kar.actorDeleteState(this, Constants.REEFER_MAP_KEY, String.valueOf(reeferId));
             }
             inTransitTotalCount.decrementAndGet();
         } else {

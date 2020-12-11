@@ -96,7 +96,7 @@ export class ShipScheduleComponent implements OnInit {
         this.autoSimButtonLabel = "START";
       }
     });
-   // this.getActiveVoyages();
+    this.getActiveVoyages();
   }
 
   update(event: Event) {

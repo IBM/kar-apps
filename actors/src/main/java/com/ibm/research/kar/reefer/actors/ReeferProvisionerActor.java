@@ -205,45 +205,6 @@ public class ReeferProvisionerActor extends BaseActor {
         return Json.createObjectBuilder().build();
     }
 
-    /**
-     * Given numbers of reefers currently in-transit update total booked and total in-transit counts
-     *
-     * @param message
-     * @return
-     */
-    @Remote
-    public JsonObject updateInTransit(JsonObject message) {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine(
-                    "ReeferProvisionerActor.updateInTransit() - entry");
-        }
-        JsonObjectBuilder reply = Json.createObjectBuilder();
-        try {
-
-            int newInTransit = message.getInt("in-transit");
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("ReeferProvisionerActor.updateInTransit() - message:" + message + " update reefers in transit:" + newInTransit);
-            }
-            if ((bookedTotalCount.get() - newInTransit) >= 0) {
-                // subtract from booked and add to in-transit
-                bookedTotalCount.addAndGet(-newInTransit);
-            } else {
-                bookedTotalCount.set(0);
-            }
-
-            inTransitTotalCount.addAndGet(newInTransit);
-            valuesChanged.set(true);
-        } catch( Exception e) {
-            logger.log(Level.WARNING, "ReeferProvisioner.updateInTransit() - Error ", e);
-        } finally {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine(
-                        "ReeferProvisionerActor.updateInTransit() - exit");
-            }
-        }
-
-        return reply.build();
-    }
     @Remote
     public JsonObject voyageReefersDeparted(JsonObject message) {
         if (logger.isLoggable(Level.FINE)) {
@@ -377,7 +338,7 @@ public class ReeferProvisionerActor extends BaseActor {
                 }
             }
             // replace reefer map in kar storage
-            Kar.actorDeleteState(this,Constants.REEFER_MAP_KEY);
+            Kar.actorSubMapClear(this,Constants.REEFER_MAP_KEY);
             Kar.actorSetMultipleState(this,Constants.REEFER_MAP_KEY,map );
             // forces update thread to send reefer counts
             valuesChanged.set(true);

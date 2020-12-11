@@ -244,7 +244,48 @@ public class ReeferProvisionerActor extends BaseActor {
 
         return reply.build();
     }
+    @Remote
+    public JsonObject voyageReefersDeparted(JsonObject message) {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine(
+                    "ReeferProvisionerActor.voyageReefersDeparted() - entry");
+        }
+        JsonObjectBuilder reply = Json.createObjectBuilder();
+        try {
+            String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
+            // count voyage reefers in transit
+            int voyageReefersInTransitCount=0;
+            for(ReeferDTO reefer : reeferMasterInventory ) {
+                if ( reefer != null ) {
+                    if ( reefer.getVoyageId().equals(voyageId)) {
+                        voyageReefersInTransitCount++;
+                    }
+                }
+            }
 
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("ReeferProvisionerActor.voyageReefersDeparted() - message:" + message + " update reefers in transit:" + voyageReefersInTransitCount);
+            }
+            if ((bookedTotalCount.get() - voyageReefersInTransitCount) >= 0) {
+                // subtract from booked and add to in-transit
+                bookedTotalCount.addAndGet(-voyageReefersInTransitCount);
+            } else {
+                bookedTotalCount.set(0);
+            }
+
+            inTransitTotalCount.addAndGet(voyageReefersInTransitCount);
+            valuesChanged.set(true);
+        } catch( Exception e) {
+            logger.log(Level.WARNING, "ReeferProvisioner.voyageReefersDeparted() - Error ", e);
+        } finally {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine(
+                        "ReeferProvisionerActor.voyageReefersDeparted() - exit");
+            }
+        }
+
+        return reply.build();
+    }
     /**
      * Reserve enough reefers to fill with order products.
      *
@@ -343,6 +384,51 @@ public class ReeferProvisionerActor extends BaseActor {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine(
                         "ReeferProvisionerActor.unreserveReefers() - exit");
+            }
+        }
+
+        return reply.build();
+    }
+    /**
+     * Release given reefers back to inventory
+     *
+     * @param message
+     * @return
+     */
+    @Remote
+    public JsonObject releaseVoyageReefers(JsonObject message) {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine(
+                    "ReeferProvisionerActor.releaseVoyageReefers() - entry");
+        }
+        JsonObjectBuilder reply = Json.createObjectBuilder();
+        try {
+            Map<String, JsonValue> map = new HashMap<>();
+            String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
+            for(ReeferDTO reefer : reeferMasterInventory ) {
+                if ( reefer != null ) {
+                    if ( reefer.getVoyageId().equals(voyageId)) {
+                        unreserveReefer(reefer.getId());
+                    } else {
+                        map.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
+                    }
+                }
+            }
+            // replace reefer map in kar storage
+            Kar.actorDeleteState(this,Constants.REEFER_MAP_KEY);
+            Kar.actorSetMultipleState(this,Constants.REEFER_MAP_KEY,map );
+            // forces update thread to send reefer counts
+            valuesChanged.set(true);
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("ReeferProvisionerActor.releaseVoyageReefers() - released reefers " + " total booked: "
+                        + bookedTotalCount.get() + " totalInTransit:" + inTransitTotalCount.get());
+            }
+        } catch (Throwable e) {
+            logger.log(Level.WARNING, "ReeferProvisioner.releaseVoyageReefers() - Error ", e);
+        } finally {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine(
+                        "ReeferProvisionerActor.releaseVoyageReefers() - exit");
             }
         }
 
@@ -682,7 +768,7 @@ public class ReeferProvisionerActor extends BaseActor {
                 }
                 reeferMasterInventory[reeferId].reset();
                 // remove reefer from kar storage
-                Kar.actorDeleteState(this, Constants.REEFER_MAP_KEY, String.valueOf(reeferId));
+      //          Kar.actorDeleteState(this, Constants.REEFER_MAP_KEY, String.valueOf(reeferId));
             }
             inTransitTotalCount.decrementAndGet();
         } else {

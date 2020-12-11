@@ -90,6 +90,7 @@ public class OrderActor extends BaseActor {
                 logger.fine(String.format("OrderActor.delivered() -  orderId: %s voyageId: %s reefers: %d ",
                         getId(), orderState.getVoyageId(), orderState.getReeferMap() == null ? 0 : orderState.getReeferMap().size()));
             }
+            /*
             if (orderState.getReeferMap() != null) {
                 // pass reefer ids to the ProvisionerActor
                 JsonArrayBuilder reefersToRelease = Json.createArrayBuilder(orderState.getReeferMap().keySet());
@@ -98,6 +99,8 @@ public class OrderActor extends BaseActor {
                         "unreserveReefers",
                         Json.createObjectBuilder().add(Constants.REEFERS_KEY, reefersToRelease).build());
             }
+
+             */
             changeOrderStatus(OrderStatus.DELIVERED);
             // as soon as the order is delivered and reefers are released we clear actor
             // state
@@ -132,6 +135,7 @@ public class OrderActor extends BaseActor {
         }
         try {
             changeOrderStatus(OrderStatus.INTRANSIT);
+            /*
             // Notify ReeferProvisioner that the order is in-transit
             if (!orderState.getReeferMap().isEmpty()) {
                 ActorRef reeferProvisionerActor = Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
@@ -147,6 +151,8 @@ public class OrderActor extends BaseActor {
                             getId(), orderState.getVoyageId(), orderState.getReeferMap().size()));
                 }
             }
+
+             */
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {

@@ -220,6 +220,9 @@ public class VoyageActor extends BaseActor {
             messageOrderActor("delivered", orderId);
         });
         messageRest("/voyage/update/arrived", daysAtSea);
+        actorCall(actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+                "releaseVoyageReefers",
+                Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).build());
     }
 
     /**
@@ -230,17 +233,28 @@ public class VoyageActor extends BaseActor {
      */
     private void processDepartedVoyage(Voyage voyage, int daysAtSea) {
         if (logger.isLoggable(Level.INFO)) {
-            logger.info("VoyageActor.changePosition() voyageId=" + voyage.getId()
+            logger.info("VoyageActor.processDepartedVoyage() voyageId=" + voyage.getId()
                     + " has DEPARTED ------------------------------------------------------");
         }
         orders.values().forEach(orderId -> {
             if (logger.isLoggable(Level.FINE)) {
-                logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId()
+                logger.fine("VoyageActor.processDepartedVoyage() voyageId=" + voyage.getId()
                         + " Notifying Order Actor of departure - OrderID:" + orderId);
             }
             messageOrderActor("departed", orderId);
         });
         messageRest("/voyage/update/departed", daysAtSea);
+
+
+
+        ActorRef reeferProvisionerActor = Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
+                ReeferAppConfig.ReeferProvisionerId);
+        JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).build();
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine(
+                    "VoyageActor.processDepartedVoyage() - calling ReeferProvisionerActor voyageReefersDeparted - voyageId:"+getId());
+        }
+        actorCall(reeferProvisionerActor, "voyageReefersDeparted", params);
 
     }
 

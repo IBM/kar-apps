@@ -155,6 +155,9 @@ public class OrderActor extends BaseActor {
                 OrderStatus.DELIVERED.name().equals(orderState.getStateAsString())) {
           // Race condition
           logger.warning("OrderActor.anomaly() - anomaly just arrived after order delivered");
+          // this actor should not be alive
+          Kar.actorRemove(this);
+
         } else {
           // if this order is in transit, change state to Spoilt and inform provisioner
           if (OrderStatus.INTRANSIT.equals(OrderStatus.valueOf(orderState.getStateAsString()))) {

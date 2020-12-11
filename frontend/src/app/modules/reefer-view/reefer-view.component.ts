@@ -47,7 +47,6 @@ export class ReeferViewComponent implements OnInit {
     this.restService.getReeferControls().subscribe((data) => {
        this.failureRate = data.failureRate;
       this.updateFrequency = data.updateFrequency;
-
     });
     this.restService.getReeferStats().subscribe((data) => {
       this.totalReefers = data.total;
@@ -56,7 +55,6 @@ export class ReeferViewComponent implements OnInit {
       this.totalSpoiltReefers = data.totalSpoilt;
       this.totalOnMaintenanceReefers = data.totalOnMaintenance;
       });
-
   }
   connect() {
   		// Open connection with server socket
@@ -73,11 +71,8 @@ export class ReeferViewComponent implements OnInit {
               this.totalSpoiltReefers = this.reeferStats.totalSpoilt;
               this.totalOnMaintenanceReefers = this.reeferStats.totalOnMaintenance;
             }
-
           })
-
       }, this.errorCallBack.bind(this));
-
   }
   errorCallBack(error) {
      console.log("ReeferViewComponent.errorCallBack() - Websocket connection closed -> " + error)
@@ -88,6 +83,13 @@ export class ReeferViewComponent implements OnInit {
      }, 2000);
   }
   ngOnInit(): void {
+     this.restService.getReeferStats().subscribe((data) => {
+        this.totalReefers = data.total;
+        this.totalBookedReefers = data.totalBooked;
+        this.totalInTransitReefers = data.totalInTransit;
+        this.totalSpoiltReefers = data.totalSpoilt;
+        this.totalOnMaintenanceReefers = data.totalOnMaintenance;
+    });
     this.connect();
     this.reeferDataSource.paginator = this.paginator;
     this.reeferDataSource.sort = this.sort;

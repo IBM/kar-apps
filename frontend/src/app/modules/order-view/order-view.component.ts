@@ -190,14 +190,17 @@ export class OrderViewComponent implements OnInit {
 
     this.restService.setOrderSimControls(request).subscribe((data) => {
  //     console.log(data);
-      if ( this.orderTarget == 0 ) {
-        this.createOrderManually = true;
-      } else {
+    });
+    this.restService.getOrderTargetAndSimDelay().subscribe((data) => {
+      if ( this.orderTarget > 0 && data.delay > 0 ) {
         this.createOrderManually = false;
+      } else {
+        this.createOrderManually = true;
       }
     });
 
   }
+
   nextOrder() {
     console.log('>>>>>>>>>>>>>nextOrder called');
 

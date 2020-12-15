@@ -90,6 +90,15 @@ export class ReeferViewComponent implements OnInit {
         this.totalSpoiltReefers = data.totalSpoilt;
         this.totalOnMaintenanceReefers = data.totalOnMaintenance;
     });
+
+    this.restService.getOrderTargetAndSimDelay().subscribe((data) => {
+      if ( this.failureRate > 0 && data.delay > 0 ) {
+        this.createAnomalyManually = false;
+      } else {
+        this.createAnomalyManually = true;
+      }
+    });
+
     this.connect();
     this.reeferDataSource.paginator = this.paginator;
     this.reeferDataSource.sort = this.sort;
@@ -159,9 +168,17 @@ updateReeferControls() {
 
   this.restService.updateReeferControls(request).subscribe((data) => {
     console.log(data);
+  });
 
+  this.restService.getOrderTargetAndSimDelay().subscribe((data) => {
+    if ( this.failureRate > 0 && data.delay > 0 ) {
+      this.createAnomalyManually = false;
+    } else {
+      this.createAnomalyManually = true;
+    }
   });
 }
+
 createAnomaly() {
   this.restService.generateAnomaly().subscribe((data) => {
     console.log(data);

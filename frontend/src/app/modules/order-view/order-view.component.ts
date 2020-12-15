@@ -122,10 +122,10 @@ export class OrderViewComponent implements OnInit {
      this.connect();
      this.restService.getOrderTargetAndSimDelay().subscribe((data) => {
 
-      if ( data.target > 0 || data.delay > 0 ) {
-        this.createOrderManually = true;
-      }else {
+      if ( data.target > 0 && data.delay > 0 ) {
         this.createOrderManually = false;
+      }else {
+        this.createOrderManually = true;
       }
       this.orderTarget = data.target;
 

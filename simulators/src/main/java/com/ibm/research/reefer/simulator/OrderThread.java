@@ -11,6 +11,8 @@ import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.reefer.common.Constants;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,7 +48,8 @@ public class OrderThread extends Thread {
     if (SimulatorService.reeferRestRunning.get()) {
       // Make sure currentDate is set
       if (null == SimulatorService.currentDate.get()) {
-        Response response = Kar.restPost("reeferservice", "time/currentDate", JsonValue.NULL);
+        //Response response = Kar.restPost("reeferservice", "time/currentDate", JsonValue.NULL);
+        Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/currentDate", JsonValue.NULL);
         currentDate = response.readEntity(JsonValue.class);
         SimulatorService.currentDate.set(currentDate);
       }
@@ -115,7 +118,8 @@ public class OrderThread extends Thread {
           JsonObject message = Json.createObjectBuilder().add("startDate", startday.toString())
                   .add("endDate", endday.toString()).build();
 
-          Response response = Kar.restPost("reeferservice", "voyage/inrange", message);
+          //Response response = Kar.restPost("reeferservice", "voyage/inrange", message);
+          Response response = Kar.Services.post(Constants.REEFERSERVICE, "voyage/inrange", message);
           futureVoyages = response.readEntity(JsonValue.class);
           if (logger.isLoggable(Level.INFO)) {
             logger.info("orderthread: received " + futureVoyages.asJsonArray().size() + " future voyages");
@@ -183,7 +187,8 @@ public class OrderThread extends Thread {
               long ordersnap = System.nanoTime();
               JsonValue rsp = null;
               try {
-                Response response = Kar.restPost("reeferservice", "orders", order);
+                //Response response = Kar.restPost("reeferservice", "orders", order);
+                Response response = Kar.Services.post(Constants.REEFERSERVICE, "orders", order);
                 rsp = response.readEntity(JsonValue.class);
               }
               catch (Exception e) {

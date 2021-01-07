@@ -1,7 +1,7 @@
 package com.ibm.research.kar.reefer.actors;
 
-import static com.ibm.research.kar.Kar.actorCall;
-import static com.ibm.research.kar.Kar.actorRef;
+//import static com.ibm.research.kar.Kar.actorCall;
+//import static com.ibm.research.kar.Kar.actorRef;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +37,8 @@ public class OrderActor extends BaseActor {
 
     @Activate
     public void activate() {
-        Map<String, JsonValue> state = Kar.actorGetAllState(this);
+        //Map<String, JsonValue> state = Kar.actorGetAllState(this);
+        Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
         try {
             // initial actor invocation should handle no state
             if (!state.isEmpty()) {
@@ -63,7 +64,8 @@ public class OrderActor extends BaseActor {
                 JsonObjectBuilder job = Json.createObjectBuilder();
                 job.add(Constants.ORDER_STATUS_KEY, orderState.getState()).
                         add(Constants.VOYAGE_ID_KEY, orderState.getVoyageId());
-                Kar.actorSetMultipleState(this, job.build());
+                //Kar.actorSetMultipleState(this, job.build());
+                Kar.Actors.State.set(this, job.build());
             }
         } catch( Exception e) {
             logger.log(Level.WARNING, "OrderActor.deactivate() - Error - orderId "+getId()+" ", e);
@@ -91,7 +93,8 @@ public class OrderActor extends BaseActor {
             }
             // as soon as the order is delivered and reefers are released we clear actor
             // state
-            Kar.actorRemove(this);
+            //Kar.actorRemove(this);
+            Kar.Actors.remove(this);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         } catch (Exception e) {
@@ -156,7 +159,8 @@ public class OrderActor extends BaseActor {
           // Race condition
           logger.warning("OrderActor.anomaly() - anomaly just arrived after order delivered");
           // this actor should not be alive
-          Kar.actorRemove(this);
+          //Kar.actorRemove(this);
+            Kar.Actors.remove(this);
 
         } else {
           // if this order is in transit, change state to Spoilt and inform provisioner
@@ -183,14 +187,15 @@ public class OrderActor extends BaseActor {
      */
     private void markSpoilt(JsonObject message) {
       int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
-      ActorRef provisioner = actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
-
+      //ActorRef provisioner = actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
+        ActorRef provisioner = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
       changeOrderStatus(OrderStatus.SPOILT);
       if (logger.isLoggable(Level.INFO)) {
         logger.info(String.format("OrderActor.anomaly() - orderId: %s state: %s", getId(),
                 orderState.getState()));
       }
-      JsonObject reply = (JsonObject) actorCall(provisioner, "reeferSpoilt", message);
+      //JsonObject reply = (JsonObject) actorCall(provisioner, "reeferSpoilt", message);
+        JsonObject reply = Kar.Actors.call(provisioner, "reeferSpoilt", message).asJsonObject();
       if (reply.getString(Constants.STATUS_KEY).equals(Constants.FAILED)) {
         logger.warning("OrderActor.anomaly() - orderId " + getId() + " request to mark reeferId "
                 + spoiltReeferId + " spoilt failed");
@@ -204,14 +209,15 @@ public class OrderActor extends BaseActor {
      */
     private void requestReplacementReefer(JsonObject message) {
       int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
-      ActorRef provisioner = actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
-
+     // ActorRef provisioner = actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
+        ActorRef provisioner = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
       if (logger.isLoggable(Level.FINE)) {
         logger.fine(String.format("OrderActor.anomaly() - orderId: %s requesting replacement for %s",
                 getId(), message.getInt(Constants.REEFER_ID_KEY)));
       }
 
-      JsonObject reply = (JsonObject) actorCall(provisioner, "reeferReplacement", message);
+      //JsonObject reply = (JsonObject) actorCall(provisioner, "reeferReplacement", message);
+        JsonObject reply = Kar.Actors.call(provisioner, "reeferReplacement", message).asJsonObject();
       if (reply.getString(Constants.STATUS_KEY).equals(Constants.FAILED)) {
         logger.warning("OrderActor.anomaly() - orderId: " + getId()
                 + " request to replace reeferId " + spoiltReeferId + " failed");
@@ -226,8 +232,11 @@ public class OrderActor extends BaseActor {
       }
 
       // reefer replace is a two step process (remove + add)
-      Kar.actorDeleteState(this, Constants.REEFER_MAP_KEY, String.valueOf(spoiltReeferId));
-      Kar.actorSetState(this, Constants.REEFER_MAP_KEY, String.valueOf(replacementReeferId),
+      //Kar.actorDeleteState(this, Constants.REEFER_MAP_KEY, String.valueOf(spoiltReeferId));
+      Kar.Actors.State.Submap.remove(this, Constants.REEFER_MAP_KEY, String.valueOf(spoiltReeferId));
+      //Kar.actorSetState(this, Constants.REEFER_MAP_KEY, String.valueOf(replacementReeferId),
+      //        Json.createValue(replacementReeferId));
+      Kar.Actors.State.Submap.set(this, Constants.REEFER_MAP_KEY, String.valueOf(replacementReeferId),
               Json.createValue(replacementReeferId));
       orderState.replaceReefer(spoiltReeferId, replacementReeferId);
     }
@@ -332,7 +341,8 @@ public class OrderActor extends BaseActor {
                 reeferMap.put(String.valueOf(((JsonNumber) reeferId).intValue()), reeferId);
                 orderState.addReefer(((JsonNumber) reeferId).intValue());
             });
-            Kar.actorSetMultipleState(this, Constants.REEFER_MAP_KEY, reeferMap);
+            //Kar.actorSetMultipleState(this, Constants.REEFER_MAP_KEY, reeferMap);
+            Kar.Actors.State.Submap.set(this, Constants.REEFER_MAP_KEY, reeferMap);
         }
     }
 
@@ -345,8 +355,10 @@ public class OrderActor extends BaseActor {
      */
     private JsonObject bookVoyage(JsonOrder order) {
         JsonObject params = Json.createObjectBuilder().add(JsonOrder.OrderKey, order.getAsObject()).build();
-        ActorRef voyageActor = actorRef(ReeferAppConfig.VoyageActorName, order.getVoyageId());
-        JsonValue reply = actorCall(voyageActor, "reserve", params);
+        //ActorRef voyageActor = actorRef(ReeferAppConfig.VoyageActorName, order.getVoyageId());
+        ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, order.getVoyageId());
+        //JsonValue reply = actorCall(voyageActor, "reserve", params);
+        JsonValue reply = Kar.Actors.call(voyageActor, "reserve", params);
         return reply.asJsonObject();
     }
 

@@ -1,6 +1,6 @@
 package com.ibm.research.reefer.simulator;
 
-import static com.ibm.research.kar.Kar.actorRef;
+//import static com.ibm.research.kar.Kar.actorRef;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -13,6 +13,8 @@ import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.reefer.common.Constants;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -71,7 +73,8 @@ public class ShipThread extends Thread {
         if (0 == nextevent) {
           // start of new day, tell REST to advance time
           activemap.clear();
-          Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
+          //Response response = Kar.restPost("reeferservice", "time/advance", JsonValue.NULL);
+          Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/advance", JsonValue.NULL);
           currentDate = response.readEntity(JsonValue.class);
           SimulatorService.currentDate.set(currentDate);
           if (logger.isLoggable(Level.INFO)) {
@@ -79,10 +82,12 @@ public class ShipThread extends Thread {
           }
 
           // tell other threads to wake up
-          Kar.restPost("simservice", "simulator/newday", JsonValue.NULL);
-
+          //Kar.restPost("simservice", "simulator/newday", JsonValue.NULL);
+          Kar.Services.post(Constants.SIMSERVICE,"simulator/newday", JsonValue.NULL);
           // fetch all active voyages from REST
-          response = Kar.restGet("reeferservice", "voyage/active");
+          //response = Kar.restGet("reeferservice", "voyage/active");
+          response = Kar.Services.get(Constants.REEFERSERVICE, "voyage/active");
+
           JsonValue activeVoyages = response.readEntity(JsonValue.class);
           if (logger.isLoggable(Level.INFO)) {
             logger.info("shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
@@ -121,7 +126,8 @@ public class ShipThread extends Thread {
           if ( activemap.size() > voyages_updated) {
             String id = activekeys[voyages_updated++];
             JsonObject message = activemap.get(id);
-            Kar.actorTell(actorRef("voyage", id), "changePosition", message);
+            //Kar.actorTell(actorRef("voyage", id), "changePosition", message);
+            Kar.Actors.tell(Kar.Actors.ref("voyage", id), "changePosition", message);
             if (logger.isLoggable(Level.FINE)) {
               logger.fine("shipthread: updates voyageid: " + id + " with " + message.toString());
             }
@@ -135,7 +141,9 @@ public class ShipThread extends Thread {
 
         // tell GUI to update active voyages
         snapshot = System.nanoTime();
-        Kar.restPost("reeferservice", "voyage/updateGui", currentDate);
+        //Kar.restPost("reeferservice", "voyage/updateGui", currentDate);
+        Kar.Services.post(Constants.REEFERSERVICE, "voyage/updateGui", currentDate);
+
         if (logger.isLoggable(Level.FINE)) {
           logger.fine("shipthread: updateGui took " + (System.nanoTime()-snapshot)/1000000 + " ms");
         }

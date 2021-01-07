@@ -23,7 +23,8 @@ public class ActorReeferState implements ReeferState{
         // shallow copy actor state since actorGetAllState() returns
         // immutable Collection. We need to be able to modify reefer
         // actor state.
-        reeferState = new HashMap<>(actorGetAllState(reefer));   
+        //reeferState = new HashMap<>(actorGetAllState(reefer));
+        reeferState = new HashMap<>(Actors.State.getAll(reefer));
     }
     public String getId() {
         return reefer.getId();
@@ -66,6 +67,7 @@ public class ActorReeferState implements ReeferState{
 
     }
     public void save() {
-        actorSetMultipleState(reefer, reeferState);
+        //actorSetMultipleState(reefer, reeferState);
+        Actors.State.set(reefer, reeferState);
     }
 }

@@ -7,6 +7,7 @@ import javax.ws.rs.core.Response;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.actors.VoyageActor;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.OrderSimControls;
 import com.ibm.research.kar.reefer.model.ReeferSimControls;
 
@@ -22,7 +23,8 @@ public class SimulatorService {
         JsonObject params = Json.createObjectBuilder().add("voyageId", voyageId).add("freeCapacity", freeCapacity)
                 .build();
         try {
-            Kar.restPost("simservice", "/simulator/updatevoyagecapacity", params);
+            //Kar.restPost("simservice", "/simulator/updatevoyagecapacity", params);
+            Kar.Services.post(Constants.SIMSERVICE, "/simulator/updatevoyagecapacity", params);
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
         }
@@ -31,8 +33,9 @@ public class SimulatorService {
     public void setSimOrderTarget(int orderTarget) {
          try {
             JsonObject body = Json.createObjectBuilder().add("value", orderTarget).build();
-            Response response = Kar.restPost("simservice", "simulator/setordertarget", body);
-            JsonValue respValue = response.readEntity(JsonValue.class);
+            //Response response = Kar.restPost("simservice", "simulator/setordertarget", body);
+             Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/setordertarget", body);
+             JsonValue respValue = response.readEntity(JsonValue.class);
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
         }
@@ -41,7 +44,8 @@ public class SimulatorService {
     public void setSimOrderWindow(int window) {
         try {
             JsonObject body = Json.createObjectBuilder().add("value", window).build();
-            Response response = Kar.restPost("simservice", "simulator/setorderwindow", body);
+            //Response response = Kar.restPost("simservice", "simulator/setorderwindow", body);
+            Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/setorderwindow", body);
             JsonValue respValue = response.readEntity(JsonValue.class);
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
@@ -51,7 +55,8 @@ public class SimulatorService {
     public void setSimOrderUpdateFrequency(int updateFrequency) {
         try {
             JsonObject body = Json.createObjectBuilder().add("value", updateFrequency).build();
-            Response response = Kar.restPost("simservice", "simulator/setorderupdates", body);
+            //Response response = Kar.restPost("simservice", "simulator/setorderupdates", body);
+            Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/setorderupdates", body);
             response.readEntity(JsonValue.class);
          } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
@@ -86,7 +91,8 @@ public class SimulatorService {
     public int getSimOrderTarget() {
         int orderTarget = 0;
         try {
-            Response response = Kar.restGet("simservice", "simulator/getordertarget");
+            //Response response = Kar.restGet("simservice", "simulator/getordertarget");
+            Response response = Kar.Services.get(Constants.SIMSERVICE, "simulator/getordertarget");
             JsonValue respValue = response.readEntity(JsonValue.class);
             orderTarget = Integer.parseInt(respValue.toString());
         } catch (Exception e) {
@@ -98,7 +104,8 @@ public class SimulatorService {
     public int getOrderSimWindow() {
         int orderTarget = 0;
         try {
-            Response response = Kar.restGet("simservice", "simulator/getorderwindow");
+            //Response response = Kar.restGet("simservice", "simulator/getorderwindow");
+            Response response = Kar.Services.get(Constants.SIMSERVICE, "simulator/getorderwindow");
             JsonValue respValue = response.readEntity(JsonValue.class);
             orderTarget = Integer.parseInt(respValue.toString());
         } catch (Exception e) {
@@ -110,7 +117,8 @@ public class SimulatorService {
     public int getOrderSimUpdateFrequency() {
         int orderTarget = 0;
         try {
-            Response response = Kar.restGet("simservice", "simulator/getorderupdates");
+            //Response response = Kar.restGet("simservice", "simulator/getorderupdates");
+            Response response = Kar.Services.get(Constants.SIMSERVICE, "simulator/getorderupdates");
             JsonValue respValue = response.readEntity(JsonValue.class);
            orderTarget = Integer.parseInt(respValue.toString());
         } catch (Exception e) {
@@ -120,7 +128,8 @@ public class SimulatorService {
     }
 
     public ReeferSimControls getReeferSimControls() {
-        Response response = Kar.restGet("simservice", "simulator/getreefercontrols");
+        //Response response = Kar.restGet("simservice", "simulator/getreefercontrols");
+        Response response = Kar.Services.get(Constants.SIMSERVICE, "simulator/getreefercontrols");
         JsonValue respValue = response.readEntity(JsonValue.class);
         int failureRate = respValue.asJsonObject().getInt("failuretarget");
         int updateFrequency = respValue.asJsonObject().getInt("reeferupdates");
@@ -132,7 +141,8 @@ public class SimulatorService {
             JsonObject body = Json.createObjectBuilder().add("reeferupdates", simControls.getUpdateFrequency())
                     .add("failuretarget", simControls.getFailureRate()).build();
 
-            Response response = Kar.restPost("simservice", "simulator/setreefercontrols", body);
+            //Response response = Kar.restPost("simservice", "simulator/setreefercontrols", body);
+            Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/setreefercontrols", body);
             JsonValue respValue = response.readEntity(JsonValue.class);
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
@@ -141,7 +151,8 @@ public class SimulatorService {
 
     public void generateAnomaly() {
         try {
-            Response response = Kar.restPost("simservice", "simulator/createanomaly", JsonValue.NULL);
+            //Response response = Kar.restPost("simservice", "simulator/createanomaly", JsonValue.NULL);
+            Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/createanomaly", JsonValue.NULL);
             JsonValue respValue = response.readEntity(JsonValue.class);
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("SimulatorService.generateAnomaly() - sim response:"+respValue);
@@ -153,7 +164,8 @@ public class SimulatorService {
 
     public void createOrder() {
         try {
-            Response response = Kar.restPost("simservice", "simulator/createorder", JsonValue.NULL);
+            //Response response = Kar.restPost("simservice", "simulator/createorder", JsonValue.NULL);
+            Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/createorder", JsonValue.NULL);
             JsonValue respValue = response.readEntity(JsonValue.class);
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);

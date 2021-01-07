@@ -10,6 +10,8 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 import static com.ibm.research.kar.Kar.*;
+
+import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.model.Reefer;
 import com.ibm.research.kar.reefer.model.ReeferSimControls;
@@ -46,8 +48,10 @@ public class ReeferService {
 
 	public ReeferStats getReeferStats() {
 		JsonObject message = Json.createObjectBuilder().build();
-		JsonValue reply = actorCall(
-				actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId), "getStats",
+		//JsonValue reply = actorCall(
+		//		actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId), "getStats",
+		//		message);
+		JsonValue reply = Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId), "getStats",
 				message);
 		JsonObject stats = reply.asJsonObject();
 

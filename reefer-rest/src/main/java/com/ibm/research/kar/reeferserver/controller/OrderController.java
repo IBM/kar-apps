@@ -1,7 +1,7 @@
 package com.ibm.research.kar.reeferserver.controller;
 
-import static com.ibm.research.kar.Kar.actorCall;
-import static com.ibm.research.kar.Kar.actorRef;
+//import static com.ibm.research.kar.Kar.actorCall;
+//import static com.ibm.research.kar.Kar.actorRef;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -16,6 +16,7 @@ import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import javax.json.JsonValue;
 
+import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
@@ -141,9 +142,11 @@ public class OrderController {
 			orderObject.add("order", orderParamsBuilder.build());
 			JsonObject params = orderObject.build();
 
-			ActorRef orderActor = actorRef(ReeferAppConfig.OrderActorName, order.getId());
+			//ActorRef orderActor = actorRef(ReeferAppConfig.OrderActorName, order.getId());
+			ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
 			// call Order actor to create the order
-			JsonValue reply = actorCall(orderActor, "createOrder", params);
+			//JsonValue reply = actorCall(orderActor, "createOrder", params);
+			JsonValue reply = Kar.Actors.call(orderActor, "createOrder", params);
 			if ( logger.isLoggable(Level.FINE)) {
 				logger.fine("OrderController.bookOrder - Order Actor reply:" + reply);
 			}

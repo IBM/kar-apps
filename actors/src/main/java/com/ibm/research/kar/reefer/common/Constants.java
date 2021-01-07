@@ -32,7 +32,7 @@ public class Constants {
 
    public static final String VOYAGE_ORDER_MAP_KEY="voyage-order-map";
 
-   // each reefer can hold up to 1000 product units. Simplifaction is that
+   // each reefer can hold up to 1000 product units. Simplification is that
    // each product unit has the same size.
    public static final int REEFER_CAPACITY=1000;
    public static final int REEFER_DAYS_ON_MAINTENANCE=2;
@@ -44,4 +44,7 @@ public class Constants {
    public static final String OK="OK";
    public static final String FAILED="Failed";
    public static final String ERROR="error";
+
+   public static final String SIMSERVICE="simservice";
+   public static final String REEFERSERVICE="reeferservice";
 }

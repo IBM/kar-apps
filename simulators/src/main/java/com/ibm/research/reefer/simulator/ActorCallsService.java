@@ -25,7 +25,6 @@ public class ActorCallsService extends BaseActor {
 
 	@Remote
 	public JsonValue setUnitPeriod(JsonValue num) {
-		//return (JsonValue)Kar.call("simservice", "simulator/setunitperiod", num);
 		return (JsonValue)Kar.Services.call("simservice", "simulator/setunitperiod", num);
 	}
 

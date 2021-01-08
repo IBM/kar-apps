@@ -1,8 +1,5 @@
 package com.ibm.research.kar.reeferserver.controller;
 
-//import static com.ibm.research.kar.Kar.actorCall;
-//import static com.ibm.research.kar.Kar.actorRef;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
@@ -142,10 +139,8 @@ public class OrderController {
 			orderObject.add("order", orderParamsBuilder.build());
 			JsonObject params = orderObject.build();
 
-			//ActorRef orderActor = actorRef(ReeferAppConfig.OrderActorName, order.getId());
 			ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
 			// call Order actor to create the order
-			//JsonValue reply = actorCall(orderActor, "createOrder", params);
 			JsonValue reply = Kar.Actors.call(orderActor, "createOrder", params);
 			if ( logger.isLoggable(Level.FINE)) {
 				logger.fine("OrderController.bookOrder - Order Actor reply:" + reply);

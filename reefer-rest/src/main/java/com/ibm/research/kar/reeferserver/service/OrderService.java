@@ -41,8 +41,6 @@ public class OrderService extends AbstractPersistentService {
      * @return- Most recent active orders
      */
     public List<Order> getActiveOrderList() {
-        // private JsonArray getListAJsonArray(String orderListKind) {
-
         List<JsonValue> activeOrders = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
         List<Order> sublist;
         if (activeOrders.size() <= MaxOrdersToReturn) {
@@ -186,7 +184,6 @@ public class OrderService extends AbstractPersistentService {
             Voyage voyage = scheduleService.getVoyage(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY));
             long daysBetween = TimeUtils.getInstance().getDaysBetween(voyage.getSailDateObject(), today);
             if ( daysBetween > 5) {
-            //if ( voyage.getSailDateObject().isBefore(today)) {
                 logger.log(Level.WARNING,"OrderService.findVoyagesBeyondDepartureDate() - voyage:"+voyage.getId()+
                         " should have sailed on:"+voyage.getSailDateObject()+" but still in the booked list as of today:"+today);
             }
@@ -198,7 +195,6 @@ public class OrderService extends AbstractPersistentService {
             Voyage voyage = scheduleService.getVoyage(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY));
             long daysBetween = TimeUtils.getInstance().getDaysBetween(Instant.parse(voyage.getArrivalDate()), today);
             if ( daysBetween > 5) {
-            //if ( Instant.parse(voyage.getArrivalDate()).isBefore(today)) {
                 logger.log(Level.WARNING,"OrderService.findVoyagesBeyondArrivalDate() - voyage:"+voyage.getId()+
                         " should have arrived on:"+voyage.getArrivalDate()+" but still in the active list as of today "+today);
             }
@@ -274,8 +270,6 @@ public class OrderService extends AbstractPersistentService {
             JsonArray activeArray = activeOrderBuilder.build();
             try {
                 set(Constants.ACTIVE_ORDERS_KEY, activeArray);
-                // findVoyagesBeyondArrivalDate(activeArray);
-
                 set(Constants.BOOKED_ORDERS_KEY, toJsonArray(newBookedList));
                 findVoyagesBeyondDepartureDate(toJsonArray(newBookedList));
             } catch( VoyageNotFoundException e) {

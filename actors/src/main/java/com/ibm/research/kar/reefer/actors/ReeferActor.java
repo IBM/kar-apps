@@ -1,9 +1,5 @@
 package com.ibm.research.kar.reefer.actors;
 
-//import static com.ibm.research.kar.Kar.actorCall;
-//import static com.ibm.research.kar.Kar.actorGetAllState;
-//import static com.ibm.research.kar.Kar.actorRef;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,7 +40,6 @@ public class ReeferActor extends BaseActor {
 
     @Activate
     public void init() {
-        //stateMap = actorGetAllState(this);
         stateMap = Kar.Actors.State.getAll(this);
     }
 
@@ -56,25 +51,18 @@ public class ReeferActor extends BaseActor {
     public void setState(JsonObject reeferProperties) {
         try {
             if (reeferProperties.containsKey(ReeferState.MAX_CAPACITY_KEY)) {
-               // Kar.actorSetState(this, ReeferState.MAX_CAPACITY_KEY,
-                //        Json.createValue(reeferProperties.getInt(ReeferState.MAX_CAPACITY_KEY)));
                 Kar.Actors.State.set(this, ReeferState.MAX_CAPACITY_KEY,
                         Json.createValue(reeferProperties.getInt(ReeferState.MAX_CAPACITY_KEY)));
             }
             if (reeferProperties.containsKey(ReeferState.ORDER_ID_KEY)) {
-                //Kar.actorSetState(this, ReeferState.ORDER_ID_KEY,
-                     //   Json.createValue(reeferProperties.getString(ReeferState.ORDER_ID_KEY)));
-                Kar.Actors.State.set(this, ReeferState.ORDER_ID_KEY,
+                 Kar.Actors.State.set(this, ReeferState.ORDER_ID_KEY,
                         Json.createValue(reeferProperties.getString(ReeferState.ORDER_ID_KEY)));
             }
             if (reeferProperties.containsKey(ReeferState.VOYAGE_ID_KEY)) {
-                //Kar.actorSetState(this, ReeferState.VOYAGE_ID_KEY,
-                    //    Json.createValue(reeferProperties.getString(ReeferState.VOYAGE_ID_KEY)));
                 Kar.Actors.State.set(this, ReeferState.VOYAGE_ID_KEY,
                         Json.createValue(reeferProperties.getString(ReeferState.VOYAGE_ID_KEY)));
             }
             if (reeferProperties.containsKey(ReeferState.STATE_KEY)) {
-                //Kar.actorSetState(this, ReeferState.STATE_KEY, Json.createValue(reeferProperties.getString(ReeferState.STATE_KEY)));
                 Kar.Actors.State.set(this, ReeferState.STATE_KEY, Json.createValue(reeferProperties.getString(ReeferState.STATE_KEY)));
             }
 
@@ -88,7 +76,6 @@ public class ReeferActor extends BaseActor {
      */
     @Remote
     public void reserve(JsonObject message) {
-        //System.out.println("ReeferActor.reserve() called - Id:" + this.getId() + " message:" + message.toString());
         setState(message);
     }
     /**
@@ -97,8 +84,6 @@ public class ReeferActor extends BaseActor {
      */
     @Remote
     public void unreserve(JsonObject message) {
-        //System.out.println("ReeferActor.unreserve() called - Id:" + this.getId());
-        //Kar.actorDeleteAllState(this);
         Kar.Actors.State.removeAll(this);
     }
     /**
@@ -117,7 +102,6 @@ public class ReeferActor extends BaseActor {
     @Remote
     public void offMaintenance(JsonObject message) {
         System.out.println("ReeferActor.offMaintenance() called - Id:" + this.getId() + " message:" + message.toString());
-        //Kar.actorDeleteAllState(this);
         Kar.Actors.State.removeAll(this);
     }
     /**
@@ -180,10 +164,8 @@ public class ReeferActor extends BaseActor {
      * @return
      */
     private JsonObject notifyOrderOfSpoilage(String orderId) {
-        //ActorRef orderActor = Kar.actorRef(ReeferAppConfig.OrderActorName, orderId);
         ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, orderId);
         JsonObject params = Json.createObjectBuilder().add("reeferId", getId()).build();
-        //return actorCall(orderActor, "anomaly", params).asJsonObject();
         return Kar.Actors.call(orderActor, "anomaly", params).asJsonObject();
     }
 }

@@ -53,9 +53,6 @@ public class TimeController {
             JsonObject message = Json.createObjectBuilder()
                     .add(Constants.DATE_KEY, Json.createValue(TimeUtils.getInstance().getCurrentDate().toString()))
                     .build();
-
-           // Kar.actorCall(Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
-           //         "releaseReefersfromMaintenance", message);
             Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "releaseReefersfromMaintenance", message);
         } catch (Exception e) {
@@ -79,8 +76,6 @@ public class TimeController {
             JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(time.toString()))
                     .build();
             // Reefers on maintenance are freed automatically after a configurable number of days passes.
-            //Kar.actorCall(Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
-              //      "releaseReefersfromMaintenance", message);
             Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "releaseReefersfromMaintenance", message);
         } catch (Exception e) {

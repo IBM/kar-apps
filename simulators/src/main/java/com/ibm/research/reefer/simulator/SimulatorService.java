@@ -1,7 +1,5 @@
 package com.ibm.research.reefer.simulator;
 
-//import static com.ibm.research.kar.Kar.actorRef;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,8 +28,7 @@ import com.ibm.research.kar.actor.ActorRef;
 public class SimulatorService {
 
   private Map<String, JsonValue> persistentData;
-  //private ActorRef aref = actorRef("simhelper", "simservice");
-  private ActorRef aref = Kar.Actors.ref("simhelper", "simservice");
+   private ActorRef aref = Kar.Actors.ref("simhelper", "simservice");
   public final static AtomicInteger unitdelay = new AtomicInteger(0);
   public final static AtomicInteger shipthreadcount = new AtomicInteger(0);
   public final static AtomicBoolean reeferRestRunning = new AtomicBoolean(true);
@@ -66,7 +63,6 @@ public class SimulatorService {
   private JsonValue get(JsonValue key) {
     if (null == persistentData) {
       persistentData = new HashMap<String, JsonValue>();
-      //persistentData.putAll(Kar.actorGetAllState(aref));
       persistentData.putAll(Kar.Actors.State.getAll(aref));
 
     }
@@ -77,11 +73,9 @@ public class SimulatorService {
   private JsonValue set(JsonValue key, JsonValue value) {
     if (null == persistentData) {
       persistentData = new HashMap<String, JsonValue>();
-      //persistentData.putAll(Kar.actorGetAllState(aref));
       persistentData.putAll(Kar.Actors.State.getAll(aref));
     }
     persistentData.put(((JsonString) key).getString(), value);
-    //return Json.createValue(Kar.actorSetState(aref, ((JsonString)key).getString(), value));
     return Json.createValue(Kar.Actors.State.set(aref, ((JsonString)key).getString(), value));
 
   }

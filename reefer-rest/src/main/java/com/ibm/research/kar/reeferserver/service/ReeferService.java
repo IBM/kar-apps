@@ -48,9 +48,6 @@ public class ReeferService {
 
 	public ReeferStats getReeferStats() {
 		JsonObject message = Json.createObjectBuilder().build();
-		//JsonValue reply = actorCall(
-		//		actorRef(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId), "getStats",
-		//		message);
 		JsonValue reply = Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId), "getStats",
 				message);
 		JsonObject stats = reply.asJsonObject();

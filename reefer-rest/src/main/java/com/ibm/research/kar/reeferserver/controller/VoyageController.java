@@ -1,9 +1,5 @@
 package com.ibm.research.kar.reeferserver.controller;
 
-//import static com.ibm.research.kar.Kar.actorCall;
-//import static com.ibm.research.kar.Kar.actorRef;
-//import static com.ibm.research.kar.Kar.restPost;
-
 import java.io.StringReader;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -125,12 +121,7 @@ public class VoyageController {
   public List<Voyage> getActiveVoyages() {
     return activeVoyages();
   }
-/*
-  @GetMapping("/voyage/upcoming")
-  public List<Voyage> getShippingSchedule() {
-    return shipScheduleService.get();
-  }
-*/
+
   @GetMapping("/voyage/state/{id}")
   public Voyage getVoyageState(@PathVariable("id") String id) throws VoyageNotFoundException {
     return shipScheduleService.getVoyage(id);
@@ -246,7 +237,6 @@ public class VoyageController {
   private void updateSimulator(String voyageId, int freeCapacity) {
     JsonObject params = Json.createObjectBuilder().add("voyageId", voyageId).add("freeCapacity", freeCapacity).build();
     try {
-      //restPost("simservice", "/simulator/updatevoyagecapacity", params);
       Kar.Services.post("simservice", "/simulator/updatevoyagecapacity", params);
     } catch (Exception e) {
       logger.log(Level.WARNING,"",e);

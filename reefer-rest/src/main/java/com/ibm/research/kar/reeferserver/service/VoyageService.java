@@ -84,7 +84,6 @@ public class VoyageService extends AbstractPersistentService {
 
     public void nextDay() {
         try {
-            //Response response = Kar.restPost("simservice", "simulator/advancetime", JsonValue.NULL);
             Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/advancetime", JsonValue.NULL);
             JsonValue respValue = response.readEntity(JsonValue.class);
             if ( logger.isLoggable(Level.INFO)) {
@@ -98,7 +97,6 @@ public class VoyageService extends AbstractPersistentService {
     public void changeDelay(int delay) {
         try {
             JsonObject delayArg = Json.createObjectBuilder().add("value", delay).build();
-            //Response response = Kar.restPost("simservice", "simulator/setunitdelay", delayArg);
             Response response = Kar.Services.post(Constants.SIMSERVICE,"simulator/setunitdelay", delayArg);
             JsonValue respValue = response.readEntity(JsonValue.class);
         } catch (Exception e) {
@@ -107,7 +105,6 @@ public class VoyageService extends AbstractPersistentService {
     }
 
     public int getDelay() throws Exception {
-        //Response response = Kar.restGet("simservice", "simulator/getunitdelay");
         Response response = Kar.Services.get(Constants.SIMSERVICE,"simulator/getunitdelay");
         JsonValue respValue = response.readEntity(JsonValue.class);
         return Integer.parseInt(respValue.toString());

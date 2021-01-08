@@ -62,7 +62,6 @@ public class ReeferThread extends Thread {
       } else {
         // Make sure currentDate is set
         if (null == SimulatorService.currentDate.get()) {
-          //Response response = Kar.restPost("reeferservice", "time/currentDate", JsonValue.NULL);
           Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/currentDate", JsonValue.NULL);
 
           currentDate = response.readEntity(JsonValue.class);
@@ -74,7 +73,6 @@ public class ReeferThread extends Thread {
 
           currentDate = (JsonValue) SimulatorService.currentDate.get();
           // Get reefer inventory size from reefer-rest
-          //Response response = Kar.restGet("reeferservice", "reefers/inventory/size");
           Response response = Kar.Services.get(Constants.REEFERSERVICE,"reefers/inventory/size");
 
           JsonValue is = (JsonValue) response.readEntity(JsonValue.class);
@@ -112,8 +110,6 @@ public class ReeferThread extends Thread {
         for (int i=0; i<anomaliesPerUpdate; i++) {
           if (anomaliesDoneToday < reefersToBreak) {
             int reeferid = r2b[anomaliesDoneToday++];
-            //ActorRef reeferProvisionerActor =  Kar.actorRef(ReeferAppConfig.ReeferProvisionerActorName,
-            //        ReeferAppConfig.ReeferProvisionerId);
             ActorRef reeferProvisionerActor = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName,
                     ReeferAppConfig.ReeferProvisionerId);
             JsonObject params = Json.createObjectBuilder()
@@ -125,7 +121,6 @@ public class ReeferThread extends Thread {
               logger.fine("reeferthread: alerting provisioner about anomaly in reefer_"+reeferid);
             }
             try {
-             //actorCall(reeferProvisionerActor, "reeferAnomaly", params);
               Kar.Actors.call(reeferProvisionerActor, "reeferAnomaly", params);
             } catch (Exception e) {
               logger.warning("reeferthread: error sending anomaly "+ e.toString());

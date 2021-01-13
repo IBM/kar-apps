@@ -100,6 +100,8 @@ public class ReeferProvisionerActor extends BaseActor {
                     // deserialize json reefers into a HashMap
                     onMaintenanceMap = mapper.readValue(jv.toString(), HashMap.class);
                 }
+            } else {
+                initMasterInventory(getReeferInventorySize());
             }
 
             // update thread. Sends reefer count updates to the REST
@@ -262,12 +264,6 @@ public class ReeferProvisionerActor extends BaseActor {
                     "ReeferProvisionerActor.bookReefers() - entry");
         }
         try {
-            // lazily initialize master reefer inventory list on the first call.
-            // This is fast since all we do is just creating an array of
-            // fixed size
-            if (reeferMasterInventory == null) {
-                initMasterInventory(getReeferInventorySize());
-            }
             // wrap Json with POJO
             JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
             if (order.containsKey(JsonOrder.ProductQtyKey)) {
@@ -374,12 +370,6 @@ public class ReeferProvisionerActor extends BaseActor {
       }
 
       try {
-        // lazily initialize master reefer inventory list on the first call.
-        // This is fast since all we do is just creating an array of fixed size
-        if (reeferMasterInventory == null) {
-          initMasterInventory(getReeferInventorySize());
-        }
-
         // check if given reeferIs is within valid range. The reeferId is used as an index in
         // reeferMasterInventory array which is 0-based.
         if (reeferId < 0 || reeferId >= reeferMasterInventory.length) {
@@ -593,9 +583,6 @@ public class ReeferProvisionerActor extends BaseActor {
     }
 
     private JsonObject getReeferStats() {
-        if (reeferMasterInventory == null) {
-            initMasterInventory(getReeferInventorySize());
-        }
         int totalOnMaintenance = onMaintenanceMap.size(); //Kar.actorSubMapSize(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("ReeferProvisionerActor.getReeferStats() - totalBooked:" + bookedTotalCount.get() + " in-transit:"

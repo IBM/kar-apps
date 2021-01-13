@@ -315,18 +315,9 @@ public class ReeferProvisionerActor extends BaseActor {
                     }
                 }
             }
-            // remove reefers which just arrived. The reefer inventory contains
+            // remove reefers which just arrived. The reefer inventory should only contain
             // reefers which are booked or in-transit.
             Kar.Actors.State.Submap.removeAll(this,Constants.REEFER_MAP_KEY, reefers2Remove);
-            /*
-            // replace reefer map in kar storage
-            Kar.Actors.State.Submap.removeAll(this,Constants.REEFER_MAP_KEY);
-            // if map is empty kar will complain
-            if ( !map.isEmpty() ) {
-                Kar.Actors.State.Submap.set(this,Constants.REEFER_MAP_KEY,map );;
-            }
-
-             */
             // forces update thread to send reefer counts
             valuesChanged.set(true);
             if (logger.isLoggable(Level.FINE)) {

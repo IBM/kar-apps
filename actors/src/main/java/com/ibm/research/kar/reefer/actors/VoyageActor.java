@@ -79,17 +79,6 @@ public class VoyageActor extends BaseActor {
     }
 
     /**
-     * Save actor's state when the instance is passivated. Currently just saves the
-     * actor's status.
-     */
-    @Deactivate
-    public void deactivate() {
-        if (voyageStatus != null && !((JsonString)voyageStatus).getString().equals( VoyageStatus.ARRIVED.name())) {
-            Kar.Actors.State.set(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
-        }
-    }
-
-    /**
      * Called on ship position change. Determines if the ship departed from
      * its origin port or arrived at the destination. Updates REST ship
      * position.
@@ -133,6 +122,7 @@ public class VoyageActor extends BaseActor {
             } // check if ship departed its origin port
             else if ((daysAtSea == 1) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
                 voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
+                Kar.Actors.State.set(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
                 long snapshot = System.nanoTime();
                 processDepartedVoyage(voyage, daysAtSea);
                 if (logger.isLoggable(Level.FINE)) {
@@ -181,6 +171,7 @@ public class VoyageActor extends BaseActor {
                 orders.put(String.valueOf(order.getId()), String.valueOf((order.getId())));
                 // reload order map since there is a change. Local orders map is not mutable
                 voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
+                Kar.Actors.State.set(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
                 return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                         .add(Constants.REEFERS_KEY, bookingStatus.asJsonObject().getJsonArray(Constants.REEFERS_KEY))
                         .add(JsonOrder.OrderKey, order.getAsObject()).build();
@@ -261,7 +252,7 @@ public class VoyageActor extends BaseActor {
         JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).add("daysAtSea", daysAtSea)
                 .build();
         try {
-            /// Notify REST of the position change
+            /// Notify REST
              Kar.Services.post("reeferservice", methodToCall, params);
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);

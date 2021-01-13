@@ -48,25 +48,6 @@ public class OrderActor extends BaseActor {
             logger.log(Level.WARNING, "OrderActor.activate() - Error - orderId "+getId()+" ", e);
         }
     }
-    /**
-     * Save actor's state when the instance is passivated. Currently just saves the
-     * actor's status and voyageId.
-     */
-    @Deactivate
-    public void deactivate() {
-        try {
-            // don't save state if the order has been delivered
-            if (orderState != null && !OrderStatus.DELIVERED.name().equals(orderState.getStateAsString()) ){
-                JsonObjectBuilder job = Json.createObjectBuilder();
-                job.add(Constants.ORDER_STATUS_KEY, orderState.getState()).
-                        add(Constants.VOYAGE_ID_KEY, orderState.getVoyageId());
-                Kar.Actors.State.set(this, job.build());
-            }
-        } catch( Exception e) {
-            logger.log(Level.WARNING, "OrderActor.deactivate() - Error - orderId "+getId()+" ", e);
-        }
-
-    }
 
     /**
      * Called when an order is delivered (ie.ship arrived at the destination port).
@@ -284,6 +265,8 @@ public class OrderActor extends BaseActor {
             if (voyageBookingResult.getString(Constants.STATUS_KEY).equals(Constants.OK)) {
                 saveOrderReefers(voyageBookingResult);
                 changeOrderStatus(OrderStatus.BOOKED);
+                Kar.Actors.State.set(this, Constants.VOYAGE_ID_KEY, orderState.getVoyageId());
+
                 if (logger.isLoggable(Level.FINE)) {
                     logger.fine(String.format("OrderActor.createOrder() - orderId: %s saved - voyage: %s state: %s reefers: %d",
                             getId(), orderState.getVoyageId(), orderState.getStateAsString(), orderState.getReeferMap().size()));
@@ -309,6 +292,7 @@ public class OrderActor extends BaseActor {
     private void changeOrderStatus(OrderStatus state) {
         JsonValue jv = Json.createValue(state.name());
         orderState.newState(jv);
+        Kar.Actors.State.set(this, Constants.ORDER_STATUS_KEY, orderState.getState());
     }
 
     /**

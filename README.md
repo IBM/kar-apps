@@ -18,6 +18,8 @@ Its main responsibility is to provide drivers for Reefer App use cases. Currentl
    * Advance time and notify active voyages of their new locations
    * Gradually create orders to fill upcoming voyages to a specified target capacity
 
+
+![Alt text](docs/images/reefer-arch.png?raw=true "Reefer Architecture")
 ## Reefer Deployment
 
 ### Prereqs

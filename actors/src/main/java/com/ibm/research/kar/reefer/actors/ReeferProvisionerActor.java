@@ -304,24 +304,29 @@ public class ReeferProvisionerActor extends BaseActor {
                     "ReeferProvisionerActor.releaseVoyageReefers() - entry");
         }
         JsonObjectBuilder reply = Json.createObjectBuilder();
+        List<String> reefers2Remove  = new ArrayList<>();
         try {
-            Map<String, JsonValue> map = new HashMap<>();
             String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
             for(ReeferDTO reefer : reeferMasterInventory ) {
                 if ( reefer != null ) {
                     if ( reefer.getVoyageId().equals(voyageId)) {
                         unreserveReefer(reefer.getId());
-                    } else if (!reefer.getState().equals(ReeferState.State.UNALLOCATED)) {  // keep in-transit and booked in the store
-                        map.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
+                        reefers2Remove.add(String.valueOf(reefer.getId()));
                     }
                 }
             }
+            // remove reefers which just arrived. The reefer inventory contains
+            // reefers which are booked or in-transit.
+            Kar.Actors.State.Submap.removeAll(this,Constants.REEFER_MAP_KEY, reefers2Remove);
+            /*
             // replace reefer map in kar storage
             Kar.Actors.State.Submap.removeAll(this,Constants.REEFER_MAP_KEY);
             // if map is empty kar will complain
             if ( !map.isEmpty() ) {
                 Kar.Actors.State.Submap.set(this,Constants.REEFER_MAP_KEY,map );;
             }
+
+             */
             // forces update thread to send reefer counts
             valuesChanged.set(true);
             if (logger.isLoggable(Level.FINE)) {
@@ -605,7 +610,6 @@ public class ReeferProvisionerActor extends BaseActor {
         }
         reefer.reset();
         Kar.Actors.State.Submap.remove(this, Constants.REEFER_MAP_KEY, String.valueOf(reefer.getId()));
-        //Kar.actorDeleteState(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reefer.getId()));
         Kar.Actors.State.Submap.remove(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reefer.getId()));
     }
 

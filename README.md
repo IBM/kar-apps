@@ -2,7 +2,7 @@
 
 The application models simplified business process involved in shipping perishable goods on a ship from manufacturer to a client. The manufacturer places an order for a shipment of goods which requires one or more refrigerated (reefer) containers and a ship. The land transportation of reefer containers as well as Customs clearance are not considered to simplify the design. To facilitate transit of goods, the application uses a fleet of ships covering Atlantic and Pacific oceans. Each ship in a fleet has a different tonnage (reefer cargo capacity) and is assigned to a shipping schedule serving a route between two ports. The itinerary includes departure date from origin port and arrival date at the destination port. All reefers have identical physical dimensions and have a maximum holding capacity in terms of product units.
 
-The Reefer application runtime consists of four seperately deployable components.  
+The Reefer application runtime consists of four separately deployable components.  
 
 1. UI server running in OpenLiberty
 Its main responsibility is to serve Angular based Reefer application packaged in multiple javascript bundles.
@@ -14,9 +14,10 @@ Its main responsibility is to process HTTP requests and return results to client
 Its main responsibility is to implement business logic for Reefer App use cases.
 
 4. Simulator server running in OpenLiberty
-Its main responsibility is to provide drivers for Reefer App use cases. Currently supported use case are:
+Its main responsibility is to provide drivers for Reefer App use cases. Currently supported use cases are:
    * Advance time and notify active voyages of their new locations
-   * Gradually create orders to fill upcoming voyages to a specified target capacity
+   * Gradually create orders filling upcoming voyages to a specified target capacity
+   * Randomly generate reefer anomalies at specified failure rate
 
 
 ![Alt text](docs/images/reefer-arch.png?raw=true "Reefer Architecture")
@@ -100,7 +101,7 @@ http://localhost:9088
 ```
 ### GUI
 
-The Reefer Application implements SPA (Single Page Application) design where all 
+The Reefer Application GUI is implemented with Angular 9 using SPA (Single Page Application) design where all 
 HTML, Javascript, and CSS code is fetched by the browser in a single page load to
 improve user experience. The application offers five distinct views 
 
@@ -108,32 +109,56 @@ improve user experience. The application offers five distinct views
 - Manually create and submit an order
 
 2. Orders View
-- Shows existing orders and starts/stops the Order Simulator
+- Shows number of future (booked), in-transit, and spoiled orders. Configures and starts/stops the Order Simulator 
 
 3. Active Voyage View
-- Shows active voyages and starts/stops the Ship Simulator
+- Shows active voyages with progress updated in real time. Configures and starts/stops the Ship Simulator
 
-4. Reefers View (partially implemented)
+4. Reefers View 
+- Shows number of booked, in-transit, spoiled, and on-maintenance reefers. Configures and starts/stops the Reefer Anomaly Simulator
 
-5. Ships View (partially implemented)
+5. Ships View 
+- Shows the fleet of ships
+### REST Service
+This Spring Framework service provides HTTP based, RESTful API to application clients which include the GUI, KAR actors, 
+and simulators. The simulators call it to advance time, fetch current reefer inventory, fetch ship schedule and to get a list of active 
+voyages. The REST receives updates from KAR actors and pushes these changes in real time to the GUI using Websockets to
+move ships and change reefer and order counts and totals. It is also responsible for initially creating a ship schedule 
+for N days ahead and extending the schedule dynamically to make sure the Reefer Application doesn't run out of voyages.
+The schedule is computed from a static configuration defined in resources/routes.json which currently includes
+routes for seven ships. Each ship in the schedule moves from origin port to destination port in a fixed number of days. 
+After reaching its destination, the ship remains at port for one day to unload reefers and then goes back to origin port.
 
 ### Simulators
 
-Current implementation of the Reefer Application provides two simulators. The Ship
-Simulator which advances time and causes ships to move from an origin port
-to a destination port. To start the Ship Simulator, navigate to the Active Voyage View and 
+The Reefer Application provides three simulators:
+####Ship Simulator
+The Ship Simulator which advances time and moves ships from an origin port
+to a destination port. To start the Ship Simulator, navigate to the Active Voyages View and 
 change the value in a field directly under the **Simulated Delay** label. This value represents
 the desired time compression (in secs). For example, the value of 10 means that 
 each day is 10 secs long, 20 makes a day 20 secs, etc. The default value is 0, which disables 
-the Ship Simulator. The minimum (and recommended) compression factor for the Ship Simulator is 10secs. 
+the Ship Simulator. The minimum (and recommended) compression factor for the Ship Simulator is 5 secs. 
 Once the value is greater than zero, the **Start** button is activated. Press it to start the simulator.
-This is a modal button which will toggle **Start** and **Stop**. When the Ship Simulator is running
-the voyages begin to appear and the progress updated at the chosen rate.
-
-With the Ship Simulator running you can start the Order Simulator by navigating to the Orders View. 
-Change the value directly under the **Order Simulator** label to a number greater than zero. This value
-represents the max percentage the orders will fill each ship. For example, the value of 80 
-means that the ship will be filled with orders up to 80% of the maximum capacity. After choosing the 
-desired percentage, press **Update** button to start the Order Simulator. Orders begin to appear, with 
-the newest shown on top.
-
+This is a modal button which will toggle **Start** and **Stop**. While the Ship Simulator is running,
+the ships begin to appear, and each ship progress is updated in real time at a chosen rate.
+####Order Simulator
+With the Ship Simulator running you can start the Order Simulator by navigating to the Orders View. The behavior of
+this simulator can be changed using three values which are directly under the **Order Simulator** label. Set the
+*Order Target* value to a number greater than zero. This value represents the max percentage the orders will fill each ship. 
+For example, the value of 80 means that the ship will be filled with orders up to 80% of its maximum capacity. 
+Set the *Future Time Window* value to a number greater than zero. This value represents a moving window of days for which orders
+will be generated into the future. Set the *Order Updates per Day* value to a number greater than zero. This value represents
+a number of orders the simulator will generate per day.
+After choosing the values, press **Update** button to start the Order Simulator. The order counts begin to change as new 
+orders are created, ships depart/arrive, and orders becoming spoiled while en-route to destination.
+####Reefer Anomaly Simulator
+With the Ship Simulator running you can start the **Reefer Anomaly Simulator** by navigating to the Reefers View.
+The behavior of this simulator can be changed using two values which are directly under the **Reefer Anomaly Simulator** 
+label. Set the *Failure Rate* value to a number greater than zero. This value represents reefer failure rate as a percentage
+of available reefers. Set the *Anomaly Updates per Day* value to a number greater than zero. This value represents number of
+reefer failures the simulator will generate per day. Press **Update** button to start the simulator. Watch the *Spoilt* and 
+*On Maintenance* counts begin to change. A reefer becomes spoilt only if it is on a ship which has departed (ie. in transit). 
+When a spoilt reefer arrives at the destination port, it's state changes to on-maintenance. Spoilt reefers which are 
+not in-transit are counted as on-maintenance and remain there for two days after which they become available
+for booking again.

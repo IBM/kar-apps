@@ -132,7 +132,8 @@ After reaching its destination, the ship remains at port for one day to unload r
 ### Simulators
 
 The Reefer Application provides three simulators:
-####Ship Simulator
+
+#### Ship Simulator
 The Ship Simulator which advances time and moves ships from an origin port
 to a destination port. To start the Ship Simulator, navigate to the Active Voyages View and 
 change the value in a field directly under the **Simulated Delay** label. This value represents
@@ -142,7 +143,7 @@ the Ship Simulator. The minimum (and recommended) compression factor for the Shi
 Once the value is greater than zero, the **Start** button is activated. Press it to start the simulator.
 This is a modal button which will toggle **Start** and **Stop**. While the Ship Simulator is running,
 the ships begin to appear, and each ship progress is updated in real time at a chosen rate.
-####Order Simulator
+#### Order Simulator
 With the Ship Simulator running you can start the Order Simulator by navigating to the Orders View. The behavior of
 this simulator can be changed using three values which are directly under the **Order Simulator** label. Set the
 *Order Target* value to a number greater than zero. This value represents the max percentage the orders will fill each ship. 
@@ -152,7 +153,7 @@ will be generated into the future. Set the *Order Updates per Day* value to a nu
 a number of orders the simulator will generate per day.
 After choosing the values, press **Update** button to start the Order Simulator. The order counts begin to change as new 
 orders are created, ships depart/arrive, and orders becoming spoiled while en-route to destination.
-####Reefer Anomaly Simulator
+#### Reefer Anomaly Simulator
 With the Ship Simulator running you can start the **Reefer Anomaly Simulator** by navigating to the Reefers View.
 The behavior of this simulator can be changed using two values which are directly under the **Reefer Anomaly Simulator** 
 label. Set the *Failure Rate* value to a number greater than zero. This value represents reefer failure rate as a percentage

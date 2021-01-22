@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,8 +46,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class VoyageService extends AbstractPersistentService {
  
-    private Map<String, Set<Order>> voyageOrders = new HashMap<>();
-    private Map<String, VoyageStatus > voyageStatus = new HashMap<>();
+    private Map<String, Set<Order>> voyageOrders = new ConcurrentHashMap<>();
+    private Map<String, VoyageStatus > voyageStatus = new ConcurrentHashMap<>();
     private static final Logger logger = Logger.getLogger(VoyageService.class.getName());
 
     public void addOrderToVoyage(Order order) {

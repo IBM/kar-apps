@@ -182,7 +182,7 @@ public class ReeferProvisionerActor extends BaseActor {
                     Instant today = Instant.parse(message.getString(Constants.DATE_KEY));
                     ReeferDTO reefer = reeferMasterInventory[Integer.parseInt(it.next())];
                     // release reefer from maintenance if today matches reefer's assigned release date
-                    if (releaseFromMaintenanceToday(reefer, today)) {
+                    if (reefer != null && releaseFromMaintenanceToday(reefer, today)) {
                         releaseFromMaintenance(reefer, today);
                         // remove reefer from onMaintenance map
                         it.remove();

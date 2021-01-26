@@ -42,7 +42,7 @@ Its main responsibility is to provide drivers for Reefer App use cases. Currentl
 
 The Reefer Application GUI is implemented with Angular 9 using SPA (Single Page Application) design where all 
 HTML, Javascript, and CSS code is fetched by the browser in a single page load to
-improve user experience. The application offers five distinct views 
+improve user experience. The application offers four distinct views 
 
 1. Order Create View 
 - Manually create and submit an order
@@ -56,8 +56,6 @@ improve user experience. The application offers five distinct views
 4. Reefers View 
 - Shows number of booked, in-transit, spoiled, and on-maintenance reefers. Configures and starts/stops the Reefer Anomaly Simulator
 
-5. Ships View 
-- Shows the fleet of ships
 ### REST Service
 This Spring Framework service provides an HTTP based, RESTful API to external application clients, internal actor components and simulators.
 Simulators call to advance time, fetch current reefer inventory, fetch ship schedule and to get a list of active voyages. 

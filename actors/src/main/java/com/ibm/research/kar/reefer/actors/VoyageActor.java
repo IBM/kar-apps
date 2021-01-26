@@ -214,11 +214,15 @@ public class VoyageActor extends BaseActor {
         }
         // notify each order actor that the ship arrived
         orders.values().forEach(orderId -> {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId()
-                        + " Notifying Order Actor of arrival - OrderID:" + orderId);
-            }
+          if (logger.isLoggable(Level.FINE)) {
+            logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId()
+            + " Notifying Order Actor of arrival - OrderID:" + orderId);
+          }
+          try {
             messageOrderActor("delivered", orderId);
+          } catch (Exception e) {
+            logger.log(Level.SEVERE, "VoyageActor.processArrivedVoyage() - Error - voyageId "+getId()+" ", e);
+          }
         });
         messageRest("/voyage/update/arrived", daysAtSea);
         Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),

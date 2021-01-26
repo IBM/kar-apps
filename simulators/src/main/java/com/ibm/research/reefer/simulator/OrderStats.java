@@ -34,8 +34,9 @@ public class OrderStats {
   private double newS;
   private int max_latency;
   private int outliers;
+  private double threshold;
 
-  public OrderStats() {
+  public OrderStats(int t) {
     this.successful_orders = 0;
     this.failed_orders = 0;
     this.missed_orders = 0;
@@ -45,9 +46,10 @@ public class OrderStats {
     this.newS = 0.0;
     this.max_latency = 0;
     this.outliers = 0;
+    this.threshold = t;
   }
 
-  public OrderStats(int s, int f, int m, double om, double nm, double os, double ns, int ml, int or) {
+  public OrderStats(int s, int f, int m, double om, double nm, double os, double ns, int ml, int or, double t) {
     this.successful_orders = s;
     this.failed_orders = f;
     this.missed_orders = m;
@@ -57,14 +59,21 @@ public class OrderStats {
     this.newS = ns;
     this.max_latency = ml;
     this.outliers = or;
+    this.threshold = t;
   }
 
   public boolean addSuccessful(int latency) {
+    double thresh;
     synchronized (this) {
       if (latency > this.max_latency) {
         this.max_latency = latency;
       }
-      double thresh = ( 3*getMean() > getMean()+5*getStddev() ) ? 3*getMean() : getMean()+5*getStddev(); 
+      if (this.threshold > 0) {
+        thresh = this.threshold;
+      }
+      else {
+        thresh = ( 3*getMean() > getMean()+5*getStddev() ) ? 3*getMean() : getMean()+5*getStddev();
+      }
       if (latency > thresh && successful_orders > 10) {
         outliers++;
         return true;
@@ -128,6 +137,10 @@ public class OrderStats {
     return this.outliers;
   }
 
+  public int getThreshold() {
+    return (int) Math.round(this.threshold);
+  }
+
   @Override
   public Object clone() {
     synchronized (this) {
@@ -135,7 +148,7 @@ public class OrderStats {
         return (OrderStats) super.clone();
       } catch (CloneNotSupportedException e) {
         return new OrderStats(this.successful_orders, this.failed_orders, this.missed_orders,
-                this.oldM, this.newM, this.oldS, this.newS, this.max_latency, this.outliers);
+                this.oldM, this.newM, this.oldS, this.newS, this.max_latency, this.outliers, this.threshold);
       }
     }
   }
@@ -148,7 +161,7 @@ public class OrderStats {
       System.exit(1);
     }
     
-    OrderStats os = new OrderStats();
+    OrderStats os = new OrderStats(0);
     for (int i=1; i<=10; i++) {
       switch (args[0]) {
         case "successful" :  os.addSuccessful(i);

@@ -26,4 +26,4 @@ fi
 
 KAR_RUNTIME_PORT=${KAR_RUNTIME_PORT:=30666}
 
-kar run -runtime_port $KAR_RUNTIME_PORT -app reefer node monitor.js $1
+kar run -runtime_port $KAR_RUNTIME_PORT -app reefer node monitor.js $@

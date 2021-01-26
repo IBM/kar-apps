@@ -253,9 +253,9 @@ public class SimulatorResource {
 
   @POST
   @Path("/resetorderstats")
-  public JsonValue resetorderstats() {
+  public JsonValue resetorderstats(JsonValue num) {
     try {
-      simService.resetOrderStats();
+      simService.resetOrderStats(num);
       return Json.createValue("accepted");
     } catch (Exception e) {
       e.printStackTrace();

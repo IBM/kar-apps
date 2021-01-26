@@ -63,7 +63,7 @@ public class SimulatorService {
   private static final Logger logger = Logger.getLogger(SimulatorService.class.getName());
 
   // keep statistics on simulator orders
-  public static OrderStats os = new OrderStats();
+  public static OrderStats os = new OrderStats(0);
 
   // constructor
   public SimulatorService() {
@@ -433,32 +433,39 @@ public class SimulatorService {
   public JsonValue getOrderStats() {
     Object oss = os.clone();
     if (logger.isLoggable(Level.INFO)) {
-      logger.info("simulator: getOrderStats successful=" + ((OrderStats)oss).getSuccessful() +
+      logger.info("simulator: getOrderStats good=" + ((OrderStats)oss).getSuccessful() +
               " mean=" + ((OrderStats)oss).getMean() + " stddev=" + ((OrderStats)oss).getStddev() +
-              " max=" +  ((OrderStats)oss).getMax() + " outliers=" + ((OrderStats)oss).getOutliers() +
-              " failed=" + ((OrderStats)oss).getFailed() + " missed=" + ((OrderStats)oss).getMissed());
+              " max=" +  ((OrderStats)oss).getMax() + 
+              " thresh=" + ((OrderStats)oss).getThreshold() + " outliers=" + ((OrderStats)oss).getOutliers() +
+              " bad=" + ((OrderStats)oss).getFailed() + " miss=" + ((OrderStats)oss).getMissed());
     }
 
     double mean   = Math.floor(10.0 * ((OrderStats)oss).getMean()) / 10.0;
     double stddev = Math.floor(10.0 * ((OrderStats)oss).getStddev()) / 10.0;
     
     JsonObject ostats = Json.createObjectBuilder()
-            .add("successful", (JsonNumber) Json.createValue(((OrderStats)oss).getSuccessful()))
+            .add("good", (JsonNumber) Json.createValue(((OrderStats)oss).getSuccessful()))
             .add("mean",   (JsonNumber) Json.createValue(mean))
             .add("stddev", (JsonNumber) Json.createValue(stddev))
             .add("max",    (JsonNumber) Json.createValue(((OrderStats)oss).getMax()))
+            .add("thresh",    (JsonNumber) Json.createValue(((OrderStats)oss).getThreshold()))
             .add("outliers", (JsonNumber) Json.createValue(((OrderStats)oss).getOutliers()))
-            .add("failed", (JsonNumber) Json.createValue(((OrderStats)oss).getFailed()))
-            .add("missed", (JsonNumber) Json.createValue(((OrderStats)oss).getMissed()))
+            .add("bad", (JsonNumber) Json.createValue(((OrderStats)oss).getFailed()))
+            .add("miss", (JsonNumber) Json.createValue(((OrderStats)oss).getMissed()))
             .build();
     return ostats;
   }
 
-  public void resetOrderStats() {
-    if (logger.isLoggable(Level.INFO)) {
+  public void resetOrderStats(JsonValue value) {
+    JsonNumber newval;
+    if (JsonValue.ValueType.OBJECT == value.getValueType()) {
+      newval = ((JsonObject) value).getJsonNumber("value");
+    } else {
+      newval = Json.createValue(((JsonNumber) value).intValue());
+    }    if (logger.isLoggable(Level.INFO)) {
       logger.info("simulator: resetOrderStats called");
     }
-    os = new OrderStats();
+    os = new OrderStats(newval.intValue());
   }
 
 

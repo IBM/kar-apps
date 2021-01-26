@@ -19,13 +19,14 @@
 //   delay = current number of seconds allowed to run a day's work
 //   orderctl = {order target, order window, order updates}
 //   orderstats:
-//     successful = orders generated
+//     good = number orders generated
 //     mean = average order latency in ms, excluding outliers
 //     stddev = distribution of order latencies, excluding outliers
 //     max = max latency, including outliers
+//     thresh = outlier threshold; 0 = calculate dynamically
 //     outliers = order latencies > instantanious mean + 5*stddev
-//     failed = failed order requests
-//     missed = number of order events that could not be executed within a "day"
+//     bad = failed order requests
+//     miss = number of order groups that could not be started within a "day"
 
 // retry http requests up to 10 times over 10s
 const fetch = require('fetch-retry')(require('node-fetch'), { retries: 10 })
@@ -41,22 +42,70 @@ function url (service, route) {
 }
 
 async function main () {
+
+  var argv = require('yargs/yargs')(process.argv.slice(2))
+    .usage('Usage: $0 [--delay <int>] [--thresh <int>] [--reset <int>]')
+    .version(false)
+    .help('help').alias('help', 'h')
+    .options({
+      delay: {
+	alias: 'd',
+	description: "delay between reports"
+      },
+      thresh: {
+	alias: 't',
+	description: 'outlier threshold'
+      },
+      reset: {
+	alias: 'r',
+	description: 'reset stats after specified updates'
+      }
+    })
+    .argv;
+
   var sleep=60
   if ( process.env.ORDERSTATS_DELAY ) {
     sleep=process.env.ORDERSTATS_DELAY
   }
-  if ( process.argv[2] ) {
-    sleep=process.argv[2]
+  if (argv.delay) {
+    sleep=argv.delay
   }
-    
+
+  var thresh=0
+  var resetthresh=0
+  if ( process.env.ORDERSTATS_THRESHOLD ) {
+    thresh=process.env.ORDERSTATS_THRESHOLD
+  }
+  if (argv.thresh) {
+    thresh=argv.thresh
+  }
+  if ( thresh > 0 ) {
+    console.log('resetting order stats and setting outlier threshold to '+thresh+' ms')
+    resetthresh=1
+  }
+
+  var reset=0
+  var rcd=0
+  if ( process.env.ORDERSTATS_RESET ) {
+    reset=process.env.ORDERSTATS_RESET
+  }
+  if (argv.reset) {
+    reset=argv.reset
+  }
+  if ( reset > 0 ) {
+    console.log('resetting order stats after every '+reset+' updates')
+  }
+
+  // reporting loop
   while (true) {
+    this.startTime = Date.now()
     const unitdelay = await fetch(url('simservice', 'simulator/getunitdelay'), {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     })
     const restext = await unitdelay.text()
-    // at startup liberty may respond with garbage string before app is ready to serve
-    // a valid unitdelay response will never include a space
+    // at startup liberty may respond with garbage string before app is ready to serve.
+    // a valid unitdelay response will never include a space.
     if ( restext.includes(' ') ) {
       await new Promise(resolve => setTimeout(resolve, 1000))
       continue
@@ -69,6 +118,16 @@ async function main () {
     })
     const objctl = await orderctl.json()
 
+    if ( resetthresh > 0 ) {
+      resetthresh=0
+      const oktext = await fetch(url('simservice', 'simulator/resetorderstats'), {
+	method: 'POST',
+	body: JSON.stringify({ value: new Number(thresh) }),
+	headers: { 'Content-Type': 'application/json' }
+      })
+      const objok = await oktext.json()
+    }
+
     const orderstats = await fetch(url('simservice', 'simulator/getorderstats'), {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
@@ -77,7 +136,24 @@ async function main () {
 
     console.log('delay:{'+JSON.stringify(objdly)+'} orderctl:{'+objctl.ordertarget+','+objctl.orderwindow+','+objctl.orderupdates+
 		'} orderstats:'+JSON.stringify(objstats))
-    await new Promise(resolve => setTimeout(resolve, sleep*1000))
+
+    // check if auto reset time
+    if ( reset > 0 ) {
+      if ( rcd > 0 ) {
+	rcd -= 1
+      }
+      if ( rcd == 0 ) {
+	rcd = reset
+	const oktext = await fetch(url('simservice', 'simulator/resetorderstats'), {
+	  method: 'POST',
+	  body: JSON.stringify({ value: new Number(thresh) }),
+	  headers: { 'Content-Type': 'application/json' }
+	})
+	const objok = await oktext.json()
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, (sleep*1000)-(Date.now()-this.startTime)))
   }
 }
 

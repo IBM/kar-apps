@@ -217,10 +217,12 @@ public class ReeferProvisionerActor extends BaseActor {
                 if ( reefer != null ) {
                     if ( reefer.getVoyageId().equals(voyageId)) {
                         voyageReefersInTransitCount++;
-                        reefer.setState(ReeferState.State.INTRANSIT);
-                        // The INTRANSIT state is not currently being used in ReeferProvisioner. If it needs to be
-                        // checked save the reefer map to persist the change by first deleting reefer map in
-                        // kar storage and saving the updated map.
+                        if ( reefer.getState().equals(ReeferState.State.ALLOCATED)) {
+                            // The INTRANSIT state is not currently being used in ReeferProvisioner. If it needs to be
+                            // checked save the reefer map to persist the change by first deleting reefer map in
+                            // kar storage and saving the updated map.
+                            reefer.setState(ReeferState.State.INTRANSIT);
+                        }
                     }
                 }
             }

@@ -21,11 +21,13 @@ metadata:
   labels:
     name: reefer-rest
 spec:
+  type: NodePort
   selector:
     name: reefer-rest
   ports:
     - name: app
       port: {{ .Values.reefer.rest.port }}
+      nodePort: {{ .Values.reefer.rest.nodeport }}
 ---
 apiVersion: apps/v1
 kind: Deployment

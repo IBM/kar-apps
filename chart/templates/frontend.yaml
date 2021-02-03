@@ -21,11 +21,13 @@ metadata:
   labels:
     name: reefer-frontend
 spec:
+  type: NodePort
   selector:
     name: reefer-frontend
   ports:
     - name: app
       port: {{ .Values.reefer.frontend.port }}
+      nodePort: {{ .Values.reefer.frontend.nodeport }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -43,8 +45,6 @@ spec:
       labels:
         name: reefer-frontend
     spec:
-      imagePullSecrets:
-        - name: {{ .Values.kar.imagePullSecret }}
       containers:
       - name: app
         image: {{ .Values.reefer.frontend.image }}
@@ -54,4 +54,4 @@ spec:
           containerPort: {{ .Values.reefer.frontend.port }}
         env:
         - name: REST_URL
-          value: https://reefer-rest.{{ .Values.ingress.subdomain }}
+          value: http://localhost:{{ .Values.reefer.rest.nodeport }}

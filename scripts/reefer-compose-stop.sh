@@ -19,7 +19,12 @@
 # Script to launch reefer components using docker-compose
 
 SCRIPTDIR=$(cd $(dirname "$0") && pwd)
-
 cd $SCRIPTDIR
 
-docker-compose -f reefer-compose.yaml -p reefer down
+if systemctl is-active docker | grep -q 'inactive'; then
+    echo Docker not active, trying podman
+    podman-compose -f reefer-compose-podman.yaml -p reefer down
+else
+    docker-compose -f reefer-compose-docker.yaml -p reefer down
+fi
+

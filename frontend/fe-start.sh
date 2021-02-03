@@ -1,4 +1,3 @@
-!/bin/bash
 
 #
 # Copyright IBM Corporation 2020,2021

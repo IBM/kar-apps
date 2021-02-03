@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-DOCKER_REGISTRY ?= quay.io
-DOCKER_NAMESPACE ?= ibm
+DOCKER_REGISTRY ?= localhost:5000
+DOCKER_NAMESPACE ?= kar
 DOCKER_IMAGE_PREFIX ?= $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/
 DOCKER_IMAGE_TAG ?= latest
 
@@ -23,12 +23,12 @@ KAR_JAVA_SDK=$(DOCKER_IMAGE_PREFIX)kar-sdk-java-builder-11:$(DOCKER_IMAGE_TAG)
 KAR_JAVA_RUNTIME=$(DOCKER_IMAGE_PREFIX)kar-sdk-java-runtime-11:$(DOCKER_IMAGE_TAG)
 KAR_JS_SDK=$(DOCKER_IMAGE_PREFIX)kar-sdk-nodejs-v12:$(DOCKER_IMAGE_TAG)
 
-REEFER_FRONTEND=$(DOCKER_IMAGE_PREFIX)kar-reefer-frontend:$(DOCKER_IMAGE_TAG)
-REEFER_BUILDER=$(DOCKER_IMAGE_PREFIX)kar-reefer-builder:$(DOCKER_IMAGE_TAG)
-REEFER_ACTORS=$(DOCKER_IMAGE_PREFIX)kar-reefer-actors:$(DOCKER_IMAGE_TAG)
-REEFER_SIMULATORS=$(DOCKER_IMAGE_PREFIX)kar-reefer-simulators:$(DOCKER_IMAGE_TAG)
-REEFER_REST=$(DOCKER_IMAGE_PREFIX)kar-reefer-rest:$(DOCKER_IMAGE_TAG)
-REEFER_MONITOR=$(DOCKER_IMAGE_PREFIX)kar-reefer-monitor:$(DOCKER_IMAGE_TAG)
+REEFER_FRONTEND=$(DOCKER_IMAGE_PREFIX)kar-app-reefer-frontend:$(DOCKER_IMAGE_TAG)
+REEFER_BUILDER=$(DOCKER_IMAGE_PREFIX)kar-app-reefer-builder:$(DOCKER_IMAGE_TAG)
+REEFER_ACTORS=$(DOCKER_IMAGE_PREFIX)kar-app-reefer-actors:$(DOCKER_IMAGE_TAG)
+REEFER_SIMULATORS=$(DOCKER_IMAGE_PREFIX)kar-app-reefer-simulators:$(DOCKER_IMAGE_TAG)
+REEFER_REST=$(DOCKER_IMAGE_PREFIX)kar-app-reefer-rest:$(DOCKER_IMAGE_TAG)
+REEFER_MONITOR=$(DOCKER_IMAGE_PREFIX)kar-app-reefer-monitor:$(DOCKER_IMAGE_TAG)
 
 reeferImages: reeferBuilder reeferActors reeferSimulators reeferRest reeferFrontend reeferMonitor
 
@@ -58,8 +58,5 @@ pushReeferImages:
 	docker push $(REEFER_MONITOR)
 	docker push $(REEFER_SIMULATORS)
 	docker push $(REEFER_REST)
-
-#dockerBuildAndPush:
-#	make dockerPushReeferImages
 
 .PHONY: docker

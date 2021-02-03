@@ -17,35 +17,39 @@
 #
 
 # Script to launch reefer components using docker-compose
-# Frontend GUI may need custom URL to get to reefer-rest
-# Frontend GUI itself will always be at localhost:9088
+# usage: reefer-compose-start.sh [release]
+
+if [[ -n "$1" ]] && [[ "$1" == "release" ]]; then
+    export IMAGE_PREFIX="quay.io/ibm"
+fi
+if [ -z "$IMAGE_PREFIX" ]; then
+    export IMAGE_PREFIX="localhost:5000/kar"
+fi
 
 SCRIPTDIR=$(cd $(dirname "$0") && pwd)
-
 cd $SCRIPTDIR
 
-# if [ -n "$REST_HOST" ] && [ "$REST_HOST" == "auto" ]; then
-#    echo -n "trying to guess host ip ... "
-#    REST_HOST=$(host $(hostname) | cut -d' ' -f4)
-#    valid=$(echo $REST_HOST | egrep -e "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" > /dev/null)
-#    if [ $? != 0 ]; then
-#        echo nope
-#        echo Please specify actual host ip address to use
-#        exit
-#    else
-#      echo "found $REST_HOST"
-#    fi
-# fi
-
+# Frontend GUI may need custom URL to get to reefer-rest
+# Frontend GUI itself will always be at localhost:9088
 if [ -z "$REST_URL" ]; then
     resturl=http://localhost:9080
 else
     resturl=$REST_URL
 fi
 
-echo Deploying application with docker-compose ...
+engine=docker
+if systemctl is-active docker | grep -q 'inactive'; then
+    engine=podman
+    echo Docker not active, trying podman
+fi
 
-docker-compose -f reefer-compose.yaml -p reefer up -d
+echo Deploying ${IMAGE_PREFIX} images with ${engine}-compose ...
+
+${engine}-compose -f reefer-compose-${engine}.yaml -p reefer up -d
+if [ $? -ne 0 ]
+then
+  exit 1
+fi
 
 echo -n waiting for reefer-rest to be available
 wait=1

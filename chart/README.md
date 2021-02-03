@@ -14,11 +14,13 @@
 # limitations under the License.
 -->
 
-This chart deploys the Reefer application on Kubernetes.
+This chart deploys the Reefer application on k3s or Kind without ingress
+To deploy:  
 
-You must override the values of `ingress.subdomain` and `ingress.tls.secretname`
-to provide the real values for your cluster.  On an IKS cluster, you can
-find the values to use by doing:
 ```shell
-ibmcloud ks cluster get --cluster CLUSTER_NAME | grep Ingress
+helm install reefer chart
+```
+To undeploy:
+```shell
+helm uninstall reefer
 ```

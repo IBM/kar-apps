@@ -130,33 +130,20 @@ When the anamly generation is disabled, the manual **Create Anamaly** button can
 
 ## Reefer Deployment  
 
-### Prereqs  
-- access to KAR artifacts built locally  
-- docker engine and docker-compose  (for running the application from docker images)  
-- maven version 3.6.2+  (for reefer development)  
-- a Go development environment (for reefer development)  
+### Prereqs for running the application from docker images
+- docker engine and docker-compose, or
+- a kubernetes cluster
 
-### Building KAR artifacts  
+### Prereqs for developing and debugging the application without docker  
+- maven version 3.6.2+  
+- Kar cli from https://github.com/IBM/kar/releases  
+
+### Quick Start to run application with docker-compose or podman-compose from a release
 ```
-# clone KAR repository
-git clone https://github.com/IBM/kar
-cd kar
-
-# build docker images for running reefer app from images
-make dockerCore
-
-# build kar CLI and maven jars for doing reefer development
-make cli
-make installJavaSDK
+Clone Reefer application repository from https://github.com/IBM/kar-apps.git
+or download the latest release from https://github.com/IBM/kar-apps, and
 ```
-
-
-### Quick Start to run application with docker-compose
-```
-# clone Reefer application repository
-clone https://github.com/IBM/kar-apps.git
-
-# build docker images
+TBD ... needs work
 cd kar-apps
 make reeferImages
 
@@ -170,6 +157,10 @@ http://localhost:9088/
 
 ### Quick Start for developers
 ```
+TBD ... needs work
+# clone Reefer application repository from https://github.com/IBM/kar-apps.git or
+download the Reefer source tarball from https://github.com/IBM/kar-apps/releases.
+
 # deploy KAR dependencies Kafka and Redis by either ...
 # ... running them in docker-compose
 [KAR install dir]/scripts/docker-compose-start.sh

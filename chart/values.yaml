@@ -14,38 +14,38 @@
 # limitations under the License.
 #
 
-ingress:
-  subdomain: my-clusters-subdomain
-  tls:
-    secretname: my-clusters-tls-secret
-
 kar:
   verbose: info
   imagePullSecret: kar.ibm.com.image-pull
 
 reefer:
   frontend:
-    image: us.icr.io/research/kar-dev/reefer/frontend
+    image: localhost:5000/kar/kar-app-reefer-frontend
     port: 9088
+    nodeport: 30088
     replicas: 1
 
   rest:
-    image: us.icr.io/research/kar-dev/reefer/reefer-rest
+    image: localhost:5000/kar/kar-app-reefer-rest
     port: 9080
+    nodeport: 30080
     replicas: 1
 
   simulator:
-    image: us.icr.io/research/kar-dev/reefer/simulators
+    image: localhost:5000/kar/kar-app-reefer-simulators
     port: 7080
     replicas: 1
 
   monitor:
-    image: us.icr.io/research/kar-dev/reefer/monitor
+    image: localhost:5000/kar/kar-app-reefer-monitor
     port: 7082
     replicas: 1
+    threshold: 100
+    reset: 1
+    delay: 60
 
   actors:
-    image: us.icr.io/research/kar-dev/reefer/actors
+    image: localhost:5000/kar/kar-app-reefer-actors
     port: 8080
     replicas: 1
 

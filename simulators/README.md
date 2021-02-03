@@ -79,12 +79,19 @@ Depending on reefer performance, and the simulator "advance delay", it may not b
 within a simulated day.
 Monitoring of missed orders, failed orders, and statistics on latency for successful orders are captured in the simulator.
 A Kar client is provided that periodically dumps order stats: monitor-stats.sh.
-The stats can be reset at any time with:  
-kar rest -app reefer post simservice simulator/resetorderstats   
+The monitor offers three configuration settings:  
+  delay - the delay in seconds between reports  
+  reset - the number of reports to show before automatically resetting stats
+  threshold - the latency in ms above which orders are counted as outliers  
+
+The stats can be reset and threshold changed at any time with:  
+kar rest -app reefer post simservice simulator/resetorderstats threshold  
+  
 2. If the reefer app is deployed using reefer-compose-start.sh, Kar's environment is not exposed outside the pod.
 For this scenario the monitor is automatically run inside the pod; dump the monitor's container log to see output.
 Here the stats can be reset by exec'ing into the simulator container and issuing the command:  
 /kar/bin/kar rest -app reefer post simservice simulator/resetorderstats   
+  
 3. As of now a running simulator server supports hot method replace.  
 **Best to stop auto mode before activating by updating simulator class files with service running**  
 Simulator threads left running in auto from before replace are killed by advancetime or start/stop auto mode.

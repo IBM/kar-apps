@@ -338,7 +338,10 @@ public class OrderActor extends BaseActor {
      * @return The voyage booking result
      */
     private JsonObject bookVoyage(JsonOrder order) {
-        JsonObject params = Json.createObjectBuilder().add(JsonOrder.OrderKey, order.getAsObject()).build();
+        JsonObject params =
+                Json.createObjectBuilder().
+                        add(JsonOrder.OrderKey, order.getAsObject()).
+                        build();
         ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, order.getVoyageId());
         JsonValue reply = Kar.Actors.call(voyageActor, "reserve", params);
         return reply.asJsonObject();

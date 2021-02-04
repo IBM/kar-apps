@@ -20,9 +20,11 @@ import com.ibm.research.kar.Kar;
 
 import com.ibm.research.kar.actor.ActorRef;
 
+import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,12 +41,14 @@ import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.json.JsonUtils;
+import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reefer.model.*;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 
 @Actor
 public class VoyageActor extends BaseActor {
     private JsonObject voyageInfo;
+    private Voyage voyage = null;
     private JsonValue voyageStatus;
     private Map<String, String> orders = new HashMap<>();
     private static final Logger logger = Logger.getLogger(VoyageActor.class.getName());
@@ -68,7 +72,7 @@ public class VoyageActor extends BaseActor {
                 // call REST just once to get static voyage information like departure and arrival dates, etc
                 Response response = Kar.Services.get("reeferservice", "/voyage/info/" + getId());
                 voyageInfo = response.readEntity(JsonValue.class).asJsonObject();
-                // store static voyage information in Kar storage for reuse
+                // store voyage information in Kar storage for reuse
                 Kar.Actors.State.set(this, Constants.VOYAGE_INFO_KEY, voyageInfo);
             } else {
 
@@ -89,6 +93,7 @@ public class VoyageActor extends BaseActor {
                 }
 
             }
+            voyage = VoyageJsonSerializer.deserialize(voyageInfo);
         } catch (Exception e) {
             logger.log(Level.WARNING, "VoyageActor.init() - Error - voyageId "+getId()+" ", e);
         }
@@ -108,11 +113,23 @@ public class VoyageActor extends BaseActor {
             logger.info("VoyageActor.changePosition() called Id:" + getId() + " " + message.toString() + " state:"
                     + getVoyageStatus());
         }
-
+        // If voyage is null it means that this actor was not able to fetch voyage info from the Rest
+        // service when this actor was activated (see init() above). Most likely the service is down.
+        if ( Objects.isNull(voyage)) {
+            logger.log(Level.WARNING, "VoyageActor.changePosition() - Error - voyageId "+getId()+" metadata is not defined - looks like the REST service is down");
+            return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Rest Service Unavailable - voyage metadata unknown")
+                    .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
+        }
         try {
-            Voyage voyage = JsonUtils.jsonToVoyage(voyageInfo);
+            //Voyage voyage = JsonUtils.jsonToVoyage(voyageInfo);
             // the simulator advances ship position
             int daysAtSea = message.getInt(Constants.VOYAGE_DAYSATSEA_KEY);
+
+            voyage.getRoute().getVessel().setPosition(daysAtSea);
+            int progress = Math.round((daysAtSea / (float) voyage.getRoute().getDaysAtSea()) * 100);
+            voyage.getRoute().getVessel().setProgress(progress);
+            JsonObject jo =  VoyageJsonSerializer.serialize(voyage);
+            Kar.Actors.State.set(this, Constants.VOYAGE_INFO_KEY, jo);
             // given ship sail date and current days at sea get ship's current date
             Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysAtSea);
             if (logger.isLoggable(Level.FINE)) {
@@ -149,16 +166,21 @@ public class VoyageActor extends BaseActor {
                 if (logger.isLoggable(Level.FINE)) {
                     logger.fine("VoyageActor.changePosition() Updating REST - daysAtSea:" + daysAtSea);
                 }
-                // update REST voyage days at sea
-                messageRest("/voyage/update/position", daysAtSea);
+
+                    // update REST voyage days at sea
+                if ( !messageRest("/voyage/update/position", daysAtSea) ) {
+                    logger.log(Level.WARNING, "VoyageActor.changePosition() - Error - voyageId "+getId()+" - unable to message REST service - is the service down?");
+                    return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", " REST Service down")
+                            .add(Constants.VOYAGE_ID_KEY, String.valueOf(this.getId())).build();
+                }
+
             }
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).build();
         } catch (Exception e) {
             logger.log(Level.WARNING, "VoyageActor.changePosition() - Error - voyageId "+getId()+" ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Exception")
-                    .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
+                    .add(Constants.VOYAGE_ID_KEY, String.valueOf(this.getId())).build();
         }
-
     }
 
     /**
@@ -185,6 +207,9 @@ public class VoyageActor extends BaseActor {
                 Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
                         Json.createValue(order.getId()));
                 orders.put(String.valueOf(order.getId()), String.valueOf((order.getId())));
+                voyage.setOrderCount(orders.size());
+                JsonObject jo = VoyageJsonSerializer.serialize(voyage);  //JsonUtils.voyageToJson(voyage);
+                Kar.Actors.State.set(this, Constants.VOYAGE_INFO_KEY, jo);
                 // reload order map since there is a change. Local orders map is not mutable
                 voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
                 Kar.Actors.State.set(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
@@ -250,8 +275,6 @@ public class VoyageActor extends BaseActor {
         });
         messageRest("/voyage/update/departed", daysAtSea);
 
-
-
         ActorRef reeferProvisionerActor = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName,
                 ReeferAppConfig.ReeferProvisionerId);
         JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).build();
@@ -268,14 +291,15 @@ public class VoyageActor extends BaseActor {
      * @param methodToCall -  REST API to call
      * @param daysAtSea    - ship days at sea
      */
-    private void messageRest(String methodToCall, int daysAtSea) {
+    private boolean messageRest(String methodToCall, int daysAtSea) {
         JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).add("daysAtSea", daysAtSea)
                 .build();
         try {
-            /// Notify REST
-             Kar.Services.post("reeferservice", methodToCall, params);
+            Kar.Services.post("reeferservice", methodToCall, params);
+            return true;
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
+            return false;
         }
     }
 
@@ -296,7 +320,7 @@ public class VoyageActor extends BaseActor {
      * @return VoyageStatus instance
      */
     private VoyageStatus getVoyageStatus() {
-        if (voyageStatus == null) {
+        if ( Objects.isNull(voyageStatus ) ) {
             return VoyageStatus.UNKNOWN;
         }
         return VoyageStatus.valueOf(((JsonString) voyageStatus).getString());
@@ -310,7 +334,7 @@ public class VoyageActor extends BaseActor {
      * @param voyage          - voyage info
      * @return - true if ship arrived, false otherwise
      */
-    private boolean shipArrived(Instant shipCurrentDate, Voyage voyage) { // String shipArrivalDate, String voyageId) {
+    private boolean shipArrived(Instant shipCurrentDate, Voyage voyage) {
         Instant scheduledArrivalDate = Instant.parse(voyage.getArrivalDate());
         return ((shipCurrentDate.equals(scheduledArrivalDate)
                 || shipCurrentDate.isAfter(scheduledArrivalDate) && !VoyageStatus.ARRIVED.equals(getVoyageStatus())));

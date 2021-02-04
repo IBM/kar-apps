@@ -135,7 +135,9 @@ public class VoyageController {
    */
   @GetMapping("/voyage/active")
   public List<Voyage> getActiveVoyages() {
-    return activeVoyages();
+    List<Voyage> activeVoyages = activeVoyages();
+    activeVoyages.forEach(System.out::println);
+    return activeVoyages;
   }
 
   @GetMapping("/voyage/state/{id}")
@@ -273,9 +275,12 @@ public class VoyageController {
    * @param voyageId
    * @return
    */
+  /*
   private int voyageOrders(String voyageId) {
     return voyageService.getVoyageOrderCount(voyageId);
   }
+
+   */
 
   /**
    * Returns a list of voyages currently at sea
@@ -283,16 +288,7 @@ public class VoyageController {
    * @return
    */
   private List<Voyage> activeVoyages() {
-    List<Voyage> activeVoyages = shipScheduleService.getActiveSchedule();
-    try {
-      for (Voyage voyage : activeVoyages) {
-        voyage.setOrderCount(voyageOrders(voyage.getId()));
-      }
-    } catch (Exception e) {
-      logger.log(Level.WARNING,e.getMessage(),e);
-    }
-
-    return activeVoyages;
+    return  shipScheduleService.getActiveSchedule();
   }
 
   /**
@@ -307,13 +303,22 @@ public class VoyageController {
     try {
       List<Voyage> activeVoyages = activeVoyages();
       gui.sendActiveVoyageUpdate(activeVoyages, currentDate);
-      int totalActiveOrders = 0;
-      for (Voyage voyage : activeVoyages) {
-        totalActiveOrders += voyage.getOrderCount();
-      }
+
+      int totalActiveOrders =
+              activeVoyages.
+                      stream().
+                      map(Voyage::getOrderCount).
+                      reduce(0, Integer::sum);
+     /*
+      gui.updateOrderCounts(totalActiveOrders,
+              orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY),
+              orderService.getOrderCount(Constants.SPOILT_ORDERS_KEY));
+      */
       gui.updateInTransitOrderCount(totalActiveOrders);
       gui.updateFutureOrderCount(orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY));
       gui.updateSpoiltOrderCount(orderService.getOrderCount(Constants.SPOILT_ORDERS_KEY));
+
+
 
     } catch( Exception e) {
       logger.log(Level.WARNING,e.getMessage(),e);

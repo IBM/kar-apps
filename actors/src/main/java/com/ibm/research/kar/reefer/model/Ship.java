@@ -20,6 +20,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Ship {
+    public static final String VESSEL="vessel";
+    public static final String VESSEL_ID="id";
+    public static final String VESSEL_NAME="name";
+    public static final String POSITION="position";
+    public static final String PROGRESS="progress";
+    public static final String MAX_CAPACITY="maxCapacity";
+    public static final String FREE_CAPACITY="freeCapacity";
+    public static final String LOCATION="location";
+    public static final String REEFERS="reefers";
+
     private String id;
     private String name;
     private long position;
@@ -109,5 +119,19 @@ public class Ship {
 
     public void setReefers(List<Reefer> reefers) {
         this.reefers = reefers;
+    }
+
+    @Override
+    public String toString() {
+        return "Ship{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", position=" + position +
+                ", progress=" + progress +
+                ", maxCapacity=" + maxCapacity +
+                ", freeCapacity=" + freeCapacity +
+                ", location='" + location + '\'' +
+                ", reefers=" + reefers +
+                '}';
     }
 }

@@ -35,6 +35,7 @@ import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.actors.VoyageActor;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.OrderProperties;
@@ -150,10 +151,9 @@ public class OrderController {
 			JsonObjectBuilder orderParamsBuilder = Json.createObjectBuilder();
 			orderParamsBuilder.add("orderId", order.getId()).add("orderVoyageId", order.getVoyageId()).add("orderProductQty",
 					order.getProductQty());
-
-			JsonObjectBuilder orderObject = Json.createObjectBuilder();
-			orderObject.add("order", orderParamsBuilder.build());
-			JsonObject params = orderObject.build();
+			JsonObjectBuilder jsonOrderBuilder = Json.createObjectBuilder();
+			jsonOrderBuilder.add("order", orderParamsBuilder.build());
+			JsonObject params = jsonOrderBuilder.build();
 
 			ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
 			// call Order actor to create the order
@@ -168,7 +168,12 @@ public class OrderController {
 			int shipFreeCapacity = scheduleService.updateFreeCapacity(order.getVoyageId(), reefers.size());
 			
 			simulatorService.updateVoyageCapacity(order.getVoyageId(), shipFreeCapacity);
-			voyageService.addOrderToVoyage(order);
+			//voyageService.addOrderToVoyage(order);
+			Voyage voyage = scheduleService.getVoyage(order.getVoyageId());
+			voyage.setOrderCount(voyage.getOrderCount()+1);
+
+			//scheduleService.incrementVoyageOrderCount(order.getVoyageId(), 1);
+
 			int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY);
 			gui.updateFutureOrderCount(futureOrderCount);
 		} catch (Exception e) {

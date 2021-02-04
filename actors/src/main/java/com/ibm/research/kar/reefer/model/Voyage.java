@@ -18,8 +18,15 @@ package com.ibm.research.kar.reefer.model;
 
 import java.time.Instant;
 
-public class Voyage {
-    
+public class Voyage implements Comparable<Voyage>{
+    public static final String ID="id";
+    public static final String SAIL_DATE="sailDateObject";
+    public static final String SAIL_DATE_STRING="sailDate";
+    public static final String ARRIVAL_DATE="arrivalDate";
+    public static final String ORDER_COUNT="orderCount";
+    public static final String DISPLAY_ARRIVAL_DATE="displayArrivalDate";
+
+
     private String id;
     private Route route;
 
@@ -36,6 +43,14 @@ public class Voyage {
         this.displayArrivalDate = arrivalDate.substring(0,10);
         this.sailDate = sailDateObject.toString().substring(0,10);
         this.id = String.format("%s-%s",route.getVessel().getName(),this.sailDateObject.toString()).replaceAll("/","-");
+    }
+    public Voyage(String id, Route route, Instant sailDateObject, String arrivalDate) {
+        this.route = route;
+        this.sailDateObject = sailDateObject;
+        this.arrivalDate = arrivalDate;
+        this.displayArrivalDate = arrivalDate.substring(0,10);
+        this.sailDate = sailDateObject.toString().substring(0,10);
+        this.id = id;
     }
     public String getId() {
         return id;
@@ -65,7 +80,24 @@ public class Voyage {
         return displayArrivalDate;
     }
 
-    
- 
-    
+    @Override
+    public String toString() {
+        return "Voyage{" +
+                "id='" + id + '\'' +
+                ", route=" + route +
+                ", sailDateObject=" + sailDateObject +
+                ", sailDate='" + sailDate + '\'' +
+                ", arrivalDate='" + arrivalDate + '\'' +
+                ", displayArrivalDate='" + displayArrivalDate + '\'' +
+                ", orderCount=" + orderCount +
+                '}';
+    }
+
+    @Override
+    public int compareTo(Voyage v) {
+        if ( this.getSailDateObject().isBefore(v.getSailDateObject())) {
+            return -1;
+        }
+        return 1;
+    }
 }

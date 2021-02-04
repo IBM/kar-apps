@@ -18,11 +18,15 @@ package com.ibm.research.kar.reeferserver.service;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.Constants;
 
 import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 import javax.json.JsonValue;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class AbstractPersistentService {
     private ActorRef aref = Kar.Actors.ref("resthelper", "reeferservice");
@@ -44,5 +48,32 @@ public abstract class AbstractPersistentService {
         }
         persistentData.put(key, value);
         return Json.createValue(Kar.Actors.State.set(aref, key, value));
+    }
+
+    /**
+     * Returns a list of unique voyage ids generated from ReeferProvisioner's reefer inventory.
+     *
+     * @return
+     */
+    protected List<String> getVoyageIds() {
+        ActorRef reeferProvisionerRef = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
+        Map<String, JsonValue> reeferInventory = Kar.Actors.State.Submap.getAll(reeferProvisionerRef, Constants.REEFER_MAP_KEY);
+        return reeferInventory.
+                values().
+                stream().
+                filter(Objects::nonNull).
+                map(JsonValue::asJsonObject).
+                map(jo -> jo.getString(Constants.VOYAGE_ID_KEY)).
+                distinct().
+                sorted().
+                collect(Collectors.toList());
+    }
+    protected Optional<JsonObject> getVoyageMetadata(String voyageId) {
+        ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, voyageId);
+        JsonValue jv  = Kar.Actors.State.get(voyageActorRef, Constants.VOYAGE_INFO_KEY);
+        if ( jv == null || jv == JsonValue.NULL) {
+           return  Optional.empty();
+        }
+        return Optional.of(jv.asJsonObject());
     }
 }

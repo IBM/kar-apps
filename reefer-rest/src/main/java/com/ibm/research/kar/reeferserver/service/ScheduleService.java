@@ -19,8 +19,10 @@ package com.ibm.research.kar.reeferserver.service;
 import java.time.Instant;
 import java.util.*;
 
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import com.ibm.research.kar.reefer.common.error.RouteNotFoundException;
 import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
@@ -84,6 +86,7 @@ public class ScheduleService {
             LinkedList<Voyage> sortedSchedule = new LinkedList<>();
             StringBuilder sb = new StringBuilder("date " + date + "\n");
             for (Route route : routes) {
+                //System.out.println("ScheduleService() - generateNextSchedule() route:"+route.getVessel().getName()+" lasArrivalDate:"+route.getLastArrival());
                 long daysBetween = TimeUtils.getInstance().getDaysBetween(date, route.getLastArrival());
                 if (logger.isLoggable(Level.FINE)) {
                     sb.append(route.getVessel().getId()).append(" last arrival date:").
@@ -171,9 +174,9 @@ public class ScheduleService {
     }
 
     public List<Voyage> getMatchingSchedule(String origin, String destination, Instant date) {
+
         List<Voyage> schedule = new ArrayList<>();
         for (Voyage voyage : masterSchedule) {
-
             if ((voyage.getSailDateObject().equals(date) || voyage.getSailDateObject().isAfter(date))
                     && voyage.getRoute().getOriginPort().equals(origin)
                     && voyage.getRoute().getDestinationPort().equals(destination)) {
@@ -183,12 +186,9 @@ public class ScheduleService {
                             + voyage.getRoute().getVessel().getFreeCapacity());
                 }
             }
-
         }
-
         return schedule;
     }
-
     /*
      * Returns voyages with ships currently at sea.
      */
@@ -213,7 +213,7 @@ public class ScheduleService {
                     voyage.getRoute().getDaysAtSea() + voyage.getRoute().getDaysAtPort());
             if (voyage.getSailDateObject().isAfter(currentDate)) {
                 // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate
-                // we just stop iterating since all voyagaes sail in the future.
+                // we just stop iterating since all voyages sail in the future.
                 break;
             }
             // find active voyage which is one that started before current date and
@@ -230,8 +230,63 @@ public class ScheduleService {
             scheduler.getRoutes();
             masterSchedule = scheduler.generateSchedule();
             System.out.println("ScheduleService.generateShipSchedule() - generated initial master schedule");
+            masterSchedule.forEach(v -> System.out.println("##### Voyage:"+v.getId()+ " Departure:"+v.getSailDateObject()+" Arrival:"+v.getArrivalDate()));
         } catch (Exception e) {
             logger.log(Level.WARNING,"",e);
+        }
+    }
+    public void generateShipSchedule(Instant baseScheduleDate) {
+        try {
+            scheduler.getRoutes();
+            masterSchedule = scheduler.generateSchedule(baseScheduleDate);
+            System.out.println("ScheduleService.generateShipSchedule() - generated master schedule from base date:"+baseScheduleDate);
+            masterSchedule.forEach(v -> System.out.println("xxxx Voyage:"+v.getId()+ " Departure:"+v.getSailDateObject()+" Arrival:"+v.getArrivalDate()));
+        } catch (Exception e) {
+            logger.log(Level.WARNING,"",e);
+        }
+    }
+
+    public void generateShipSchedule(List<Voyage> voyages) {
+        try {
+
+            List<List<Voyage>> list = new ArrayList<>(
+                    voyages.
+                            stream().
+                            collect(Collectors.groupingBy(v -> v.getRoute().getVessel().getName(),
+                                    TreeMap::new,
+                                    Collectors.toList())).values());
+            int staggerInitialShipDepartures=0;
+            LinkedList<Voyage> schedule = new LinkedList<>();
+            for ( List<Voyage> vl : list) {
+                staggerInitialShipDepartures = 1;
+                // next departure date. It is the last arrival date + stagger days
+                Instant departureDate =
+                        TimeUtils.
+                                getInstance().
+                                futureDate(Instant.parse(vl.get(vl.size()-1).getArrivalDate()), staggerInitialShipDepartures);
+                schedule.addAll(vl);
+                schedule.addAll(generateShipSchedule(vl.get(0).getRoute(), departureDate));
+            }
+            List<Route> routes =
+                    list.stream().flatMap(l -> l.stream().limit(1)).map(Voyage::getRoute).collect(Collectors.toList());
+            routes.forEach(r -> System.out.println(">>>>>> Route:"+r));
+            scheduler.setRoutes(routes);
+            schedule.sort(Voyage::compareTo);
+            masterSchedule = schedule;
+            masterSchedule.forEach(v -> System.out.println("## Voyage:"+v.getId()+ " from:"+v.getRoute().getOriginPort() +" to:"+v.getRoute().getDestinationPort()+" Departure:"+v.getSailDateObject()+" Arrival:"+v.getArrivalDate()));
+        } catch (Exception e) {
+            logger.log(Level.WARNING,"",e);
+        }
+
+    }
+
+    public LinkedList<Voyage>  generateShipSchedule(Route route, Instant departureDate) {
+        try {
+            scheduler.getRoutes();
+           return ShippingScheduler.generateSchedule( route, departureDate);
+        } catch (Exception e) {
+            logger.log(Level.WARNING,"",e);
+            return new LinkedList<>();
         }
     }
 
@@ -277,7 +332,11 @@ public class ScheduleService {
                 "VoyageID:" + voyageId + " Unable to book ship due to lack of capacity. Current capacity:"
                         + voyage.getRoute().getVessel().getFreeCapacity() + " Order reefer count:" + reeferCount);
     }
-
+    public void incrementVoyageOrderCount(String voyageId, int orderCount)
+            throws VoyageNotFoundException {
+        Voyage voyage = getVoyage(voyageId);
+        voyage.setOrderCount(voyage.getOrderCount()+orderCount);
+    }
     class SchedulerComp implements Comparator<Voyage> {
 
         @Override

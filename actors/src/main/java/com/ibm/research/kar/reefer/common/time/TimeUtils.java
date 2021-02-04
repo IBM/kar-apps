@@ -29,11 +29,24 @@ public class TimeUtils {
         if ( instance != null ) {
             throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
         }
-        currentDate = startDate = Instant.now();
+        //currentDate = startDate = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        currentDate = startDate = Instant.now().truncatedTo(ChronoUnit.DAYS);
+    }
+    private  TimeUtils(Instant date) {
+        if ( instance != null ) {
+            throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
+        }
+        currentDate = startDate = date;
     }
     public static TimeUtils getInstance(){
-        if (instance == null){ //if there is no instance available... create new one
+        if (instance == null){
             instance = new TimeUtils();
+        }
+        return instance;
+    }
+    public static TimeUtils getInstance(Instant currentDate){
+        if (instance == null){
+            instance = new TimeUtils(currentDate);
         }
         return instance;
     }
@@ -50,7 +63,8 @@ public class TimeUtils {
 		return currentDate;
     }
     public Instant futureDate(Instant date, long daysIntoTheFuture) {
-        return date.plus(daysIntoTheFuture, ChronoUnit.DAYS);
+        //return date.plus(daysIntoTheFuture, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS);
+        return date.plus(daysIntoTheFuture, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
     }
     public boolean isSameDay(Instant date1, Instant date2) {
 

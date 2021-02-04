@@ -76,6 +76,12 @@ public class GuiController {
 
         template.convertAndSend("/topic/orders", order);
     }
+    public void updateOrderCounts(int inTransitCnt, int futureCnt, int spoiltCnt) {
+        inTransitOrderCount.set(inTransitCnt);
+        futureOrderCount.set(futureCnt);
+        spoiltOrderCount.set(spoiltCnt);
+        valuesChanged.set(true);
+    }
 
     public void updateInTransitOrderCount(int orderCount) {
         inTransitOrderCount.set(orderCount);
@@ -91,6 +97,8 @@ public class GuiController {
         spoiltOrderCount.set(orderCount);
         valuesChanged.set(true);
     }
+
+
 
     public void updateReeferStats(ReeferStats stats) {
         reeferStats = stats;

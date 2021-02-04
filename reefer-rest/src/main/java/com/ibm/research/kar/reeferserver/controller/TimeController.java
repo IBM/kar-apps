@@ -17,6 +17,7 @@
 package com.ibm.research.kar.reeferserver.controller;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,8 +28,9 @@ import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
+import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
-import com.ibm.research.kar.reeferserver.service.SimulatorService;
+import com.ibm.research.kar.reeferserver.service.TimeService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +44,9 @@ public class TimeController {
     @Autowired
     private VoyageService voyageService;
     @Autowired
-    private ScheduleService schduleService;
+    private ScheduleService scheduleService;
+    @Autowired
+    private TimeService timeService;
 
     private static final Logger logger = Logger.getLogger(TimeController.class.getName());
     @PostMapping("/time/startDate")
@@ -80,16 +84,25 @@ public class TimeController {
 
     @PostMapping("/time/advance")
     public Instant advance() {
-        Instant time = TimeUtils.getInstance().advanceDate(1);
+        Instant date = TimeUtils.getInstance().advanceDate(1);
+        // persist current date
+        timeService.saveDate(date,Constants.CURRENT_DATE_KEY);
+/*
+        List<Voyage> activeSchedule = scheduleService.getActiveSchedule();
+        if ( !activeSchedule.isEmpty() )   {
+            String baseActiveDate = activeSchedule.get(0).getSailDate();
+            timeService.saveDate(Instant.parse(baseActiveDate),Constants.SCHEDULE_BASE_DATE_KEY);
+        }
+        */
         if ( logger.isLoggable(Level.INFO)) {
             logger.info("TimeController.advance() ***************************************** NEXT DAY "
-                    + time.toString() + " ***************************************************************");
+                    + date.toString() + " ***************************************************************");
         }
         try {
             // On a day change generate a future schedule if necessary. The new schedule is generated if
             // we reached a configured threshold of days before the end of current schedule.
-            schduleService.generateNextSchedule(time);
-            JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(time.toString()))
+            scheduleService.generateNextSchedule(date);
+            JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(date.toString()))
                     .build();
             // Reefers on maintenance are freed automatically after a configurable number of days passes.
             Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
@@ -98,7 +111,7 @@ public class TimeController {
             logger.log(Level.WARNING,"",e);
         }
 
-        return time;
+        return date;
     }
 
 }

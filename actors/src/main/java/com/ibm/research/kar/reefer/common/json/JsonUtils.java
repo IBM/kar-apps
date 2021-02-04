@@ -61,12 +61,14 @@ public class JsonUtils {
     public static String getString(JsonValue value, String key) {
         return value.asJsonObject().getString(key);
     }
-
+/*
     public static Voyage jsonToVoyage(JsonObject jsonVoyage) {
+        System.out.println("JsonUtils.jsonToVoyage - "+jsonVoyage);
         Instant sailDate = Instant.parse(jsonVoyage.getString("sailDateObject"));
         String arrivalDate = jsonVoyage.getString("arrivalDate");
         Route route = jsonToRoute(jsonVoyage.getJsonObject("route"));
         Voyage voyage = new Voyage(route, sailDate, arrivalDate);
+        voyage.setOrderCount(jsonVoyage.getInt("orderCount"));
         return voyage;
     }
 
@@ -89,6 +91,42 @@ public class JsonUtils {
         String location = jsonShip.getString("location");
         Ship ship = new Ship(name, position, maxCapacity, freeCapacity, location);
         ship.setId(shipId);
+        ship.setProgress(progress);
         return ship;
     }
+
+    public static JsonObject voyageToJson(Voyage v) {
+       return Json.createObjectBuilder().
+               add("id", Json.createValue(v.getId())).
+               add("route", routeToJson(v.getRoute())).
+               add("sailDateObject", v.getSailDateObject().toString()).
+               add("sailDate",v.getSailDate()).
+               add("arrivalDate", v.getArrivalDate()).
+               add("displayArrivalDate",v.getDisplayArrivalDate()).
+               add("orderCount",v.getOrderCount()).build();
+    }
+    public static JsonObject routeToJson(Route r) {
+       String la = (r.getLastArrival() == null) ? "" : r.getLastArrival().toString();
+       return Json.createObjectBuilder().
+               add("vessel", shipToJson(r.getVessel())).
+               add("originPort",r.getOriginPort()).
+               add("destinationPort",r.getDestinationPort()).
+               add("daysAtSea",r.getDaysAtSea()).
+               add("daysAtPort",r.getDaysAtPort()).
+               add("lastArrival",la).build();
+    }
+    public static JsonObject shipToJson(Ship s) {
+       return Json.createObjectBuilder().
+               add("id",s.getId()).
+               add("name",s.getName()).
+               add("position",s.getPosition()).
+               add("progress",s.getProgress()).
+               add("maxCapacity",s.getMaxCapacity()).
+               add("freeCapacity",s.getFreeCapacity()).
+               add("location",s.getLocation()).
+               add("reefers",Json.createArrayBuilder(s.getReefers())).build();
+    }
+
+
+ */
 }

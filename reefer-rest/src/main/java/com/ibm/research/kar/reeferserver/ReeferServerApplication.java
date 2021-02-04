@@ -16,9 +16,16 @@
 
 package com.ibm.research.kar.reeferserver;
 
+import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 
+import com.ibm.research.kar.reefer.model.Route;
+import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
+import com.ibm.research.kar.reeferserver.service.VoyageService;
+import com.ibm.research.kar.reeferserver.service.TimeService;
+import com.ibm.research.kar.reeferserver.scheduler.ShippingScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -29,6 +36,9 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import javax.annotation.PostConstruct;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @EnableAutoConfiguration
 @ComponentScan("com.ibm.research.kar")
@@ -38,7 +48,10 @@ import javax.annotation.PostConstruct;
 public class ReeferServerApplication {
 	@Autowired
 	private ScheduleService shipScheduleService;
-
+	@Autowired
+	private VoyageService voyageService;
+	@Autowired
+	private TimeService timeService;
 	public static void main(final String[] args) {
 
 		SpringApplication.run(ReeferServerApplication.class, args);
@@ -46,7 +59,23 @@ public class ReeferServerApplication {
 	}
 	@PostConstruct
 	public void init() {
-		System.out.println("ReeferServerApplication.init()............");
-		shipScheduleService.generateShipSchedule();
+		// The schedule base date is a date when the schedule was generated. It is saved persistently right
+		// after the schedule generation. It only exists if the REST service is terminated.
+		Optional<Instant> scheduleBaseDate = timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY);
+		if ( scheduleBaseDate.isPresent()) {
+			// recover from failure
+			Optional<Instant> date = timeService.recoverDate(Constants.CURRENT_DATE_KEY);
+			// initialize Singleton TimeUtils with recovered current date
+			Instant currentDate = TimeUtils.getInstance(date.get()).getCurrentDate();
+			System.out.println("ReeferServerApplication.init() - Restored Current Date:"+currentDate);
+			shipScheduleService.generateShipSchedule(scheduleBaseDate.get());
+			voyageService.recoverActiveVoyageOrders(shipScheduleService.getActiveSchedule());
+		} else {
+			Instant currentDate = TimeUtils.getInstance().getCurrentDate();
+			System.out.println("ReeferServerApplication.init() - Current Date:"+currentDate);
+			timeService.saveDate(currentDate, Constants.SCHEDULE_BASE_DATE_KEY);
+			timeService.saveDate(currentDate, Constants.CURRENT_DATE_KEY);
+			shipScheduleService.generateShipSchedule();
+		}
 	}
 }

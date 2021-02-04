@@ -41,7 +41,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 @Component
 public class ShippingScheduler {
-    private List<Route> routes = new ArrayList<Route>();
+    private static List<Route> routes = new ArrayList<Route>();
     @Value("classpath:routes.json")
     private Resource routesJsonResource;
     private static final Logger logger = Logger.getLogger(ScheduleService.class.getName());
@@ -82,16 +82,22 @@ public class ShippingScheduler {
         }
         return routes;
     }
-
+    /**
+     *
+     * @return
+     * @throws Exception
+     */
+    public void setRoutes(List<Route> routes) throws Exception {
+        this.routes = routes;
+    }
     /**
      *
      * @return
      */
     public LinkedList<Voyage> generateSchedule() {
-        // generate new schedule for one year ahead begining from next day
-        return generateSchedule(TimeUtils.getInstance().getCurrentDate()); // .
+        // generate new schedule for one year ahead
+        return generateSchedule(TimeUtils.getInstance().getCurrentDate());
     }
-
     /**
      *
      * @param route
@@ -100,7 +106,7 @@ public class ShippingScheduler {
      * @param yearFromNow
      * @return
      */
-    public Instant generateShipSchedule(Route route, Instant departureDate, LinkedList<Voyage> sortedSchedule, Instant yearFromNow) {
+    public static Instant generateShipSchedule(Route route, Instant departureDate, LinkedList<Voyage> sortedSchedule, Instant yearFromNow) {
         Instant arrivalDate;
         while (departureDate.isBefore(yearFromNow)) {
            // get the ship arrival date at destination port (departureDate+transitTime)
@@ -125,7 +131,7 @@ public class ShippingScheduler {
      * @param departureDate
      * @return
      */
-    public LinkedList<Voyage> generateSchedule(Instant departureDate) {
+    public static LinkedList<Voyage> generateSchedule(Instant departureDate) {
         Instant arrivalDate;
 
          // the shipping schedule is generated for one year from now
@@ -136,6 +142,8 @@ public class ShippingScheduler {
              // generate current ship schedule for the whole year
              Instant shipLastArrivalDate = 
                 generateShipSchedule(route, departureDate, sortedSchedule, yearFromNow);
+
+
             route.setLastArrival(shipLastArrivalDate);
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("ShippingScheduler.generateSchedule - Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());
@@ -147,10 +155,37 @@ public class ShippingScheduler {
             departureDate = TimeUtils.getInstance().futureDate(Instant.now(), staggerInitialShipDepartures);
 
         }
+        return sortedSchedule;
+    }
+    public static LinkedList<Voyage> generateSchedule(Route route, Instant departureDate) {
+        Instant arrivalDate;
+
+        // the shipping schedule is generated for one year from now
+        final Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(departureDate);
+        int staggerInitialShipDepartures = 0;
+        LinkedList<Voyage> sortedSchedule = new LinkedList<>();
+
+        // generate current ship schedule for the whole year
+        Instant shipLastArrivalDate =
+                generateShipSchedule(route, departureDate, sortedSchedule, yearFromNow);
+
+        route.setLastArrival(shipLastArrivalDate);
+        logger.warning("ShippingScheduler.generateSchedule - Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());
+
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("ShippingScheduler.generateSchedule - Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());
+        }
+        logger.info("ShippingScheduler.generateSchedule - Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());
+
+        // initial ship departures staggered by 2 days (change this if necessary)
+ //       staggerInitialShipDepartures += 2;
+        // reset departure date to today+stagger (calculated above) so that the ships
+        // dont depart on the same day
+   //     departureDate = TimeUtils.getInstance().futureDate(Instant.now(), staggerInitialShipDepartures);
+
 
         return sortedSchedule;
     }
-
     /**
      *
      * @param sortedSchedule
@@ -158,7 +193,7 @@ public class ShippingScheduler {
      * @param departureDate
      * @param returnVoyage
      */
-    private void addVoyageToSchedule(LinkedList<Voyage> sortedSchedule, final Route route, final Instant departureDate,
+    private static void addVoyageToSchedule(LinkedList<Voyage> sortedSchedule, final Route route, final Instant departureDate,
             final boolean returnVoyage) {
         int next = 0;
         while (next < sortedSchedule.size()) {
@@ -179,7 +214,7 @@ public class ShippingScheduler {
      * @param returnVoyage
      * @return
      */
-    private Voyage newScheduledVoyage(final Route route, final Instant departureDate, final boolean returnVoyage) {
+    private static Voyage newScheduledVoyage(final Route route, final Instant departureDate, final boolean returnVoyage) {
         Instant arrivalDate = TimeUtils.getInstance().futureDate(departureDate, route.getDaysAtSea());
         String originPort = route.getOriginPort();
         String destinationPort = route.getDestinationPort();

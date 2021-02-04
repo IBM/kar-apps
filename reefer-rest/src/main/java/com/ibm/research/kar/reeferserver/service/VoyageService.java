@@ -16,20 +16,13 @@
 
 package com.ibm.research.kar.reeferserver.service;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonValue;
+import javax.json.*;
 import javax.swing.tree.VariableHeightLayoutCache;
 import javax.ws.rs.core.Response;
 
@@ -37,7 +30,11 @@ import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.json.JsonUtils;
+import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
+import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
+import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reefer.model.VoyageStatus;
 
 import com.ibm.research.kar.reeferserver.controller.VoyageController;
@@ -45,33 +42,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class VoyageService extends AbstractPersistentService {
- 
-    private Map<String, Set<Order>> voyageOrders = new ConcurrentHashMap<>();
     private Map<String, VoyageStatus > voyageStatus = new ConcurrentHashMap<>();
     private static final Logger logger = Logger.getLogger(VoyageService.class.getName());
 
-    public void addOrderToVoyage(Order order) {
-        Set<Order> orders;
-        if (voyageOrders.containsKey(order.getVoyageId())) {
-            orders = voyageOrders.get(order.getVoyageId());
-        } else {
-            orders = new HashSet<>();
-            voyageOrders.put(order.getVoyageId(), orders);
-        }
-        orders.add(order);
-        if ( logger.isLoggable(Level.INFO)) {
-            logger.info("VoyageService.addOrderToVoyage()-Added Order to Voyage:" + order.getVoyageId()
-                    + " Order Count:" + orders.size());
-        }
-    }
-
-    public Set<Order> getOrders(String voyageId) {
-        if (voyageOrders.containsKey(voyageId)) {
-            return voyageOrders.get(voyageId);
-        } else {
-            return Collections.emptySet();
-        }
-    }
     public void voyageDeparted(String voyageId) {
         voyageStatus.put(voyageId, VoyageStatus.DEPARTED);
     }
@@ -80,25 +53,7 @@ public class VoyageService extends AbstractPersistentService {
     }
     public void voyageEnded(String voyageId) {
         voyageStatus.put(voyageId, VoyageStatus.ARRIVED);
-        if (voyageOrders.containsKey(voyageId)) {
-            // remove voyage orders
-            for (Iterator<String> iterator = voyageOrders.keySet().iterator(); iterator.hasNext();) {
-                String key = iterator.next();
-                if (key.equals(voyageId)) {
-                    iterator.remove();
-                }
-            }
-        }
     }
-
-    public int getVoyageOrderCount(String voyageId) {
-        if (voyageOrders.containsKey(voyageId)) {
-            return voyageOrders.get(voyageId).size();
-        } else {
-             return 0;
-        }
-    }
-
     public void nextDay() {
         try {
             Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/advancetime", JsonValue.NULL);
@@ -110,7 +65,6 @@ public class VoyageService extends AbstractPersistentService {
             logger.log(Level.WARNING,"",e);
         }
     }
-
     public void changeDelay(int delay) {
         try {
             JsonObject delayArg = Json.createObjectBuilder().add("value", delay).build();
@@ -120,10 +74,20 @@ public class VoyageService extends AbstractPersistentService {
             logger.log(Level.WARNING,"",e);
         }
     }
-
     public int getDelay() throws Exception {
         Response response = Kar.Services.get(Constants.SIMSERVICE,"simulator/getunitdelay");
         JsonValue respValue = response.readEntity(JsonValue.class);
         return Integer.parseInt(respValue.toString());
+    }
+    public void recoverActiveVoyageOrders(List<Voyage> activeVoyages) {
+        for( Voyage voyage: activeVoyages ) {
+            Optional<JsonObject> state = super.getVoyageMetadata(voyage.getId());
+            if ( state.isPresent()) {
+                Voyage recoveredVoyageState = VoyageJsonSerializer.deserialize(state.get());
+                voyage.setOrderCount(recoveredVoyageState.getOrderCount());
+                voyage.getRoute().getVessel().setProgress(recoveredVoyageState.getRoute().getVessel().getProgress());
+                voyage.getRoute().getVessel().setPosition(recoveredVoyageState.getRoute().getVessel().getPosition());
+            }
+        }
     }
 }

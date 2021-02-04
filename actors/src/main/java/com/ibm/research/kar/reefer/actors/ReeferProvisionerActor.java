@@ -19,17 +19,14 @@ package com.ibm.research.kar.reefer.actors;
 import java.time.Instant;
 import java.util.*;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonValue;
+import javax.json.*;
 import javax.ws.rs.core.Response;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.research.kar.Kar;
@@ -176,10 +173,11 @@ public class ReeferProvisionerActor extends BaseActor {
         }
         try {
             if (!onMaintenanceMap.isEmpty()) {
+                // get current date. Its a date that the simulator advances at regular intervals.
+                Instant today = Instant.parse(message.getString(Constants.DATE_KEY));
+
                 Iterator<String> it = onMaintenanceMap.values().iterator();
                 while (it.hasNext()) {
-                    // get current date. Its a date that the simulator advances at regular intervals.
-                    Instant today = Instant.parse(message.getString(Constants.DATE_KEY));
                     ReeferDTO reefer = reeferMasterInventory[Integer.parseInt(it.next())];
                     // release reefer from maintenance if today matches reefer's assigned release date
                     if (reefer != null && releaseFromMaintenanceToday(reefer, today)) {
@@ -322,9 +320,10 @@ public class ReeferProvisionerActor extends BaseActor {
                     "ReeferProvisionerActor.releaseVoyageReefers() - entry");
         }
         JsonObjectBuilder reply = Json.createObjectBuilder();
-        List<String> reefers2Remove  = new ArrayList<>();
+        //List<String> reefers2Remove  = new ArrayList<>();
         try {
             String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
+            /*
             for(ReeferDTO reefer : reeferMasterInventory ) {
                 if ( reefer != null ) {
                     if ( reefer.getVoyageId().equals(voyageId)) {
@@ -333,6 +332,16 @@ public class ReeferProvisionerActor extends BaseActor {
                     }
                 }
             }
+
+             */
+            List<String> reefers2Remove = Arrays.stream(reeferMasterInventory).
+                    filter(Objects::nonNull).
+                    filter(reefer -> reefer.getVoyageId().equals(voyageId)).
+                    map(reefer -> {
+                        unreserveReefer(reefer.getId());
+                        return String.valueOf(reefer.getId());
+                    }).collect(Collectors.toList());
+
             // remove reefers which just arrived. The reefer inventory should only contain
             // reefers which are booked or in-transit.
             Kar.Actors.State.Submap.removeAll(this,Constants.REEFER_MAP_KEY, reefers2Remove);
@@ -391,17 +400,13 @@ public class ReeferProvisionerActor extends BaseActor {
                       + " allocated on Maintenance");
             }
             valuesChanged.set(true);
-          }
-
-          else {
+          } else {
             // check if reefer went bad already. The simulator randomly selects reefers for
             // anomalies and may select same reefer within a short amount of time
             ReeferDTO reefer = reeferMasterInventory[reeferId];
             if (reefer.getState().equals(ReeferState.State.MAINTENANCE) || reefer.getState().equals(ReeferState.State.SPOILT)) {
               logger.log(Level.WARNING, "ReeferProvisioner.reeferAnomaly() - " + reeferId + " already bad");
-            }
-
-            else {
+            } else {
               // Check if reefer is not assigned to an order
               if (reefer.getOrderId() == null || reefer.getOrderId().length() == 0) {
                 if (logger.isLoggable(Level.FINE)) {
@@ -418,9 +423,7 @@ public class ReeferProvisionerActor extends BaseActor {
                           + Constants.ON_MAINTENANCE_PROVISIONER_LIST + " Map"
                           + " onMaintenance date:" + message.getString(Constants.DATE_KEY));
                 }
-              }
-
-              else {
+              } else {
                 // notify order of anomaly for reeferId
                 // the order will call back with request to replace it or mark it spoilt
                 if (logger.isLoggable(Level.INFO)) {
@@ -532,6 +535,22 @@ public class ReeferProvisionerActor extends BaseActor {
       return reply;
     }
 
+    /**
+     * Returns a list of unique voyage ids reefers have been assigned to.
+     *
+     * @return - JsonArray containing voyage ids
+     */
+    @Remote
+    public JsonValue voyageList() {
+        List<String> voyageIdList =
+                Arrays.stream(reeferMasterInventory).
+                        filter(Objects::nonNull).
+                        map(ReeferDTO::getVoyageId).
+                        filter(id -> !(id.trim().isEmpty())).
+                        distinct().
+                        collect(Collectors.toList());
+        return Json.createArrayBuilder(voyageIdList).build();
+    }
 
     private ReeferDTO jsonObjectToReeferDTO(JsonObject reefer) {
         ReeferDTO reeferDTO = new ReeferDTO(reefer.getInt(Constants.REEFER_ID_KEY),

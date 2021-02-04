@@ -17,6 +17,13 @@
 package com.ibm.research.kar.reefer.model;
 import java.time.Instant;
 public class Route {
+    public static final String ROUTE="route";
+    public static final String ORIGIN_PORT="originPort";
+    public static final String DESTINATION_PORT="destinationPort";
+    public static final String DAYS_AT_SEA="daysAtSea";
+    public static final String DAYS_AT_PORT="daysAtPort";
+    public static final String LAST_ARRIVAL_DATE="lastArrival";
+
     private Ship vessel;
     private String originPort;
     private String destinationPort;
@@ -81,5 +88,16 @@ public class Route {
         this.daysAtPort = daysAtPort;
     }
 
- 
+
+    @Override
+    public String toString() {
+        return "Route{" +
+                "vessel=" + vessel +
+                ", originPort='" + originPort + '\'' +
+                ", destinationPort='" + destinationPort + '\'' +
+                ", daysAtSea=" + daysAtSea +
+                ", daysAtPort=" + daysAtPort +
+                ", lastArrival=" + lastArrival +
+                '}';
+    }
 }

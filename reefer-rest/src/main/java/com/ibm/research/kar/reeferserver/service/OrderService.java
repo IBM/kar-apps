@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -216,6 +217,7 @@ public class OrderService extends AbstractPersistentService {
             }
         }
     }
+
     /**
      * Returns aggregate counts for booked, active, spoilt and on-maintenance orders
      * 
@@ -311,15 +313,12 @@ public class OrderService extends AbstractPersistentService {
     }
 
     private List<JsonValue> getMutableOrderList(String orderListKind) {
-        List<JsonValue> newList = new ArrayList<>();
-
         // fetch immutable list of orders from Kar persistent storage
         JsonArray orders = getListAJsonArray(orderListKind);
-        // copy spoilt orders from immutable list to one that we can change
-        orders.forEach(value -> {
-            newList.add(value);
-        });
-        return newList;
+        // Can't use Collectors.toList() here since we need mutable list. According
+        // to java documentation there is no guarantee for the toList() to return
+        // a mutable list. Instead use Supplier (ArrayList)
+        return orders.stream().collect(Collectors.toCollection(ArrayList<JsonValue>::new));
     }
 
     private void removeVoyageOrdersFromList(String voyageId, List<JsonValue> orderList) {
@@ -344,29 +343,20 @@ public class OrderService extends AbstractPersistentService {
         synchronized(OrderService.class) {
             List<JsonValue> newSpoiltList = getMutableOrderList(Constants.SPOILT_ORDERS_KEY);
             List<JsonValue> newActiveList = getMutableOrderList(Constants.ACTIVE_ORDERS_KEY);
-
-            // remove voyage orders from the spoilt list
             removeVoyageOrdersFromList(voyageId, newSpoiltList);
-            // remove voyage orders from the active list
             removeVoyageOrdersFromList(voyageId, newActiveList);
             try {
-                // save new spoilt list in the Kar persistent storage
                 set(Constants.SPOILT_ORDERS_KEY, toJsonArray(newSpoiltList));
-
-                // save new active list in the Kar persistent storage
                 set(Constants.ACTIVE_ORDERS_KEY, toJsonArray(newActiveList));
                 findVoyagesBeyondArrivalDate(toJsonArray(newActiveList));
-
             } catch( VoyageNotFoundException e ) {
                 logger.log(Level.WARNING,e.getMessage(),e);
             }
-
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("OrderService.voyageArrived() - voyageId:" + voyageId
                         + " - Active Orders:" + newActiveList.size() + " Spoilt Orders:" + newSpoiltList.size());
             }
         }
-
     }
 
     /**

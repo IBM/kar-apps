@@ -380,4 +380,8 @@ public class OrderService extends AbstractPersistentService {
             voyageDeparted(voyageId);
         }
     }
+    public int getActiveOrdersCount() {
+        List<JsonValue> activeOrders = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
+        return activeOrders.size();
+    }
 }

@@ -136,7 +136,7 @@ public class VoyageController {
   @GetMapping("/voyage/active")
   public List<Voyage> getActiveVoyages() {
     List<Voyage> activeVoyages = activeVoyages();
-    activeVoyages.forEach(System.out::println);
+    //activeVoyages.forEach(System.out::println);
     return activeVoyages;
   }
 
@@ -270,19 +270,6 @@ public class VoyageController {
   }
 
   /**
-   * Returns number of orders on this voyage
-   * 
-   * @param voyageId
-   * @return
-   */
-  /*
-  private int voyageOrders(String voyageId) {
-    return voyageService.getVoyageOrderCount(voyageId);
-  }
-
-   */
-
-  /**
    * Returns a list of voyages currently at sea
    * 
    * @return
@@ -303,23 +290,8 @@ public class VoyageController {
     try {
       List<Voyage> activeVoyages = activeVoyages();
       gui.sendActiveVoyageUpdate(activeVoyages, currentDate);
-
-      int totalActiveOrders =
-              activeVoyages.
-                      stream().
-                      map(Voyage::getOrderCount).
-                      reduce(0, Integer::sum);
-     /*
-      gui.updateOrderCounts(totalActiveOrders,
-              orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY),
-              orderService.getOrderCount(Constants.SPOILT_ORDERS_KEY));
-      */
-      gui.updateInTransitOrderCount(totalActiveOrders);
-      gui.updateFutureOrderCount(orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY));
-      gui.updateSpoiltOrderCount(orderService.getOrderCount(Constants.SPOILT_ORDERS_KEY));
-
-
-
+      OrderStats stats = orderService.getOrderStats();
+      gui.updateOrderCounts(stats);
     } catch( Exception e) {
       logger.log(Level.WARNING,e.getMessage(),e);
     }

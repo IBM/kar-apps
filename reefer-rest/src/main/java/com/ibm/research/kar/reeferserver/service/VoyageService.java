@@ -79,7 +79,7 @@ public class VoyageService extends AbstractPersistentService {
         JsonValue respValue = response.readEntity(JsonValue.class);
         return Integer.parseInt(respValue.toString());
     }
-    public void recoverActiveVoyageOrders(List<Voyage> activeVoyages) {
+    public void restoreActiveVoyageOrders(List<Voyage> activeVoyages) {
         for( Voyage voyage: activeVoyages ) {
             Optional<JsonObject> state = super.getVoyageMetadata(voyage.getId());
             if ( state.isPresent()) {

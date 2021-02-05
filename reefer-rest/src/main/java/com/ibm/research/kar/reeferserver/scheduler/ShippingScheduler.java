@@ -95,20 +95,23 @@ public class ShippingScheduler {
      * @return
      */
     public LinkedList<Voyage> generateSchedule() {
+        // the shipping schedule is generated for one year from now
+       Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate());
+
         // generate new schedule for one year ahead
-        return generateSchedule(TimeUtils.getInstance().getCurrentDate());
+        return generateSchedule(TimeUtils.getInstance().getCurrentDate(),yearFromNow);
     }
     /**
      *
      * @param route
      * @param departureDate
      * @param sortedSchedule
-     * @param yearFromNow
+     * @param endDate
      * @return
      */
-    public static Instant generateShipSchedule(Route route, Instant departureDate, LinkedList<Voyage> sortedSchedule, Instant yearFromNow) {
+    public static Instant generateShipSchedule(Route route, Instant departureDate, LinkedList<Voyage> sortedSchedule, Instant endDate) {
         Instant arrivalDate;
-        while (departureDate.isBefore(yearFromNow)) {
+        while (departureDate.isBefore(endDate)) {
            // get the ship arrival date at destination port (departureDate+transitTime)
             arrivalDate = TimeUtils.getInstance().futureDate(departureDate, route.getDaysAtSea());
             // add voyage to a sorted (by departure date) schedule
@@ -131,17 +134,17 @@ public class ShippingScheduler {
      * @param departureDate
      * @return
      */
-    public static LinkedList<Voyage> generateSchedule(Instant departureDate) {
+    public static LinkedList<Voyage> generateSchedule(Instant departureDate, final Instant lastVoyageDate) {
         Instant arrivalDate;
 
          // the shipping schedule is generated for one year from now
-        final Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(departureDate);
+        //final Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(departureDate);
         int staggerInitialShipDepartures = 0;
         LinkedList<Voyage> sortedSchedule = new LinkedList<>();
         for (final Route route : routes) {
              // generate current ship schedule for the whole year
              Instant shipLastArrivalDate = 
-                generateShipSchedule(route, departureDate, sortedSchedule, yearFromNow);
+                generateShipSchedule(route, departureDate, sortedSchedule, lastVoyageDate); //yearFromNow);
 
 
             route.setLastArrival(shipLastArrivalDate);

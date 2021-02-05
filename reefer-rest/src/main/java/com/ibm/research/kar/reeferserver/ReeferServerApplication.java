@@ -36,6 +36,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import javax.annotation.PostConstruct;
+import javax.json.Json;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -59,17 +60,20 @@ public class ReeferServerApplication {
 	}
 	@PostConstruct
 	public void init() {
-		// The schedule base date is a date when the schedule was generated. It is saved persistently right
-		// after the schedule generation. It only exists if the REST service is terminated.
+		// load routes
+		shipScheduleService.getRoutes();
+		// The schedule base date is a date when the schedule was generated. It is saved persistently and
+		// only exists if the REST service process stops.
 		Optional<Instant> scheduleBaseDate = timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY);
 		if ( scheduleBaseDate.isPresent()) {
-			// recover from failure
+			// recover current date which is persisted on every date change
 			Optional<Instant> date = timeService.recoverDate(Constants.CURRENT_DATE_KEY);
-			// initialize Singleton TimeUtils with recovered current date
+			// initialize Singleton TimeUtils
 			Instant currentDate = TimeUtils.getInstance(date.get()).getCurrentDate();
 			System.out.println("ReeferServerApplication.init() - Restored Current Date:"+currentDate);
+
 			shipScheduleService.generateShipSchedule(scheduleBaseDate.get());
-			voyageService.recoverActiveVoyageOrders(shipScheduleService.getActiveSchedule());
+			voyageService.restoreActiveVoyageOrders(shipScheduleService.getActiveSchedule());
 		} else {
 			Instant currentDate = TimeUtils.getInstance().getCurrentDate();
 			System.out.println("ReeferServerApplication.init() - Current Date:"+currentDate);

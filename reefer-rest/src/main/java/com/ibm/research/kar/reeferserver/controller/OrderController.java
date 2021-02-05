@@ -168,12 +168,8 @@ public class OrderController {
 			int shipFreeCapacity = scheduleService.updateFreeCapacity(order.getVoyageId(), reefers.size());
 			
 			simulatorService.updateVoyageCapacity(order.getVoyageId(), shipFreeCapacity);
-			//voyageService.addOrderToVoyage(order);
 			Voyage voyage = scheduleService.getVoyage(order.getVoyageId());
 			voyage.setOrderCount(voyage.getOrderCount()+1);
-
-			//scheduleService.incrementVoyageOrderCount(order.getVoyageId(), 1);
-
 			int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY);
 			gui.updateFutureOrderCount(futureOrderCount);
 		} catch (Exception e) {

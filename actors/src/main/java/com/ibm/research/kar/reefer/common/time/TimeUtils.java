@@ -75,7 +75,6 @@ public class TimeUtils {
         return date.plus(365, ChronoUnit.DAYS);
     }
     public Instant getDateNyearsFromNow(Instant now, int years) {
-        // return date 365 days from now
         return now.atOffset(ZoneOffset.UTC).plus(years, ChronoUnit.YEARS).toInstant();
     }
     public long getDaysBetween(String startDate, String endDate) {

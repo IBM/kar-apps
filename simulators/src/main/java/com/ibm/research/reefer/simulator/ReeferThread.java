@@ -78,9 +78,20 @@ public class ReeferThread extends Thread {
       } else {
         // Make sure currentDate is set
         if (null == SimulatorService.currentDate.get()) {
-          Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/currentDate", JsonValue.NULL);
+          //Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/currentDate", JsonValue.NULL);
 
-          currentDate = response.readEntity(JsonValue.class);
+         // currentDate = response.readEntity(JsonValue.class);
+
+          while(true) {
+            try {
+              Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/currentDate", JsonValue.NULL);
+
+              currentDate = response.readEntity(JsonValue.class);
+              break;
+            } catch( Exception e) {
+              logger.warning("reeferthread: Unable to fetch current date from REST - cause:"+e.getMessage());
+            }
+          }
           SimulatorService.currentDate.set(currentDate);
         }
 
@@ -88,12 +99,18 @@ public class ReeferThread extends Thread {
         if (oneshot || !currentDate.equals((JsonValue) SimulatorService.currentDate.get())) {
 
           currentDate = (JsonValue) SimulatorService.currentDate.get();
-          // Get reefer inventory size from reefer-rest
-          Response response = Kar.Services.get(Constants.REEFERSERVICE,"reefers/inventory/size");
+          while(true) {
+            try {
+              // Get reefer inventory size from reefer-rest
+              Response response = Kar.Services.get(Constants.REEFERSERVICE, "reefers/inventory/size");
 
-          JsonValue is = (JsonValue) response.readEntity(JsonValue.class);
-          inventorySize = ((JsonNumber) is).intValue();
-
+              JsonValue is = (JsonValue) response.readEntity(JsonValue.class);
+              inventorySize = ((JsonNumber) is).intValue();
+              break;
+            } catch (Exception e) {
+              logger.warning("reeferthread: Unable to fetch reefer inventory size - cause:" + e.getMessage());
+            }
+          }
           // Get anomaly target for today
           if (oneshot) {
             reefersToBreak = 1;

@@ -87,22 +87,51 @@ public class ShipThread extends Thread {
         if (0 == nextevent) {
           // start of new day, tell REST to advance time
           activemap.clear();
-          Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/advance", JsonValue.NULL);
-          currentDate = response.readEntity(JsonValue.class);
+          while( true ) {
+            // further fixup needed if user manually kills ship thread
+            try {
+              Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/advance", JsonValue.NULL);
+              currentDate = response.readEntity(JsonValue.class);
+              break;
+            } catch( Exception e) {
+              logger.warning("shipthread: time advance call failed - cause:"+e.getMessage());
+            }
+          }
+
+
+
+          //Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/advance", JsonValue.NULL);
+         // currentDate = response.readEntity(JsonValue.class);
           SimulatorService.currentDate.set(currentDate);
           if (logger.isLoggable(Level.INFO)) {
             logger.info("shipthread: New time ======> " + currentDate.toString());
           }
 
-          // tell other threads to wake up
-          Kar.Services.post(Constants.SIMSERVICE,"simulator/newday", JsonValue.NULL);
-          // fetch all active voyages from REST
-          response = Kar.Services.get(Constants.REEFERSERVICE, "voyage/active");
 
-          JsonValue activeVoyages = response.readEntity(JsonValue.class);
-          if (logger.isLoggable(Level.INFO)) {
-            logger.info("shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
+          JsonValue activeVoyages;
+          while( true ) {
+            try {
+              // fetch all active voyages from REST
+              Response  response = Kar.Services.get(Constants.REEFERSERVICE, "voyage/active");
+              // catch exception and continue
+              activeVoyages = response.readEntity(JsonValue.class);
+              if (logger.isLoggable(Level.INFO)) {
+                logger.info("shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
+              }
+              break;
+            } catch (Exception e) {
+              logger.info("shipthread: Unable to fetch active voayges from REST - cause:"+e.getMessage());
+            }
           }
+          // tell other threads to wake up
+         // Kar.Services.post(Constants.SIMSERVICE,"simulator/newday", JsonValue.NULL);
+          // fetch all active voyages from REST
+         // response = Kar.Services.get(Constants.REEFERSERVICE, "voyage/active");
+
+       //   JsonValue activeVoyages = response.readEntity(JsonValue.class);
+       //   if (logger.isLoggable(Level.INFO)) {
+        //    logger.info("shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
+       //   }
 
           // compute ship positions to send to all active voyages
           Instant ed = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
@@ -137,7 +166,15 @@ public class ShipThread extends Thread {
           if ( activemap.size() > voyages_updated) {
             String id = activekeys[voyages_updated++];
             JsonObject message = activemap.get(id);
-            Kar.Actors.tell(Kar.Actors.ref("voyage", id), "changePosition", message);
+
+            try {
+              Kar.Actors.tell(Kar.Actors.ref("voyage", id), "changePosition", message);
+            } catch (Exception ex) {
+              //  Add support to handle tell failures. For now just log the cause
+              logger.warning("shipthread: changePosition failed - cause:"+ex.getMessage());
+            }
+
+            //Kar.Actors.tell(Kar.Actors.ref("voyage", id), "changePosition", message);
             if (logger.isLoggable(Level.FINE)) {
               logger.fine("shipthread: updates voyageid: " + id + " with " + message.toString());
             }
@@ -151,7 +188,17 @@ public class ShipThread extends Thread {
 
         // tell GUI to update active voyages
         snapshot = System.nanoTime();
-        Kar.Services.post(Constants.REEFERSERVICE, "voyage/updateGui", currentDate);
+
+        while( true ) {
+          try {
+            Kar.Services.post(Constants.REEFERSERVICE, "voyage/updateGui", currentDate);
+            break;
+          } catch (Exception e) {
+            logger.warning("shipthread: updateGUI failed - cause:"+e.getMessage());
+          }
+        }
+
+        //Kar.Services.post(Constants.REEFERSERVICE, "voyage/updateGui", currentDate);
 
         if (logger.isLoggable(Level.FINE)) {
           logger.fine("shipthread: updateGui took " + (System.nanoTime()-snapshot)/1000000 + " ms");

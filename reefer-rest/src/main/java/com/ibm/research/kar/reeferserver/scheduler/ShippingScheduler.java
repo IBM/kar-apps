@@ -19,10 +19,8 @@ package com.ibm.research.kar.reeferserver.scheduler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.*;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,7 +43,7 @@ public class ShippingScheduler {
     @Value("classpath:routes.json")
     private Resource routesJsonResource;
     private static final Logger logger = Logger.getLogger(ScheduleService.class.getName());
-
+    private static Set<Voyage> sortedShipSchedule = new TreeSet<>();
     /**
      * Load voyages into memory from a config file
      *
@@ -158,6 +156,7 @@ public class ShippingScheduler {
             departureDate = TimeUtils.getInstance().futureDate(Instant.now(), staggerInitialShipDepartures);
 
         }
+        sortedShipSchedule.forEach(v -> System.out.println(":::::::"+v));
         return sortedSchedule;
     }
     public static LinkedList<Voyage> generateSchedule(Route route, Instant departureDate) {
@@ -229,8 +228,12 @@ public class ShippingScheduler {
         }
 
         // for return voyage reverse origin and destination ports
-        return new Voyage(new Route(route.getVessel().clone(), originPort, destinationPort, route.getDaysAtSea(),
+       // return new Voyage(new Route(route.getVessel().clone(), originPort, destinationPort, route.getDaysAtSea(),
+       //         route.getDaysAtPort()), departureDate, arrivalDate.toString());
+        Voyage v = new Voyage(new Route(route.getVessel().clone(), originPort, destinationPort, route.getDaysAtSea(),
                 route.getDaysAtPort()), departureDate, arrivalDate.toString());
+        sortedShipSchedule.add(v);
+        return v;
     }
  
 }

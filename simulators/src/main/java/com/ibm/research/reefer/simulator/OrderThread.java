@@ -64,9 +64,22 @@ public class OrderThread extends Thread {
     if (SimulatorService.reeferRestRunning.get()) {
       // Make sure currentDate is set
       if (null == SimulatorService.currentDate.get()) {
-        Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/currentDate", JsonValue.NULL);
-        currentDate = response.readEntity(JsonValue.class);
-        SimulatorService.currentDate.set(currentDate);
+
+        // retry until success
+        while( true ) {
+          try {
+            Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/currentDate", JsonValue.NULL);
+            currentDate = response.readEntity(JsonValue.class);
+            SimulatorService.currentDate.set(currentDate);
+            break;
+          } catch( Exception e) {
+            logger.warning("orderthread - unable to fetch current date from REST - cause:"+e.getMessage());
+          }
+        }
+
+        //Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/currentDate", JsonValue.NULL);
+        //currentDate = response.readEntity(JsonValue.class);
+       // SimulatorService.currentDate.set(currentDate);
       }
       else {
         currentDate = (JsonValue) SimulatorService.currentDate.get();
@@ -133,8 +146,19 @@ public class OrderThread extends Thread {
           JsonObject message = Json.createObjectBuilder().add("startDate", startday.toString())
                   .add("endDate", endday.toString()).build();
 
-          Response response = Kar.Services.post(Constants.REEFERSERVICE, "voyage/inrange", message);
-          futureVoyages = response.readEntity(JsonValue.class);
+
+          while( true ) {
+            try {
+              Response response = Kar.Services.post(Constants.REEFERSERVICE, "voyage/inrange", message);
+              futureVoyages = response.readEntity(JsonValue.class);
+              break;
+            } catch( Exception e) {
+              logger.warning("orderthread: unable to fetch future voyages from REST - cause:"+e.getMessage());
+            }
+
+          }
+         // Response response = Kar.Services.post(Constants.REEFERSERVICE, "voyage/inrange", message);
+         // futureVoyages = response.readEntity(JsonValue.class);
           if (logger.isLoggable(Level.INFO)) {
             logger.info("orderthread: received " + futureVoyages.asJsonArray().size() + " future voyages");
           }

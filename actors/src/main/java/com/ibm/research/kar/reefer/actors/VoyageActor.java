@@ -294,13 +294,16 @@ public class VoyageActor extends BaseActor {
     private boolean messageRest(String methodToCall, int daysAtSea) {
         JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).add("daysAtSea", daysAtSea)
                 .build();
-        try {
-            Kar.Services.post("reeferservice", methodToCall, params);
-            return true;
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
-            return false;
+        while( true ) {
+            try {
+                Kar.Services.post("reeferservice", methodToCall, params);
+                return true;
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "", e);
+                //return false;
+            }
         }
+
     }
 
     /**
@@ -311,7 +314,16 @@ public class VoyageActor extends BaseActor {
      */
     private void messageOrderActor(String methodToCall, String orderId) {
         ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, orderId);
-        Kar.Actors.call(orderActor, methodToCall);
+        while( true ) {
+            try {
+                Kar.Actors.call(orderActor, methodToCall);
+                break;
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "", e);
+                //return false;
+            }
+        }
+
     }
 
     /**

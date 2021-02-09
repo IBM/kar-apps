@@ -27,6 +27,7 @@ import com.ibm.research.kar.reeferserver.service.VoyageService;
 import com.ibm.research.kar.reeferserver.service.TimeService;
 import com.ibm.research.kar.reeferserver.scheduler.ShippingScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -53,10 +54,13 @@ public class ReeferServerApplication {
 	private VoyageService voyageService;
 	@Autowired
 	private TimeService timeService;
+	@Value("${start}")
+	private static String mode;
+
 	public static void main(final String[] args) {
 
 		SpringApplication.run(ReeferServerApplication.class, args);
-		System.out.println("UTC:     " + TimeUtils.getInstance().getStartDate());
+		System.out.println("UTC:   " + TimeUtils.getInstance().getStartDate()+" args:"+mode);
 	}
 	@PostConstruct
 	public void init() {

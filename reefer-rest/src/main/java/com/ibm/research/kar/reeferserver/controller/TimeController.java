@@ -87,13 +87,17 @@ public class TimeController {
         Instant date = TimeUtils.getInstance().advanceDate(1);
         // persist current date
         timeService.saveDate(date,Constants.CURRENT_DATE_KEY);
-/*
-        List<Voyage> activeSchedule = scheduleService.getActiveSchedule();
-        if ( !activeSchedule.isEmpty() )   {
-            String baseActiveDate = activeSchedule.get(0).getSailDate();
-            timeService.saveDate(Instant.parse(baseActiveDate),Constants.SCHEDULE_BASE_DATE_KEY);
+        /*
+        try {
+            List<Voyage> activeSchedule = scheduleService.getActiveSchedule();
+            if ( !activeSchedule.isEmpty() )   {
+                String baseActiveDate = activeSchedule.get(0).getSailDateObject().toString();
+                timeService.saveDate(Instant.parse(baseActiveDate),Constants.SCHEDULE_BASE_DATE_KEY);
+            }
+        } catch( Exception e) {
+            e.printStackTrace();
         }
-        */
+*/
         if ( logger.isLoggable(Level.INFO)) {
             logger.info("TimeController.advance() ***************************************** NEXT DAY "
                     + date.toString() + " ***************************************************************");

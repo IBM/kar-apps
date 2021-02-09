@@ -34,14 +34,22 @@ spec:
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.monitor.port | quote }}
     spec:
+      imagePullSecrets:
+         - name: {{ .Values.kar.imagePullSecret }}
       volumes:
       - name: runtime-config
+        secret:
+          secretName: kar.ibm.com.runtime-config
       containers:
       - name: app
-        image: {{ .Values.reefer.monitor.image }}
+        image: {{ .Values.kar.imageRegistry }}{{ .Values.reefer.monitor.imageName }}
         ports:
         - name: app
           containerPort: {{ .Values.reefer.monitor.port }}
+        volumeMounts:
+        - mountPath: /var/run/secrets/kar.ibm.com
+          name: runtime-config
+          readOnly: true
         env:
         - name: ORDERSTATS_DELAY
           value: {{ .Values.reefer.monitor.delay | quote }}

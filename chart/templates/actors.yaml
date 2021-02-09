@@ -35,9 +35,11 @@ spec:
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.actors.port | quote }}
     spec:
+      imagePullSecrets:
+         - name: {{ .Values.kar.imagePullSecret }}
       containers:
       - name: app
-        image: {{ .Values.reefer.actors.image }}
+        image: {{ .Values.kar.imageRegistry }}{{ .Values.reefer.actors.imageName }}
         ports:
         - name: app
           containerPort: {{ .Values.reefer.actors.port }}

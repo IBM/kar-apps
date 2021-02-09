@@ -50,9 +50,11 @@ spec:
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.rest.port | quote }}
     spec:
+      imagePullSecrets:
+         - name: {{ .Values.kar.imagePullSecret }}
       containers:
       - name: app
-        image: {{ .Values.reefer.rest.image }}
+        image: {{ .Values.kar.imageRegistry }}{{ .Values.reefer.rest.imageName }}
         ports:
         - name: app
           containerPort: {{ .Values.reefer.rest.port }}

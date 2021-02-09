@@ -17,27 +17,28 @@
 kar:
   verbose: info
   imagePullSecret: kar.ibm.com.image-pull
+  imageRegistry: localhost:5000/
 
 reefer:
   frontend:
-    image: localhost:5000/kar/kar-app-reefer-frontend
+    imageName: kar/kar-app-reefer-frontend
     port: 9088
     nodeport: 30088
     replicas: 1
 
   rest:
-    image: localhost:5000/kar/kar-app-reefer-rest
+    imageName: kar/kar-app-reefer-rest
     port: 9080
     nodeport: 30080
     replicas: 1
 
   simulator:
-    image: localhost:5000/kar/kar-app-reefer-simulators
+    imageName: kar/kar-app-reefer-simulators
     port: 7080
     replicas: 1
 
   monitor:
-    image: localhost:5000/kar/kar-app-reefer-monitor
+    imageName: kar/kar-app-reefer-monitor
     port: 7082
     replicas: 1
     threshold: 100
@@ -45,7 +46,7 @@ reefer:
     delay: 60
 
   actors:
-    image: localhost:5000/kar/kar-app-reefer-actors
+    imageName: kar/kar-app-reefer-actors
     port: 8080
     replicas: 1
 

@@ -45,9 +45,11 @@ spec:
       labels:
         name: reefer-frontend
     spec:
+      imagePullSecrets:
+         - name: {{ .Values.kar.imagePullSecret }}
       containers:
       - name: app
-        image: {{ .Values.reefer.frontend.image }}
+        image: {{ .Values.kar.imageRegistry }}{{ .Values.reefer.frontend.imageName }}
         command: [ "/bin/bash", "-c", "/kar/bin/fe-start.sh" ]
         ports:
         - name: app

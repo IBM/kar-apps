@@ -14,15 +14,23 @@
 # limitations under the License.
 -->
 
-This chart deploys the Reefer application on a Kubernetes cluster and
-exposes the front-end services via NodePorts.
+This chart deploys the Reefer application on a Kubernetes cluster.
 
-To deploy:  
+To deploy on `k3s` or Docker for Desktop execute:
 ```shell
-helm install reefer chart --wait
+helm install reefer chart
 ```
 
-To undeploy:
+To deploy on `kind` execute:
+```shell
+helm install reefer chart --set ingress.pathBased=true
+```
+
+After deploying, wait about a minute to allow the application to
+finish initializing and use the URL displayed by the `helm install`
+to access the Reefer Web Application.
+
+To undeploy the application from any type of cluster:
 ```shell
 helm uninstall reefer
 ```

@@ -14,12 +14,14 @@
 # limitations under the License.
 -->
 
-This chart deploys the Reefer application on k3s or Kind without ingress
-To deploy:  
+This chart deploys the Reefer application on a Kubernetes cluster and
+exposes the front-end services via NodePorts.
 
+To deploy:  
 ```shell
-helm install reefer chart
+helm install reefer chart --wait
 ```
+
 To undeploy:
 ```shell
 helm uninstall reefer

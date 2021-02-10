@@ -56,4 +56,8 @@ spec:
           containerPort: {{ .Values.reefer.frontend.port }}
         env:
         - name: REST_URL
+{{ if .Values.ingress.pathBased }}
+          value: http://{{ .Values.ingress.subdomain }}/reefer-rest
+{{ else }}
           value: http://localhost:{{ .Values.reefer.rest.nodeport }}
+{{ end }}

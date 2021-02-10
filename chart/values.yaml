@@ -19,6 +19,10 @@ kar:
   imagePullSecret: kar.ibm.com.image-pull
   imageRegistry: localhost:5000/
 
+ingress:
+  pathBased: false
+  subdomain: localhost:31080
+
 reefer:
   frontend:
     imageName: kar/kar-app-reefer-frontend

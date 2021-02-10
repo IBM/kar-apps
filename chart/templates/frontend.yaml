@@ -21,13 +21,17 @@ metadata:
   labels:
     name: reefer-frontend
 spec:
+{{ if not .Values.ingress.pathBased }}
   type: NodePort
+{{ end }}
   selector:
     name: reefer-frontend
   ports:
     - name: app
       port: {{ .Values.reefer.frontend.port }}
+{{ if not .Values.ingress.pathBased }}
       nodePort: {{ .Values.reefer.frontend.nodeport }}
+{{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment

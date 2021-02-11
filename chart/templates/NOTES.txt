@@ -2,4 +2,9 @@ Wait about a minute for the application to be fully initialized.
 
 Then, open the URL below in your browser to access the
 Reefer Web Application:
-  http://localhost:{{ .Values.reefer.frontend.nodeport }}
+{{ if .Values.ingress.pathBased }}
+  http://{{ .Values.ingress.subdomain }}/reefer-frontend/
+{{- else }}
+  http://localhost:{{ .Values.reefer.frontend.nodeport }}/
+{{ end }}
+

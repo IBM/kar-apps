@@ -200,5 +200,5 @@ kar run -app_port 7080 -app reefer -service simservice -actors simhelper mvn lib
 
 ### Access the Reefer Web Application from your browser at:
 ```
-http://localhost:9088
+http://localhost:9088/
 ```

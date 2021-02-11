@@ -21,13 +21,17 @@ metadata:
   labels:
     name: reefer-frontend
 spec:
+{{ if not .Values.ingress.pathBased }}
   type: NodePort
+{{ end }}
   selector:
     name: reefer-frontend
   ports:
     - name: app
       port: {{ .Values.reefer.frontend.port }}
+{{ if not .Values.ingress.pathBased }}
       nodePort: {{ .Values.reefer.frontend.nodeport }}
+{{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -56,4 +60,8 @@ spec:
           containerPort: {{ .Values.reefer.frontend.port }}
         env:
         - name: REST_URL
+{{ if .Values.ingress.pathBased }}
+          value: http://{{ .Values.ingress.subdomain }}/reefer-rest
+{{ else }}
           value: http://localhost:{{ .Values.reefer.rest.nodeport }}
+{{ end }}

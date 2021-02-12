@@ -42,7 +42,7 @@ spec:
           secretName: kar.ibm.com.runtime-config
       containers:
       - name: app
-        image: {{ .Values.kar.imageRegistry }}{{ .Values.reefer.monitor.imageName }}
+        image: {{ .Values.kar.imagePrefix }}/{{ .Values.reefer.monitor.imageName }}
         ports:
         - name: app
           containerPort: {{ .Values.reefer.monitor.port }}

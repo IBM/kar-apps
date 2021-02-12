@@ -135,12 +135,17 @@ When the anamly generation is disabled, the manual **Create Anamaly** button can
 - browse the README and follow the getting-started guide
 - clone Kar-apps from https://github.com/IBM/kar-apps.git
 
-## Deploying Reefer using docker or podman and the latest reefer release
+## Deploying Reefer using docker or podman from the latest reefer release
 - install docker-compose or podman-compose
 - (skip this step for podman) start the kar runtime using 
   `[kar-install-dir]/scripts/docker-compose-start.sh`
 - start the reefer application using `IMAGE_PREFIX=quay.io/ibm kar-apps/scripts/reefer-compose-start.sh`
 - point browser at the URL listed for the reefer GUI when the application is ready
+
+
+## Deploying Reefer using kind, k3s or docker desktop from latest reefer release
+- See [kar-install-dir]/docs/kar-deployments.md for instructions on installing these
+- See [kar-apps-install-dir]/charts/README.md for instructions on launching reefer app
 
 
 ## Reefer Development

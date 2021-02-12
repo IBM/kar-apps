@@ -40,7 +40,7 @@ spec:
          - name: {{ .Values.kar.imagePullSecret }}
       containers:
       - name: app
-        image: {{ .Values.kar.imageRegistry }}{{ .Values.reefer.simulator.imageName }}
+        image: {{ .Values.kar.imagePrefix }}/{{ .Values.reefer.simulator.imageName }}
         ports:
         - name: app
           containerPort: {{ .Values.reefer.simulator.port }}

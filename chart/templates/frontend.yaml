@@ -53,7 +53,7 @@ spec:
          - name: {{ .Values.kar.imagePullSecret }}
       containers:
       - name: app
-        image: {{ .Values.kar.imageRegistry }}{{ .Values.reefer.frontend.imageName }}
+        image: {{ .Values.kar.imagePrefix }}/{{ .Values.reefer.frontend.imageName }}
         command: [ "/bin/bash", "-c", "/kar/bin/fe-start.sh" ]
         ports:
         - name: app

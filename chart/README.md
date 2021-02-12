@@ -14,16 +14,18 @@
 # limitations under the License.
 -->
 
-This chart deploys the Reefer application on a Kubernetes cluster.
+This chart deploys the Reefer application on a local Kubernetes cluster.
+By default helm will deploy images from a local registry listening on localhost:5000.
+To deploy official release images, override kar.imagePrefix as indicated below.
 
-To deploy on `k3s` or Docker for Desktop execute:
+To deploy on `k3s` or `Docker Desktop` execute:
 ```shell
-helm install reefer chart
+helm install reefer chart --set kar.imagePrefix=quay.io/ibm
 ```
 
 To deploy on `kind` execute:
 ```shell
-helm install reefer chart --set ingress.pathBased=true
+helm install reefer chart --set ingress.pathBased=true --set kar.imagePrefix=quay.io/ibm
 ```
 
 After deploying, wait about a minute to allow the application to

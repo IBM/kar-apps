@@ -14,7 +14,7 @@
 # limitations under the License.
 -->
 
-# Reefer Application
+# Reefer Application Overview
 
 The application models simplified business process involved in shipping perishable goods on a ship from manufacturer to a client. The manufacturer places an order for a shipment of goods which requires one or more refrigerated (reefer) containers and a ship. The land transportation of reefer containers as well as Customs clearance are not considered to simplify the design. To facilitate transit of goods, the application uses a fleet of ships covering Atlantic and Pacific oceans. Each ship in a fleet has a different tonnage (reefer cargo capacity) and is assigned to a shipping schedule serving a route between two ports. The itinerary includes departure date from origin port and arrival date at the destination port. All reefers have identical physical dimensions and have a maximum holding capacity in terms of product units.
 
@@ -128,77 +128,66 @@ After choosing the values, press the **Update** button to make them operational.
 An order target of 0 disabled automatic anomaly generation when the ship simulator is active.
 When the anamly generation is disabled, the manual **Create Anamaly** button can be used to generate one anomaly.  
 
-## Reefer Deployment  
+# Reefer Deployment and Development
 
-### Prereqs for running the application from docker images
-- docker engine and docker-compose, or
-- a kubernetes cluster
+## Prereqs for running or developing Reefer
+- clone Kar from https://github.com/IBM/kar.git
+- browse the README and follow the getting-started guide
+- clone Kar-apps from https://github.com/IBM/kar-apps.git
 
-### Prereqs for developing and debugging the application without docker  
+## Deploying Reefer using docker or podman and the latest reefer release
+- install docker-compose or podman-compose
+- (skip this step for podman) start the kar runtime using 
+  `[kar-install-dir]/scripts/docker-compose-start.sh`
+- start the reefer application using `IMAGE_PREFIX=quay.io/ibm kar-apps/scripts/reefer-compose-start.sh`
+- point browser at the URL listed for the reefer GUI when the application is ready
+
+
+## Reefer Development
+
+Development can be done with native compilation or docker images.
+
+### Native development
+
+Additional prereqs:  
 - maven version 3.6.2+  
-- Kar cli from https://github.com/IBM/kar/releases  
+- JDK 11+
+- nodejs
 
-### Quick Start to run application with docker-compose or podman-compose from a release
+Build java application:  
 ```
-Clone Reefer application repository from https://github.com/IBM/kar-apps.git
-or download the latest release from https://github.com/IBM/kar-apps, and
-```
-TBD ... needs work
-cd kar-apps
-make reeferImages
-
-# start reefer application
-./scripts/reefer-compose-start.sh
-
-# After 30-60 seconds, access the Reefer Web Application from your browser at:
-http://localhost:9088/
-```
-
-
-### Quick Start for developers
-```
-TBD ... needs work
-# clone Reefer application repository from https://github.com/IBM/kar-apps.git or
-download the Reefer source tarball from https://github.com/IBM/kar-apps/releases.
-
-# deploy KAR dependencies Kafka and Redis by either ...
-# ... running them in docker-compose
-[KAR install dir]/scripts/docker-compose-start.sh
-# ... or running them in kind
-[KAR install dir]/scripts/setup-kind-kar-macos.sh
-
-# export Kafka and Redis specific env vars by running
-source [KAR install dir]/scripts/kar-env-local.sh
-
-# clone Reefer application
-clone https://github.com/IBM/kar-apps.git
-
-# build Reefer application. This step takes awhile since it involves a download
-# of node and npm, and builds Angular GUI runtime artifacts.
-cd kar-apps
+cd [kar-apps-install-dir]
 mvn clean install
 ```
+Start Kar runtime: `[kar-install-dir]/scripts/docker-compose-start.sh`
 
-### Launch Reefer server processes in four separate terminal windows:  
+Open four terminal windows, one for each reefer service:
+- Rest window
 ```
-# Reefer GUI Server
-cd [reefer install dir]/frontend
+cd kar-apps/reefer-rest
+source [kar-install-dir]/scripts/kar-env-local.sh
+kar run -app_port 9080 -app reefer -v info -service reeferservice mvn liberty:run
+```
+
+- Actors window
+```
+cd [kar-apps/actors
+source [kar-install-dir]/scripts/kar-env-local.sh
+kar run -app reefer -v info -actors order,reefer,voyage,reefer-provisioner mvn liberty:run
+```
+
+- Simulators window
+```
+cd kar-apps/simulators
+source [kar-install-dir]/scripts/kar-env-local.sh
+kar run -app_port 7080 -app reefer -v info -service simservice -actors simhelper mvn liberty:run
+```
+
+- Frontend window
+```
+cd [kar-install-dir]/frontend
 mvn liberty:run
-
-# Reefer Actor Server
-cd [reefer install dir]/actors
-kar run -app reefer -actors order,reefer,voyage,reefer-provisioner mvn liberty:run
-
-# Reefer REST Server
-cd [reefer install dir]/reefer-rest dir
-kar run -app_port 9080 -app reefer -service reeferservice  mvn liberty:run
-
-# Reefer Simulator Server
-cd [reefer install dir]/simulators dir
-kar run -app_port 7080 -app reefer -service simservice -actors simhelper mvn liberty:run
 ```
 
-### Access the Reefer Web Application from your browser at:
-```
-http://localhost:9088/
-```
+- When all services have completed initialization, access the Reefer Web Application from your browser at:
+`http://localhost:9088/`

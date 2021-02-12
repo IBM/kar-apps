@@ -144,8 +144,8 @@ When the anamly generation is disabled, the manual **Create Anamaly** button can
 
 
 ## Deploying Reefer using kind, k3s or docker desktop from latest reefer release
-- See [kar-install-dir]/docs/kar-deployments.md for instructions on installing these
-- See [kar-apps-install-dir]/charts/README.md for instructions on launching reefer app
+- See [KAR Deployment Options](https://github.com/IBM/kar/blob/main/docs/kar-deployments.md) for instructions on installing these
+- See [Reefer launch on k8s](chart/README.md) for instructions on launching reefer app
 
 
 ## Reefer Development

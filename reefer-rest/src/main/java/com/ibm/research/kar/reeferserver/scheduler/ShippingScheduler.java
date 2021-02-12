@@ -80,12 +80,8 @@ public class ShippingScheduler {
         }
         return routes;
     }
-    /**
-     *
-     * @return
-     * @throws Exception
-     */
-    public void setRoutes(List<Route> routes) throws Exception {
+
+    public void setRoutes(List<Route> routes) {
         this.routes = routes;
     }
     /**
@@ -95,7 +91,6 @@ public class ShippingScheduler {
     public LinkedList<Voyage> generateSchedule() {
         // the shipping schedule is generated for one year from now
        Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate());
-
         // generate new schedule for one year ahead
         return generateSchedule(TimeUtils.getInstance().getCurrentDate(),yearFromNow);
     }
@@ -103,7 +98,6 @@ public class ShippingScheduler {
      *
      * @param route
      * @param departureDate
-     * @param sortedSchedule
      * @param endDate
      * @return
      */
@@ -135,16 +129,12 @@ public class ShippingScheduler {
     public static LinkedList<Voyage> generateSchedule(Instant departureDate, final Instant lastVoyageDate) {
         Instant arrivalDate;
 
-         // the shipping schedule is generated for one year from now
-        //final Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(departureDate);
         int staggerInitialShipDepartures = 0;
         LinkedList<Voyage> sortedSchedule = new LinkedList<>();
         for (final Route route : routes) {
              // generate current ship schedule for the whole year
-             Instant shipLastArrivalDate = 
+             Instant shipLastArrivalDate =
                 generateShipSchedule(route, departureDate, sortedSchedule, lastVoyageDate); //yearFromNow);
-
-
             route.setLastArrival(shipLastArrivalDate);
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("ShippingScheduler.generateSchedule - Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());
@@ -156,7 +146,7 @@ public class ShippingScheduler {
             departureDate = TimeUtils.getInstance().futureDate(Instant.now(), staggerInitialShipDepartures);
 
         }
-        sortedShipSchedule.forEach(v -> System.out.println(":::::::"+v));
+
         return sortedSchedule;
     }
     public static LinkedList<Voyage> generateSchedule(Route route, Instant departureDate) {
@@ -169,23 +159,12 @@ public class ShippingScheduler {
 
         // generate current ship schedule for the whole year
         Instant shipLastArrivalDate =
-                generateShipSchedule(route, departureDate, sortedSchedule, yearFromNow);
-
+              generateShipSchedule(route, departureDate, sortedSchedule, yearFromNow);
+           // generateShipSchedule(route, departureDate, yearFromNow);
         route.setLastArrival(shipLastArrivalDate);
-        logger.warning("ShippingScheduler.generateSchedule - Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());
-
         if (logger.isLoggable(Level.INFO)) {
             logger.info("ShippingScheduler.generateSchedule - Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());
         }
-        logger.info("ShippingScheduler.generateSchedule - Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());
-
-        // initial ship departures staggered by 2 days (change this if necessary)
- //       staggerInitialShipDepartures += 2;
-        // reset departure date to today+stagger (calculated above) so that the ships
-        // dont depart on the same day
-   //     departureDate = TimeUtils.getInstance().futureDate(Instant.now(), staggerInitialShipDepartures);
-
-
         return sortedSchedule;
     }
     /**
@@ -228,12 +207,8 @@ public class ShippingScheduler {
         }
 
         // for return voyage reverse origin and destination ports
-       // return new Voyage(new Route(route.getVessel().clone(), originPort, destinationPort, route.getDaysAtSea(),
-       //         route.getDaysAtPort()), departureDate, arrivalDate.toString());
-        Voyage v = new Voyage(new Route(route.getVessel().clone(), originPort, destinationPort, route.getDaysAtSea(),
+        return new Voyage(new Route(route.getVessel().clone(), originPort, destinationPort, route.getDaysAtSea(),
                 route.getDaysAtPort()), departureDate, arrivalDate.toString());
-        sortedShipSchedule.add(v);
-        return v;
     }
  
 }

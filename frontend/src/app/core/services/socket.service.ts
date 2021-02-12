@@ -33,7 +33,7 @@ export class SocketService {
     console.log('Connecting to '+GlobalConstants.restServerUrl+'/socket...');
     let socket = new SockJs( GlobalConstants.restServerUrl+`/socket`);
     let stompClient = Stomp.over(socket);
-    console.log('+++++++ StompClient connected to the server');
+    console.log('+++++++ StompClient connecting to the server');
     return stompClient;
   }
 

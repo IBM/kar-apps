@@ -16,7 +16,6 @@
 
 package com.ibm.research.kar.reeferserver.service;
 
-import com.ibm.research.kar.reefer.common.Constants;
 import org.springframework.stereotype.Component;
 
 import javax.json.Json;
@@ -34,15 +33,10 @@ public class TimeService extends AbstractPersistentService {
     }
 
     public Optional<Instant> recoverDate(String key) {
-      // JsonValue jv = super.get(Constants.CURRENT_DATE_KEY);
         JsonValue jv = super.get(key);
-        System.out.println("TimeService.recoverDate() - key:"+key+" value:"+jv);
-       if (Objects.isNull(jv)) {
-           return Optional.empty();
-       }
-
-       return Optional.of(Instant.parse( ((JsonString)jv).getString() ));
-
-      //  return Instant.parse( ((JsonString)jv).getString());
+        if (Objects.isNull(jv)) {
+            return Optional.empty();
+        }
+        return Optional.of(Instant.parse(((JsonString) jv).getString()));
     }
 }

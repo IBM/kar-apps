@@ -127,6 +127,10 @@ public class VoyageActor extends BaseActor {
 
             voyage.getRoute().getVessel().setPosition(daysAtSea);
             int progress = Math.round((daysAtSea / (float) voyage.getRoute().getDaysAtSea()) * 100);
+            //progress = (progress+5/10.0) * 10;
+            //Long p = Math.round(progress+5/10.0) * 10;
+            //voyage.getRoute().getVessel().setProgress(p.intValue());
+          //  System.out.println("VoyageActor.changePosition - Voyage:" + voyage.getId()+" Ship:"+voyage.getRoute().getVessel().getName()+" progress:"+progress +" daysAtSea:"+daysAtSea);
             voyage.getRoute().getVessel().setProgress(progress);
             JsonObject jo =  VoyageJsonSerializer.serialize(voyage);
             Kar.Actors.State.set(this, Constants.VOYAGE_INFO_KEY, jo);
@@ -154,6 +158,7 @@ public class VoyageActor extends BaseActor {
                 Kar.Actors.remove(this);
             } // check if ship departed its origin port
             else if ((daysAtSea == 1) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
+        //        System.out.println("VoyageActor.changePosition - Voyage:" +voyage.getId()+" >>>>>> DEPARTED");
                 voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
                 Kar.Actors.State.set(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
                 long snapshot = System.nanoTime();

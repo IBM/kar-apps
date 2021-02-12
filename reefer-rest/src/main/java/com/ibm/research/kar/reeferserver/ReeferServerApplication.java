@@ -60,7 +60,7 @@ public class ReeferServerApplication {
 	public static void main(final String[] args) {
 
 		SpringApplication.run(ReeferServerApplication.class, args);
-		System.out.println("UTC:   " + TimeUtils.getInstance().getStartDate()+" args:"+mode);
+		System.out.println("UTC:   " + TimeUtils.getInstance().getStartDate());
 	}
 	@PostConstruct
 	public void init() {
@@ -84,6 +84,7 @@ public class ReeferServerApplication {
 			timeService.saveDate(currentDate, Constants.SCHEDULE_BASE_DATE_KEY);
 			timeService.saveDate(currentDate, Constants.CURRENT_DATE_KEY);
 			shipScheduleService.generateShipSchedule();
+			System.out.println("ReeferServerApplication.init() - Saved Base Date:"+timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY).get());
 		}
 	}
 }

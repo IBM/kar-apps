@@ -21,6 +21,7 @@ import java.util.*;
 
 import javax.json.*;
 import javax.ws.rs.core.Response;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -60,7 +61,7 @@ public class ReeferProvisionerActor extends BaseActor {
     private AtomicInteger bookedTotalCount = new AtomicInteger();
     private AtomicInteger inTransitTotalCount = new AtomicInteger();
     private AtomicInteger spoiltTotalCount = new AtomicInteger();
-    private Map<String, String> onMaintenanceMap = new HashMap<>();// super.getSubMap(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST);
+    private Map<String, String> onMaintenanceMap = new ConcurrentHashMap<>();
     private JsonValue totalReeferInventory;
     private static final Logger logger = Logger.getLogger(ReeferProvisionerActor.class.getName());
 
@@ -519,7 +520,15 @@ public class ReeferProvisionerActor extends BaseActor {
           changeReeferState(reefer, reeferId, ReeferState.State.SPOILT);
           JsonObject orderId = Json.createObjectBuilder()
                   .add(Constants.ORDER_ID_KEY, reefer.getOrderId()).build();
-          Kar.Services.post("reeferservice", "/orders/spoilt", orderId);
+          while(true) {
+              try {
+                  Kar.Services.post( Constants.REEFERSERVICE, "/orders/spoilt", orderId);
+                  break;
+              } catch( Exception e) {
+                  logger.log(Level.WARNING, "ReeferProvisioner.reeferSpoilt() - REST call /orders/spoilt failed - cause", e.getMessage());
+              }
+          }
+
           updateStore(reefer);
           // forces update thread to send reefer counts
           valuesChanged.set(true);
@@ -590,8 +599,16 @@ public class ReeferProvisionerActor extends BaseActor {
      * @return Total number of reefers
      */
     private int getReeferInventorySize() {
-        Response response = Kar.Services.get("reeferservice", "reefers/inventory/size");
-        totalReeferInventory = response.readEntity(JsonValue.class);
+        while(true) {
+            try {
+                Response response = Kar.Services.get(Constants.REEFERSERVICE, "reefers/inventory/size");
+                totalReeferInventory = response.readEntity(JsonValue.class);
+                break;
+            } catch (Exception e) {
+                logger.warning("ReeferProvisionerActor.getReeferInventorySize() - REST call reefers/inventory/size failed - cause:"+e.getMessage());
+            }
+        }
+
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("ReeferProvisionerActor.getReeferInventorySize() - Inventory Size:" + totalReeferInventory);
         }
@@ -709,12 +726,17 @@ public class ReeferProvisionerActor extends BaseActor {
         public void run() {
 
             if (valuesChanged.get()) {
-                try {
-                    Kar.Services.post("reeferservice", "/reefers/stats/update", getReeferStats());
-                } catch (Exception e) {
-                    e.printStackTrace();
+                while( true ) {
+                    try {
+                        Kar.Services.post( Constants.REEFERSERVICE, "/reefers/stats/update", getReeferStats());
+                        valuesChanged.set(false);
+                        break;
+                    } catch (Exception e) {
+                        logger.warning("ReeferProvisioner- REST call /reefers/stats/update failed - cause:"+e.getMessage());
+                    }
+
                 }
-                valuesChanged.set(false);
+
 	        }
         }
     }

@@ -135,9 +135,7 @@ public class VoyageController {
    */
   @GetMapping("/voyage/active")
   public List<Voyage> getActiveVoyages() {
-    List<Voyage> activeVoyages = activeVoyages();
-    //activeVoyages.forEach(System.out::println);
-    return activeVoyages;
+    return activeVoyages();
   }
 
   @GetMapping("/voyage/state/{id}")

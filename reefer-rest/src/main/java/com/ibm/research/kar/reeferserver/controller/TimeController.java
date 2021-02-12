@@ -66,15 +66,19 @@ public class TimeController {
     @PostMapping("/time/nextDay")
     public Instant nextDay() {
         voyageService.nextDay();
-        String date = "";
+       // String date = "";
         try {
-            date = TimeUtils.getInstance().getCurrentDate().toString().substring(0, 10);
-            System.out.println("nextDay() - Returning Date >>>>>>>" + date);
+          //  date = TimeUtils.getInstance().getCurrentDate().toString().substring(0, 10);
             JsonObject message = Json.createObjectBuilder()
                     .add(Constants.DATE_KEY, Json.createValue(TimeUtils.getInstance().getCurrentDate().toString()))
                     .build();
+            /*
             Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "releaseReefersfromMaintenance", message);
+
+             */
+            messageReeferProvisioner("releaseReefersfromMaintenance", message);
+
         } catch (Exception e) {
             logger.log(Level.WARNING,"",e);
         }
@@ -84,6 +88,7 @@ public class TimeController {
 
     @PostMapping("/time/advance")
     public Instant advance() {
+        // Advance date by one day
         Instant date = TimeUtils.getInstance().advanceDate(1);
         // persist current date
         timeService.saveDate(date,Constants.CURRENT_DATE_KEY);
@@ -108,14 +113,37 @@ public class TimeController {
             scheduleService.generateNextSchedule(date);
             JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(date.toString()))
                     .build();
-            // Reefers on maintenance are freed automatically after a configurable number of days passes.
-            Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
-                    "releaseReefersfromMaintenance", message);
+            /*
+            while(true) {
+                try {
+                    // Reefers on maintenance are freed automatically after a configurable number of days passes.
+                    Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+                            "releaseReefersfromMaintenance", message);
+                    break;
+                } catch( Exception e) {
+                    logger.warning("TimeController.advance() - ReeferProvisioner.releaseReefersfromMaintenance call failed - reason:"+e.getMessage());
+                }
+            }
+
+             */
+            messageReeferProvisioner("releaseReefersfromMaintenance", message);
         } catch (Exception e) {
             logger.log(Level.WARNING,"",e);
         }
 
         return date;
+    }
+    private void messageReeferProvisioner(String method, JsonObject message) {
+        while(true) {
+            try {
+                // Reefers on maintenance are freed automatically after a configurable number of days passes.
+                Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+                        method, message);
+                break;
+            } catch( Exception e) {
+                logger.warning("TimeController.messageReeferProvisioner() - ReeferProvisioner."+method+"() call failed - reason:"+e.getMessage());
+            }
+        }
     }
 
 }

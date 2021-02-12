@@ -31,6 +31,8 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonValue;
 import javax.json.JsonObject;
 
+import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order;
@@ -195,27 +197,33 @@ public class OrderService extends AbstractPersistentService {
 
         return order;
     }
-    private void findVoyagesBeyondDepartureDate(JsonArray bookedOrders) throws VoyageNotFoundException {
+    private List<Voyage> findVoyagesBeyondDepartureDate(JsonArray bookedOrders) throws VoyageNotFoundException {
         Instant today = TimeUtils.getInstance().getCurrentDate();
+        List<Voyage> neverDepartedList = new ArrayList<>();
         for( JsonValue v : bookedOrders ) {
             Voyage voyage = scheduleService.getVoyage(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY));
             long daysBetween = TimeUtils.getInstance().getDaysBetween(voyage.getSailDateObject(), today);
             if ( daysBetween > 5) {
                 logger.log(Level.WARNING,"OrderService.findVoyagesBeyondDepartureDate() - voyage:"+voyage.getId()+
                         " should have sailed on:"+voyage.getSailDateObject()+" but still in the booked list as of today:"+today);
+                neverDepartedList.add(voyage);
             }
         }
+        return neverDepartedList;
     }
-    private void findVoyagesBeyondArrivalDate(JsonArray activeOrders) throws VoyageNotFoundException {
+    private  List<Voyage> findVoyagesBeyondArrivalDate(JsonArray activeOrders) throws VoyageNotFoundException {
         Instant today = TimeUtils.getInstance().getCurrentDate();
+        List<Voyage> neverArrivedList = new ArrayList<>();
         for( JsonValue v : activeOrders ) {
             Voyage voyage = scheduleService.getVoyage(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY));
             long daysBetween = TimeUtils.getInstance().getDaysBetween(Instant.parse(voyage.getArrivalDate()), today);
             if ( daysBetween > 5) {
                 logger.log(Level.WARNING,"OrderService.findVoyagesBeyondArrivalDate() - voyage:"+voyage.getId()+
                         " should have arrived on:"+voyage.getArrivalDate()+" but still in the active list as of today "+today);
+                neverArrivedList.add(voyage);
             }
         }
+        return neverArrivedList;
     }
 
     /**
@@ -233,7 +241,7 @@ public class OrderService extends AbstractPersistentService {
      * orderKindKey=Contstants.BOOKED_ORDERS_KEY the method returns total number of
      * booked orders
      * 
-     * @param orderKindKey - type of order list (active,booked,spoilt,
+     * @param orderListKindKey - type of order list (active,booked,spoilt,
      *                     on-maintenance)
      * @return number of orders
      */
@@ -345,13 +353,18 @@ public class OrderService extends AbstractPersistentService {
             List<JsonValue> newActiveList = getMutableOrderList(Constants.ACTIVE_ORDERS_KEY);
             removeVoyageOrdersFromList(voyageId, newSpoiltList);
             removeVoyageOrdersFromList(voyageId, newActiveList);
+            set(Constants.SPOILT_ORDERS_KEY, toJsonArray(newSpoiltList));
+            set(Constants.ACTIVE_ORDERS_KEY, toJsonArray(newActiveList));
+            /*
             try {
                 set(Constants.SPOILT_ORDERS_KEY, toJsonArray(newSpoiltList));
                 set(Constants.ACTIVE_ORDERS_KEY, toJsonArray(newActiveList));
-                findVoyagesBeyondArrivalDate(toJsonArray(newActiveList));
+                List<Voyage> neverArrivedList =
+                        findVoyagesBeyondArrivalDate(toJsonArray(newActiveList));
             } catch( VoyageNotFoundException e ) {
                 logger.log(Level.WARNING,e.getMessage(),e);
             }
+            */
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("OrderService.voyageArrived() - voyageId:" + voyageId
                         + " - Active Orders:" + newActiveList.size() + " Spoilt Orders:" + newSpoiltList.size());
@@ -376,9 +389,43 @@ public class OrderService extends AbstractPersistentService {
         }
         if (OrderStatus.DELIVERED.equals(status)) {
             voyageArrived(voyageId);
+            try {
+                // check if there are voyages that should have arrived but didnt (due to REST crash)
+                List<Voyage> neverArrivedList =
+                        findVoyagesBeyondArrivalDate(toJsonArray(getMutableOrderList(Constants.ACTIVE_ORDERS_KEY)));
+                // force arrival to reclaim reefers and clean orders
+                neverArrivedList.forEach(v -> forceArrival(v));
+            } catch(VoyageNotFoundException e) {
+
+            }
         } else if (OrderStatus.INTRANSIT.equals(status)) {
             voyageDeparted(voyageId);
+            try {
+                // check if there are voyages that should have departed but didnt (due to REST crash)
+                List<Voyage> neverDepartedList =
+                        findVoyagesBeyondDepartureDate(toJsonArray(getMutableOrderList(Constants.BOOKED_ORDERS_KEY)));
+                // force arrival to reclaim reefers and clean orders
+                neverDepartedList.forEach(v -> voyageDeparted(v.getId()));
+            } catch(VoyageNotFoundException e) {
+
+            }
         }
+    }
+    private void forceArrival(Voyage voyage) {
+        voyageArrived(voyage.getId());
+        while( true ) {
+            try {
+                Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+                        "releaseVoyageReefers",
+                        Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, voyage.getId()).build());
+                logger.warning("OrderService.forceArrival() - forced reefers release - voyage:"+voyage.getId());
+                break;
+            } catch( Exception e) {
+                logger.warning("OrderService.forceArrival() - ReeferProvisioner.releaseVoyageReefers call failed - cause: "+e.getMessage());
+            }
+        }
+
+
     }
     public int getActiveOrdersCount() {
         List<JsonValue> activeOrders = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);

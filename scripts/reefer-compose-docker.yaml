@@ -20,7 +20,7 @@ networks:
     external: true
 services:
   rest:
-    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-rest
+    image: ${IMAGE_PREFIX:-localhost:5000/kar/}kar-app-reefer-rest
     command: ["/bin/bash","-c","/kar/bin/runner"]
     ports:
       - "9080:9080"
@@ -36,7 +36,7 @@ services:
       REDIS_PASSWORD: passw0rd
       KAR_EXTRA_ARGS: -app_port 9080 -service reeferservice
   simulators:
-    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-simulators
+    image: ${IMAGE_PREFIX:-localhost:5000/kar/}kar-app-reefer-simulators
     command: ["/bin/bash","-c","/kar/bin/runner"]
     networks:
       - kar-bus
@@ -50,7 +50,7 @@ services:
       REDIS_PASSWORD: passw0rd
       KAR_EXTRA_ARGS: -app_port 7080 -service simservice -actors simhelper
   monitor:
-    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-monitor
+    image: ${IMAGE_PREFIX:-localhost:5000/kar/}kar-app-reefer-monitor
     command: ["/bin/sh","-c","/kar/bin/runner"]
     networks:
       - kar-bus
@@ -68,7 +68,7 @@ services:
       ORDERSTATS_RESET: ${ORDERSTATS_RESET:-1}
       ORDERSTATS_THRESHOLD: ${ORDERSTATS_THRESHOLD:-0}
   actors:
-    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-actors
+    image: ${IMAGE_PREFIX:-localhost:5000/kar/}kar-app-reefer-actors
     command: ["/bin/bash","-c","/kar/bin/runner"]
     networks:
       - kar-bus
@@ -82,7 +82,7 @@ services:
       REDIS_PASSWORD: passw0rd
       KAR_EXTRA_ARGS: -actors order,reefer,voyage,reefer-provisioner
   frontend:
-    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-frontend
+    image: ${IMAGE_PREFIX:-localhost:5000/kar/}kar-app-reefer-frontend
     command: ["/bin/bash","-c","/kar/bin/fe-start.sh"]
     environment:
       REST_URL:  ${REST_URL-http://localhost:9080}

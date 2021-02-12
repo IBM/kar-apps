@@ -35,7 +35,7 @@ services:
     command: ["/bin/sh", "-c", "/usr/local/bin/docker-entrypoint.sh --requirepass passw0rd --port 31379"]
     hostname: redis
   rest:
-    image: quay.io/ibm/kar-app-reefer-rest
+    image: ${IMAGE_PREFIX:-localhost:5000/kar/}kar-app-reefer-rest
     command: ["/bin/bash","-c","sleep 15 && /kar/bin/runner"]
     ports:
       - "9080:9080"
@@ -52,7 +52,7 @@ services:
       - "kafka"
       - "redis"
   simulators:
-    image: quay.io/ibm/kar-app-reefer-simulators
+    image: ${IMAGE_PREFIX:-localhost:5000/kar/}kar-app-reefer-simulators
     command: ["/bin/bash","-c","sleep 15 && /kar/bin/runner"]
     environment:
       KAR_SIDECAR_IN_CONTAINER: "true"
@@ -67,7 +67,7 @@ services:
       - "kafka"
       - "redis"
   monitor:
-    image: quay.io/ibm/kar-app-reefer-monitor
+    image: ${IMAGE_PREFIX:-localhost:5000/kar/}kar-app-reefer-monitor
     command: ["/bin/sh","-c","sleep 15 && /kar/bin/runner"]
     environment:
       KAR_SIDECAR_IN_CONTAINER: "true"
@@ -80,13 +80,13 @@ services:
       KAR_EXTRA_ARGS: -app_port 7082
       KAR_APP_PORT:   7082
       ORDERSTATS_DELAY: ${ORDERSTATS_DELAY:-60}
-      ORDERSTATS_RESET: ${ORDERSTATS_RESET:-0}
+      ORDERSTATS_RESET: ${ORDERSTATS_RESET:-1}
       ORDERSTATS_THRESHOLD: ${ORDERSTATS_THRESHOLD:-0}
     depends_on:
       - "kafka"
       - "redis"
   actors:
-    image: quay.io/ibm/kar-app-reefer-actors
+    image: ${IMAGE_PREFIX:-localhost:5000/kar/}kar-app-reefer-actors
     command: ["/bin/bash","-c","sleep 15 && /kar/bin/runner"]
     environment:
       KAR_SIDECAR_IN_CONTAINER: "true"
@@ -101,7 +101,7 @@ services:
       - "kafka"
       - "redis"
   frontend:
-    image: quay.io/ibm/kar-app-reefer-frontend
+    image: ${IMAGE_PREFIX:-localhost:5000/kar/}kar-app-reefer-frontend
     command: ["/bin/bash","-c","/kar/bin/fe-start.sh"]
     environment:
       REST_URL:  ${REST_URL-http://localhost:9080}

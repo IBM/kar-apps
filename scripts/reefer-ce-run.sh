@@ -130,13 +130,13 @@ if [ -n "$start_backend" ]; then
 	exit 1
     fi
     
-    ${kardir}/scripts/kar-ce-run.sh -app reefer -image us.icr.io/research/kar-dev/reefer/simulators -name reefer-simulators\
+    ${kardir}/scripts/kar-ce-run.sh -app reefer -image quay.io/ibm/kar-app-reefer-simulators -name reefer-simulators\
 	  -service simservice -actors simhelper -port 7080 -nowait -v info
-    ${kardir}/scripts/kar-ce-run.sh -app reefer -image us.icr.io/research/kar-dev/reefer/monitor -name reefer-monitor -port 7082\
+    ${kardir}/scripts/kar-ce-run.sh -app reefer -image quay.io/ibm/kar-app-reefer-monitor -name reefer-monitor -port 7082\
 	  -nowait -v info
-    ${kardir}/scripts/kar-ce-run.sh -app reefer -image us.icr.io/research/kar-dev/reefer/actors -name reefer-actors\
+    ${kardir}/scripts/kar-ce-run.sh -app reefer -image quay.io/ibm/kar-app-reefer-actors -name reefer-actors\
 	  -actors order,reefer,voyage,reefer-provisioner -port 8080 -nowait -v info
-    ${kardir}/scripts/kar-ce-run.sh -app reefer -image us.icr.io/research/kar-dev/reefer/reefer-rest -name reefer-rest\
+    ${kardir}/scripts/kar-ce-run.sh -app reefer -image quay.io/ibm/kar-app-reefer-reefer-rest -name reefer-rest\
 	  -service reeferservice -port 9080 -externalize -nowait -v info
     echo "backend started. To check status: ibmcloud ce app list"
     exit 0
@@ -166,7 +166,7 @@ if [ -n "$start_frontend" ]; then
 	echo
 	exit 1
     fi
-    ibmcloud ce app create -image us.icr.io/research/kar-dev/reefer/frontend -name reefer-frontend --min-scale 1\
+    ibmcloud ce app create -image quay.io/ibm/kar-app-reefer-frontend -name reefer-frontend --min-scale 1\
 	     --max-scale 1 --port 9088 --cmd /kar/bin/fe-start.sh --registry-secret kar.ibm.com.image-pull\
 	     --env REST_URL=$rest_url
 fi

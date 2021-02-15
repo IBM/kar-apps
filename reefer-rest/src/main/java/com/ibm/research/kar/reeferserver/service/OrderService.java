@@ -17,10 +17,7 @@
 package com.ibm.research.kar.reeferserver.service;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -197,9 +194,9 @@ public class OrderService extends AbstractPersistentService {
 
         return order;
     }
-    private List<Voyage> findVoyagesBeyondDepartureDate(JsonArray bookedOrders) throws VoyageNotFoundException {
+    private Set<Voyage> findVoyagesBeyondDepartureDate(JsonArray bookedOrders) throws VoyageNotFoundException {
         Instant today = TimeUtils.getInstance().getCurrentDate();
-        List<Voyage> neverDepartedList = new ArrayList<>();
+        Set<Voyage> neverDepartedList = new HashSet<>();
         for( JsonValue v : bookedOrders ) {
             Voyage voyage = scheduleService.getVoyage(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY));
             long daysBetween = TimeUtils.getInstance().getDaysBetween(voyage.getSailDateObject(), today);
@@ -211,9 +208,9 @@ public class OrderService extends AbstractPersistentService {
         }
         return neverDepartedList;
     }
-    private  List<Voyage> findVoyagesBeyondArrivalDate(JsonArray activeOrders) throws VoyageNotFoundException {
+    private  Set<Voyage> findVoyagesBeyondArrivalDate(JsonArray activeOrders) throws VoyageNotFoundException {
         Instant today = TimeUtils.getInstance().getCurrentDate();
-        List<Voyage> neverArrivedList = new ArrayList<>();
+        Set<Voyage> neverArrivedList = new HashSet<>();
         for( JsonValue v : activeOrders ) {
             Voyage voyage = scheduleService.getVoyage(v.asJsonObject().getString(Constants.VOYAGE_ID_KEY));
             long daysBetween = TimeUtils.getInstance().getDaysBetween(Instant.parse(voyage.getArrivalDate()), today);
@@ -222,6 +219,9 @@ public class OrderService extends AbstractPersistentService {
                         " should have arrived on:"+voyage.getArrivalDate()+" but still in the active list as of today "+today);
                 neverArrivedList.add(voyage);
             }
+        }
+        if ( !neverArrivedList.isEmpty()) {
+            neverArrivedList.forEach( v -> System.out.println("OrderService.findVoyagesBeyondArrivalDate() >>>>>>>>> Late voyage:"+v.getId()));
         }
         return neverArrivedList;
     }
@@ -355,16 +355,6 @@ public class OrderService extends AbstractPersistentService {
             removeVoyageOrdersFromList(voyageId, newActiveList);
             set(Constants.SPOILT_ORDERS_KEY, toJsonArray(newSpoiltList));
             set(Constants.ACTIVE_ORDERS_KEY, toJsonArray(newActiveList));
-            /*
-            try {
-                set(Constants.SPOILT_ORDERS_KEY, toJsonArray(newSpoiltList));
-                set(Constants.ACTIVE_ORDERS_KEY, toJsonArray(newActiveList));
-                List<Voyage> neverArrivedList =
-                        findVoyagesBeyondArrivalDate(toJsonArray(newActiveList));
-            } catch( VoyageNotFoundException e ) {
-                logger.log(Level.WARNING,e.getMessage(),e);
-            }
-            */
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("OrderService.voyageArrived() - voyageId:" + voyageId
                         + " - Active Orders:" + newActiveList.size() + " Spoilt Orders:" + newSpoiltList.size());
@@ -391,7 +381,7 @@ public class OrderService extends AbstractPersistentService {
             voyageArrived(voyageId);
             try {
                 // check if there are voyages that should have arrived but didnt (due to REST crash)
-                List<Voyage> neverArrivedList =
+                Set<Voyage> neverArrivedList =
                         findVoyagesBeyondArrivalDate(toJsonArray(getMutableOrderList(Constants.ACTIVE_ORDERS_KEY)));
                 // force arrival to reclaim reefers and clean orders
                 neverArrivedList.forEach(v -> forceArrival(v));
@@ -402,7 +392,7 @@ public class OrderService extends AbstractPersistentService {
             voyageDeparted(voyageId);
             try {
                 // check if there are voyages that should have departed but didnt (due to REST crash)
-                List<Voyage> neverDepartedList =
+                Set<Voyage> neverDepartedList =
                         findVoyagesBeyondDepartureDate(toJsonArray(getMutableOrderList(Constants.BOOKED_ORDERS_KEY)));
                 // force arrival to reclaim reefers and clean orders
                 neverDepartedList.forEach(v -> voyageDeparted(v.getId()));
@@ -427,8 +417,5 @@ public class OrderService extends AbstractPersistentService {
 
 
     }
-    public int getActiveOrdersCount() {
-        List<JsonValue> activeOrders = getListAJsonArray(Constants.ACTIVE_ORDERS_KEY);
-        return activeOrders.size();
-    }
+
 }

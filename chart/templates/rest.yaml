@@ -21,7 +21,7 @@ metadata:
   labels:
     name: reefer-rest
 spec:
-{{ if not .Values.ingress.pathBased }}
+{{ if not (or .Values.ingress.pathBased .Values.ingress.hostBased) }}
   type: NodePort
 {{ end }}
   selector:
@@ -29,7 +29,7 @@ spec:
   ports:
     - name: app
       port: {{ .Values.reefer.rest.port }}
-{{ if not .Values.ingress.pathBased }}
+{{ if not (or .Values.ingress.pathBased .Values.ingress.hostBased) }}
       nodePort: {{ .Values.reefer.rest.nodeport }}
 {{ end }}
 ---

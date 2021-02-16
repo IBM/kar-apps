@@ -21,7 +21,9 @@ kar:
 
 ingress:
   pathBased: false
+  hostBased: false
   subdomain: localhost:31080
+  secret: none
 
 reefer:
   frontend:

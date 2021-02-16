@@ -14,24 +14,29 @@
 # limitations under the License.
 #
 
-{{ if .Values.ingress.pathBased }}
+{{ if .Values.ingress.hostBased }}
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: reefer-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
+  tls:
+  - hosts:
+    - reefer-rest.{{ .Values.ingress.subdomain }}
+    - reefer-frontend.{{ .Values.ingress.subdomain }}
+    secretName: {{ .Values.ingress.secret }}
   rules:
-  - http:
+  - host: reefer-rest.{{ .Values.ingress.subdomain }}
+    http:
       paths:
-      - path: /reefer-rest(/|$)(.*)
-        pathType: Prefix
+      - path: /
         backend:
           serviceName: reefer-rest
           servicePort: {{ .Values.reefer.rest.port }}
-      - path: /reefer-frontend(/|$)(.*)
-        pathType: Prefix
+  - host: reefer-frontend.{{ .Values.ingress.subdomain }}
+    http:
+      paths:
+      - path: /
         backend:
           serviceName: reefer-frontend
           servicePort: {{ .Values.reefer.frontend.port }}

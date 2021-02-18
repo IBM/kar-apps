@@ -21,11 +21,17 @@ metadata:
   labels:
     name: reefer-rest
 spec:
+{{ if not (or .Values.ingress.pathBased .Values.ingress.hostBased) }}
+  type: NodePort
+{{ end }}
   selector:
     name: reefer-rest
   ports:
     - name: app
       port: {{ .Values.reefer.rest.port }}
+{{ if not (or .Values.ingress.pathBased .Values.ingress.hostBased) }}
+      nodePort: {{ .Values.reefer.rest.nodeport }}
+{{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -48,9 +54,11 @@ spec:
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.rest.port | quote }}
     spec:
+      imagePullSecrets:
+         - name: {{ .Values.kar.imagePullSecret }}
       containers:
       - name: app
-        image: {{ .Values.reefer.rest.image }}
+        image: {{ .Values.kar.imagePrefix }}/{{ .Values.reefer.rest.imageName }}
         ports:
         - name: app
           containerPort: {{ .Values.reefer.rest.port }}

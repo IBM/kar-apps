@@ -1,0 +1,92 @@
+#
+# Copyright IBM Corporation 2020,2021
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+version: "3"
+networks:
+  kar-bus:
+    external: true
+services:
+  rest:
+    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-rest
+    command: ["/bin/bash","-c","/kar/bin/runner"]
+    ports:
+      - "9080:9080"
+    networks:
+      - kar-bus
+    environment:
+      KAR_SIDECAR_IN_CONTAINER: "true"
+      KAR_APP: reefer
+      KAFKA_BROKERS:  kar_kafka:9092
+      KAFKA_VERSION:  2.4.0
+      REDIS_HOST:     kar_redis
+      REDIS_PORT:     6379
+      REDIS_PASSWORD: passw0rd
+      KAR_EXTRA_ARGS: -app_port 9080 -service reeferservice
+  simulators:
+    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-simulators
+    command: ["/bin/bash","-c","/kar/bin/runner"]
+    networks:
+      - kar-bus
+    environment:
+      KAR_SIDECAR_IN_CONTAINER: "true"
+      KAR_APP: reefer
+      KAFKA_BROKERS:  kar_kafka:9092
+      KAFKA_VERSION:  2.4.0
+      REDIS_HOST:     kar_redis
+      REDIS_PORT:     6379
+      REDIS_PASSWORD: passw0rd
+      KAR_EXTRA_ARGS: -app_port 7080 -service simservice -actors simhelper
+  monitor:
+    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-monitor
+    command: ["/bin/sh","-c","/kar/bin/runner"]
+    networks:
+      - kar-bus
+    environment:
+      KAR_SIDECAR_IN_CONTAINER: "true"
+      KAR_APP: reefer
+      KAFKA_BROKERS:  kar_kafka:9092
+      KAFKA_VERSION:  2.4.0
+      REDIS_HOST:     kar_redis
+      REDIS_PORT:     6379
+      REDIS_PASSWORD: passw0rd
+      KAR_EXTRA_ARGS: -app_port 7082
+      KAR_APP_PORT:   7082
+      ORDERSTATS_DELAY: ${ORDERSTATS_DELAY:-60}
+      ORDERSTATS_RESET: ${ORDERSTATS_RESET:-1}
+      ORDERSTATS_THRESHOLD: ${ORDERSTATS_THRESHOLD:-0}
+  actors:
+    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-actors
+    command: ["/bin/bash","-c","/kar/bin/runner"]
+    networks:
+      - kar-bus
+    environment:
+      KAR_SIDECAR_IN_CONTAINER: "true"
+      KAR_APP: reefer
+      KAFKA_BROKERS:  kar_kafka:9092
+      KAFKA_VERSION:  2.4.0
+      REDIS_HOST:     kar_redis
+      REDIS_PORT:     6379
+      REDIS_PASSWORD: passw0rd
+      KAR_EXTRA_ARGS: -actors order,reefer,voyage,reefer-provisioner
+  frontend:
+    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-frontend
+    command: ["/bin/bash","-c","/kar/bin/fe-start.sh"]
+    environment:
+      REST_URL:  ${REST_URL-http://localhost:9080}
+    ports:
+      - "9088:9088"
+    networks:
+      - kar-bus

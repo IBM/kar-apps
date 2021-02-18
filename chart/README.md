@@ -14,11 +14,43 @@
 # limitations under the License.
 -->
 
-This chart deploys the Reefer application on Kubernetes.
+This chart deploys the Reefer application on a local Kubernetes cluster.
+By default helm will deploy images from a local registry listening on localhost:5000.
+To deploy official release images, override kar.imagePrefix as indicated below.
 
-You must override the values of `ingress.subdomain` and `ingress.tls.secretname`
-to provide the real values for your cluster.  On an IKS cluster, you can
-find the values to use by doing:
+To deploy on `k3s` or `Docker Desktop` execute:
 ```shell
-ibmcloud ks cluster get --cluster CLUSTER_NAME | grep Ingress
+helm install reefer chart --set kar.imagePrefix=quay.io/ibm
+```
+
+To deploy on `kind` execute:
+```shell
+helm install reefer chart --set ingress.pathBased=true --set kar.imagePrefix=quay.io/ibm
+```
+
+To deploy on `IBM Cloud Kubernetes Service`, first use `ibmcloud` to
+determine the `Ingress Subdomain` and `Ingress Secret` for your cluster:
+```shell
+ibmcloud cs cluster get --cluster your-cluster-name
+OK
+
+Name:                           your-cluster-name
+...
+Ingress Subdomain:              your-ingress-subdomain
+Ingress Secret:                 your-ingress-secret
+...
+```
+Next deploy the chart by executing the command below, substituting in
+the actual values for `your-ingress-subdomain` and `your-ingress-secret`
+```shell
+helm install reefer chart --set ingress.hostBased=true --set kar.imagePrefix=quay.io/ibm --set ingress.subdomain=your-ingress-subdomain --set ingress.secret=your-ingress-secret
+```
+
+After deploying, wait about a minute to allow the application to
+finish initializing and use the URL displayed by the `helm install`
+to access the Reefer Web Application.
+
+To undeploy the application from any type of cluster:
+```shell
+helm uninstall reefer
 ```

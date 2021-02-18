@@ -1,5 +1,3 @@
-#!/bin/bash
-
 #
 # Copyright IBM Corporation 2020,2021
 #
@@ -16,15 +14,25 @@
 # limitations under the License.
 #
 
-# Script to launch reefer components using docker-compose
-
-SCRIPTDIR=$(cd $(dirname "$0") && pwd)
-cd $SCRIPTDIR
-
-if systemctl is-active docker | grep -q 'inactive'; then
-    echo Docker not active, trying podman
-    podman-compose -f reefer-compose-podman.yaml -p reefer down
-else
-    docker-compose -f reefer-compose-docker.yaml -p reefer down
-fi
-
+{{ if .Values.ingress.pathBased }}
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: reefer-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /reefer-rest(/|$)(.*)
+        pathType: Prefix
+        backend:
+          serviceName: reefer-rest
+          servicePort: {{ .Values.reefer.rest.port }}
+      - path: /reefer-frontend(/|$)(.*)
+        pathType: Prefix
+        backend:
+          serviceName: reefer-frontend
+          servicePort: {{ .Values.reefer.frontend.port }}
+{{ end }}

@@ -21,11 +21,17 @@ metadata:
   labels:
     name: reefer-frontend
 spec:
+{{ if not (or .Values.ingress.pathBased .Values.ingress.hostBased) }}
+  type: NodePort
+{{ end }}
   selector:
     name: reefer-frontend
   ports:
     - name: app
       port: {{ .Values.reefer.frontend.port }}
+{{ if not (or .Values.ingress.pathBased .Values.ingress.hostBased) }}
+      nodePort: {{ .Values.reefer.frontend.nodeport }}
+{{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -44,14 +50,20 @@ spec:
         name: reefer-frontend
     spec:
       imagePullSecrets:
-        - name: {{ .Values.kar.imagePullSecret }}
+         - name: {{ .Values.kar.imagePullSecret }}
       containers:
       - name: app
-        image: {{ .Values.reefer.frontend.image }}
+        image: {{ .Values.kar.imagePrefix }}/{{ .Values.reefer.frontend.imageName }}
         command: [ "/bin/bash", "-c", "/kar/bin/fe-start.sh" ]
         ports:
         - name: app
           containerPort: {{ .Values.reefer.frontend.port }}
         env:
         - name: REST_URL
-          value: https://reefer-rest.{{ .Values.ingress.subdomain }}
+{{ if .Values.ingress.pathBased }}
+          value: http://{{ .Values.ingress.subdomain }}/reefer-rest
+{{- else if .Values.ingress.hostBased }}
+          value: https://reefer-rest.{{ .Values.ingress.subdomain }}/
+{{ else }}
+          value: http://localhost:{{ .Values.reefer.rest.nodeport }}
+{{ end }}

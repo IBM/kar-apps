@@ -16,27 +16,23 @@
 
 package com.ibm.research.kar.reeferserver.controller;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
-import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import com.ibm.research.kar.reeferserver.service.TimeService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import java.time.Instant;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @RestController
 @CrossOrigin("*")
@@ -49,6 +45,7 @@ public class TimeController {
     private TimeService timeService;
 
     private static final Logger logger = Logger.getLogger(TimeController.class.getName());
+
     @PostMapping("/time/startDate")
     public Instant getStartDate() {
         return TimeUtils.getInstance().getStartDate();
@@ -61,26 +58,18 @@ public class TimeController {
 
     /*
      * Called by the GUI to advance time while in manual mode.
-     * 
+     *
      */
     @PostMapping("/time/nextDay")
     public Instant nextDay() {
         voyageService.nextDay();
-       // String date = "";
         try {
-          //  date = TimeUtils.getInstance().getCurrentDate().toString().substring(0, 10);
             JsonObject message = Json.createObjectBuilder()
                     .add(Constants.DATE_KEY, Json.createValue(TimeUtils.getInstance().getCurrentDate().toString()))
                     .build();
-            /*
-            Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
-                    "releaseReefersfromMaintenance", message);
-
-             */
             messageReeferProvisioner("releaseReefersfromMaintenance", message);
-
         } catch (Exception e) {
-            logger.log(Level.WARNING,"",e);
+            logger.log(Level.WARNING, "", e);
         }
 
         return TimeUtils.getInstance().getCurrentDate();
@@ -91,19 +80,9 @@ public class TimeController {
         // Advance date by one day
         Instant date = TimeUtils.getInstance().advanceDate(1);
         // persist current date
-        timeService.saveDate(date,Constants.CURRENT_DATE_KEY);
-        /*
-        try {
-            List<Voyage> activeSchedule = scheduleService.getActiveSchedule();
-            if ( !activeSchedule.isEmpty() )   {
-                String baseActiveDate = activeSchedule.get(0).getSailDateObject().toString();
-                timeService.saveDate(Instant.parse(baseActiveDate),Constants.SCHEDULE_BASE_DATE_KEY);
-            }
-        } catch( Exception e) {
-            e.printStackTrace();
-        }
-*/
-        if ( logger.isLoggable(Level.INFO)) {
+        timeService.saveDate(date, Constants.CURRENT_DATE_KEY);
+
+        if (logger.isLoggable(Level.INFO)) {
             logger.info("TimeController.advance() ***************************************** NEXT DAY "
                     + date.toString() + " ***************************************************************");
         }
@@ -113,37 +92,24 @@ public class TimeController {
             scheduleService.generateNextSchedule(date);
             JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(date.toString()))
                     .build();
-            /*
-            while(true) {
-                try {
-                    // Reefers on maintenance are freed automatically after a configurable number of days passes.
-                    Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
-                            "releaseReefersfromMaintenance", message);
-                    break;
-                } catch( Exception e) {
-                    logger.warning("TimeController.advance() - ReeferProvisioner.releaseReefersfromMaintenance call failed - reason:"+e.getMessage());
-                }
-            }
-
-             */
             messageReeferProvisioner("releaseReefersfromMaintenance", message);
         } catch (Exception e) {
-            logger.log(Level.WARNING,"",e);
+            logger.log(Level.WARNING, "", e);
         }
 
         return date;
     }
+
     private void messageReeferProvisioner(String method, JsonObject message) {
-        while(true) {
-            try {
-                // Reefers on maintenance are freed automatically after a configurable number of days passes.
-                Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
-                        method, message);
-                break;
-            } catch( Exception e) {
-                logger.warning("TimeController.messageReeferProvisioner() - ReeferProvisioner."+method+"() call failed - reason:"+e.getMessage());
-            }
+        try {
+            // Reefers on maintenance are freed automatically after a configurable number of days passes.
+            Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+                    method, message);
+
+        } catch (Exception e) {
+            logger.warning("TimeController.messageReeferProvisioner() - ReeferProvisioner." + method + "() call failed - reason:" + e.getMessage());
         }
+
     }
 
 }

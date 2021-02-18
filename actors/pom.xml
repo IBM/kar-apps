@@ -15,18 +15,16 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
 		<version.java-compiler>11</version.java-compiler>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
 		<failOnMissingWebXml>false</failOnMissingWebXml>
 		<version.maven-war-plugin>3.3.0</version.maven-war-plugin>
 		<version.microprofile>3.3</version.microprofile>
 		<liberty.var.app.context.root>/</liberty.var.app.context.root>
-		<version.kar-java-sdk>0.5.1</version.kar-java-sdk>
+		<version.kar-java-sdk>1.0.1-SNAPSHOT</version.kar-java-sdk>
 		<jackson.version>2.10.0</jackson.version>
 		<version.maven-failsafe-plugin>2.22.2</version.maven-failsafe-plugin>
 		<version.maven-surefire-plugin>2.22.2</version.maven-surefire-plugin>
 		<!-- Liberty configuration -->
-		<liberty.embedded.version>20.0.0.5</liberty.embedded.version>
+		<liberty.version>21.0.0.1</liberty.version>
 		<liberty.var.default.http.port>${env.KAR_APP_PORT}</liberty.var.default.http.port>
 		<liberty.var.default.https.port>-1</liberty.var.default.https.port>
 		<liberty.var.app.context.root>/</liberty.var.app.context.root>
@@ -69,11 +67,11 @@
 			<version>${jaeger.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-jdk14 -->
-		<!--dependency>
+		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-jdk14</artifactId>
 			<version>1.7.25</version>
-		</dependency-->
+		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
@@ -91,6 +89,14 @@
       			</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${version.maven-compiler-plugin}</version>
+				<configuration>
+					<release>${version.java-compiler}</release>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>io.openliberty.tools</groupId>
 				<artifactId>liberty-maven-plugin</artifactId>
 				<version>${version.liberty-maven-plugin}</version>
@@ -98,7 +104,7 @@
 					<runtimeArtifact>
 						<groupId>io.openliberty</groupId>
 						<artifactId>openliberty-runtime</artifactId>
-						<version>20.0.0.10</version>
+						<version>${liberty.version}</version>
 						<type>zip</type>
 					</runtimeArtifact>
 				</configuration>

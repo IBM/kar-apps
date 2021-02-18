@@ -72,18 +72,19 @@ public class ReeferServerApplication {
 		if ( scheduleBaseDate.isPresent()) {
 			// recover current date which is persisted on every date change
 			Optional<Instant> date = timeService.recoverDate(Constants.CURRENT_DATE_KEY);
-			// initialize Singleton TimeUtils
+			// initialize Singleton TimeUtils with restored current date
 			Instant currentDate = TimeUtils.getInstance(date.get()).getCurrentDate();
 			System.out.println("ReeferServerApplication.init() - Restored Current Date:"+currentDate);
 
 			shipScheduleService.generateShipSchedule(scheduleBaseDate.get());
+			// get state of active voyages (order count, daysOutAtSea, etc) from actors
 			voyageService.restoreActiveVoyageOrders(shipScheduleService.getActiveSchedule());
 		} else {
 			Instant currentDate = TimeUtils.getInstance().getCurrentDate();
 			System.out.println("ReeferServerApplication.init() - Current Date:"+currentDate);
 			timeService.saveDate(currentDate, Constants.SCHEDULE_BASE_DATE_KEY);
 			timeService.saveDate(currentDate, Constants.CURRENT_DATE_KEY);
-			shipScheduleService.generateShipSchedule();
+			shipScheduleService.generateShipSchedule(currentDate);
 			System.out.println("ReeferServerApplication.init() - Saved Base Date:"+timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY).get());
 		}
 	}

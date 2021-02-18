@@ -72,24 +72,6 @@ public class ScheduleService extends AbstractPersistentService {
         throw new VoyageNotFoundException("ScheduleService.getVoyage() - voyage:" + voyageId + " not found in MasterSchedule");
     }
 
-    public void generateShipSchedule() {
-
-        try {
-            masterSchedule = scheduler.generateSchedule();
-            //           System.out.println("ScheduleService.generateShipSchedule() - generated initial master schedule");
-            masterSchedule.forEach(v -> System.out.println("##### Voyage:" + v.getId() + " Departure:" + v.getSailDateObject() + " Arrival:" + v.getArrivalDate()));
-
-            timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
-            routes.forEach(r -> System.out.println("ScheduleService.generateShipSchedule ---- Ship: " + r.getVessel().getName() + " Last Arrival:" + r.getLastArrival()));
-            System.out.println("ScheduleService.generateShipSchedule ---- Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
-        } catch (Exception e) {
-
-            logger.log(Level.WARNING, "", e);
-        }
-
-
-    }
-
     public void generateShipSchedule(Instant baseScheduleDate) {
         try {
             Optional<Instant> lastVoyageDate = getLastVoyageDate();
@@ -99,34 +81,37 @@ public class ScheduleService extends AbstractPersistentService {
             } else {
                 masterSchedule = scheduler.generateSchedule(baseScheduleDate, TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate()));
             }
-
-            //           System.out.println("ScheduleService.generateShipSchedule() - generated master schedule from base date:"+baseScheduleDate);
             masterSchedule.forEach(v -> System.out.println("xxxx Voyage:" + v.getId() + " Departure:" + v.getSailDateObject() + " Arrival:" + v.getArrivalDate()));
             timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
             routes.forEach(r -> System.out.println("ScheduleService.generateShipSchedule ++++ Ship: " + r.getVessel().getName() + " Last Arrival:" + r.getLastArrival()));
             System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
-
-            // generate schedule within a given range of dates
-
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
         }
     }
 
+    /**
+     * Conditionally generate new schedule and append it to the current one. The new schedule
+     * is generated if given number of days remaining in current schedule is less than
+     * a threshold.
+     *
+     * @param date - current date
+     */
     public void generateNextSchedule(Instant date) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info("ScheduleService() - generateNextSchedule() ============================================ ");
         }
         long start = System.currentTimeMillis();
         // generate future schedule if number of days from a given date and the last
-        // voyage in the
-        // current master schedule is less than a threshold.
+        // voyage in the current master schedule is less than a threshold.
         try {
-            LinkedList<Voyage> sortedSchedule = new LinkedList<>();
-            TreeSet<Voyage> schedule = new TreeSet<>();
+            TreeSet<Voyage> newSchedule = new TreeSet<>();
             StringBuilder sb = new StringBuilder("date " + date + "\n");
             Instant lastVoyageDate = null;
+            //
             for (Route route : routes) {
+                // each route maintains its last voyage arrival date. Its saved when new route schedule
+                // is generated. This date becomes a departure date of the first voyage in the new schedule.
                 long daysBetween = TimeUtils.getInstance().getDaysBetween(date, route.getLastArrival());
                 if (logger.isLoggable(Level.FINE)) {
                     sb.append(route.getVessel().getId()).append(" last arrival date:").
@@ -136,12 +121,8 @@ public class ScheduleService extends AbstractPersistentService {
                 if (route.getLastArrival() != null && daysBetween < THRESHOLD_IN_DAYS) {
                     // generate new schedule for the whole year
                     Instant endDate = TimeUtils.getInstance().futureDate(route.getLastArrival(), 365);
-                    //Instant departureDate = TimeUtils.getInstance().futureDate(route.getLastArrival(), 2);
                     Instant departureDate = route.getLastArrival();
-                    //lastVoyageDate = scheduler.generateShipSchedule(route, departureDate, sortedSchedule, endDate);
-                    schedule.addAll(scheduler.generateShipSchedule(route, departureDate, endDate));
-                    //System.out.println("ScheduleService.generateNextSchedule() - schedule range - begin:"+departureDate+" end:"+endDate);
-                    //route.setLastArrival(lastVoyageDate);
+                    newSchedule.addAll(scheduler.generateShipSchedule(route, departureDate, endDate));
                     lastVoyageDate = route.getLastArrival();
                 }
             }
@@ -156,8 +137,9 @@ public class ScheduleService extends AbstractPersistentService {
             }
 
             synchronized (ScheduleService.class) {
-                if (!schedule.isEmpty()) {
-                    masterSchedule.addAll(schedule);
+                if (!newSchedule.isEmpty()) {
+                    masterSchedule.addAll(newSchedule);
+                    masterSchedule.forEach(v -> System.out.println(">>>> Voyage:" + v.getId() + " Departure:" + v.getSailDateObject() + " Arrival:" + v.getArrivalDate()));
                     if (logger.isLoggable(Level.FINE)) {
                         sb.setLength(0);
                         masterSchedule.forEach(voyage -> {
@@ -193,8 +175,8 @@ public class ScheduleService extends AbstractPersistentService {
                     voyage.getRoute().getVessel().setPosition(daysOutAtSea);
                     int progress = Math.round((daysOutAtSea / (float) voyage.getRoute().getDaysAtSea()) * 100);
 
-                    // progress = (int) (Math.ceil(progress/10)*10);
-                    voyage.getRoute().getVessel().setProgress((int) (((progress + 5) / 10) * 10));
+                    //voyage.getRoute().getVessel().setProgress((int) (((progress + 5) / 10) * 10));
+                    voyage.getRoute().getVessel().setProgress(progress);
                     if (logger.isLoggable(Level.INFO)) {
                         logger.info("ScheduleService.updateDaysAtSea() - voyage:" + voyage.getId() + " daysOutAtSea:"
                                 + voyage.getRoute().getVessel().getPosition() + " Progress:"

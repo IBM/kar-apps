@@ -70,6 +70,7 @@ public class ReeferServerApplication {
 		// only exists if the REST service process stops.
 		Optional<Instant> scheduleBaseDate = timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY);
 		if ( scheduleBaseDate.isPresent()) {
+			// WARM START
 			// recover current date which is persisted on every date change
 			Optional<Instant> date = timeService.recoverDate(Constants.CURRENT_DATE_KEY);
 			// initialize Singleton TimeUtils with restored current date
@@ -77,9 +78,10 @@ public class ReeferServerApplication {
 			System.out.println("ReeferServerApplication.init() - Restored Current Date:"+currentDate);
 
 			shipScheduleService.generateShipSchedule(scheduleBaseDate.get());
-			// get state of active voyages (order count, daysOutAtSea, etc) from actors
+			// restore state of active voyages (order count, daysOutAtSea, etc) from actors
 			voyageService.restoreActiveVoyageOrders(shipScheduleService.getActiveSchedule());
 		} else {
+			// COLD START
 			Instant currentDate = TimeUtils.getInstance().getCurrentDate();
 			System.out.println("ReeferServerApplication.init() - Current Date:"+currentDate);
 			timeService.saveDate(currentDate, Constants.SCHEDULE_BASE_DATE_KEY);

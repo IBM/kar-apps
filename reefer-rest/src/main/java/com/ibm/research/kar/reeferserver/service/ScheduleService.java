@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 public class ScheduleService extends AbstractPersistentService {
 
     private static final int THRESHOLD_IN_DAYS = 100;
-
+    private static final int SCHEDULE_DAYS = 365;
     @Autowired
     private ShippingScheduler scheduler;
     @Autowired
@@ -78,6 +78,7 @@ public class ScheduleService extends AbstractPersistentService {
             synchronized (ScheduleService.class) {
                 masterSchedule = scheduler.generateSchedule(baseScheduleDate, getLastVoyageDate());
                 masterSchedule.forEach(v -> System.out.println("xxxx Voyage:" + v.getId() + " Departure:" + v.getSailDateObject() + " Arrival:" + v.getArrivalDate()));
+                // save last voyage departure date to be able to restore schedule after REST service restarts
                 timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
                 System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
             }
@@ -101,14 +102,20 @@ public class ScheduleService extends AbstractPersistentService {
         // voyage in the current master schedule is less than a threshold.
         try {
             if (!masterSchedule.isEmpty()) {
+                // last voyage departure date
                 Voyage lastVoyage = ((TreeSet<Voyage>) masterSchedule).last();
                 long daysBetween = TimeUtils.getInstance().getDaysBetween(date, lastVoyage.getSailDateObject());
                 if (daysBetween < THRESHOLD_IN_DAYS) {
-                    Instant endDate = TimeUtils.getInstance().futureDate(lastVoyage.getSailDateObject(), 365);
+                    // upper date range for new schedule
+                    Instant endDate = TimeUtils.getInstance().futureDate(lastVoyage.getSailDateObject(), SCHEDULE_DAYS);
+                    // lower date range for new schedule
                     Optional<Instant> scheduleBaseDate = timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY);
                     synchronized (ScheduleService.class) {
+                        // generate new schedule for a given range of dates
                         masterSchedule = scheduler.generateSchedule(scheduleBaseDate.get(), endDate);
                     }
+                    // persist last voyage departure date which will be used to restore schedule after
+                    // REST restart
                     timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
                     masterSchedule.forEach(v -> System.out.println(">>>> Voyage:" +
                             v.getId() +

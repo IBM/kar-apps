@@ -136,26 +136,6 @@ public class ShippingScheduler {
         }
         return schedule;
     }
-    /**
-     *
-     * @param sortedSchedule
-     * @param route
-     * @param departureDate
-     * @param returnVoyage
-     */
-    private static void addVoyageToSchedule(LinkedList<Voyage> sortedSchedule, final Route route, final Instant departureDate,
-            final boolean returnVoyage) {
-        int next = 0;
-        while (next < sortedSchedule.size()) {
-            final Voyage voyage = sortedSchedule.get(next);
-            if (voyage.getSailDateObject().isBefore(departureDate)) {
-                next++;
-            } else {
-                break;
-            }
-        }
-        sortedSchedule.add(next, newScheduledVoyage(route, departureDate, returnVoyage));
-    }
 
     /**
      *

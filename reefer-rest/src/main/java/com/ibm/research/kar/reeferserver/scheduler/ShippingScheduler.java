@@ -85,20 +85,7 @@ public class ShippingScheduler {
     public void setRoutes(List<Route> routes) {
         this.routes = routes;
     }
-    /**
-     *
-     * @return
-     */
-    /*
-    public Set<Voyage> generateSchedule() {
-       // public LinkedList<Voyage> generateSchedule() {
-        // the shipping schedule is generated for one year from now
-       Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate());
-        // generate new schedule for one year ahead
-        return generateSchedule(TimeUtils.getInstance().getCurrentDate(),yearFromNow);
-    }
 
-     */
     /**
      *
      * @param route
@@ -149,27 +136,6 @@ public class ShippingScheduler {
         }
         return schedule;
     }
-    /*
-    public static LinkedList<Voyage> generateSchedule(Route route, Instant departureDate) {
-        Instant arrivalDate;
-
-        // the shipping schedule is generated for one year from now
-        final Instant yearFromNow = TimeUtils.getInstance().getDateYearFrom(departureDate);
-        int staggerInitialShipDepartures = 0;
-        LinkedList<Voyage> sortedSchedule = new LinkedList<>();
-
-        // generate current ship schedule for the whole year
-        Instant shipLastArrivalDate =
-              generateShipSchedule(route, departureDate, sortedSchedule, yearFromNow);
-           // generateShipSchedule(route, departureDate, yearFromNow);
-        route.setLastArrival(shipLastArrivalDate);
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info("ShippingScheduler.generateSchedule - Route Last Voyage:" +route.getVessel().getName()+ " Arrival Date:"+route.getLastArrival());
-        }
-        return sortedSchedule;
-    }
-
-     */
     /**
      *
      * @param sortedSchedule

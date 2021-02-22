@@ -78,26 +78,30 @@ public class TimeController {
     @PostMapping("/time/advance")
     public Instant advance() {
         // Advance date by one day
-        Instant date = TimeUtils.getInstance().advanceDate(1);
+        Instant today = TimeUtils.getInstance().advanceDate(1);
         // persist current date
-        timeService.saveDate(date, Constants.CURRENT_DATE_KEY);
+        timeService.saveDate(today, Constants.CURRENT_DATE_KEY);
 
         if (logger.isLoggable(Level.INFO)) {
             logger.info("TimeController.advance() ***************************************** NEXT DAY "
-                    + date.toString() + " ***************************************************************");
+                    + today.toString() + " ***************************************************************");
         }
         try {
-            // On a day change generate a future schedule if necessary. The new schedule is generated if
-            // we reached a configured threshold of days before the end of current schedule.
-            scheduleService.generateNextSchedule(date);
-            JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(date.toString()))
+            Instant lastDepartureDate = scheduleService.lastVoyageDepartureDate();
+            long daysBetween = TimeUtils.getInstance().getDaysBetween(today, lastDepartureDate);
+            if (daysBetween < scheduleService.THRESHOLD_IN_DAYS) {
+                // On a day change generate a future schedule if necessary. The new schedule is generated if
+                // we reached a configured threshold of days before the end of current schedule.
+                scheduleService.extendSchedule(lastDepartureDate);
+            }
+            JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(today.toString()))
                     .build();
             messageReeferProvisioner("releaseReefersfromMaintenance", message);
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
         }
 
-        return date;
+        return today;
     }
 
     private void messageReeferProvisioner(String method, JsonObject message) {

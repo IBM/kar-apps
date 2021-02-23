@@ -97,7 +97,6 @@ public class ShipThread extends Thread {
                         logger.info("shipthread: New time ======> " + currentDate.toString());
                     }
 
-
                     JsonValue activeVoyages = null;
                     try {
                         // fetch all active voyages from REST
@@ -110,15 +109,9 @@ public class ShipThread extends Thread {
                     } catch (Exception e) {
                         logger.warning("shipthread: Unable to fetch active voayges from REST - cause:" + e.getMessage());
                     }
-                    // tell other threads to wake up
-                    // Kar.Services.post(Constants.SIMSERVICE,"simulator/newday", JsonValue.NULL);
-                    // fetch all active voyages from REST
-                    // response = Kar.Services.get(Constants.REEFERSERVICE, "voyage/active");
 
-                    //   JsonValue activeVoyages = response.readEntity(JsonValue.class);
-                    //   if (logger.isLoggable(Level.INFO)) {
-                    //    logger.info("shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
-                    //   }
+                    // tell other threads to wake up
+                    Kar.Services.post(Constants.SIMSERVICE,"simulator/newday", JsonValue.NULL);
 
                     // compute ship positions to send to all active voyages
                     Instant ed = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));

@@ -18,7 +18,7 @@
 		<version.java-compiler>11</version.java-compiler>
 		<version.maven-war-plugin>3.3.0</version.maven-war-plugin>
 		<version.microprofile>3.3</version.microprofile>
-		<version.kar-java-sdk>1.0.1-SNAPSHOT</version.kar-java-sdk>
+		<version.kar-java-sdk>1.0.1</version.kar-java-sdk>
 		<!--ersion.slf4j>1.7.25</version.slf4j-->
 		<jaeger.version>0.34.0</jaeger.version>
 		<version.reefer>1.0-SNAPSHOT</version.reefer>

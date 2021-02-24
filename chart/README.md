@@ -14,9 +14,7 @@
 # limitations under the License.
 -->
 
-This chart deploys the Reefer application on various Kubernetes clusters.
-By default helm will deploy images from a local registry listening on localhost:5000.
-To deploy official release images, override kar.imagePrefix as indicated below.
+## This chart deploys the Reefer application on various Kubernetes clusters
 
 ### **Prerequisites to deployment**:  
  * Deploy the KAR Runtime System to the kar-system namespace: [kar-install-dir]/scripts/kar-k8s-deploy.sh

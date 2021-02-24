@@ -81,6 +81,13 @@ public class ScheduleService extends AbstractPersistentService {
                 // save last voyage departure date to be able to restore schedule after REST service restarts
                 timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
                 System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
+                List<Voyage> actives = getActiveSchedule();
+                if ( !actives.isEmpty()) {
+                    // remove old, arrived voyages
+                    int sizeBefore = masterSchedule.size();
+                    masterSchedule.removeIf(v -> v.getSailDateObject().isBefore(actives.get(0).getSailDateObject()));
+                    System.out.println("\"ScheduleService() - extendSchedule() - schedule size before trim:"+sizeBefore+" - size after trim:"+masterSchedule.size());
+                }
             }
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
@@ -114,11 +121,21 @@ public class ScheduleService extends AbstractPersistentService {
             // persist last voyage departure date which will be used to restore schedule after
             // REST restart
             timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
-            masterSchedule.forEach(v -> System.out.println(">>>> Voyage:" +
-                    v.getId() +
-                    " Departure:" +
-                    v.getSailDateObject() +
-                    " Arrival:" + v.getArrivalDate()));
+            if (logger.isLoggable(Level.INFO)) {
+                masterSchedule.forEach(v -> System.out.println(">>>> Voyage:" +
+                        v.getId() +
+                        " Departure:" +
+                        v.getSailDateObject() +
+                        " Arrival:" + v.getArrivalDate()));
+            }
+            List<Voyage> actives = getActiveSchedule();
+            if ( !actives.isEmpty() ) {
+                // remove old, arrived voyages
+                int sizeBefore = masterSchedule.size();
+                masterSchedule.removeIf(v -> v.getSailDateObject().isBefore(actives.get(0).getSailDateObject()));
+                System.out.println("\"ScheduleService() - extendSchedule() - schedule size before trim:"+sizeBefore+" - size after trim:"+masterSchedule.size());
+            }
+
         }
     }
 
@@ -211,7 +228,6 @@ public class ScheduleService extends AbstractPersistentService {
             }
 
         }
-
         return activeSchedule;
     }
 

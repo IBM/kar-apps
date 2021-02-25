@@ -25,7 +25,7 @@ public class Voyage implements Comparable<Voyage>{
     public static final String ARRIVAL_DATE="arrivalDate";
     public static final String ORDER_COUNT="orderCount";
     public static final String DISPLAY_ARRIVAL_DATE="displayArrivalDate";
-
+    public static final String PROGRESS="progress";
 
     private String id;
     private Route route;
@@ -35,7 +35,8 @@ public class Voyage implements Comparable<Voyage>{
     private String arrivalDate;
     private String displayArrivalDate;
     private int orderCount=0;
-    
+    private int progress;
+
     public Voyage(Route route, Instant sailDateObject, String arrivalDate) {
         this.route = route;
         this.sailDateObject = sailDateObject;
@@ -79,7 +80,13 @@ public class Voyage implements Comparable<Voyage>{
     public String getDisplayArrivalDate() {
         return displayArrivalDate;
     }
+    public int getProgress() {
+        return progress;
+    }
 
+    public void setProgress(int progress) {
+        this.progress = progress;
+    }
     @Override
     public String toString() {
         return "Voyage{" +

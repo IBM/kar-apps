@@ -19,6 +19,7 @@ package com.ibm.research.kar.reeferserver.controller;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
 import com.ibm.research.kar.reefer.common.json.JsonUtils;
+import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.Route;
@@ -190,7 +191,9 @@ public class VoyageController {
             }
             if (daysAtSea > 0) {
                 shipScheduleService.updateDaysAtSea(voyageId, daysAtSea);
+
             }
+            updateGuiSchedule(TimeUtils.getInstance().getCurrentDate().toString());
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
         }
@@ -267,12 +270,21 @@ public class VoyageController {
             logger.fine("VoyageController.updateGui() - updating GUI with active schedule - currentDate:" + currentDate);
         }
         try {
-            gui.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule(), currentDate);
+           // gui.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule(), currentDate);
             OrderStats stats = orderService.getOrderStats();
             gui.updateOrderCounts(stats);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
         }
     }
-
+    public void updateGuiSchedule(String currentDate) {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("VoyageController.updateSchedule() - updating GUI with active schedule - currentDate:" + currentDate);
+        }
+        try {
+            gui.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule(), currentDate);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, e.getMessage(), e);
+        }
+    }
 }

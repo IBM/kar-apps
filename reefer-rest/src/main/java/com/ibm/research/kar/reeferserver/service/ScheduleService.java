@@ -155,11 +155,12 @@ public class ScheduleService extends AbstractPersistentService {
                     int progress = Math.round((daysOutAtSea / (float) voyage.getRoute().getDaysAtSea()) * 100);
 
                     //voyage.getRoute().getVessel().setProgress((int) (((progress + 5) / 10) * 10));
-                    voyage.getRoute().getVessel().setProgress(progress);
+                    //voyage.getRoute().getVessel().setProgress(progress);
+                    voyage.setProgress(progress);
                     if (logger.isLoggable(Level.INFO)) {
                         logger.info("ScheduleService.updateDaysAtSea() - voyage:" + voyage.getId() + " daysOutAtSea:"
                                 + voyage.getRoute().getVessel().getPosition() + " Progress:"
-                                + voyage.getRoute().getVessel().getProgress());
+                                + voyage.getProgress());
                     }
                     return voyage;
                 }

@@ -17,9 +17,9 @@
 import { Component, OnInit, ViewChild, SystemJsNgModuleLoader } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { Voyage } from 'src/app/core/models/voyage';
+import { Route } from 'src/app/core/models/route';
 import { RestService } from 'src/app/core/services/rest.service';
 import { RouteConfigLoadEnd } from '@angular/router';
-import { Route } from '@angular/compiler/src/core';
 import { SocketService } from 'src/app/core/services/socket.service';
 import { Console } from 'console';
 import { ActiveSchedule } from 'src/app/core/models/active-schedule';
@@ -66,6 +66,7 @@ export class ShipScheduleComponent implements OnInit {
           this.stompClient.subscribe('/topic/voyages', (event:any) => {
 
             if ( event.body) {
+
               let schedule: ActiveSchedule;
               schedule = JSON.parse(event.body);
               this.voyages = schedule.voyages;
@@ -73,9 +74,32 @@ export class ShipScheduleComponent implements OnInit {
               // strip quotation marks
               d = d.replace(/"/g,"");
               this.date = d.substr(0,10);
-             // console.log('::::::'+this.voyages);
-            //  this.voyageDataSource.data = new MatTableDataSource(this.voyages);//this.voyages;
-               this.voyageDataSource = new MatTableDataSource(this.voyages);
+
+               for ( var inx in this.voyages ) {
+                  let voyage : Voyage = this.voyages[inx];
+                  // find index of voyage to update
+                  const index = this.voyageDataSource.data.findIndex((v: Voyage) => v.id === voyage.id);
+                  if (index !== -1 ) {
+                      if ( voyage.progress !== this.voyageDataSource.data[index].progress) {
+                          this.voyageDataSource.data[index].progress = voyage.progress;
+                      }
+                  } else {
+                    // new voyage - add a new row in the table
+                    this.voyageDataSource.data.push(voyage);
+                  }
+               }
+               // remove arrived voyages
+               for( var x=0; x < this.voyageDataSource.data.length; x++) {
+                  let voyage : Voyage = this.voyageDataSource.data[x];
+                  // check if voyage in the current list exists in the new one
+                  const index = this.voyages.findIndex((v: Voyage) => v.id === voyage.id);
+                  if (index === -1 ) {
+                      // voyage arrived
+                      this.voyageDataSource.data.splice(x, 1);
+                  }
+               }
+               this.voyageDataSource._updateChangeSubscription();
+
             }
 
           })
@@ -123,12 +147,22 @@ export class ShipScheduleComponent implements OnInit {
   }
 
   getActiveVoyages() {
-
+/*
     this.restService.getActiveVoyages().subscribe((data) => {
 
       let voyages: Voyage[] = data;
+                   voyages.forEach( function (value) {
+                     //console.log("------- ship-schedule - voyage"+value);
+                       const index = this.voyageDataSource.data.findIndex((v: Voyage) => v.id === value.id);
+                       if (index !== -1) {
+                          console.log("ship-schedule - found voyage match for "+value.id+" at index "+index);
+                       } else {
+                       console.log("ship-schedule - voyage  "+value.id+" not found in datasource");
+                       }
+                    });
       this.voyageDataSource.data = voyages;
       });
+      */
   }
 
   nextDay() {

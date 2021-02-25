@@ -85,7 +85,7 @@ public class VoyageService extends AbstractPersistentService {
             if ( state.isPresent()) {
                 Voyage recoveredVoyageState = VoyageJsonSerializer.deserialize(state.get());
                 voyage.setOrderCount(recoveredVoyageState.getOrderCount());
-                voyage.getRoute().getVessel().setProgress(recoveredVoyageState.getRoute().getVessel().getProgress());
+                voyage.setProgress(recoveredVoyageState.getProgress());
                 voyage.getRoute().getVessel().setPosition(recoveredVoyageState.getRoute().getVessel().getPosition());
             }
         }

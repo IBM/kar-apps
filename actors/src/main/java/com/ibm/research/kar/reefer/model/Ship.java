@@ -24,7 +24,6 @@ public class Ship {
     public static final String VESSEL_ID="id";
     public static final String VESSEL_NAME="name";
     public static final String POSITION="position";
-    public static final String PROGRESS="progress";
     public static final String MAX_CAPACITY="maxCapacity";
     public static final String FREE_CAPACITY="freeCapacity";
     public static final String LOCATION="location";
@@ -33,7 +32,6 @@ public class Ship {
     private String id;
     private String name;
     private long position;
-    private int progress;
     private int maxCapacity;
     private int freeCapacity;
     private String location;
@@ -71,13 +69,7 @@ public class Ship {
     public void setPosition(long position) {
         this.position = position;
     }
-    public int getProgress() {
-        return progress;
-    }
 
-    public void setProgress(int progress) {
-        this.progress = progress;
-    }
     public int getMaxCapacity() {
         return maxCapacity;
     }
@@ -127,7 +119,7 @@ public class Ship {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", position=" + position +
-                ", progress=" + progress +
+                //", progress=" + progress +
                 ", maxCapacity=" + maxCapacity +
                 ", freeCapacity=" + freeCapacity +
                 ", location='" + location + '\'' +

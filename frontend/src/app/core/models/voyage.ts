@@ -23,5 +23,5 @@ export interface Voyage {
   sailDate: string;
   displayArrivalDate: string;
   orderCount: number;
-  
+  progress: number;
 }

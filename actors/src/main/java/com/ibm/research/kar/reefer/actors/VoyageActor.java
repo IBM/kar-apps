@@ -123,7 +123,8 @@ public class VoyageActor extends BaseActor {
             int daysOutAtSea = message.getInt(Constants.VOYAGE_DAYSATSEA_KEY);
             voyage.getRoute().getVessel().setPosition(daysOutAtSea);
             int progress = Math.round((daysOutAtSea / (float) voyage.getRoute().getDaysAtSea()) * 100);
-            voyage.getRoute().getVessel().setProgress(progress);
+            //voyage.getRoute().getVessel().setProgress(progress);
+            voyage.setProgress(progress);
             JsonObject jo = VoyageJsonSerializer.serialize(voyage);
             Kar.Actors.State.set(this, Constants.VOYAGE_INFO_KEY, jo);
             // given ship sail date and current days at sea get ship's current date

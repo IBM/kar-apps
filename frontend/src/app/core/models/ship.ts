@@ -20,7 +20,7 @@ export interface Ship {
   id: string;
   name: string;
   position: number;
-  progress: number;
+  //progress: number;
   maxCapacity: number;
   freeCapacity : number;
   location : string;

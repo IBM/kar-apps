@@ -315,7 +315,6 @@ public class ReeferProvisionerActor extends BaseActor {
                     "ReeferProvisionerActor.releaseVoyageReefers() - entry");
         }
         JsonObjectBuilder reply = Json.createObjectBuilder();
-        //List<String> reefers2Remove  = new ArrayList<>();
         try {
             String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
             List<String> reefers2Remove = Arrays.stream(reeferMasterInventory).
@@ -324,7 +323,9 @@ public class ReeferProvisionerActor extends BaseActor {
                     map(reefer -> {
                         unreserveReefer(reefer.getId());
                         return String.valueOf(reefer.getId());
-                    }).collect(Collectors.toList());
+                    }).
+                    filter(rid -> !ReeferState.State.MAINTENANCE.equals(reeferMasterInventory[Integer.parseInt(rid)].getState())).
+                    collect(Collectors.toList());
 
             // remove reefers which just arrived. The reefer inventory should only contain
             // reefers which are booked or in-transit.

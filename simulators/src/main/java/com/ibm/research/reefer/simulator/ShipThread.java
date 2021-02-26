@@ -25,7 +25,11 @@ import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,17 +48,42 @@ public class ShipThread extends Thread {
     boolean interrupted = false;
     boolean oneshot = false;
     int loopcnt = 0;
-    int events_per_day = 5;
+    int event_scale[] = {6,10,25,50,100,200};
+    int events_per_day;
     int voyages_per_event;
     int extra_per_event;
     int voyages_updated;
-    LinkedHashMap<String, JsonObject> activemap;
+    LinkedHashMap<String, JsonObject> activemap = new LinkedHashMap<String, JsonObject>();
+    LinkedHashMap<String, V2update> updatemap = new LinkedHashMap<String, V2update>();
     String[] activekeys;
+    Integer[] numevents;
     int sleeptime;
     JsonValue currentDate;
     long last_snapshot;
     private static final Logger logger = Logger.getLogger(ShipThread.class.getName());
 
+    private class V2update{
+      String id;
+      int event;
+      V2update(String id, int event) {
+        this.id = id;
+        this.event = event;
+      }
+    }
+
+    private int events_from_fsize(int fsize) {
+      if (fsize < 2) return 1;
+      if (fsize < 3) return 2;
+      if (fsize < 4) return 3;
+      if (fsize < 5) return 4;
+      if (fsize < 10) return 5;
+      if (fsize < 25) return 6;
+      if (fsize < 50) return 7;
+      if (fsize < 100) return 8;
+      if (fsize < 200) return 9;
+      return 10;
+    }
+    
     public void run() {
         if (0 == SimulatorService.unitdelay.intValue()) {
             oneshot = true;
@@ -66,7 +95,15 @@ public class ShipThread extends Thread {
             logger.info("shipthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
         }
         int nextevent = 0;
-        activemap = new LinkedHashMap<String, JsonObject>();
+        //TODO get current fleet size from rest
+        int total_fleet_size = 7;
+        events_per_day = events_from_fsize(total_fleet_size);
+        if (null == numevents || numevents.length != events_per_day) {
+          numevents = new Integer[events_per_day];
+          for (int i=0; i<numevents.length; i++) {
+            numevents[i] = Integer.valueOf(0);
+          }
+        }
         sleeptime = 1000 * SimulatorService.unitdelay.intValue();
         last_snapshot = System.nanoTime();
 
@@ -125,15 +162,40 @@ public class ShipThread extends Thread {
                         activemap.put(id, message);
                     }
 
-                    // compute number of ships to update on each iteration
-                    activekeys = activemap.keySet().toArray(new String[activemap.size()]);
-                    voyages_per_event = activemap.size() / events_per_day;
-                    // spread out any extras as well
-                    extra_per_event = activemap.size() % events_per_day;
-                    if (0 == voyages_per_event) {
-                        voyages_per_event = 1;
+                    // remove non-active voyages from update map
+                    Iterator<Entry<String, V2update>> iter = updatemap.entrySet().iterator();
+                    while (iter.hasNext()) {
+                        Entry<String,V2update> entry = iter.next();
+                        V2update u = entry.getValue();
+                        if (!activemap.containsKey(u.id)) {
+                          numevents[u.event]--;
+                          if (logger.isLoggable(Level.FINE)) {
+                            logger.fine("shipthread: deleting " + u.id + " from event " + u.event);
+                          }
+                          iter.remove();
+                        }
                     }
-                    voyages_updated = 0;
+
+                    // add new voyages into first "emptiest" event
+                    for (String id : activemap.keySet()) {
+                      if (!updatemap.containsKey(id)) {
+                        int min = Collections.min(Arrays.asList(numevents));
+                        for (int i=0;i<numevents.length;i++) {
+                          if ( numevents[i] == min ) {
+                            numevents[i]++;
+                            if (logger.isLoggable(Level.FINE)) {
+                              logger.fine("shipthread: adding " + id + " with event " + i);
+                            }
+                            updatemap.put(id, new V2update(id, i));
+                            break;
+                          }
+                        }
+                        if (logger.isLoggable(Level.FINE)) {
+                          logger.fine("shipthread: updatemap = " + Arrays.toString(numevents));
+                        }
+                      }
+                    }
+
                     if (SimulatorService.unitdelay.intValue() > 0) {
                         sleeptime = (1000 * SimulatorService.unitdelay.intValue()) / (events_per_day);
                     } else {
@@ -141,24 +203,22 @@ public class ShipThread extends Thread {
                     }
                 }
 
-                int voyages_to_update = (0 < extra_per_event--) ? voyages_per_event + 1 : voyages_per_event;
-                for (int e = 0; e < voyages_to_update; e++) {
-                    if (activemap.size() > voyages_updated) {
-                        String id = activekeys[voyages_updated++];
-                        JsonObject message = activemap.get(id);
-
-                        try {
-                            Kar.Actors.tell(Kar.Actors.ref("voyage", id), "changePosition", message);
-                        } catch (Exception ex) {
-                            //  Add support to handle tell failures. For now just log the cause
-                            logger.warning("shipthread: changePosition failed - cause:" + ex.getMessage());
-                        }
-                        if (logger.isLoggable(Level.FINE)) {
-                            logger.fine("shipthread: updates voyageid: " + id + " with " + message.toString());
-                        }
+                for (V2update u : updatemap.values()) {
+                  if (u.event == nextevent) {
+                    String id = u.id;
+                    JsonObject message = activemap.get(id);
+                    try {
+                      Kar.Actors.tell(Kar.Actors.ref("voyage", id), "changePosition", message);
+                    } catch (Exception ex) {
+                      //  Add support to handle tell failures. For now just log the cause
+                      logger.warning("shipthread: changePosition failed - cause:" + ex.getMessage());
                     }
+                    if (logger.isLoggable(Level.FINE)) {
+                      logger.fine("shipthread: updates voyageid: " + id + " with " + message.toString());
+                    }
+                  }
                 }
-            }
+              }
 
             nextevent++;
             if (events_per_day == nextevent) {

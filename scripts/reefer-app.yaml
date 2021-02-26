@@ -1,0 +1,285 @@
+#
+# Copyright IBM Corporation 2020,2021
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: reefer
+  name: reefer
+spec:
+  containers:
+### Zookeeper
+  - command:
+    - /bin/sh
+    - -c
+    - /usr/sbin/sshd && bash /usr/bin/start-zk.sh
+    env:
+    - name: HOSTNAME
+      value: zookeeper
+    image: docker.io/wurstmeister/zookeeper:latest
+    name: zookeeper
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities: {}
+      privileged: false
+      readOnlyRootFilesystem: false
+      seLinuxOptions: {}
+### Kafka
+  - command:
+    - start-kafka.sh
+    env:
+    - name: KAFKA_ZOOKEEPER_CONNECT
+      value: localhost:2181
+    - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+      value: "false"
+    - name: KAFKA_PORT
+      value: "31093"
+    - name: KAFKA_ADVERTISED_HOST_NAME
+      value: localhost
+    - name: KAFKA_HOME
+      value: /opt/kafka
+    - name: HOSTNAME
+      value: kafka
+    image: docker.io/wurstmeister/kafka:2.12-2.4.0
+    name: kafka
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities: {}
+      privileged: false
+      readOnlyRootFilesystem: false
+      seLinuxOptions: {}
+### Redis
+  - command:
+    - /bin/sh
+    - -c
+    - /usr/local/bin/docker-entrypoint.sh --requirepass passw0rd --port 31379
+    env:
+    - name: HOSTNAME
+      value: redis
+    image: docker.io/library/redis:5.0
+    name: redis
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities: {}
+      privileged: false
+      readOnlyRootFilesystem: false
+      seLinuxOptions: {}
+######### expose ports for application and external kar cli
+    ports:
+    - containerPort: 9080
+      hostPort: 9080
+      protocol: TCP
+    - containerPort: 9088
+      hostPort: 9088
+      protocol: TCP
+    - containerPort: 31093
+      hostPort: 31093
+      protocol: TCP
+    - containerPort: 31379
+      hostPort: 31379
+      protocol: TCP
+### Simulators
+  - command:
+    - /bin/bash
+    - -c
+    - sleep 15 && /kar/bin/runner
+    env:
+    - name: PATH
+      value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    - name: JAVA_HOME
+      value: /opt/java/openjdk
+    - name: KAR_APP
+      value: reefer
+    - name: REDIS_PORT
+      value: "31379"
+    - name: KAR_SIDECAR_IN_CONTAINER
+      value: "true"
+    - name: REDIS_PASSWORD
+      value: passw0rd
+    - name: REDIS_HOST
+      value: localhost
+    - name: KAR_EXTRA_ARGS
+      value: -app_port 7080 -service simservice -actors simhelper
+    - name: KAFKA_BROKERS
+      value: localhost:31093
+    - name: KAFKA_VERSION
+      value: 2.4.0
+    - name: HOSTNAME
+    image: localhost:5000/kar/kar-app-reefer-simulators:latest
+    name: simulators
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities: {}
+      privileged: false
+      readOnlyRootFilesystem: false
+      runAsGroup: 0
+      runAsUser: 1001
+      seLinuxOptions: {}
+    workingDir: /
+### Frontend
+  - command:
+    - /bin/bash
+    - -c
+    - /kar/bin/fe-start.sh
+    env:
+    - name: PATH
+      value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    - name: JAVA_HOME
+      value: /opt/java/openjdk
+    - name: REST_URL
+      value: http://localhost:9080
+    - name: HOSTNAME
+    image: localhost:5000/kar/kar-app-reefer-frontend:latest
+    name: frontend
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities: {}
+      privileged: false
+      readOnlyRootFilesystem: false
+      runAsGroup: 0
+      runAsUser: 1001
+      seLinuxOptions: {}
+    workingDir: /
+### Reefer-rest
+  - command:
+    - /bin/bash
+    - -c
+    - sleep 15 && /kar/bin/runner
+    env:
+    - name: PATH
+      value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    - name: JAVA_HOME
+      value: /opt/java/openjdk
+    - name: REDIS_PASSWORD
+      value: passw0rd
+    - name: KAFKA_VERSION
+      value: 2.4.0
+    - name: KAR_SIDECAR_IN_CONTAINER
+      value: "true"
+    - name: KAFKA_BROKERS
+      value: localhost:31093
+    - name: KAR_EXTRA_ARGS
+      value: -app_port 9080 -service reeferservice
+    - name: REDIS_HOST
+      value: localhost
+    - name: KAR_APP
+      value: reefer
+    - name: REDIS_PORT
+      value: "31379"
+    - name: HOSTNAME
+    image: localhost:5000/kar/kar-app-reefer-rest:latest
+    name: rest
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities: {}
+      privileged: false
+      readOnlyRootFilesystem: false
+      runAsGroup: 0
+      runAsUser: 1001
+      seLinuxOptions: {}
+    workingDir: /
+### Monitor
+  - command:
+    - /bin/sh
+    - -c
+    - sleep 15 && /kar/bin/runner
+    env:
+    - name: MAIN
+      value: monitor.js
+    - name: KAFKA_BROKERS
+      value: localhost:31093
+    - name: REDIS_PASSWORD
+      value: passw0rd
+    - name: REDIS_HOST
+      value: localhost
+    - name: KAR_APP_PORT
+      value: "7082"
+    - name: ORDERSTATS_DELAY
+      value: "60"
+    - name: KAR_SIDECAR_IN_CONTAINER
+      value: "true"
+    - name: ORDERSTATS_RESET
+      value: "1"
+    - name: KAR_APP
+      value: reefer
+    - name: KAR_EXTRA_ARGS
+      value: -app_port 7082
+    - name: KAFKA_VERSION
+      value: 2.4.0
+    - name: REDIS_PORT
+      value: "31379"
+    - name: ORDERSTATS_THRESHOLD
+      value: "0"
+    - name: HOSTNAME
+    image: localhost:5000/kar/kar-app-reefer-monitor:latest
+    name: monitor
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities: {}
+      privileged: false
+      readOnlyRootFilesystem: false
+      runAsGroup: 1000
+      runAsUser: 1000
+      seLinuxOptions: {}
+    workingDir: /kar/bin
+### Actors
+  - command:
+    - /bin/bash
+    - -c
+    - sleep 15 && /kar/bin/runner
+    env:
+    - name: PATH
+      value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    - name: JAVA_HOME
+      value: /opt/java/openjdk
+    - name: REDIS_HOST
+      value: localhost
+    - name: REDIS_PORT
+      value: "31379"
+    - name: KAR_APP
+      value: reefer
+    - name: KAFKA_BROKERS
+      value: localhost:31093
+    - name: REDIS_PASSWORD
+      value: passw0rd
+    - name: KAFKA_VERSION
+      value: 2.4.0
+    - name: KAR_EXTRA_ARGS
+      value: -actors order,reefer,voyage,reefer-provisioner
+    - name: KAR_SIDECAR_IN_CONTAINER
+      value: "true"
+    - name: HOSTNAME
+    image: localhost:5000/kar/kar-app-reefer-actors:latest
+    name: actors
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities: {}
+      privileged: false
+      readOnlyRootFilesystem: false
+      runAsGroup: 0
+      runAsUser: 1001
+      seLinuxOptions: {}
+    workingDir: /
+

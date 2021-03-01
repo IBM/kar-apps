@@ -135,13 +135,16 @@ When the anamly generation is disabled, the manual **Create Anamaly** button can
 - browse the README and follow the getting-started guide
 - clone Kar-apps from https://github.com/IBM/kar-apps.git
 
-## Deploying Reefer using docker or podman from the latest reefer release
-- install docker-compose or podman-compose
-- (skip this step for podman) start the kar runtime using 
+## Deploying Reefer using docker-compose from the latest reefer release
+- start the kar runtime using 
   `[kar-install-dir]/scripts/docker-compose-start.sh`
 - start the reefer application using `IMAGE_PREFIX=quay.io/ibm kar-apps/scripts/reefer-compose-start.sh`
-- point browser at the URL listed for the reefer GUI when the application is ready
+- when the application is ready, point browser at the URL listed for the reefer GUI
 
+## Deploying Reefer using rootless podman from the latest reefer release
+- if previously running, run `[kar-install-dir]/scripts/docker-compose-stop.sh`
+- start the kar runtime and reefer application using `IMAGE_PREFIX=quay.io/ibm kar-apps/scripts/reefer-play-start.sh`
+- when the application is ready, point browser at the URL listed for the reefer GUI
 
 ## Deploying Reefer using kind, k3s or docker desktop from latest reefer release
 - See [KAR Deployment Options](https://github.com/IBM/kar/blob/main/docs/kar-deployments.md) for instructions on installing these
@@ -151,6 +154,20 @@ When the anamly generation is disabled, the manual **Create Anamaly** button can
 ## Reefer Development
 
 Development can be done with native compilation or docker images.
+
+### Docker development
+
+Dev images are served via a local image repository. Start one using:
+  `[kar-install-dir]/scripts/start-local-registry.sh`
+
+Build the reefer dev images and push them into a local registry:
+```
+cd [kar-apps-install-dir]
+make reeferImages
+make pushReeferImages
+```
+Start the application using docker-compose, podman, k3s, docker desktop or kind following the directions above but
+**without overriding the IMAGE_PREFIX**
 
 ### Native development
 

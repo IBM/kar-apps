@@ -1,0 +1,29 @@
+Shanghai, CN : Hamburg, DE : 25
+Singapore, SI : Long Beach, US : 16
+Shenzhen, CN : Busan, KR : 5
+Ningbo-Zhoushan, CN : Piraeus, GR : 28
+Tokyo, JP : Salalah, OM : 19
+Tanger Med, MA : Colon, PA : 14
+Vancouver, CA : Felixstowe, UK : 12
+Seattle-Tacoma, US : Manila, PH :11
+Santos, BR : Savannah, US : 10
+Busan, KR : Barcelona, ES : 22
+Hong Kong, CN : Algeciras, ES : 29
+Los Angeles, US : Nehru Port, IN : 16
+Tanjung Pelepas, MY : Bremen,DE : 25
+Dubai, UAE : Taiwan, CN : 12
+Rotterdam, NL : Keihin Ports, JP : 28
+Port Klang, MY : Mundra, IN : 8
+Antwerp, BE : Laem Chabang, TH : 26
+Jakarta, ID : Jeddah, SA : 10
+Hanshin Port, JP : Long Beach, US : 18
+Hamburg, DE : New York-New Jersey, US : 14
+Tokyo, JP : Seattle-Tacoma, US : 12
+Rotterdam, NL : Dubai, UAE : 8
+Hong Kong, CN : Los Angeles, US : 13
+Savannah, US : Barcelona, ES : 14
+Long Beach, US : Taiwan, CN : 12
+Seattle-Tacoma, US : Busan, KR : 16
+Felixstowe, UK : Barcelona, ES : 6
+Bremen,DE : Salalah, OM : 9
+New York-New Jersey, US : Hamburg, DE : 17

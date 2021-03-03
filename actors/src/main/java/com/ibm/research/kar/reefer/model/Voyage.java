@@ -84,6 +84,19 @@ public class Voyage implements Comparable<Voyage>{
         return progress;
     }
 
+    public boolean positionChanged( int daysOutAtSea) {
+        return daysOutAtSea > 0 && daysOutAtSea != getRoute().getVessel().getPosition();
+    }
+    public void changePosition(int daysOutAtSea) {
+        getRoute().getVessel().setPosition(daysOutAtSea);
+        int progress = Math.round((daysOutAtSea / (float) getRoute().getDaysAtSea()) * 100);
+        setProgress(progress);
+    }
+    public boolean shipArrived(Instant shipCurrentDate, VoyageStatus status) {
+        Instant scheduledArrivalDate = Instant.parse(getArrivalDate());
+        return ((shipCurrentDate.equals(scheduledArrivalDate)
+                || shipCurrentDate.isAfter(scheduledArrivalDate) && !VoyageStatus.ARRIVED.equals(status)));
+    }
     public void setProgress(int progress) {
         this.progress = progress;
     }

@@ -16,19 +16,27 @@
 
 package com.ibm.research.kar.reeferserver.scheduler;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
@@ -37,6 +45,7 @@ import com.ibm.research.kar.reefer.model.Voyage;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.FileCopyUtils;
 
 @Component
 public class ShippingScheduler {
@@ -45,6 +54,8 @@ public class ShippingScheduler {
     private Resource routesJsonResource;
     private static final Logger logger = Logger.getLogger(ScheduleService.class.getName());
     private static Set<Voyage> sortedShipSchedule = new TreeSet<>();
+    @Value("classpath:ships.txt")
+    private static Resource ships;
     /**
      * Load voyages into memory from a config file
      *
@@ -79,6 +90,24 @@ public class ShippingScheduler {
         if ( routes.isEmpty() ) {
             this.initialize(routesJsonResource.getInputStream());
         }
+        /*
+        InputStream resource = new ClassPathResource(
+                "ships.txt").getInputStream();
+        try ( BufferedReader reader = new BufferedReader(
+                new InputStreamReader(resource)) ) {
+            String ships = reader.
+                    lines().
+                    map(line -> line.split("\t")).
+                    map(v -> "\n{\n\t\"ship\" : {\n\t\t\"name\":\""+v[1].replaceAll("\\s","-")+"\",\n\t\t\"capacity\":\""+v[6]+"\" \n\t} \n}").
+                    collect(Collectors.joining(","));
+
+            System.out.println(ships);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+         */
         return routes;
     }
 

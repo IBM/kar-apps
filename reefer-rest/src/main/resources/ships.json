@@ -1,0 +1,458 @@
+[
+  {
+    "ship": {
+      "name": "HMM-Algeciras",
+      "capacity": "23,964"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-Copenhagen",
+      "capacity": "23,964"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-Dublin",
+      "capacity": "23,964"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-Gdansk",
+      "capacity": "23,964"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-Hamburg",
+      "capacity": "23,964"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-Helsinki",
+      "capacity": "23,964"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-Le-Havre",
+      "capacity": "23,964"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-Oslo",
+      "capacity": "23,820"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-Rotterdam",
+      "capacity": "23,820"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-Southampton",
+      "capacity": "23,820"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-Stockholm",
+      "capacity": "23,820"
+    }
+  },
+  {
+    "ship": {
+      "name": "HMM-St-Petersburg",
+      "capacity": "23,820"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Gülsün",
+      "capacity": "23,756"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Samar",
+      "capacity": "23,756"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Leni",
+      "capacity": "23,756"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Mia",
+      "capacity": "23,756"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Febe",
+      "capacity": "23,756"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Ambra",
+      "capacity": "23,756"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Mina",
+      "capacity": "23,656"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Isabella",
+      "capacity": "23,656"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Arina",
+      "capacity": "23,656"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Nela",
+      "capacity": "23,656"
+    }
+  },
+  {
+    "ship": {
+      "name": "MSC-Sixin",
+      "capacity": "23,656"
+    }
+  },
+  {
+    "ship": {
+      "name": "CMA-CGM-Jacques-Saadé",
+      "capacity": "23,112"
+    }
+  },
+  {
+    "ship": {
+      "name": "CMA-CGM-Champs-Elysées",
+      "capacity": "23,112"
+    }
+  },
+  {
+    "ship": {
+      "name": "CMA-CGM-Palais-Royal",
+      "capacity": "23,112"
+    }
+  },
+  {
+    "ship": {
+      "name": "CMA-CGM-Louvre",
+      "capacity": "23,112"
+    }
+  },
+  {
+    "ship": {
+      "name": "CMA-CGM-Rivoli",
+      "capacity": "23,112"
+    }
+  },
+  {
+    "ship": {
+      "name": "OOCL-Hong-Kong",
+      "capacity": "21,413"
+    }
+  },
+  {
+    "ship": {
+      "name": "OOCL-Germany",
+      "capacity": "21,413"
+    }
+  },
+  {
+    "ship": {
+      "name": "OOCL-Japan",
+      "capacity": "21,413"
+    }
+  },
+  {
+    "ship": {
+      "name": "OOCL-United-Kingdom",
+      "capacity": "21,413"
+    }
+  },
+  {
+    "ship": {
+      "name": "OOCL-Scandinavia",
+      "capacity": "21,413"
+    }
+  },
+  {
+    "ship": {
+      "name": "OOCL-Indonesia",
+      "capacity": "21,413"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Universe",
+      "capacity": "21,237"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Nebula",
+      "capacity": "21,237"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Galaxy",
+      "capacity": "21,237"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Solar",
+      "capacity": "21,237"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Star",
+      "capacity": "21,237"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Planet",
+      "capacity": "21,237"
+    }
+  },
+  {
+    "ship": {
+      "name": "CMA-CGM-Antoine-de-Saint-Exupéry",
+      "capacity": "20,954"
+    }
+  },
+  {
+    "ship": {
+      "name": "CMA-CGM-Jean-Mermoz",
+      "capacity": "20,954"
+    }
+  },
+  {
+    "ship": {
+      "name": "CMA-CGM-Louis-Blériot",
+      "capacity": "20,954"
+    }
+  },
+  {
+    "ship": {
+      "name": "Madrid-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "Munich-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "Moscow-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "Milan-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "Monaco-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "Marseille-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "Manchester-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "Murcia-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "Manila-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "Mumbai-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "Maastricht-Maersk",
+      "capacity": "20,568"
+    }
+  },
+  {
+    "ship": {
+      "name": "MOL-Truth",
+      "capacity": "20,182"
+    }
+  },
+  {
+    "ship": {
+      "name": "MOL-Treasure",
+      "capacity": "20,182"
+    }
+  },
+  {
+    "ship": {
+      "name": "MOL-Triumph",
+      "capacity": "20,170"
+    }
+  },
+  {
+    "ship": {
+      "name": "MOL-Trust",
+      "capacity": "20,170"
+    }
+  },
+  {
+    "ship": {
+      "name": "MOL-Tribute",
+      "capacity": "20,170"
+    }
+  },
+  {
+    "ship": {
+      "name": "MOL-Tradition",
+      "capacity": "20,170"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Glory",
+      "capacity": "20,160"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Govern",
+      "capacity": "20,160"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Globe",
+      "capacity": "20,160"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Greet",
+      "capacity": "20,160"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Golden",
+      "capacity": "20,124"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Goods",
+      "capacity": "20,124"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Genius",
+      "capacity": "20,124"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Given",
+      "capacity": "20,124"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Gifted",
+      "capacity": "20,124"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Grade",
+      "capacity": "20,124"
+    }
+  },
+  {
+    "ship": {
+      "name": "Ever-Gentle",
+      "capacity": "20,124"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Taurus",
+      "capacity": "20,119"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Gemini",
+      "capacity": "20,119"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Virgo",
+      "capacity": "20,119"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Libra",
+      "capacity": "20,119"
+    }
+  },
+  {
+    "ship": {
+      "name": "COSCO-Shipping-Sagittarius",
+      "capacity": "20,119"
+    }
+  }
+]

@@ -162,7 +162,7 @@ Dev images are served via a local image repository. Start one using:
 
 Build the reefer dev images and push them into a local registry:
 ```
-cd [kar-apps-install-dir]
+cd [kar-apps-install-dir]/reefer
 make reeferImages
 make pushReeferImages
 ```
@@ -178,7 +178,7 @@ Additional prereqs:
 
 Build java application:  
 ```
-cd [kar-apps-install-dir]
+cd [kar-apps-install-dir]/reefer
 mvn clean install
 ```
 Start Kar runtime: `[kar-install-dir]/scripts/docker-compose-start.sh`
@@ -186,28 +186,28 @@ Start Kar runtime: `[kar-install-dir]/scripts/docker-compose-start.sh`
 Open four terminal windows, one for each reefer service:
 - Rest window
 ```
-cd kar-apps/reefer-rest
+cd [kar-apps-install-dir]/reefer/reefer-rest
 source [kar-install-dir]/scripts/kar-env-local.sh
 kar run -app_port 9080 -app reefer -v info -service reeferservice mvn liberty:run
 ```
 
 - Actors window
 ```
-cd [kar-apps/actors
+cd [kar-apps-install-dir]/reefer/actors
 source [kar-install-dir]/scripts/kar-env-local.sh
 kar run -app reefer -v info -actors order,reefer,voyage,reefer-provisioner mvn liberty:run
 ```
 
 - Simulators window
 ```
-cd kar-apps/simulators
+cd [kar-apps-install-dir]/reefer/simulators
 source [kar-install-dir]/scripts/kar-env-local.sh
 kar run -app_port 7080 -app reefer -v info -service simservice -actors simhelper mvn liberty:run
 ```
 
 - Frontend window
 ```
-cd [kar-install-dir]/frontend
+cd [kar-apps-install-dir]/reefer/frontend
 mvn liberty:run
 ```
 

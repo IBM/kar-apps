@@ -28,6 +28,7 @@ public class Constants {
 
    public static final String VOYAGE_ID_KEY="voyageId";
    public static final String VOYAGE_ORDERS_KEY="voyage-orders";
+   public static final String VOYAGE_REEFERS_KEY="voyage-reefers";
    public static final String VOYAGE_INFO_KEY="voyage-info";
    public static final String VOYAGE_STATUS_KEY="voyage-status";
    public static final String VOYAGE_DAYSATSEA_KEY="daysAtSea";

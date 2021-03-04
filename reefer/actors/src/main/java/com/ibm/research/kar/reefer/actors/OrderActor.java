@@ -187,7 +187,7 @@ public class OrderActor extends BaseActor {
      */
     private void tagAsSpoilt(JsonObject message) {
         int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
-        if ( !OrderStatus.SPOILT.equals(orderState.getState()) ) {
+        if (!OrderStatus.SPOILT.equals(orderState.getState())) {
             saveOrderStatusChange(OrderStatus.SPOILT);
         }
         if (logger.isLoggable(Level.INFO)) {
@@ -210,13 +210,13 @@ public class OrderActor extends BaseActor {
     private void requestReplacementReefer(JsonObject message) {
         int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
         if (logger.isLoggable(Level.FINE)) {
-            logger.fine(String.format("OrderActor.anomaly() - orderId: %s requesting replacement for %s",
+            logger.fine(String.format("OrderActor.requestReplacementReefer() - orderId: %s requesting replacement for %s",
                     getId(), message.getInt(Constants.REEFER_ID_KEY)));
         }
         ActorRef provisioner = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
         JsonObject reply = Kar.Actors.call(provisioner, "reeferReplacement", message).asJsonObject();
         if (reply.getString(Constants.STATUS_KEY).equals(Constants.FAILED)) {
-            logger.warning("OrderActor.anomaly() - orderId: " + getId()
+            logger.warning("OrderActor.requestReplacementReefer() - orderId: " + getId()
                     + " request to replace reeferId " + spoiltReeferId + " failed");
             return;
         }
@@ -224,7 +224,7 @@ public class OrderActor extends BaseActor {
         int replacementReeferId = reply.getInt(Constants.REEFER_REPLACEMENT_ID_KEY);
         if (logger.isLoggable(Level.INFO)) {
             logger.info(String.format(
-                    "OrderActor.anomaly() - orderId: %s state: %s spoilt reefer id: %s replacement reefer id: %s",
+                    "OrderActor.requestReplacementReefer() - orderId: %s state: %s spoilt reefer id: %s replacement reefer id: %s",
                     getId(), orderState.getState(), spoiltReeferId, replacementReeferId));
         }
 

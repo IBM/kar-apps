@@ -191,6 +191,10 @@ public class VoyageActor extends BaseActor {
                 Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
                         Json.createValue(order.getId()));
                 voyage.setOrderCount(orders.size());
+                JsonArray reefers = bookingStatus.asJsonObject().getJsonArray(Constants.REEFERS_KEY);
+                if (reefers != null && reefers.size() > 0) {
+                    voyage.setReeferCount(voyage.getReeferCount()+reefers.size());
+                }
                 voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
                 JsonObjectBuilder jb = Json.createObjectBuilder();
                 jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus).
@@ -259,7 +263,9 @@ public class VoyageActor extends BaseActor {
 
         ActorRef reeferProvisionerActor = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName,
                 ReeferAppConfig.ReeferProvisionerId);
-        JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).build();
+        JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).
+                add(Constants.VOYAGE_REEFERS_KEY, Json.createValue(voyage.getReeferCount())).
+                build();
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(
                     "VoyageActor.processDepartedVoyage() - calling ReeferProvisionerActor voyageReefersDeparted - voyageId:" + getId());
@@ -274,8 +280,9 @@ public class VoyageActor extends BaseActor {
      * @param daysAtSea    - ship days at sea
      */
     private void messageRest(String methodToCall, int daysAtSea) {
-        JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).add("daysAtSea", daysAtSea)
-                .build();
+        JsonObject params = Json.createObjectBuilder().
+                add(Constants.VOYAGE_ID_KEY, getId()).add("daysAtSea", daysAtSea).
+                build();
         Kar.Services.post(Constants.REEFERSERVICE, methodToCall, params);
     }
 

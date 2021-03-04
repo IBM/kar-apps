@@ -19,6 +19,7 @@ package com.ibm.research.kar.reefer.model;
 import java.time.Instant;
 
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferState;
 import com.ibm.research.kar.reefer.common.ReeferState.State;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 
@@ -30,13 +31,15 @@ public class ReeferDTO {
     private String voyageId;
     private String maintenanceReleaseDate;
 
+    public ReeferDTO(int id, State state) {
+        this(id, state, "","");
+    }
     public ReeferDTO(int id, State state, String orderId, String voyageId) {
         this.id = id;
         setState(state);
         this.orderId = orderId;
         this.voyageId = voyageId;
     }
-
     public int getId() {
         return id;
     }
@@ -47,7 +50,10 @@ public class ReeferDTO {
         this.voyageId = "";
         this.maintenanceReleaseDate = "";
     }
-
+    public void removeFromVoyage() {
+        this.orderId = "";
+        this.voyageId = "";
+    }
     public State getState() {
         return state;
     }
@@ -59,8 +65,12 @@ public class ReeferDTO {
     public String getOrderId() {
         return orderId;
     }
-
-
+    public boolean alreadyBad() {
+        return getState().equals(ReeferState.State.MAINTENANCE) || getState().equals(ReeferState.State.SPOILT);
+    }
+    public boolean assignedToOrder() {
+        return getOrderId() != null && getOrderId().trim().length() > 0;
+    }
     public String getVoyageId() {
         return voyageId;
     }

@@ -76,6 +76,26 @@ public class ReeferAllocator {
     }
     */
 
+    public static List<Integer> allocateReefers( ReeferState.State[] reeferStateList, int productQuantity) {
+        List<Integer>  reefers = new ArrayList<>();
+        // simple calculation for how many reefers are needed for the order.
+        int howManyReefersNeeded = Double.valueOf(Math.ceil(productQuantity/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
+        try {
+            while(howManyReefersNeeded-- > 0 ) {
+                int index = findInsertionIndexForReefer(reeferStateList);
+                //ReeferDTO reefer = new ReeferDTO(index, ReeferState.State.ALLOCATED, orderId, voyageId);
+                //reeferInventory[index] = reefer;
+                reefers.add(index);
+                //System.out.println("+++++++++++++++++++++ ReeferId:"+index+" Added to order:"+orderId);
+            }
+        } catch(ReeferInventoryExhaustedException e) {
+            e.printStackTrace();
+        }
+
+
+        return reefers;
+    }
+
     public static List<ReeferDTO> allocateReefers( ReeferDTO[] reeferInventory, int productQuantity, String orderId, String voyageId) {
         List<ReeferDTO>  reefers = new ArrayList<>();
         // simple calculation for how many reefers are needed for the order. 
@@ -102,6 +122,30 @@ public class ReeferAllocator {
         return xoroRandom.nextInt(inventorySize);
     }
     
+    private static int findInsertionIndexForReefer(ReeferState.State[] reeferStateList) throws ReeferInventoryExhaustedException{
+        int index = randomIndex(reeferStateList.length);
+        // max number of lookup steps before we jump (randomly)
+        int maxSteps = 10;
+        // if lookup hits unassigned spot, we've found an insertion index for a new reefer
+        if ( reeferStateList[index] == null || reeferStateList[index].equals(State.UNALLOCATED) ) {
+            return index;
+        } else {
+            // the random index hit an assigned spot in the list. Do maxSteps to find an unassigned spot
+            for( int i = index; i < reeferStateList.length; i++) {
+
+                if ( reeferStateList[index] == null ) {
+                    return i;
+                }
+                // after maxSteps lookups an insertion index has not been found in the availableReefers list. Choose
+                // another random index and try again.
+                if ( (i-index) == maxSteps ) {
+                    break;
+                } 
+            }
+            return findInsertionIndexForReefer(reeferStateList);
+        }
+      // throw new ReeferInventoryExhaustedException();  
+    }
     private static int findInsertionIndexForReefer(ReeferDTO[] reeferInventory) throws ReeferInventoryExhaustedException{
         int index = randomIndex(reeferInventory.length);
         // max number of lookup steps before we jump (randomly)
@@ -120,13 +164,12 @@ public class ReeferAllocator {
                 // another random index and try again.
                 if ( (i-index) == maxSteps ) {
                     break;
-                } 
+                }
             }
             return findInsertionIndexForReefer(reeferInventory);
         }
-      // throw new ReeferInventoryExhaustedException();  
+        // throw new ReeferInventoryExhaustedException();
     }
-
     /*
     This method is temporary until Reefer support is added
    

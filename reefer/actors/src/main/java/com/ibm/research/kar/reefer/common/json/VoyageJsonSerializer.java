@@ -34,6 +34,7 @@ public class VoyageJsonSerializer {
         String id = jsonVoyage.getString(Voyage.ID);
         Voyage voyage = new Voyage(id, route, sailDate, arrivalDate);
         voyage.setOrderCount(jsonVoyage.getInt(Voyage.ORDER_COUNT));
+        voyage.setReeferCount(jsonVoyage.getInt(Voyage.REEFER_COUNT));
         voyage.setProgress(jsonVoyage.getInt(Voyage.ORDER_COUNT));
         return voyage;
     }
@@ -69,7 +70,9 @@ public class VoyageJsonSerializer {
                 add(Voyage.SAIL_DATE_STRING,v.getSailDate()).
                 add(Voyage.ARRIVAL_DATE, v.getArrivalDate()).
                 add(Voyage.DISPLAY_ARRIVAL_DATE,v.getDisplayArrivalDate()).
-                add(Voyage.ORDER_COUNT,v.getOrderCount()).build();
+                add(Voyage.ORDER_COUNT,v.getOrderCount()).
+                add(Voyage.REEFER_COUNT,v.getReeferCount()).
+                build();
     }
     private static JsonObject routeToJson(Route r) {
         String la = (r.getLastArrival() == null) ? "" : r.getLastArrival().toString();

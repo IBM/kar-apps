@@ -23,13 +23,13 @@
    * if deploying locally built reefer images, push them to a repo running at localhost:5000 and leave out the override of kar.imagePrefix below
 
 ### **To deploy on `k3s` or `Docker Desktop`**
- * From [kar-apps-install-dir] execute:
+ * From [kar-apps-install-dir]/reefer execute:
 ```shell
 helm install reefer chart --set kar.imagePrefix=quay.io/ibm
 ```
 
 ### **To deploy on `kind`**
- * From [kar-apps-install-dir] execute:
+ * From [kar-apps-install-dir]/reefer execute:
 ```shell
 helm install reefer chart --set ingress.pathBased=true --set kar.imagePrefix=quay.io/ibm
 ```
@@ -47,7 +47,7 @@ Ingress Secret:                 your-ingress-secret
 ...
 ```
  * Next deploy the chart by executing the command below
-from [kar-apps-install-dir], substituting in
+from [kar-apps-install-dir]/reefer, substituting in
 the actual values for `your-ingress-subdomain` and `your-ingress-secret`
 ```shell
 helm install reefer chart --set ingress.hostBased=true --set kar.imagePrefix=quay.io/ibm --set ingress.subdomain=your-ingress-subdomain --set ingress.secret=your-ingress-secret

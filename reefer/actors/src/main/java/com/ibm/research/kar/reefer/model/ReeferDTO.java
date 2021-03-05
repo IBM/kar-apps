@@ -17,6 +17,7 @@
 package com.ibm.research.kar.reefer.model;
 
 import java.time.Instant;
+import java.util.logging.Level;
 
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferState;
@@ -91,7 +92,20 @@ public class ReeferDTO {
         
     }
 
-
+    public boolean releaseFromMaintenanceToday(Instant today) {
+        if (getMaintenanceReleaseDate() == null) {
+                System.out.println(
+                        "ReeferProvisionerActor.releaseFromMaintenanceToday() - maintenance release date not set for reefer:"
+                                + getId() + " state:" + getState().name() + " not booked yet");
+            return false;
+        }
+        // reefer assigned to maintenance gets a date when it is taken off maintenance
+        if (today.equals(Instant.parse(getMaintenanceReleaseDate()))
+                || today.isAfter(Instant.parse(getMaintenanceReleaseDate()))) {
+            return true;
+        }
+        return false;
+    }
 
 
 

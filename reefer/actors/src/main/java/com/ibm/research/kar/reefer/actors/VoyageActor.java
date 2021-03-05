@@ -137,10 +137,10 @@ public class VoyageActor extends BaseActor {
                 } else {
                     // check if ship departed its origin port
                     if ((daysOutAtSea == 1) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
-                        voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
-                        Kar.Actors.State.set(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
                         // notify voyage orders of departure
                         processDepartedVoyage(voyage, daysOutAtSea);
+                        voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
+                        Kar.Actors.State.set(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
                     } else {  // voyage in transit
                         // update REST voyage days at sea
                         messageRest("/voyage/update/position", daysOutAtSea);
@@ -187,9 +187,7 @@ public class VoyageActor extends BaseActor {
 
             // Check if ReeferProvisioner booked reefers for this order.
             if (bookingStatus.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-                // add new order to this voyage order list
-                Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
-                        Json.createValue(order.getId()));
+                orders.put(String.valueOf(order.getId()), bookingStatus);
                 voyage.setOrderCount(orders.size());
                 JsonArray reefers = bookingStatus.asJsonObject().getJsonArray(Constants.REEFERS_KEY);
                 if (reefers != null && reefers.size() > 0) {
@@ -200,7 +198,10 @@ public class VoyageActor extends BaseActor {
                 jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus).
                         add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
                 Kar.Actors.State.set(this, jb.build());
-                orders.put(String.valueOf(order.getId()), bookingStatus);
+                // add new order to this voyage order list
+                Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
+                        Json.createValue(order.getId()));
+
                 return buildResponse(bookingStatus, order);
             }
             // return failure

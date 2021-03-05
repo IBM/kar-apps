@@ -95,8 +95,11 @@ public class OrderActor extends BaseActor {
             // Check if voyage has been booked
             if (voyageBookingResult.getString(Constants.STATUS_KEY).equals(Constants.OK)) {
                 saveOrderReefers(voyageBookingResult);
-                saveOrderStatusChange(OrderStatus.BOOKED);
-                Kar.Actors.State.set(this, Constants.VOYAGE_ID_KEY, orderState.getVoyageId());
+                orderState.newState(Json.createValue(OrderStatus.BOOKED.name()));
+                JsonObjectBuilder jb = Json.createObjectBuilder();
+                jb.add(Constants.VOYAGE_ID_KEY, orderState.getVoyageId()).
+                        add(Constants.ORDER_STATUS_KEY, orderState.getState());
+                Kar.Actors.State.set(this, jb.build());
 
                 if (logger.isLoggable(Level.FINE)) {
                     logger.fine(String.format("OrderActor.createOrder() - orderId: %s saved - voyage: %s state: %s reefers: %d",
@@ -272,8 +275,7 @@ public class OrderActor extends BaseActor {
                         add(JsonOrder.OrderKey, order.getAsObject()).
                         build();
         ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, order.getVoyageId());
-        JsonValue reply = Kar.Actors.call(voyageActor, "reserve", params);
-        return reply.asJsonObject();
+        return Kar.Actors.call(voyageActor, "reserve", params).asJsonObject();
     }
 
     /**

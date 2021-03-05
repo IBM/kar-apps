@@ -49,8 +49,8 @@ const httpOptions = {
 })
 export class RestService {
   schedule:ShipSchedule[] = [];
-  private REST_API_SERVER = GlobalConstants.restServerUrl; 
-  constructor(private httpClient: HttpClient) { 
+  private REST_API_SERVER = GlobalConstants.restServerUrl;
+  constructor(private httpClient: HttpClient) {
 }
 
   sendGetRequest() : ShipSchedule[] {
@@ -100,7 +100,7 @@ getRoutes()  {
 
 }
 getActiveVoyages()  {
-  //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REEFER_REST_HOST:"+this.REST_API_SERVER);
+  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> getActiveVoyages() - REEFER_REST_HOST:"+this.REST_API_SERVER);
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams({}) };
 
@@ -189,7 +189,7 @@ advanceDateByOneDay() {
 currentDate() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
- 
+
   return this.httpClient.post<String>(this.REST_API_SERVER+'/time/currentDate', options).pipe(retry(3), catchError(this.handleError));
 }
 getAllPorts()  {
@@ -225,21 +225,21 @@ getOrderSimControls() {
 getOrderTargetAndSimDelay() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
-  
+
   return this.httpClient.get<DelayTarget>(this.REST_API_SERVER+'/simulator/getdelayandtarget', options).pipe(retry(3), catchError(this.handleError));
 
 }
 getOrderStats() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
-  
+
   return this.httpClient.get<OrderStats>(this.REST_API_SERVER+'/orders/stats', options).pipe(retry(3), catchError(this.handleError));
 
 }
 getReeferControls() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
-  
+
   return this.httpClient.get<ReeferSimControls>(this.REST_API_SERVER+'/simulator/controls', options).pipe(retry(3), catchError(this.handleError));
 
 }
@@ -252,7 +252,7 @@ updateReeferControls(request) {
 getOrderTarget() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
-  
+
   return this.httpClient.post<number>(this.REST_API_SERVER+'/simulator/getsimordertarget', options).pipe(retry(3), catchError(this.handleError));
 
 }
@@ -283,7 +283,7 @@ nextPage(request) {
 }
 generateAnomaly() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  
+
   const options = { header: headers, params: new HttpParams()};
   return this.httpClient.post<String>(this.REST_API_SERVER+'/simulator/reefer/anomaly', options).pipe(retry(3), catchError(this.handleError));
 

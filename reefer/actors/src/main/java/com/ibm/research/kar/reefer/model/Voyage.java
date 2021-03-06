@@ -105,6 +105,11 @@ public class Voyage implements Comparable<Voyage>{
         return ((shipCurrentDate.equals(scheduledArrivalDate)
                 || shipCurrentDate.isAfter(scheduledArrivalDate) && !VoyageStatus.ARRIVED.equals(status)));
     }
+    public boolean shipDeparted(Instant shipCurrentDate, VoyageStatus status) {
+        Instant scheduledDepartureDate = getSailDateObject();
+        return ((shipCurrentDate.equals(scheduledDepartureDate)
+                || shipCurrentDate.isAfter(scheduledDepartureDate) && !VoyageStatus.DEPARTED.equals(status)));
+    }
     public void setProgress(int progress) {
         this.progress = progress;
     }

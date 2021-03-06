@@ -4,30 +4,16 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<parent>
+		<groupId>com.ibm.research.kar</groupId>
+		<artifactId>reeferapp</artifactId>
+		<version>1.0-SNAPSHOT</version>
+	</parent>
+
 	<groupId>com.ibm.research.reefer.simulator</groupId>
 	<artifactId>simulator-server</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>war</packaging>
-
-	<properties>
-		<version.liberty-maven-plugin>3.2.1</version.liberty-maven-plugin>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
-		<failOnMissingWebXml>false</failOnMissingWebXml>
-		<version.java-compiler>11</version.java-compiler>
-		<version.maven-war-plugin>3.3.0</version.maven-war-plugin>
-		<version.microprofile>3.3</version.microprofile>
-		<version.kar-java-sdk>1.0.1</version.kar-java-sdk>
-		<!--ersion.slf4j>1.7.25</version.slf4j-->
-		<jaeger.version>0.34.0</jaeger.version>
-		<version.reefer>1.0-SNAPSHOT</version.reefer>
-		<!-- Liberty configuration -->
-		<liberty.var.default.http.port>7080</liberty.var.default.http.port>
-		<liberty.var.default.https.port>7443</liberty.var.default.https.port>
-		<liberty.var.app.context.root>/</liberty.var.app.context.root>
-		<liberty.version>21.0.0.1</liberty.version>
-	</properties>
 
 	<dependencies>
 		<!-- Provided dependencies -->
@@ -44,7 +30,11 @@
 			<type>pom</type>
 			<scope>provided</scope>
 		</dependency>
-
+		<dependency>
+			<groupId>io.jaegertracing</groupId>
+			<artifactId>jaeger-client</artifactId>
+			<version>${jaeger.version}</version>
+		</dependency>
 		<!-- KAR SDK -->
 		<dependency>
 			<groupId>com.ibm.research.kar</groupId>

@@ -4,34 +4,16 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<parent>
+		<groupId>com.ibm.research.kar</groupId>
+		<artifactId>reeferapp</artifactId>
+		<version>1.0-SNAPSHOT</version>
+	</parent>
+
 	<groupId>com.ibm.research.kar.reefer</groupId>
 	<artifactId>reefer-kar-actor-server</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>war</packaging>
-
-	<properties>
-		<version.liberty-maven-plugin>3.2.1</version.liberty-maven-plugin>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
-		<version.java-compiler>11</version.java-compiler>
-		<failOnMissingWebXml>false</failOnMissingWebXml>
-		<version.maven-war-plugin>3.3.0</version.maven-war-plugin>
-		<version.microprofile>3.3</version.microprofile>
-		<liberty.var.app.context.root>/</liberty.var.app.context.root>
-		<version.kar-java-sdk>1.0.1</version.kar-java-sdk>
-		<jackson.version>2.10.0</jackson.version>
-		<version.maven-failsafe-plugin>2.22.2</version.maven-failsafe-plugin>
-		<version.maven-surefire-plugin>2.22.2</version.maven-surefire-plugin>
-		<!-- Liberty configuration -->
-		<liberty.version>21.0.0.1</liberty.version>
-		<liberty.var.default.http.port>${env.KAR_APP_PORT}</liberty.var.default.http.port>
-		<liberty.var.default.https.port>-1</liberty.var.default.https.port>
-		<liberty.var.app.context.root>/</liberty.var.app.context.root>
-		<!-- Jaeger tracing version -->
-		<!-- openliberty requires older version -->
-		<jaeger.version>0.34.0</jaeger.version>
-	</properties>
 
 	<dependencies>
 		<!-- Provided dependencies -->
@@ -60,18 +42,13 @@
     		<artifactId>dsiutils</artifactId>
    			 <version>2.6.6</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/io.jaegertracing/jaeger-client -->
+
 		<dependency>
 			<groupId>io.jaegertracing</groupId>
 			<artifactId>jaeger-client</artifactId>
 			<version>${jaeger.version}</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-jdk14 -->
-		<!--dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-jdk14</artifactId>
-			<version>1.7.25</version>
-		</dependency-->
+
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>

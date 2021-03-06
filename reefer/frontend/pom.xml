@@ -3,16 +3,16 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>com.ibm.research.kar</groupId>
+    <artifactId>reeferapp</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
   <groupId>com.ibm.research.reefer</groupId>
   <artifactId>reefer-frontend</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>war</packaging>
-
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <liberty.version>21.0.0.1</liberty.version>
-  </properties>
 
   <build>
 
@@ -23,7 +23,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-clean-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>${version.maven-clean-plugin}</version>
         <configuration>
           <failOnError>false</failOnError>
           <filesets>
@@ -54,7 +54,7 @@
 
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
-        <version>2.4</version>
+        <version>${version.maven-war-plugin}</version>
         <configuration>
           <failOnMissingWebXml>false</failOnMissingWebXml>
           <!--warName>${project.artifactId}</warName-->
@@ -73,12 +73,12 @@
       <plugin>
         <groupId>com.github.eirslett</groupId>
         <artifactId>frontend-maven-plugin</artifactId>
-        <version>1.10.0</version>
+        <version>${version.frontend-maven-plugin}</version>
         <configuration>
           <workingDirectory>./</workingDirectory>
-          <nodeVersion>v12.18.2</nodeVersion>
+          <nodeVersion>${version.node}</nodeVersion>
           <!--nodeVersion>${node.version}</nodeVersion-->
-          <npmVersion>6.14.5</npmVersion>
+          <npmVersion>${version.npm}</npmVersion>
           <!--npmVersion>${npm.version}</npmVersion-->
           <nodeDownloadRoot>http://nodejs.org/dist/</nodeDownloadRoot>
           <npmDownloadRoot>http://registry.npmjs.org/npm/-/</npmDownloadRoot>
@@ -120,7 +120,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.7</version>
+        <version>${version.maven-antrun-plugin}</version>
         <executions>
           <execution>
             <id>copyruntime</id>
@@ -150,7 +150,7 @@
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.2</version>
+        <version>${version.liberty-maven-plugin}</version>
         <configuration>
           <serverName>frontEndServer</serverName>
           <runtimeArtifact>

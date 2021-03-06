@@ -135,8 +135,9 @@ public class VoyageActor extends BaseActor {
                     // voyage arrived, no longer need the state
                     Kar.Actors.remove(this);
                 } else {
+                    if ( voyage.shipDeparted(shipCurrentDate, getVoyageStatus())) {
                     // check if ship departed its origin port
-                    if ((daysOutAtSea == 1) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
+                    //if ((daysOutAtSea == 1) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
                         // notify voyage orders of departure
                         processDepartedVoyage(voyage, daysOutAtSea);
                         voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());

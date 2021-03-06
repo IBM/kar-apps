@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM quay.io/ibm/kar-sdk-java-builder-11
+FROM quay.io/ibm/kar-sdk-java-builder-11:1.0.1
 
 #ENV LANG en_US.UTF-8
 #ENV LANGUAGE en_US:en

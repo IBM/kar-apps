@@ -30,7 +30,7 @@ spec:
     env:
     - name: HOSTNAME
       value: zookeeper
-    image: docker.io/wurstmeister/zookeeper:latest
+    image: docker.io/wurstmeister/zookeeper:3.4
     name: zookeeper
     resources: {}
     securityContext:

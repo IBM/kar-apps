@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-ARG JAVA_BUILDER=quay.io/ibm/kar-sdk-java-builder:1.0.0
-ARG JAVA_RUNTIME=quay.io/ibm/kar-sdk-java-runtime-11:1.0.0
+ARG JAVA_BUILDER=quay.io/ibm/kar-sdk-java-builder:1.0.1
+ARG JAVA_RUNTIME=quay.io/ibm/kar-sdk-java-runtime-11:1.0.1
 
 #
 # Build the artifacts using the builder image

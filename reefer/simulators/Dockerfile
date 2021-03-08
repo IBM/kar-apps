@@ -1,3 +1,4 @@
+
 #
 # Copyright IBM Corporation 2020,2021
 #
@@ -14,8 +15,8 @@
 # limitations under the License.
 #
 
-ARG JAVA_BUILDER=quay.io/ibm/kar-sdk-java-builder:1.0.1
-ARG JAVA_RUNTIME=quay.io/ibm/kar-sdk-java-runtime-11:1.0.1
+ARG JAVA_BUILDER
+ARG JAVA_RUNTIME
 
 #
 # Build the artifacts using the builder image
@@ -23,15 +24,15 @@ ARG JAVA_RUNTIME=quay.io/ibm/kar-sdk-java-runtime-11:1.0.1
 FROM $JAVA_BUILDER as builder
 
 WORKDIR /kar/app
-COPY pom.xml ./
-COPY src src
+COPY simulators/pom.xml ./
+COPY simulators/src src
 RUN mvn package
 
 #
 # Copy the artifacts to the runtime image
 #
 FROM $JAVA_RUNTIME
-COPY --from=builder --chown=default:root /kar/app/target/simulator-server.war /opt/ol/wlp/usr/servers/defaultServer/apps
+COPY --from=builder --chown=default:root /kar/app/target/reefer-kar-simulator-server.war /opt/ol/wlp/usr/servers/defaultServer/apps
 COPY --from=builder --chown=default:root /kar/app/src/main/liberty/config/server.xml /opt/ol/wlp/usr/servers/defaultServer
 
 #

@@ -13,7 +13,7 @@
 
 	<httpEndpoint httpPort="9088" httpsPort="8443" id="defaultHttpEndpoint" host="*" />
 
-	<webApplication location="reefer-frontend.war" contextRoot="/">
+	<webApplication location="reefer-kar-frontend.war" contextRoot="/">
 		<!--classloader apiTypeVisibility="+third-party" /-->
 	</webApplication>
 

@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-ARG JAVA_BUILDER=quay.io/ibm/kar-sdk-java-builder-11:1.0.1
-ARG JAVA_RUNTIME=quay.io/ibm/kar-sdk-java-runtime-11:1.0.1
+ARG JAVA_BUILDER
+ARG JAVA_RUNTIME
 
 #
 # Build the artifacts using the builder image
@@ -23,19 +23,21 @@ ARG JAVA_RUNTIME=quay.io/ibm/kar-sdk-java-runtime-11:1.0.1
 FROM $JAVA_BUILDER as builder
 
 WORKDIR /kar/app
-COPY pom.xml tsconfig.app.json tsconfig.json tsconfig.spec.json tslint.json package.json package-lock.json angular.json karma.conf.js browserslist extra-webpack.config.js ./
-COPY e2e e2e
-COPY src src
+COPY pom.xml ./
+RUN mkdir frontend
+COPY frontend/*.xml frontend/*.json frontend/*.js frontend/browserslist frontend/
+COPY frontend/e2e frontend/e2e
+COPY frontend/src frontend/src
 CMD export MAVEN_OPTS="-Dmstr.clientNameLookup=false"
-RUN mvn clean install
+RUN cd frontend && mvn clean install
 
 #
 # Copy the artifacts to the runtime image
 #
 FROM $JAVA_RUNTIME
-COPY --from=builder --chown=default:root /kar/app/target/reefer-frontend.war /opt/ol/wlp/usr/servers/defaultServer/apps
-COPY --from=builder --chown=default:root /kar/app/src/main/liberty/config/server.xml /opt/ol/wlp/usr/servers/defaultServer
-COPY fe-start.sh /kar/bin/fe-start.sh
+COPY --from=builder --chown=default:root /kar/app/frontend/target/reefer-kar-frontend.war /opt/ol/wlp/usr/servers/defaultServer/apps
+COPY --from=builder --chown=default:root /kar/app/frontend/src/main/liberty/config/server.xml /opt/ol/wlp/usr/servers/defaultServer
+COPY frontend/fe-start.sh /kar/bin/fe-start.sh
 
 #
 # Run Open Liberty configure script.

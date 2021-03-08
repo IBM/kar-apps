@@ -17,7 +17,7 @@
 
 function modify_index_html {
     sleep 10
-    /bin/sed -i 's|http://localhost:9080|'"$REST_URL"'|' /opt/ol/wlp/usr/servers/defaultServer/apps/expanded/reefer-frontend.war/index.html
+    /bin/sed -i 's|http://localhost:9080|'"$REST_URL"'|' /opt/ol/wlp/usr/servers/defaultServer/apps/expanded/reefer-kar-frontend.war/index.html
 }
 
 if [ ! -z $REST_URL ]; then

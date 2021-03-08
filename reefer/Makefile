@@ -19,7 +19,7 @@ DOCKER_NAMESPACE ?= kar
 DOCKER_IMAGE_PREFIX ?= $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/
 DOCKER_IMAGE_TAG ?= latest
 KAR_IMAGE_PREFIX ?= quay.io/ibm/
-KAR_IMAGE_TAG ?= latest
+KAR_IMAGE_TAG ?= 1.0.1
 
 KAR_JAVA_SDK=$(KAR_IMAGE_PREFIX)kar-sdk-java-builder-11:$(KAR_IMAGE_TAG)
 KAR_JAVA_RUNTIME=$(KAR_IMAGE_PREFIX)kar-sdk-java-runtime-11:$(KAR_IMAGE_TAG)
@@ -39,19 +39,19 @@ reeferMonitor:
 	cd simulators && docker build -f Dockerfile.monitor -t $(REEFER_MONITOR) .
 
 reeferFrontend:
-	cd frontend && docker build --build-arg JAVA_BUILDER=$(KAR_JAVA_SDK) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_FRONTEND) .
+	docker build -f frontend/Dockerfile --build-arg JAVA_BUILDER=$(KAR_JAVA_SDK) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_FRONTEND) .
 
 reeferBuilder:
-	cd actors && docker build -f Dockerfile.reefer-builder -t $(REEFER_BUILDER) .
+	docker build -f actors/Dockerfile.reefer-builder --build-arg JAVA_BUILDER=$(KAR_JAVA_SDK) -t $(REEFER_BUILDER) .
 
 reeferActors:
-	cd actors && docker build --build-arg JAVA_BUILDER=$(REEFER_BUILDER) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_ACTORS) .
+	docker build -f actors/Dockerfile --build-arg JAVA_BUILDER=$(REEFER_BUILDER) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_ACTORS) .
 
 reeferSimulators:
-	cd simulators && docker build --build-arg JAVA_BUILDER=$(REEFER_BUILDER) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_SIMULATORS) .
+	docker build -f simulators/Dockerfile --build-arg JAVA_BUILDER=$(REEFER_BUILDER) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_SIMULATORS) .
 
 reeferRest:
-	cd reefer-rest && docker build --build-arg JAVA_BUILDER=$(REEFER_BUILDER) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_REST) .
+	docker build -f reefer-rest/Dockerfile --build-arg JAVA_BUILDER=$(REEFER_BUILDER) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_REST) .
 
 
 pushReeferImages:

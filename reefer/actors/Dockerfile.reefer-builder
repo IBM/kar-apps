@@ -14,17 +14,13 @@
 # limitations under the License.
 #
 
-FROM quay.io/ibm/kar-sdk-java-builder-11:1.0.1
+ARG JAVA_BUILDER
+FROM $JAVA_BUILDER
 
-#ENV LANG en_US.UTF-8
-#ENV LANGUAGE en_US:en
-#ENV LC_ALL en_US.UTF-8
+WORKDIR /kar/reefer
 
-#RUN apk add --update maven && apk update && apk upgrade
-
-WORKDIR /kar/actor
-
-COPY pom.xml pom.xml
-COPY src src
-
-RUN mvn install && /bin/rm -rf /kar/actor
+COPY pom.xml ./
+RUN mkdir actors
+COPY actors/pom.xml actors/
+COPY actors/src actors/src
+RUN mvn install -N && cd actors && mvn install && /bin/rm -rf /kar/reefer

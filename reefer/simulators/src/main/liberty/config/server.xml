@@ -20,7 +20,7 @@
   <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
                 id="defaultHttpEndpoint" host="*" />
 
-  <webApplication location="simulator-server.war" contextRoot="/">
+  <webApplication location="reefer-kar-simulator-server.war" contextRoot="/">
     <classloader apiTypeVisibility="+third-party" />
   </webApplication>
 

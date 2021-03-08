@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-ARG JAVA_BUILDER=quay.io/ibm/kar-sdk-java-builder-11:1.0.1
-ARG JAVA_RUNTIME=quay.io/ibm/kar-sdk-java-runtime-11:1.0.1
+ARG JAVA_BUILDER
+ARG JAVA_RUNTIME
 
 #
 # Build the artifacts using the builder image
@@ -23,8 +23,8 @@ ARG JAVA_RUNTIME=quay.io/ibm/kar-sdk-java-runtime-11:1.0.1
 FROM $JAVA_BUILDER as builder
 
 WORKDIR /kar/app
-COPY pom.xml ./
-COPY src src
+COPY actors/pom.xml ./
+COPY actors/src src
 RUN mvn package
 
 #

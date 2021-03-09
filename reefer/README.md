@@ -16,20 +16,20 @@
 
 # Reefer Application Overview
 
-The application models simplified business process involved in shipping perishable goods on a ship from manufacturer to a client. The manufacturer places an order for a shipment of goods which requires one or more refrigerated (reefer) containers and a ship. The land transportation of reefer containers as well as Customs clearance are not considered to simplify the design. To facilitate transit of goods, the application uses a fleet of ships covering Atlantic and Pacific oceans. Each ship in a fleet has a different tonnage (reefer cargo capacity) and is assigned to a shipping schedule serving a route between two ports. The itinerary includes departure date from origin port and arrival date at the destination port. All reefers have identical physical dimensions and have a maximum holding capacity in terms of product units.
+The application models simplified business processes involved in shipping perishable goods on a ship from a manufacturer to a client. A broker places an order for a shipment of goods which requires one or more refrigerated (reefer) containers and a ship. The land transportation of reefer containers as well as Customs clearance are not considered to simplify the design. To facilitate the transit of goods, the application uses a fleet of ships covering Atlantic and Pacific oceans. Each ship has a different tonnage (reefer cargo capacity) and is assigned to a shipping schedule serving a route between two ports. The itinerary includes departures date from origin port and arrival dates at the destination port. All reefers have identical physical dimensions and have a maximum holding capacity in terms of product units.
 
 The Reefer application runtime consists of four separately deployable components.  
 
-1. UI server running in OpenLiberty
-Its main responsibility is to serve Angular based Reefer application packaged in multiple javascript bundles.
+1. UI server running in OpenLiberty.
+Its main responsibility is to serve the Angular based Reefer application packaged in multiple javascript bundles.
 
-2. SpringBoot REST server running in OpenLiberty
+2. SpringBoot REST server running in OpenLiberty.
 Its main responsibility is to process HTTP requests and return results to clients. Its clients are browsers, KAR actors, and Reefer simulators. This server also maintains the state for the application (in memory for now) and also generates and manages a shipping schedule.
 
-3. Actor server running in OpenLiberty
+3. Actor server running in OpenLiberty.
 Its main responsibility is to implement business logic for Reefer App use cases.
 
-4. Simulator server running in OpenLiberty
+4. Simulator server running in OpenLiberty.
 Its main responsibility is to provide drivers for Reefer App use cases. Currently supported use cases are:
    * Advance time and notify active voyages of their new locations
    * Gradually create orders filling upcoming voyages to a specified target capacity
@@ -66,15 +66,15 @@ Each voyage travels between origin and destination ports in a fixed number of da
 The voyage schedules are dynamically extended when necessary to allow the simulator to run for unlimited time.  
 
 ### KAR Actors
-KAR actors implement business logic of the Reefer Application. 
+KAR actors implement the business logic of the Reefer Application. 
 
 #### Order Actor
 Represents an order entity in the application. In response to a new order request, REST creates a new orderId and calls the createOrder method of the order actor with that Id. This action implicitly creates the new actor instance.
 createOrder calls the specified *Voyage Actor* to reserve space for its products and reserve the required containers.
-If successfull, the order state becomes *booked* until the ship departs a port at which time the state changes
+If successful, the order state becomes *booked* until the ship departs a port at which time the state changes
 to *in-transit*.
 Order actors are notified if an anomaly is detected for one of its reserved reefers.
-If the anomaly is recieved before departure the order actor requests a replacement reefer from the provisioner.
+If the anomaly is received before departure the order actor requests a replacement reefer from the provisioner.
 If after departure the order actor changes state to *spoilt* and informs the provisioner.
 On arrival at port the actor removes itself from active actors.
 
@@ -106,7 +106,7 @@ the desired time compression (in secs). For example, the value of 10 means that
 each day is 10 secs long, 20 makes a day 20 secs, etc. A value of 0 disables automatically advancing time.
 When the simulator starts the simulated delay is set to 0. 
 The operational value is modified by changing the value and hitting the **Update** button.
-If the operational value is 0, the **Click to Adance Time** button can be used to manually request an advance.
+If the operational value is 0, the **Click to Advance Time** button can be used to manually request an advance.
 Requests done while still processing a previous advance are ignored.  
 
 #### Order Simulator  
@@ -126,30 +126,31 @@ The reefer simulator generate anomalies randomly across the entire reefer invent
 
 After choosing the values, press the **Update** button to make them operational.
 An order target of 0 disabled automatic anomaly generation when the ship simulator is active.
-When the anamly generation is disabled, the manual **Create Anamaly** button can be used to generate one anomaly.  
+When the anomaly generation is disabled, the manual **Create Anomaly** button can be used to generate one anomaly.  
 
 # Reefer Deployment and Development
 
 ## Prereqs for running or developing Reefer
-- clone Kar from https://github.com/IBM/kar.git
+- clone `kar` from https://github.com/IBM/kar.git
 - browse the README and follow the getting-started guide
-- clone Kar-apps from https://github.com/IBM/kar-apps.git
+- clone `kar-apps` from https://github.com/IBM/kar-apps.git
 
 ## Deploying Reefer using docker-compose from the latest reefer release
-- start the kar runtime using 
+- start the KAR runtime using 
   `[kar-install-dir]/scripts/docker-compose-start.sh`
-- start the reefer application using `IMAGE_PREFIX=quay.io/ibm kar-apps/scripts/reefer-compose-start.sh`
+- start the reefer application using `IMAGE_PREFIX=quay.io/ibm [kar-apps-install-dir]/reefer/scripts/reefer-compose-start.sh`
 - when the application is ready, point browser at the URL listed for the reefer GUI
+- stop the reefer application using `[kar-apps-install-dir]/reefer/scripts/reefer-compose-stop.sh`
 
 ## Deploying Reefer using rootless podman from the latest reefer release
-- if previously running, run `[kar-install-dir]/scripts/docker-compose-stop.sh`
-- start the kar runtime and reefer application using `IMAGE_PREFIX=quay.io/ibm kar-apps/scripts/reefer-play-start.sh`
+- if KAR was previously launched using docker-compose, stop KAR by running `[kar-install-dir]/scripts/docker-compose-stop.sh`
+- start the kar runtime and reefer application using `IMAGE_PREFIX=quay.io/ibm [kar-apps-install-dir]/reefer/scripts/reefer-play-start.sh`
 - when the application is ready, point browser at the URL listed for the reefer GUI
+- stop KAR and the reefer application using `[kar-apps-install-dir]/reefer/scripts/reefer-play-stop.sh`
 
 ## Deploying Reefer using kind, k3s or docker desktop from latest reefer release
 - See [KAR Deployment Options](https://github.com/IBM/kar/blob/main/docs/kar-deployments.md) for instructions on installing these
-- See [Reefer launch on k8s](chart/README.md) for instructions on launching reefer app
-
+- See [Reefer launch on Kubernetes](chart/README.md) for instructions
 
 ## Reefer Development
 
@@ -181,7 +182,7 @@ Build java application:
 cd [kar-apps-install-dir]/reefer
 mvn clean install
 ```
-Start Kar runtime: `[kar-install-dir]/scripts/docker-compose-start.sh`
+Start the KAR runtime: `[kar-install-dir]/scripts/docker-compose-start.sh`
 
 Open four terminal windows, one for each reefer service:
 - Rest window

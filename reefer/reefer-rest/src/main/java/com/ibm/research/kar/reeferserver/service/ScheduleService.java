@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -73,6 +74,12 @@ public class ScheduleService extends AbstractPersistentService {
         throw new VoyageNotFoundException("ScheduleService.getVoyage() - voyage:" + voyageId + " not found in MasterSchedule");
     }
 
+    /**
+     * Called when REST starts either cold or warm. In case of warm start the schedule
+     * may contain arrived voyages which will be trimmed.
+     *
+     * @param baseScheduleDate
+     */
     public void generateShipSchedule(Instant baseScheduleDate) {
         try {
             synchronized (ScheduleService.class) {
@@ -81,6 +88,7 @@ public class ScheduleService extends AbstractPersistentService {
                 // save last voyage departure date to be able to restore schedule after REST service restarts
                 timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
                 System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
+               /*
                 List<Voyage> actives = getActiveSchedule();
                 if ( !actives.isEmpty()) {
                     // remove old, arrived voyages
@@ -88,6 +96,16 @@ public class ScheduleService extends AbstractPersistentService {
                     masterSchedule.removeIf(v -> v.getSailDateObject().isBefore(actives.get(0).getSailDateObject()));
                     System.out.println("\"ScheduleService() - extendSchedule() - schedule size before trim:"+sizeBefore+" - size after trim:"+masterSchedule.size());
                 }
+                */
+                int sizeBefore = masterSchedule.size();
+                Instant date = TimeUtils.getInstance().getCurrentDate().minus(10, ChronoUnit.DAYS);
+                // remove old, arrived voyages
+                masterSchedule.removeIf(v -> v.shipArrived(date));
+                System.out.println("\"ScheduleService() - generateShipSchedule() - current date:"+
+                        TimeUtils.getInstance().getCurrentDate()+
+                        " schedule trim date:" +
+                        date +
+                        " - schedule size before trim:"+sizeBefore+" - size after trim:"+masterSchedule.size());
             }
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
@@ -102,7 +120,8 @@ public class ScheduleService extends AbstractPersistentService {
     }
 
     /**
-     * Generate a new schedule.
+     * This is called while the REST is running and when its determined that the schedule
+     * needs to be extended to make sure we don't run out of voyages.
      *
      * @param newScheduleEndDate - date of the last voyage departure in the current schedule
      */
@@ -128,14 +147,25 @@ public class ScheduleService extends AbstractPersistentService {
                         v.getSailDateObject() +
                         " Arrival:" + v.getArrivalDate()));
             }
+            /*
             List<Voyage> actives = getActiveSchedule();
             if ( !actives.isEmpty() ) {
+                Instant currentDate = TimeUtils.getInstance().getCurrentDate();
                 // remove old, arrived voyages
                 int sizeBefore = masterSchedule.size();
                 masterSchedule.removeIf(v -> v.getSailDateObject().isBefore(actives.get(0).getSailDateObject()));
                 System.out.println("\"ScheduleService() - extendSchedule() - schedule size before trim:"+sizeBefore+" - size after trim:"+masterSchedule.size());
             }
-
+*/
+            int sizeBefore = masterSchedule.size();
+            Instant date = TimeUtils.getInstance().getCurrentDate().minus(10, ChronoUnit.DAYS);
+            // remove old, arrived voyages
+            masterSchedule.removeIf(v -> v.shipArrived(date));
+            System.out.println("\"ScheduleService() - extendSchedule() - current date:"+
+                    TimeUtils.getInstance().getCurrentDate()+
+                    " schedule trim date:" +
+                    date +
+                    " - schedule size before trim:"+sizeBefore+" - size after trim:"+masterSchedule.size());
         }
     }
 

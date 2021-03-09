@@ -19,7 +19,7 @@
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
-			<version>8.0</version>
+			<version>${version.javaee-api}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -36,6 +36,8 @@
 			<artifactId>kar-actor-runtime</artifactId>
 			<version>${version.kar-java-sdk}</version>
 		</dependency>
+
+		<!-- Provides XoRoShiRo128PlusRandom used in ReeferAllocator -->
 		<dependency>
     		<groupId>it.unimi.dsi</groupId>
     		<artifactId>dsiutils</artifactId>

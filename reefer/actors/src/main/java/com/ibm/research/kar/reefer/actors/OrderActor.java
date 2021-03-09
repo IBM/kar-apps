@@ -94,7 +94,6 @@ public class OrderActor extends BaseActor {
             }
             // Check if voyage has been booked
             if (voyageBookingResult.getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-                saveOrderReefers(voyageBookingResult);
                 orderState.newState(Json.createValue(OrderStatus.BOOKED.name()));
                 JsonObjectBuilder jb = Json.createObjectBuilder();
                 jb.add(Constants.VOYAGE_ID_KEY, orderState.getVoyageId()).
@@ -118,7 +117,6 @@ public class OrderActor extends BaseActor {
 
     /**
      * Called when an order is delivered (ie.ship arrived at the destination port).
-     * Calls ReeferProvisioner to release all reefers in this order.
      *
      * @return
      */
@@ -134,8 +132,7 @@ public class OrderActor extends BaseActor {
     }
 
     /**
-     * Called when ship departs from an origin port. Message ReeferProvisioner number
-     * of reefers in this order so that it can update its counts
+     * Called when ship departs from an origin port.
      *
      * @return
      */
@@ -161,6 +158,7 @@ public class OrderActor extends BaseActor {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("OrderActor.anomaly() - :" + getId() + "received spoilt reefer ID " + spoiltReeferId);
         }
+        // handle anomaly after ship arrival.
         if (orderState == null || orderState.getState() == null ||
                 OrderStatus.DELIVERED.name().equals(orderState.getStateAsString())) {
             // Race condition
@@ -184,13 +182,13 @@ public class OrderActor extends BaseActor {
     }
 
     /**
-     * Calls provisioner to mark reefer spoilt
+     * Calls provisioner to tag a given reefer as spoilt.
      *
      * @param message
      */
     private void tagAsSpoilt(JsonObject message) {
         int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
-        if (!OrderStatus.SPOILT.equals(orderState.getState())) {
+        if (!OrderStatus.SPOILT.name().equals(orderState.getStateAsString())) {
             saveOrderStatusChange(OrderStatus.SPOILT);
         }
         if (logger.isLoggable(Level.INFO)) {
@@ -206,7 +204,8 @@ public class OrderActor extends BaseActor {
     }
 
     /**
-     * Calls provisioner to request replacement reefer
+     * Calls provisioner to request a replacement reefer. Reefer can be replaced if
+     * an order is booked but not yet departed.
      *
      * @param message
      */
@@ -230,37 +229,12 @@ public class OrderActor extends BaseActor {
                     "OrderActor.requestReplacementReefer() - orderId: %s state: %s spoilt reefer id: %s replacement reefer id: %s",
                     getId(), orderState.getState(), spoiltReeferId, replacementReeferId));
         }
-
-        // reefer replace is a two step process (remove + add)
-        Kar.Actors.State.Submap.remove(this, Constants.REEFER_MAP_KEY, String.valueOf(spoiltReeferId));
-        Kar.Actors.State.Submap.set(this, Constants.REEFER_MAP_KEY, String.valueOf(replacementReeferId),
-                Json.createValue(replacementReeferId));
-        orderState.replaceReefer(spoiltReeferId, replacementReeferId);
     }
 
     private void saveOrderStatusChange(OrderStatus state) {
         JsonValue jv = Json.createValue(state.name());
         orderState.newState(jv);
         Kar.Actors.State.set(this, Constants.ORDER_STATUS_KEY, orderState.getState());
-    }
-
-    /**
-     * Called to persist reefer ids associated with this order
-     *
-     * @param orderBookingStatus Contains reefer ids
-     * @throws Exception
-     */
-    private void saveOrderReefers(JsonObject orderBookingStatus) throws Exception {
-        JsonArray reefers = orderBookingStatus.getJsonArray(Constants.REEFERS_KEY);
-        if (reefers != null) {
-            // copy assigned reefer id's to a map and save it in kar storage
-            Map<String, JsonValue> reeferMap = new HashMap<>();
-            reefers.forEach(reeferId -> {
-                reeferMap.put(String.valueOf(((JsonNumber) reeferId).intValue()), reeferId);
-                orderState.addReefer(((JsonNumber) reeferId).intValue());
-            });
-            Kar.Actors.State.Submap.set(this, Constants.REEFER_MAP_KEY, reeferMap);
-        }
     }
 
     /**

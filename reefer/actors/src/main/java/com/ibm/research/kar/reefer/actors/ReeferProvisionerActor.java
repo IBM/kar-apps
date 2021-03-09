@@ -177,14 +177,14 @@ public class ReeferProvisionerActor extends BaseActor {
             Long voyageReefersInTransit = Arrays.stream(reeferMasterInventory).
                     filter(Objects::nonNull).
                     filter(reefer -> reefer.getVoyageId().equals(voyageId)).
-                    map(reefer -> {
+                    peek(reefer -> {
+                        // don't overwrite reefer state if it's spoilt
                         if ( reefer.getState().equals(ReeferState.State.ALLOCATED ) ) {
                             // The INTRANSIT state is not currently being used in ReeferProvisioner. If it needs to be
                             // checked save the reefer map to persist the change by first deleting reefer map in
                             // kar storage and saving the updated map.
                             reefer.setState(ReeferState.State.INTRANSIT);
                         }
-                        return reefer;
                     }).count();
 
             if (logger.isLoggable(Level.FINE)) {

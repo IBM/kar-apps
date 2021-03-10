@@ -84,7 +84,6 @@ public class ScheduleService extends AbstractPersistentService {
         try {
             synchronized (ScheduleService.class) {
                 masterSchedule = scheduler.generateSchedule(baseScheduleDate, getLastVoyageDate());
-                masterSchedule.forEach(v -> System.out.println("xxxx Voyage:" + v.getId() + " Departure:" + v.getSailDateObject() + " Arrival:" + v.getArrivalDate()));
                 // save last voyage departure date to be able to restore schedule after REST service restarts
                 timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
                 System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
@@ -147,12 +146,6 @@ public class ScheduleService extends AbstractPersistentService {
                 " schedule trim date:" +
                 date +
                 " - schedule size before trim:"+sizeBefore+" - size after trim:"+masterSchedule.size());
-        System.out.println("Extended Schedule ...");
-        masterSchedule.forEach(v -> System.out.println(">>>> Voyage:" +
-                v.getId() +
-                " Departure:" +
-                v.getSailDateObject() +
-                " Arrival:" + v.getArrivalDate()));
     }
     public Instant getLastVoyageDate() {
         JsonValue jv = super.get(Constants.SCHEDULE_END_DATE_KEY);

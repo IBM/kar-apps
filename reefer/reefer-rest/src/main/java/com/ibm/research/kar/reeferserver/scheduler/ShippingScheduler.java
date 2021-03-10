@@ -132,11 +132,13 @@ public class ShippingScheduler {
              schedule.add(newScheduledVoyage(route, departureDate, false));
             // the ship returns back to origin port after it is unloaded and loaded up again
             departureDate = TimeUtils.getInstance().futureDate(arrivalDate, route.getDaysAtPort());
-            // add return voyage to a sorted (by departure date) schedule
-             schedule.add(newScheduledVoyage(route, departureDate, true));
-            // calculate departure date for next voyage from origin to destination
-            departureDate = TimeUtils.getInstance().futureDate(departureDate,
-                    route.getDaysAtSea() + route.getDaysAtPort());
+            if ( departureDate.isBefore(endDate)) {
+                // add return voyage to a sorted (by departure date) schedule
+                schedule.add(newScheduledVoyage(route, departureDate, true));
+                // calculate departure date for next voyage from origin to destination
+                departureDate = TimeUtils.getInstance().futureDate(departureDate,
+                        route.getDaysAtSea() + route.getDaysAtPort());
+            }
         }
         // subtract days at port. When generating new future schedule that would be added
         route.setLastArrival(departureDate);

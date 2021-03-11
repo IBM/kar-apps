@@ -17,6 +17,7 @@
 package com.ibm.research.kar.reefer.model;
 
 import java.time.Instant;
+import java.util.Objects;
 
 public class Voyage implements Comparable<Voyage>{
     public static final String ID="id";
@@ -38,6 +39,19 @@ public class Voyage implements Comparable<Voyage>{
     private int orderCount=0;
     private int reeferCount=0;
     private int progress;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Voyage voyage = (Voyage) o;
+        return id.equals(voyage.id) && sailDateObject.equals(voyage.sailDateObject) && arrivalDate.equals(voyage.arrivalDate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, sailDateObject, arrivalDate);
+    }
 
     public Voyage(Route route, Instant sailDateObject, String arrivalDate) {
         this.route = route;

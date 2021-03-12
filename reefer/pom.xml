@@ -31,7 +31,8 @@
         <version.javaee-api>8.0</version.javaee-api>
         <version.microprofile>3.3</version.microprofile>
         <version.kar-java-sdk>1.0.1</version.kar-java-sdk>
-        <version.reefer>1.0.0</version.reefer>
+	<!-- CHECK IF THERE IS A BETTER WAY TO HANDLE REEFER VERSION. PERHAPS USE THE PARENT VERSION VARIABLE-->
+        <version.reefer>1.0.1-SNAPSHOT</version.reefer>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <failOnMissingWebXml>false</failOnMissingWebXml>

@@ -14,7 +14,7 @@
 
     <groupId>com.ibm.research.kar.reefer</groupId>
     <artifactId>reeferapp</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
 

@@ -37,9 +37,15 @@ import java.util.stream.Collectors;
 
 @Component
 public class ScheduleService extends AbstractPersistentService {
+/*
+        public static final int THRESHOLD_IN_DAYS = 100;
+        private static final int SCHEDULE_DAYS = 365;
 
-    public static final int THRESHOLD_IN_DAYS = 100;
-    private static final int SCHEDULE_DAYS = 365;
+
+ */
+    public static final int THRESHOLD_IN_DAYS = 330;
+    private static final int SCHEDULE_DAYS = 35;
+
     @Autowired
     private ShippingScheduler scheduler;
     @Autowired
@@ -82,6 +88,7 @@ public class ScheduleService extends AbstractPersistentService {
      */
     public void generateShipSchedule(Instant baseScheduleDate) {
         try {
+            Instant scheduleTrimDate = TimeUtils.getInstance().getCurrentDate().minus(20, ChronoUnit.DAYS);
             synchronized (ScheduleService.class) {
                 masterSchedule = scheduler.generateSchedule(baseScheduleDate, getLastVoyageDate());
                 // save last voyage departure date to be able to restore schedule after REST service restarts
@@ -89,7 +96,7 @@ public class ScheduleService extends AbstractPersistentService {
                 System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
                 // The schedule generated above may include voyages which have arrived already.
                 // Remove all arrived voyages up to 10 days ago.
-                trimArrivedVoyages(10);
+                trimArrivedVoyages(scheduleTrimDate, TimeUtils.getInstance().getCurrentDate());
             }
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
@@ -107,46 +114,98 @@ public class ScheduleService extends AbstractPersistentService {
      * This is called while the REST is running and when its determined that the schedule
      * needs to be extended to make sure we don't run out of voyages.
      *
-     * @param newScheduleEndDate - date of the last voyage departure in the current schedule
+     * @param currentScheduleEndDate - date of the last voyage departure in the current schedule
      */
-    public void extendSchedule(Instant newScheduleEndDate) {
+    public void extendSchedule(Instant currentScheduleEndDate) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info("ScheduleService() - extendSchedule() ============================================ ");
         }
-        //  long start = System.currentTimeMillis();
         // upper date range for new schedule
-        Instant endDate = TimeUtils.getInstance().futureDate(newScheduleEndDate, SCHEDULE_DAYS);
+        Instant endDate = TimeUtils.getInstance().futureDate(currentScheduleEndDate, SCHEDULE_DAYS);
         // lower date range for new schedule
         Optional<Instant> scheduleBaseDate = timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY);
+
         synchronized (ScheduleService.class) {
+            Instant currentDate = TimeUtils.getInstance().getCurrentDate();
+            Instant scheduleTrimDate = currentDate.minus(20, ChronoUnit.DAYS);
+            // ####
+            Set<Voyage> currentScheduleCopy = new TreeSet<>(masterSchedule);
+
+            List<Voyage> activeScheduleBefore = getActiveSchedule(currentDate);
+            Instant baseDate = scheduleBaseDate.get();
+            System.out.println("ScheduleService.extendSchedule() >>>> extending schedule - currentDate:"+currentDate+" baseDate:"+baseDate+" endDate:"+endDate);
             // generate new schedule for a given range of dates
-            masterSchedule = scheduler.generateSchedule(scheduleBaseDate.get(), endDate);
+            masterSchedule = scheduler.generateSchedule(baseDate, endDate);
             // persist last voyage departure date which will be used to restore schedule after
             // REST restart
             timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
-           if (logger.isLoggable(Level.INFO)) {
+            if (logger.isLoggable(Level.INFO)) {
                 masterSchedule.forEach(v -> System.out.println(">>>> Voyage:" +
                         v.getId() +
                         " Departure:" +
                         v.getSailDateObject() +
                         " Arrival:" + v.getArrivalDate()));
-           }
-           // The schedule generated above includes voyages which have arrived already.
-            // Remove all arrived voyages up to 10 days ago.
-           trimArrivedVoyages(10);
+            }
+            validateSchedule(activeScheduleBefore, "extension", currentDate, scheduleBaseDate.get(),currentScheduleCopy);
+
+            // The schedule generated above includes voyages which have arrived already.
+            // Remove all arrived voyages up to 20 days ago.
+            trimArrivedVoyages(scheduleTrimDate, currentDate);
+
+            validateSchedule(activeScheduleBefore, "trimming", currentDate, scheduleBaseDate.get(),currentScheduleCopy);
         }
     }
-    private void trimArrivedVoyages( int thresholdInDays ) {
-        int sizeBefore = masterSchedule.size();
-        Instant date = TimeUtils.getInstance().getCurrentDate().minus(thresholdInDays, ChronoUnit.DAYS);
-        // remove old, arrived voyages
-        masterSchedule.removeIf(v -> v.shipArrived(date));
-        System.out.println("ScheduleService() - trimArrivedVoyages() - current date:"+
-                TimeUtils.getInstance().getCurrentDate()+
-                " schedule trim date:" +
-                date +
-                " - schedule size before trim:"+sizeBefore+" - size after trim:"+masterSchedule.size());
+
+    private void validateSchedule(List<Voyage> originalActiveSchedule, String lbl, Instant currentDate, Instant scheduleBaseDate, Set<Voyage> previousSchedule) {
+        List<Voyage> activeScheduleNow = getActiveSchedule(currentDate);
+        /*
+        Voyage v = activeScheduleNow.get(0);
+        activeScheduleNow.remove(0);
+        activeScheduleNow.add(0, new Voyage("FOO-BAR", v.getRoute(),v.getSailDateObject(), v.getArrivalDate()));
+         */
+        if (!activeListsMatch(originalActiveSchedule, activeScheduleNow)) {
+            System.out.println("ScheduleService.validateSchedule() - After " + lbl + " active schedule does not match pre-" + lbl + " schedule ");
+            System.out.println("Before " + lbl + " Active List:");
+            dumpVoyages(originalActiveSchedule);
+            System.out.println("After " + lbl + " Active List:");
+            dumpVoyages(activeScheduleNow);
+            System.out.println("ScheduleService.validateSchedule() - current date:" +
+                    currentDate +
+                    " schedule base date:" +
+                    scheduleBaseDate );
+            StringBuilder sb = new StringBuilder("\n ***********************\n").append("\t PREVIOUS SCHEDULE:\n\t");
+            previousSchedule.forEach(v -> sb.append("\tVoyageID:\t ").append(v.getId()).append("\tDeparts:\t").append(v.getSailDateObject()).append("\tArrives:\t").append(v.getArrivalDate()));
+            System.out.println(sb.toString());
+
+            StringBuilder sb2 = new StringBuilder("\n ***********************\n").append("\t CURRENT SCHEDULE:\n\t");
+            masterSchedule.forEach(v -> sb2.append("\tVoyageID:\t ").append(v.getId()).append("\tDeparts:\t").append(v.getSailDateObject()).append("\tArrives:\t").append(v.getArrivalDate()));
+            System.out.println(sb2.toString());
+
+        }
     }
+
+    private void dumpVoyages(Collection<Voyage> list) {
+        list.forEach(v -> System.out.println("\t Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate()));
+    }
+
+    private boolean activeListsMatch(List<Voyage> actives1, List<Voyage> actives2) {
+        if (actives1.size() != actives2.size()) {
+            return false;
+        }
+        return actives1.stream().allMatch(v -> actives2.contains(v));
+    }
+
+    private void trimArrivedVoyages(Instant scheduleTrimDate, Instant currentDate) {
+        int sizeBefore = masterSchedule.size();
+        // remove old, arrived voyages
+        masterSchedule.removeIf(v -> v.shipArrived(scheduleTrimDate));
+        System.out.println("ScheduleService() - trimArrivedVoyages() - current date:" +
+                currentDate +
+                " schedule trim date:" +
+                scheduleTrimDate +
+                " - schedule size before trim:" + sizeBefore + " - size after trim:" + masterSchedule.size());
+    }
+
     public Instant getLastVoyageDate() {
         JsonValue jv = super.get(Constants.SCHEDULE_END_DATE_KEY);
         if (jv == null || jv == JsonValue.NULL) {
@@ -205,7 +264,14 @@ public class ScheduleService extends AbstractPersistentService {
      * Returns voyages with ships currently at sea.
      */
     public List<Voyage> getActiveSchedule() {
-        Instant currentDate = TimeUtils.getInstance().getCurrentDate();
+        return getActiveSchedule(TimeUtils.getInstance().getCurrentDate());
+    }
+
+    /*
+     * Returns voyages with ships currently at sea.
+     */
+    private List<Voyage> getActiveSchedule(Instant currentDate) {
+        //Instant currentDate = TimeUtils.getInstance().getCurrentDate();
         List<Voyage> activeSchedule = new ArrayList<>();
         if (logger.isLoggable(Level.FINE)) {
             StringBuilder sb = new StringBuilder();
@@ -234,6 +300,14 @@ public class ScheduleService extends AbstractPersistentService {
                         || (voyage.getSailDateObject().isBefore(currentDate) && arrivalDate.isAfter(currentDate))) {
                     activeSchedule.add(voyage);
                 }
+/*
+                if (voyage.getSailDateObject().equals(currentDate)
+                        || (voyage.getSailDateObject().isBefore(currentDate)
+                           && (arrivalDate.equals(currentDate) || arrivalDate.isAfter(currentDate))) ) {
+                    activeSchedule.add(voyage);
+                }
+
+ */
             }
 
         }

@@ -118,21 +118,24 @@ public class ShippingScheduler {
     /**
      *
      * @param route
-     * @param departureDate
+     * @param firstDepartureDate
      * @param endDate
      * @return
      */
-    public static Set<Voyage> generateShipSchedule(Route route, Instant departureDate, Instant endDate) {
+    public static Set<Voyage> generateShipSchedule(final Route route, final Instant firstDepartureDate, final Instant endDate) {
         Instant arrivalDate;
+        Instant departureDate = firstDepartureDate;
         Set<Voyage> schedule = new TreeSet<>();
-        while (departureDate.isBefore(endDate)) {
+        while(departureDate.isBefore(endDate) ) {
+        //while ( departureOnOrBefore(departureDate, endDate) ) {
            // get the ship arrival date at destination port (departureDate+transitTime)
             arrivalDate = TimeUtils.getInstance().futureDate(departureDate, route.getDaysAtSea());
             // add voyage to a sorted (by departure date) schedule
              schedule.add(newScheduledVoyage(route, departureDate, false));
             // the ship returns back to origin port after it is unloaded and loaded up again
             departureDate = TimeUtils.getInstance().futureDate(arrivalDate, route.getDaysAtPort());
-            if ( departureDate.isBefore(endDate)) {
+            if ( departureDate.isBefore(endDate) ) {
+            //if ( departureOnOrBefore(departureDate, endDate) ) {
                 // add return voyage to a sorted (by departure date) schedule
                 schedule.add(newScheduledVoyage(route, departureDate, true));
                 // calculate departure date for next voyage from origin to destination
@@ -146,7 +149,9 @@ public class ShippingScheduler {
         // we run out of voyages 
         return schedule;
     }
-
+    private static boolean departureOnOrBefore(Instant departureDate, Instant date) {
+        return departureDate.isBefore(date) || departureDate.equals(date);
+    }
     /**
      *
      * @param departureDate

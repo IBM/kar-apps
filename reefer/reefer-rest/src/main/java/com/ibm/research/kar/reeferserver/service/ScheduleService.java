@@ -86,15 +86,16 @@ public class ScheduleService extends AbstractPersistentService {
      */
     public void generateShipSchedule(Instant baseScheduleDate) {
         try {
-            Instant scheduleTrimDate = TimeUtils.getInstance().getCurrentDate().minus(20, ChronoUnit.DAYS);
             synchronized (ScheduleService.class) {
+                Instant currentDate = TimeUtils.getInstance().getCurrentDate();
+                Instant scheduleTrimDate = currentDate.minus(20, ChronoUnit.DAYS);
                 masterSchedule = scheduler.generateSchedule(baseScheduleDate, getLastVoyageDate());
                 // save last voyage departure date to be able to restore schedule after REST service restarts
                 timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
                 System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
                 // The schedule generated above may include voyages which have arrived already.
                 // Remove all arrived voyages up to 10 days ago.
-                trimArrivedVoyages(scheduleTrimDate, TimeUtils.getInstance().getCurrentDate());
+                trimArrivedVoyages(scheduleTrimDate, currentDate);
             }
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
@@ -131,7 +132,7 @@ public class ScheduleService extends AbstractPersistentService {
 
             List<Voyage> activeScheduleBefore = getActiveSchedule(currentDate);
             Instant baseDate = scheduleBaseDate.get();
-            System.out.println("ScheduleService.extendSchedule() >>>> extending schedule - currentDate:"+currentDate+" baseDate:"+baseDate+" endDate:"+endDate);
+            System.out.println("ScheduleService.extendSchedule() >>>> currentDate:"+currentDate+" baseDate:"+baseDate+" endDate:"+endDate);
             // generate new schedule for a given range of dates
             masterSchedule = scheduler.generateSchedule(baseDate, endDate);
             // persist last voyage departure date which will be used to restore schedule after
@@ -171,13 +172,17 @@ public class ScheduleService extends AbstractPersistentService {
                     currentDate +
                     " schedule base date:" +
                     scheduleBaseDate );
-            StringBuilder sb = new StringBuilder("\n ***********************\n").append("\t PREVIOUS SCHEDULE:\n\t");
-            previousSchedule.forEach(v -> sb.append("\tVoyageID:\t ").append(v.getId()).append("\tDeparts:\t").append(v.getSailDateObject()).append("\tArrives:\t").append(v.getArrivalDate()));
-            System.out.println(sb.toString());
+/*
+            if ( !lbl.equals("trimming")) {
+                StringBuilder sb = new StringBuilder("\n ***********************\n").append("\t PREVIOUS SCHEDULE size:").append(previousSchedule.size()).append("\n\t");
+                previousSchedule.forEach(v -> sb.append("\n\tVoyageID:").append(v.getId()).append("\tDeparts:").append(v.getSailDateObject()).append("\tArrives:").append(v.getArrivalDate()));
+                System.out.println(sb.toString());
 
-            StringBuilder sb2 = new StringBuilder("\n ***********************\n").append("\t CURRENT SCHEDULE:\n\t");
-            masterSchedule.forEach(v -> sb2.append("\tVoyageID:\t ").append(v.getId()).append("\tDeparts:\t").append(v.getSailDateObject()).append("\tArrives:\t").append(v.getArrivalDate()));
-            System.out.println(sb2.toString());
+                StringBuilder sb2 = new StringBuilder("\n ***********************\n").append("\t CURRENT SCHEDULE  size:").append(masterSchedule.size()).append("\n\t");
+                masterSchedule.forEach(v -> sb2.append("\n\tVoyageID:").append(v.getId()).append("\tDeparts:").append(v.getSailDateObject()).append("\tArrives:").append(v.getArrivalDate()));
+                System.out.println(sb2.toString());
+            }
+*/
 
         }
     }

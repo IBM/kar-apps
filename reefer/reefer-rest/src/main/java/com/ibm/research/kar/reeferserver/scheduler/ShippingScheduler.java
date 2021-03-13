@@ -16,36 +16,25 @@
 
 package com.ibm.research.kar.reeferserver.scheduler;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
-
-import com.ibm.research.kar.reeferserver.service.ScheduleService;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
-import org.springframework.core.io.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.util.FileCopyUtils;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Component
 public class ShippingScheduler {
@@ -154,12 +143,13 @@ public class ShippingScheduler {
     }
     /**
      *
-     * @param departureDate
+     * @param firstDepartureDate
      * @return
      */
-    public static Set<Voyage> generateSchedule(Instant departureDate, final Instant lastVoyageDate) {
+    public static Set<Voyage> generateSchedule( final Instant firstDepartureDate, final Instant lastVoyageDate) {
         TreeSet<Voyage> schedule = new TreeSet<>();
         int staggerInitialShipDepartures = 0;
+        Instant departureDate = firstDepartureDate;
         for (final Route route : routes) {
             // generate voyages for each route for a given range [departureDate, lastVoyageDate] and
             // add them to the schedule which sorts by departure date
@@ -168,7 +158,8 @@ public class ShippingScheduler {
             staggerInitialShipDepartures += 2;
             // reset departure date to today+stagger (calculated above) so that the ships
             // dont depart on the same day
-            departureDate = TimeUtils.getInstance().futureDate(Instant.now(), staggerInitialShipDepartures);
+            //departureDate = TimeUtils.getInstance().futureDate(Instant.now(), staggerInitialShipDepartures);
+            departureDate = TimeUtils.getInstance().futureDate(firstDepartureDate, staggerInitialShipDepartures);
         }
         return schedule;
     }

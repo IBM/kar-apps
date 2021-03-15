@@ -57,3 +57,5 @@ spec:
           value: {{ .Values.reefer.monitor.threshold | quote }}
         - name: ORDERSTATS_RESET
           value: {{ .Values.reefer.monitor.reset | quote }}
+        - name: ORDERSTATS_COUNTS
+          value: {{ .Values.reefer.monitor.counts | quote }}

@@ -50,6 +50,7 @@ reefer:
     threshold: 0
     reset: 1
     delay: 60
+    counts: 0
 
   actors:
     imageName: kar-app-reefer-actors

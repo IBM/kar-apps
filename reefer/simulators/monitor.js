@@ -59,6 +59,10 @@ async function main () {
       reset: {
 	alias: 'r',
 	description: 'reset stats after specified updates'
+      },
+      counts: {
+	alias: 'c',
+	description: 'output order & reefer counts'
       }
     })
     .argv;
@@ -94,6 +98,14 @@ async function main () {
   }
   if ( reset > 0 ) {
     console.log('resetting order stats after every '+reset+' updates')
+  }
+
+  var counts=0
+  if ( process.env.ORDERSTATS_COUNTS ) {
+    counts=process.env.ORDERSTATS_COUNTS
+  }
+  if (argv.counts) {
+    counts=argv.counts
   }
 
   // reporting loop
@@ -134,8 +146,27 @@ async function main () {
     })
     const objstats = await orderstats.json()
 
-    console.log('delay:{'+JSON.stringify(objdly)+'} orderctl:{'+objctl.ordertarget+','+objctl.orderwindow+','+objctl.orderupdates+
-		'} orderstats:'+JSON.stringify(objstats))
+    var output = 'delay:{'+JSON.stringify(objdly)+'} orderctl:{'+objctl.ordertarget+','+
+	objctl.orderwindow+','+objctl.orderupdates+'} orderstats:'+JSON.stringify(objstats)
+
+    if ( counts > 0 ) {
+      const ordercounts = await fetch(url('reeferservice', 'orders/stats'), {
+	method: 'GET',
+	headers: { 'Content-Type': 'application/json' }
+      })
+      const objcounts = await ordercounts.json()
+
+      const reefercounts = await fetch(url('reeferservice', 'reefers/stats'), {
+	method: 'GET',
+	headers: { 'Content-Type': 'application/json' }
+      })
+      const objrefcounts = await reefercounts.json()
+
+      output = output+'\n   order counts:'+JSON.stringify(objcounts)+
+	              '\n   reefer counts:'+JSON.stringify(objrefcounts)
+    }
+
+    console.log(output)
 
     // check if auto reset time
     if ( reset > 0 ) {

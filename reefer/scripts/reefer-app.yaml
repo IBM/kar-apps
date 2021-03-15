@@ -230,6 +230,8 @@ spec:
       value: "31379"
     - name: ORDERSTATS_THRESHOLD
       value: "0"
+    - name: ORDERSTATS_COUNTS
+      value: "0"
     - name: HOSTNAME
     image: localhost:5000/kar/kar-app-reefer-monitor:latest
     name: monitor

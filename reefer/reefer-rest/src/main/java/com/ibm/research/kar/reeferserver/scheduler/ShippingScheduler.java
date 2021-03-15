@@ -79,24 +79,6 @@ public class ShippingScheduler {
         if ( routes.isEmpty() ) {
             this.initialize(routesJsonResource.getInputStream());
         }
-        /*
-        InputStream resource = new ClassPathResource(
-                "ships.txt").getInputStream();
-        try ( BufferedReader reader = new BufferedReader(
-                new InputStreamReader(resource)) ) {
-            String ships = reader.
-                    lines().
-                    map(line -> line.split("\t")).
-                    map(v -> "\n{\n\t\"ship\" : {\n\t\t\"name\":\""+v[1].replaceAll("\\s","-")+"\",\n\t\t\"capacity\":\""+v[6]+"\" \n\t} \n}").
-                    collect(Collectors.joining(","));
-
-            System.out.println(ships);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-         */
         return routes;
     }
 
@@ -116,7 +98,6 @@ public class ShippingScheduler {
         Instant departureDate = firstDepartureDate;
         Set<Voyage> schedule = new TreeSet<>();
         while(departureDate.isBefore(endDate) ) {
-        //while ( departureOnOrBefore(departureDate, endDate) ) {
            // get the ship arrival date at destination port (departureDate+transitTime)
             arrivalDate = TimeUtils.getInstance().futureDate(departureDate, route.getDaysAtSea());
             // add voyage to a sorted (by departure date) schedule
@@ -124,7 +105,6 @@ public class ShippingScheduler {
             // the ship returns back to origin port after it is unloaded and loaded up again
             departureDate = TimeUtils.getInstance().futureDate(arrivalDate, route.getDaysAtPort());
             if ( departureDate.isBefore(endDate) ) {
-            //if ( departureOnOrBefore(departureDate, endDate) ) {
                 // add return voyage to a sorted (by departure date) schedule
                 schedule.add(newScheduledVoyage(route, departureDate, true));
                 // calculate departure date for next voyage from origin to destination
@@ -156,8 +136,7 @@ public class ShippingScheduler {
             schedule.addAll(generateShipSchedule(route, departureDate, lastVoyageDate));
              // initial ship departures staggered by 2 days (change this if necessary)
             staggerInitialShipDepartures += 2;
-            // reset departure date to today+stagger (calculated above) so that the ships
-            // dont depart on the same day
+            // change departure date to today+stagger so that the ships don't depart on the same day
             //departureDate = TimeUtils.getInstance().futureDate(Instant.now(), staggerInitialShipDepartures);
             departureDate = TimeUtils.getInstance().futureDate(firstDepartureDate, staggerInitialShipDepartures);
         }
@@ -186,5 +165,5 @@ public class ShippingScheduler {
         return new Voyage(new Route(route.getVessel().clone(), originPort, destinationPort, route.getDaysAtSea(),
                 route.getDaysAtPort()), departureDate, arrivalDate.toString());
     }
- 
+
 }

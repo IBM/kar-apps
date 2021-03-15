@@ -40,10 +40,7 @@ public class ScheduleService extends AbstractPersistentService {
 
     public static final int THRESHOLD_IN_DAYS = 100;
     private static final int SCHEDULE_DAYS = 365;
-/*
-    public static final int THRESHOLD_IN_DAYS = 330;
-    private static final int SCHEDULE_DAYS = 35;
-*/
+
     @Autowired
     private ShippingScheduler scheduler;
     @Autowired
@@ -119,17 +116,14 @@ public class ScheduleService extends AbstractPersistentService {
         if (logger.isLoggable(Level.INFO)) {
             logger.info("ScheduleService() - extendSchedule() ============================================ ");
         }
-        // upper date range for new schedule
+        // add N (where N=SCHEDULE_DAYS) days to the end of the current schedule.
         Instant endDate = TimeUtils.getInstance().futureDate(currentScheduleEndDate, SCHEDULE_DAYS);
-        // lower date range for new schedule
+        // every schedule starts on the same date (date of the REST cold start)
         Optional<Instant> scheduleBaseDate = timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY);
 
         synchronized (ScheduleService.class) {
             Instant currentDate = TimeUtils.getInstance().getCurrentDate();
             Instant scheduleTrimDate = currentDate.minus(20, ChronoUnit.DAYS);
-            // ####
-            Set<Voyage> currentScheduleCopy = new TreeSet<>(masterSchedule);
-
             List<Voyage> activeScheduleBefore = getActiveSchedule(currentDate);
             Instant baseDate = scheduleBaseDate.get();
             System.out.println("ScheduleService.extendSchedule() >>>> currentDate:"+currentDate+" baseDate:"+baseDate+" endDate:"+endDate);
@@ -145,23 +139,17 @@ public class ScheduleService extends AbstractPersistentService {
                         v.getSailDateObject() +
                         " Arrival:" + v.getArrivalDate()));
             }
-            validateSchedule(activeScheduleBefore, "extension", currentDate, scheduleBaseDate.get(),currentScheduleCopy);
-
+            validateSchedule(activeScheduleBefore, "extension", currentDate, scheduleBaseDate.get());
             // The schedule generated above includes voyages which have arrived already.
             // Remove all arrived voyages up to 20 days ago.
             trimArrivedVoyages(scheduleTrimDate, currentDate);
-
-            validateSchedule(activeScheduleBefore, "trimming", currentDate, scheduleBaseDate.get(),currentScheduleCopy);
+            validateSchedule(activeScheduleBefore, "trimming", currentDate, scheduleBaseDate.get());
         }
     }
 
-    private void validateSchedule(List<Voyage> originalActiveSchedule, String lbl, Instant currentDate, Instant scheduleBaseDate, Set<Voyage> previousSchedule) {
+    private void validateSchedule(List<Voyage> originalActiveSchedule, String lbl, Instant currentDate, Instant scheduleBaseDate) {
         List<Voyage> activeScheduleNow = getActiveSchedule(currentDate);
-        /*
-        Voyage v = activeScheduleNow.get(0);
-        activeScheduleNow.remove(0);
-        activeScheduleNow.add(0, new Voyage("FOO-BAR", v.getRoute(),v.getSailDateObject(), v.getArrivalDate()));
-         */
+
         if (!activeListsMatch(originalActiveSchedule, activeScheduleNow)) {
             System.out.println("ScheduleService.validateSchedule() - After " + lbl + " active schedule does not match pre-" + lbl + " schedule ");
             System.out.println("Before " + lbl + " Active List:");
@@ -172,18 +160,6 @@ public class ScheduleService extends AbstractPersistentService {
                     currentDate +
                     " schedule base date:" +
                     scheduleBaseDate );
-/*
-            if ( !lbl.equals("trimming")) {
-                StringBuilder sb = new StringBuilder("\n ***********************\n").append("\t PREVIOUS SCHEDULE size:").append(previousSchedule.size()).append("\n\t");
-                previousSchedule.forEach(v -> sb.append("\n\tVoyageID:").append(v.getId()).append("\tDeparts:").append(v.getSailDateObject()).append("\tArrives:").append(v.getArrivalDate()));
-                System.out.println(sb.toString());
-
-                StringBuilder sb2 = new StringBuilder("\n ***********************\n").append("\t CURRENT SCHEDULE  size:").append(masterSchedule.size()).append("\n\t");
-                masterSchedule.forEach(v -> sb2.append("\n\tVoyageID:").append(v.getId()).append("\tDeparts:").append(v.getSailDateObject()).append("\tArrives:").append(v.getArrivalDate()));
-                System.out.println(sb2.toString());
-            }
-*/
-
         }
     }
 
@@ -236,7 +212,6 @@ public class ScheduleService extends AbstractPersistentService {
                 }
             }
         }
-
         throw new VoyageNotFoundException("Voyage " + voyageId + " Not Found");
     }
 
@@ -259,7 +234,6 @@ public class ScheduleService extends AbstractPersistentService {
                     filter(voyage -> voyage.getRoute().getOriginPort().equals(origin)
                             && voyage.getRoute().getDestinationPort().equals(destination)).
                     collect(Collectors.toList());
-
         }
     }
 
@@ -274,20 +248,19 @@ public class ScheduleService extends AbstractPersistentService {
      * Returns voyages with ships currently at sea.
      */
     private List<Voyage> getActiveSchedule(Instant currentDate) {
-        //Instant currentDate = TimeUtils.getInstance().getCurrentDate();
         List<Voyage> activeSchedule = new ArrayList<>();
-        if (logger.isLoggable(Level.FINE)) {
-            StringBuilder sb = new StringBuilder();
-            masterSchedule.forEach(voyage -> {
-                sb.append("\n/////// master schedule - voyage:").append(voyage.getId()).append(" Current Date:").
-                        append(currentDate).append(" SailDate:").append(voyage.getSailDateObject()).append(" DaysAtSea:").
-                        append(voyage.getRoute().getDaysAtSea()).append(" Origin:").append(voyage.getRoute().getOriginPort()).
-                        append(" Destination:").append(voyage.getRoute().getDestinationPort());
-
-            });
-            logger.fine(sb.toString());
-        }
         synchronized (ScheduleService.class) {
+
+            if (logger.isLoggable(Level.FINE)) {
+                StringBuilder sb = new StringBuilder();
+                masterSchedule.forEach(voyage -> {
+                    sb.append("\n/////// master schedule - voyage:").append(voyage.getId()).append(" Current Date:").
+                            append(currentDate).append(" SailDate:").append(voyage.getSailDateObject()).append(" DaysAtSea:").
+                            append(voyage.getRoute().getDaysAtSea()).append(" Origin:").append(voyage.getRoute().getOriginPort()).
+                            append(" Destination:").append(voyage.getRoute().getDestinationPort());
+                });
+                logger.fine(sb.toString());
+            }
             for (Voyage voyage : masterSchedule) {
                 if (voyage.getSailDateObject().isAfter(currentDate)) {
                     // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate
@@ -296,23 +269,13 @@ public class ScheduleService extends AbstractPersistentService {
                 }
                 Instant arrivalDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(),
                         voyage.getRoute().getDaysAtSea() + voyage.getRoute().getDaysAtPort());
-
                 // find active voyage which is one that started before current date and
                 // has not yet completed
                 if (TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate)
                         || (voyage.getSailDateObject().isBefore(currentDate) && arrivalDate.isAfter(currentDate))) {
                     activeSchedule.add(voyage);
                 }
-/*
-                if (voyage.getSailDateObject().equals(currentDate)
-                        || (voyage.getSailDateObject().isBefore(currentDate)
-                           && (arrivalDate.equals(currentDate) || arrivalDate.isAfter(currentDate))) ) {
-                    activeSchedule.add(voyage);
-                }
-
- */
             }
-
         }
         return activeSchedule;
     }

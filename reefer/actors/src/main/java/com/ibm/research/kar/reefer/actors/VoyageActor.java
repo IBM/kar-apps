@@ -116,7 +116,7 @@ public class VoyageActor extends BaseActor {
             // the simulator advances ship position
             int daysOutAtSea = message.getInt(Constants.VOYAGE_DAYSATSEA_KEY);
             // process only if the position has changed
-            if ( voyage.positionChanged(daysOutAtSea) ) {
+            if ( voyage.positionChanged(daysOutAtSea) && daysOutAtSea <= voyage.getRoute().getDaysAtSea()) {
                 // given ship sail date and current days at sea get ship's current date
                 Instant shipCurrentDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(), daysOutAtSea);
                 if (logger.isLoggable(Level.FINE)) {

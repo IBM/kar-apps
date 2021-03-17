@@ -38,7 +38,6 @@ public class OrderActor extends BaseActor {
     // There are three properties we need to persist for each order:
     //     1. state: PENDING | BOOKED | INTRANSIT | SPOILT | DELIVERED
     //     2. voyageId : voyage id the order is assigned to
-    //     3. reefer map: map containing reefer ids assigned to this order
 
     // wrapper containing order state
     private Order orderState = null;
@@ -73,7 +72,7 @@ public class OrderActor extends BaseActor {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(String.format("OrderActor.createOrder() - orderId: %s message: %s", getId(), message));
         }
-        // Check if this order has already been booked.
+        // Idempotence check. Check if this order has already been booked.
         if (orderState != null && OrderStatus.BOOKED.name().equals(orderState.getStateAsString())) {
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
@@ -162,7 +161,9 @@ public class OrderActor extends BaseActor {
         if (orderState == null || orderState.getState() == null ||
                 OrderStatus.DELIVERED.name().equals(orderState.getStateAsString())) {
             // Race condition
-            logger.warning("OrderActor.anomaly() - anomaly just arrived after order delivered");
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("OrderActor.anomaly() - anomaly just arrived after order delivered");
+            }
             // this actor should not be alive
             Kar.Actors.remove(this);
             return;

@@ -332,7 +332,9 @@ public class ReeferProvisionerActor extends BaseActor {
             valuesChanged.set(true);
         } else if (reeferMasterInventory[reeferId].alreadyBad()) {
             // either on maintenance already or spoilt
-            logger.log(Level.WARNING, "ReeferProvisioner.reeferAnomaly() - " + reeferId + " already bad");
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("ReeferProvisioner.reeferAnomaly() - " + reeferId + " already bad");
+            }
         } else if (reeferMasterInventory[reeferId].assignedToOrder()) {
             // notify order actor of anomaly
             // the order will call back with request to replace it or mark it spoilt

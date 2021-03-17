@@ -104,8 +104,8 @@ export ORDERSTATS_DELAY="${ORDERSTATS_DELAY:-60}"
 export ORDERSTATS_RESET="${ORDERSTATS_RESET:-1}"
 export ORDERSTATS_THRESHOLD="${ORDERSTATS_THRESHOLD:-0}"
 export ORDERSTATS_COUNTS="${ORDERSTATS_COUNTS:-0}"
-envsubst < reefer-configmap.yaml > /tmp/reefer-configmap.yaml
-podman play kube --configmap /tmp/reefer-configmap.yaml reefer-app.yaml -q
+envsubst < reefer-app.yaml > /tmp/reefer-app.yaml
+podman play kube /tmp/reefer-app.yaml -q
 if [ $? -ne 0 ]
 then
   exit 1
@@ -127,3 +127,4 @@ while [ $wait != 0 ]; do
 done
 
 echo " reefer GUI available at http://localhost:9088"
+rm /tmp/reefer-app.yaml

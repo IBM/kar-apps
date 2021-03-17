@@ -40,7 +40,6 @@ public class ScheduleService extends AbstractPersistentService {
 
     public static final int THRESHOLD_IN_DAYS = 100;
     private static final int SCHEDULE_DAYS = 365;
-
     public static final int ARRIVED_THRESHOLD_IN_DAYS = 1;
     @Autowired
     private ShippingScheduler scheduler;
@@ -103,10 +102,13 @@ public class ScheduleService extends AbstractPersistentService {
     }
 
     /**
-     * This is called while the REST is running and when its determined that the schedule
-     * needs to be extended to make sure we don't run out of voyages.
+     * This is called while REST is running to make sure the schedule doesn't run out of voyages.
+     * The schedule start date is always the same (cold start date), the end date is extended by
+     * value from SCHEDULE_DAYS. While generating a new schedule, all voyages that have arrived
+     * up to ARRIVED_THRESHOLD_IN_DAYS before now will be excluded.
      *
      * @param currentScheduleEndDate - date of the last voyage departure in the current schedule
+     * @param currentDate - today
      */
     public void extendSchedule(Instant currentScheduleEndDate, Instant currentDate) {
         if (logger.isLoggable(Level.INFO)) {
@@ -121,15 +123,18 @@ public class ScheduleService extends AbstractPersistentService {
             List<Voyage> activeScheduleBefore = getActiveSchedule(currentDate);
             Instant baseDate = scheduleBaseDate.get();
             int previousScheduleSize = masterSchedule.size();
-            // generate new schedule for a given range of dates
+            // generate new schedule for a given range of dates. It will trim arrived
+            // voyages to reduce schedule size.
             masterSchedule = scheduler.generateSchedule(baseDate, endDate, currentDate);
-            System.out.println("ScheduleService.extendSchedule() >>>> currentDate:"+
-                    currentDate.toString().replace("T00:00:00Z","")+
-                    " baseDate:"+baseDate.toString().replace("T00:00:00Z","")+
-                    " endDate:"+endDate.toString().replace("T00:00:00Z","")+
-                    " trimDate:"+ currentDate.minus(ScheduleService.ARRIVED_THRESHOLD_IN_DAYS, ChronoUnit.DAYS).toString().replace("T00:00:00Z","") +
-                    " previous schedule size:"+previousScheduleSize +
-                    " current schedule size:"+masterSchedule.size());
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("ScheduleService.extendSchedule() >>>> currentDate:"+
+                        currentDate.toString().replace("T00:00:00Z","")+
+                        " baseDate:"+baseDate.toString().replace("T00:00:00Z","")+
+                        " endDate:"+endDate.toString().replace("T00:00:00Z","")+
+                        " trimDate:"+ currentDate.minus(ScheduleService.ARRIVED_THRESHOLD_IN_DAYS, ChronoUnit.DAYS).toString().replace("T00:00:00Z","") +
+                        " previous schedule size:"+previousScheduleSize +
+                        " current schedule size:"+masterSchedule.size());
+            }
 
             // persist last voyage departure date which will be used to restore schedule after
             // REST restart
@@ -141,6 +146,7 @@ public class ScheduleService extends AbstractPersistentService {
                         v.getSailDateObject() +
                         " Arrival:" + v.getArrivalDate()));
             }
+            // new active schedule (created from new schedule) must match previous active schedule
             validateSchedule(activeScheduleBefore, "extension", currentDate, scheduleBaseDate.get());
         }
     }
@@ -170,17 +176,6 @@ public class ScheduleService extends AbstractPersistentService {
             return false;
         }
         return actives1.stream().allMatch(v -> actives2.contains(v));
-    }
-
-    private void trimArrivedVoyages(Instant scheduleTrimDate, Instant currentDate) {
-        int sizeBefore = masterSchedule.size();
-        // remove old, arrived voyages
-        masterSchedule.removeIf(v -> v.shipArrived(scheduleTrimDate));
-        System.out.println("ScheduleService() - trimArrivedVoyages() - current date:" +
-                currentDate +
-                " schedule trim date:" +
-                scheduleTrimDate +
-                " - schedule size before trim:" + sizeBefore + " - size after trim:" + masterSchedule.size());
     }
 
     public Instant getLastVoyageDate() {
@@ -236,14 +231,15 @@ public class ScheduleService extends AbstractPersistentService {
     }
 
     /*
-     * Returns voyages with ships currently at sea.
+     * Returns voyages with ships currently are active which means voyages that left before current date
+     * and have not yet arrived or have arrived and are being unloaded
      */
     public List<Voyage> getActiveSchedule() {
         return getActiveSchedule(TimeUtils.getInstance().getCurrentDate());
     }
 
     /*
-     * Returns voyages with ships currently at sea.
+     * Returns voyages with active ships.
      */
     private List<Voyage> getActiveSchedule(Instant currentDate) {
         List<Voyage> activeSchedule = new ArrayList<>();
@@ -263,17 +259,17 @@ public class ScheduleService extends AbstractPersistentService {
             for (Voyage voyage : masterSchedule) {
                 if (voyage.getSailDateObject().isAfter(currentDate)) {
                     // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate
-                    // we just stop iterating since all voyages sail in the future.
+                    // we just stop iterating since all voyages beyond this point sail in the future.
                     break;
                 }
                 // A voyage remains in active list while its in transit and when it arrives. On arrival
                 // we keep it in the list for (daysAtPort - 1) days. Subtract 1 day to make sure the
                 // arrived voyage is *not* in active list along with the return voyage which is about
-                // to depart.
+                // to depart. The return departure date = previous voyage daysAtSea+daysAtPort
                 Instant arrivalDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(),
                         voyage.getRoute().getDaysAtSea()+voyage.getRoute().getDaysAtPort()-1);
                 // find active voyage which is one that started before current date and
-                // has not yet completed
+                // has not yet completed (including arrived but still stPort for unloading)
                 if (TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate)
                         || (voyage.getSailDateObject().isBefore(currentDate) &&
                         ( arrivalDate.equals(currentDate) || arrivalDate.isAfter(currentDate)) )) {

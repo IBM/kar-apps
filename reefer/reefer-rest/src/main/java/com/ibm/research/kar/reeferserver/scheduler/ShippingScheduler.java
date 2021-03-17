@@ -73,7 +73,7 @@ public class ShippingScheduler {
 
     /**
      *
-     * @return
+     * @return - List of Routes
      * @throws Exception
      */
     public List<Route> getRoutes() throws Exception {
@@ -82,17 +82,16 @@ public class ShippingScheduler {
         }
         return routes;
     }
-
-    public void setRoutes(List<Route> routes) {
-        this.routes = routes;
-    }
-
     /**
+     * Generate route/ship schedule for a given range of dates. Each ship sails from origin port
+     * to a destination port, stays at the destination port for a number of days (unload/reload) and sails back to the
+     * origin port. Each leg is a separate voyage which is added to the ship schedule which sorts on departure date.
      *
-     * @param route
-     * @param firstDepartureDate
-     * @param endDate
-     * @return
+     * @param route - ship route
+     * @param firstDepartureDate - date when the first voyage should depart
+     * @param endDate - no voyages beyond this date
+     * @param arrivedDateThreshold - voyage trimming date
+     * @return - sorted route/ship schedule
      */
     public static Set<Voyage> generateShipSchedule(final Route route, final Instant firstDepartureDate, final Instant endDate, final Instant arrivedDateThreshold) {
         Instant arrivalDate;
@@ -101,16 +100,12 @@ public class ShippingScheduler {
         while(departureDate.isBefore(endDate) ) {
            // get the ship arrival date at destination port (departureDate+transitTime)
             arrivalDate = TimeUtils.getInstance().futureDate(departureDate, route.getDaysAtSea());
-            // add voyage to a sorted (by departure date) schedule
-           //  schedule.add(newScheduledVoyage(route, departureDate, false));
-            // add voyage to the schedule if its arrival date is after the arrivedDateThreshold
+            // add voyage to a sorted schedule if its arrival date is after the arrivedDateThreshold
             addVoyageToSchedule(newScheduledVoyage(route, departureDate, route.getOriginPort(), route.getDestinationPort()), schedule, arrivedDateThreshold);
             // the ship returns back to origin port after it is unloaded and loaded up again
             departureDate = TimeUtils.getInstance().futureDate(arrivalDate, route.getDaysAtPort());
             if ( departureDate.isBefore(endDate) ) {
-                // add return voyage to a sorted (by departure date) schedule
-                //schedule.add(newScheduledVoyage(route, departureDate, true));
-                // add return voyage to a schedule - swap origin with destination port, the ship is going back
+                // add return voyage to a sorted schedule - swap origin with destination port, the ship is going back
                 addVoyageToSchedule(newScheduledVoyage(route, departureDate, route.getDestinationPort(), route.getOriginPort()), schedule, arrivedDateThreshold);
                 // calculate departure date for next voyage from origin to destination
                 departureDate = TimeUtils.getInstance().futureDate(departureDate,
@@ -136,13 +131,15 @@ public class ShippingScheduler {
             schedule.add(voyage);
         }
     }
-    private static boolean departureOnOrBefore(Instant departureDate, Instant date) {
-        return departureDate.isBefore(date) || departureDate.equals(date);
-    }
     /**
+     * Generate full schedule for a given range of dates [start,end]. It generates
+     * schedule for each route/ship and adds it to a master schedule sorted by
+     * departure date.
      *
-     * @param firstDepartureDate
-     * @return
+     * @param firstDepartureDate - first voyage in the schedule departs on this date
+     * @param lastVoyageDate - no voyages are added beyond this threshold
+     * @param currentDate - today's date
+     * @return sorted Set of Voyages
      */
     public static Set<Voyage> generateSchedule( final Instant firstDepartureDate, final Instant lastVoyageDate, final Instant currentDate) {
         TreeSet<Voyage> schedule = new TreeSet<>();
@@ -152,25 +149,25 @@ public class ShippingScheduler {
         Instant arrivedDateThreshold =
                 currentDate.minus(ScheduleService.ARRIVED_THRESHOLD_IN_DAYS, ChronoUnit.DAYS);
         for (final Route route : routes) {
-            // generate voyages for each route for a given range [departureDate, lastVoyageDate] and
+            // generate voyages for each route for a given range [firstDepartureDate, lastVoyageDate] and
             // add them to the schedule which sorts by departure date
             schedule.addAll(generateShipSchedule(route, departureDate, lastVoyageDate, arrivedDateThreshold));
              // initial ship departures staggered by 2 days (change this if necessary)
             staggerInitialShipDepartures += 2;
             // change departure date to today+stagger so that the ships don't depart on the same day
-            //departureDate = TimeUtils.getInstance().futureDate(Instant.now(), staggerInitialShipDepartures);
             departureDate = TimeUtils.getInstance().futureDate(firstDepartureDate, staggerInitialShipDepartures);
         }
         return schedule;
     }
 
     /**
+     * Returns initialized instance of Voyage
      *
-     * @param route
-     * @param departureDate
-     * @param originPort
-     * @param destinationPort
-     * @return
+     * @param route - route the voyage belongs
+     * @param departureDate - day of departure
+     * @param originPort - port of departure
+     * @param destinationPort - destination port
+     * @return Voyage instance
      */
     private static Voyage newScheduledVoyage(final Route route, final Instant departureDate, String originPort, String destinationPort) {
         Instant arrivalDate = TimeUtils.getInstance().futureDate(departureDate, route.getDaysAtSea());

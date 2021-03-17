@@ -135,19 +135,21 @@ public class VoyageActor extends BaseActor {
                     // voyage arrived, no longer need the state
                     Kar.Actors.remove(this);
                 } else {
+                    JsonObjectBuilder jb = Json.createObjectBuilder();
                     if ( voyage.shipDeparted(shipCurrentDate, getVoyageStatus())) {
                     // check if ship departed its origin port
                     //if ((daysOutAtSea == 1) && !VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
                         // notify voyage orders of departure
                         processDepartedVoyage(voyage, daysOutAtSea);
                         voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
-                        Kar.Actors.State.set(this, Constants.VOYAGE_STATUS_KEY, voyageStatus);
+                        jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus);
                     } else {  // voyage in transit
                         // update REST voyage days at sea
                         messageRest("/voyage/update/position", daysOutAtSea);
                     }
                     voyage.changePosition(daysOutAtSea);
-                    Kar.Actors.State.set(this, Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
+                    jb.add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
+                    Kar.Actors.State.set(this,jb.build());
                 }
             }
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).build();
@@ -173,6 +175,7 @@ public class VoyageActor extends BaseActor {
                     + order.getId() + " Orders size=" + orders.size());
         }
         JsonValue bookingStatus = null;
+        // Idempotence check. If a given order is in this voyage order list it must have already been processed.
         if (orders.containsKey(order.getId())) {
             // this order has already been processed so return result
             if (bookingStatus.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
@@ -224,7 +227,7 @@ public class VoyageActor extends BaseActor {
      * @param voyage    - Voyage info
      * @param daysAtSea - ship days at sea
      */
-    private void processArrivedVoyage(Voyage voyage, int daysAtSea) {
+    private void processArrivedVoyage(final Voyage voyage, int daysAtSea) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info("VoyageActor.changePosition() voyageId=" + voyage.getId()
                     + " has ARRIVED ------------------------------------------------------");
@@ -249,7 +252,7 @@ public class VoyageActor extends BaseActor {
      * @param voyage    - Voyage info
      * @param daysAtSea - ship days at sea
      */
-    private void processDepartedVoyage(Voyage voyage, int daysAtSea) {
+    private void processDepartedVoyage(final Voyage voyage, int daysAtSea) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info("VoyageActor.processDepartedVoyage() voyageId=" + voyage.getId()
                     + " has DEPARTED ------------------------------------------------------");

@@ -214,12 +214,8 @@ spec:
       value: localhost
     - name: KAR_APP_PORT
       value: "7082"
-    - name: ORDERSTATS_DELAY
-      value: "60"
     - name: KAR_SIDECAR_IN_CONTAINER
       value: "true"
-    - name: ORDERSTATS_RESET
-      value: "1"
     - name: KAR_APP
       value: reefer
     - name: KAR_EXTRA_ARGS
@@ -228,10 +224,26 @@ spec:
       value: 2.4.0
     - name: REDIS_PORT
       value: "31379"
+    - name: ORDERSTATS_DELAY
+      valueFrom:
+        configMapKeyRef:
+          name: reefer-env
+          key: ORDERSTATS_DELAY
+    - name: ORDERSTATS_RESET
+      valueFrom:
+        configMapKeyRef:
+          name: reefer-env
+          key: ORDERSTATS_RESET
     - name: ORDERSTATS_THRESHOLD
-      value: "0"
+      valueFrom:
+        configMapKeyRef:
+          name: reefer-env
+          key: ORDERSTATS_THRESHOLD
     - name: ORDERSTATS_COUNTS
-      value: "0"
+      valueFrom:
+        configMapKeyRef:
+          name: reefer-env
+          key: ORDERSTATS_COUNTS
     - name: HOSTNAME
     image: localhost:5000/kar/kar-app-reefer-monitor:latest
     name: monitor

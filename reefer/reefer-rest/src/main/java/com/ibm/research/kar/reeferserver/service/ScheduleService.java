@@ -262,12 +262,8 @@ public class ScheduleService extends AbstractPersistentService {
                     // we just stop iterating since all voyages beyond this point sail in the future.
                     break;
                 }
-                // A voyage remains in active list while its in transit and when it arrives. On arrival
-                // we keep it in the list for (daysAtPort - 1) days. Subtract 1 day to make sure the
-                // arrived voyage is *not* in active list along with the return voyage which is about
-                // to depart. The return departure date = previous voyage daysAtSea+daysAtPort
                 Instant arrivalDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(),
-                        voyage.getRoute().getDaysAtSea()+voyage.getRoute().getDaysAtPort()-1);
+                        voyage.getRoute().getDaysAtSea());
                 // find active voyage which is one that started before current date and
                 // has not yet completed (including arrived but still stPort for unloading)
                 if (TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate)

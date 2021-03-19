@@ -37,6 +37,7 @@ import javax.json.JsonReader;
 import java.io.StringReader;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -282,7 +283,9 @@ public class VoyageController {
             logger.fine("VoyageController.updateSchedule() - updating GUI with active schedule - currentDate:" + currentDate);
         }
         try {
-            gui.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule(), currentDate);
+            List<Voyage> activeSchedule = shipScheduleService.getActiveSchedule();
+            activeSchedule.sort(Comparator.comparing(v -> v.getRoute().getVessel().getName()));
+            gui.sendActiveVoyageUpdate(activeSchedule, currentDate);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
         }

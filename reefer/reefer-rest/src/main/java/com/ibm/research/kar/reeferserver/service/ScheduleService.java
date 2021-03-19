@@ -82,15 +82,11 @@ public class ScheduleService extends AbstractPersistentService {
      * @param baseScheduleDate
      */
     public void generateShipSchedule(Instant baseScheduleDate) {
-        try {
-            synchronized (ScheduleService.class) {
-                masterSchedule = scheduler.generateSchedule(baseScheduleDate, getLastVoyageDate(), TimeUtils.getInstance().getCurrentDate());
-                // save last voyage departure date to be able to restore schedule after REST service restarts
-                timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
-                System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
-            }
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+        synchronized (ScheduleService.class) {
+            masterSchedule = scheduler.generateSchedule(baseScheduleDate, getLastVoyageDate(), TimeUtils.getInstance().getCurrentDate());
+            // save last voyage departure date to be able to restore schedule after REST service restarts
+            timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
+            System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
         }
     }
 
@@ -108,7 +104,7 @@ public class ScheduleService extends AbstractPersistentService {
      * up to ARRIVED_THRESHOLD_IN_DAYS before now will be excluded.
      *
      * @param currentScheduleEndDate - date of the last voyage departure in the current schedule
-     * @param currentDate - today
+     * @param currentDate            - today
      */
     public void extendSchedule(Instant currentScheduleEndDate, Instant currentDate) {
         if (logger.isLoggable(Level.INFO)) {
@@ -127,13 +123,13 @@ public class ScheduleService extends AbstractPersistentService {
             // voyages to reduce schedule size.
             masterSchedule = scheduler.generateSchedule(baseDate, endDate, currentDate);
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("ScheduleService.extendSchedule() >>>> currentDate:"+
-                        currentDate.toString().replace("T00:00:00Z","")+
-                        " baseDate:"+baseDate.toString().replace("T00:00:00Z","")+
-                        " endDate:"+endDate.toString().replace("T00:00:00Z","")+
-                        " trimDate:"+ currentDate.minus(ScheduleService.ARRIVED_THRESHOLD_IN_DAYS, ChronoUnit.DAYS).toString().replace("T00:00:00Z","") +
-                        " previous schedule size:"+previousScheduleSize +
-                        " current schedule size:"+masterSchedule.size());
+                logger.info("ScheduleService.extendSchedule() >>>> currentDate:" +
+                        currentDate.toString().replace("T00:00:00Z", "") +
+                        " baseDate:" + baseDate.toString().replace("T00:00:00Z", "") +
+                        " endDate:" + endDate.toString().replace("T00:00:00Z", "") +
+                        " trimDate:" + currentDate.minus(ScheduleService.ARRIVED_THRESHOLD_IN_DAYS, ChronoUnit.DAYS).toString().replace("T00:00:00Z", "") +
+                        " previous schedule size:" + previousScheduleSize +
+                        " current schedule size:" + masterSchedule.size());
             }
 
             // persist last voyage departure date which will be used to restore schedule after
@@ -163,7 +159,7 @@ public class ScheduleService extends AbstractPersistentService {
             System.out.println("ScheduleService.validateSchedule() - current date:" +
                     currentDate +
                     " schedule base date:" +
-                    scheduleBaseDate );
+                    scheduleBaseDate);
         }
     }
 
@@ -192,9 +188,6 @@ public class ScheduleService extends AbstractPersistentService {
                 if (voyage.getId().equals(voyageId)) {
                     voyage.getRoute().getVessel().setPosition(daysOutAtSea);
                     int progress = Math.round((daysOutAtSea / (float) voyage.getRoute().getDaysAtSea()) * 100);
-
-                    //voyage.getRoute().getVessel().setProgress((int) (((progress + 5) / 10) * 10));
-                    //voyage.getRoute().getVessel().setProgress(progress);
                     voyage.setProgress(progress);
                     if (logger.isLoggable(Level.INFO)) {
                         logger.info("ScheduleService.updateDaysAtSea() - voyage:" + voyage.getId() + " daysOutAtSea:"
@@ -268,7 +261,7 @@ public class ScheduleService extends AbstractPersistentService {
                 // has not yet completed (including arrived but still stPort for unloading)
                 if (TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate)
                         || (voyage.getSailDateObject().isBefore(currentDate) &&
-                        ( arrivalDate.equals(currentDate) || arrivalDate.isAfter(currentDate)) )) {
+                        (arrivalDate.equals(currentDate) || arrivalDate.isAfter(currentDate)))) {
                     activeSchedule.add(voyage);
                 }
             }

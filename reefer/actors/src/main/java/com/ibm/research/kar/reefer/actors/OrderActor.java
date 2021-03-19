@@ -46,7 +46,7 @@ public class OrderActor extends BaseActor {
     @Activate
     public void activate() {
         Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
-        try {
+
             // initial actor invocation should handle no state
             if (!state.isEmpty()) {
                 orderState = new Order(state);
@@ -55,9 +55,7 @@ public class OrderActor extends BaseActor {
                             getId(), orderState.getState(), orderState.getVoyageId(), orderState.getReeferMap().size()));
                 }
             }
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "OrderActor.activate() - Error - orderId " + getId() + " ", e);
-        }
+
     }
 
     /**

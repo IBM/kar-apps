@@ -18,6 +18,7 @@ import { Component, OnInit, ViewChild, SystemJsNgModuleLoader } from '@angular/c
 import { MatTableDataSource } from '@angular/material/table';
 import { Voyage } from 'src/app/core/models/voyage';
 import { Route } from 'src/app/core/models/route';
+import { Ship } from 'src/app/core/models/ship';
 import { RestService } from 'src/app/core/services/rest.service';
 import { RouteConfigLoadEnd } from '@angular/router';
 import { SocketService } from 'src/app/core/services/socket.service';
@@ -123,30 +124,32 @@ export class ShipScheduleComponent implements OnInit {
   updateVoyages( data) {
 
     this.voyages = data;
+
     for ( var inx in this.voyages ) {
         let voyage : Voyage = this.voyages[inx];
+
+        let r =  voyage["route"];
+        let s = r["vessel"];
         // find index of voyage to update
-        const index = this.voyageDataSource.data.findIndex((v: Voyage) => v.id === voyage.id);
+        const index = this.voyageDataSource.data.findIndex((v: Voyage) => v["route"]["vessel"]['name'] === s['name']);
         if (index !== -1 ) {
            if ( voyage.progress !== this.voyageDataSource.data[index].progress) {
+              // tried more efficient this.voyageDataSource.data[index] = voyage, but
+              // it produced flicker. So fallback is to change individual properties
               this.voyageDataSource.data[index].progress = voyage.progress;
+              this.voyageDataSource.data[index]["route"]['originPort'] = r['originPort'];
+              this.voyageDataSource.data[index]["route"]['destinationPort'] = r['destinationPort'];
+              this.voyageDataSource.data[index]['sailDate'] = voyage['sailDate'];
+              this.voyageDataSource.data[index]['displayArrivalDate'] = voyage['displayArrivalDate'];
+              this.voyageDataSource.data[index]['orderCount'] = voyage['orderCount'];
+              this.voyageDataSource.data[index]["route"]["vessel"]['freeCapacity'] = s['freeCapacity'];
            }
         } else {
            // new voyage - add a new row in the table
            this.voyageDataSource.data.push(voyage);
         }
     }
-    // remove arrived voyages
-    for( var x=0; x < this.voyageDataSource.data.length; x++) {
-       let voyage : Voyage = this.voyageDataSource.data[x];
-       // check if voyage in the current list exists in the new one
-       const index = this.voyages.findIndex((v: Voyage) => v.id === voyage.id);
-       if (index === -1 ) {
-          // voyage arrived
-          this.voyageDataSource.data.splice(x, 1);
-       }
-    }
-    this.voyageDataSource._updateChangeSubscription();
+     this.voyageDataSource._updateChangeSubscription();
   }
   updateDate(d){
      d = d.replace(/"/g,"");

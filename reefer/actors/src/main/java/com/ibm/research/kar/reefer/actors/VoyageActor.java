@@ -186,8 +186,6 @@ public class VoyageActor extends BaseActor {
 
             // Check if ReeferProvisioner booked reefers for this order.
             if (bookingStatus.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-                orders.put(String.valueOf(order.getId()), bookingStatus);
-                voyage.setOrderCount(orders.size());
                 JsonArray reefers = bookingStatus.asJsonObject().getJsonArray(Constants.REEFERS_KEY);
                 if (reefers != null && reefers.size() > 0) {
                     voyage.setReeferCount(voyage.getReeferCount() + reefers.size());
@@ -200,7 +198,8 @@ public class VoyageActor extends BaseActor {
                 // add new order to this voyage order list
                 Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
                         Json.createValue(order.getId()));
-
+                orders.put(String.valueOf(order.getId()), bookingStatus);
+                voyage.setOrderCount(orders.size());
                 return buildResponse(bookingStatus, order);
             }
             // return failure

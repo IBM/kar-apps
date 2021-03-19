@@ -1,36 +1,36 @@
 [
     {
-        "originPort":"Elizabeth, NJ","destinationPort":"London, GB","daysAtSea":15,"daysAtPort":2,
+        "originPort":"Elizabeth, NJ","destinationPort":"London, GB","daysAtSea":15,"daysAtPort":1,
         "vessel":
               { "name":"Abyss","position":0,"maxCapacity":500,"freeCapacity":500,"location":"AtPort"  }
     },
     {
-        "originPort":"Oakland, CA","destinationPort":"Shanghai, CN","daysAtSea":19,"daysAtPort":2,
+        "originPort":"Oakland, CA","destinationPort":"Shanghai, CN","daysAtSea":19,"daysAtPort":1,
         "vessel":
               { "name":"Atlantis","position":0,"maxCapacity":200,"freeCapacity":200,"location":"AtPort"  }
     },
     {
-        "originPort":"Miami, FL","destinationPort":"Bremen, DE","daysAtSea":13,"daysAtPort":2,
+        "originPort":"Miami, FL","destinationPort":"Bremen, DE","daysAtSea":13,"daysAtPort":1,
         "vessel":
               { "name":"Black-Pearl","position":0,"maxCapacity":150,"freeCapacity":150,"location":"AtPort"  }
     },
     {
-        "originPort":"Boston, MA","destinationPort":"London, GB","daysAtSea":12,"daysAtPort":2,
+        "originPort":"Boston, MA","destinationPort":"London, GB","daysAtSea":12,"daysAtPort":1,
         "vessel":
               { "name":"Santa-Maria","position":0,"maxCapacity":225,"freeCapacity":225,"location":"AtPort"  }
     },
     {
-        "originPort":"Boston, MA","destinationPort":"Hamburg, DE","daysAtSea":13,"daysAtPort":2,
+        "originPort":"Boston, MA","destinationPort":"Hamburg, DE","daysAtSea":13,"daysAtPort":1,
         "vessel":
               { "name":"Andrea-Gail","position":0,"maxCapacity":250,"freeCapacity":250,"location":"AtPort"  }
     },
     {
-        "originPort":"New Orleans, LA","destinationPort":"Antwerp, BE","daysAtSea":15,"daysAtPort":2,
+        "originPort":"New Orleans, LA","destinationPort":"Antwerp, BE","daysAtSea":15,"daysAtPort":1,
         "vessel":
               { "name":"MOL-Triumph","position":0,"maxCapacity":550,"freeCapacity":550,"location":"AtPort"  }
     },
     {
-        "originPort":"New York, NY","destinationPort":"Antwerp, BE","daysAtSea":18,"daysAtPort":2,
+        "originPort":"New York, NY","destinationPort":"Antwerp, BE","daysAtSea":18,"daysAtPort":1,
         "vessel":
               { "name":"Victoria","position":0,"maxCapacity":750,"freeCapacity":750,"location":"AtPort"  }
     }

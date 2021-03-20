@@ -154,7 +154,7 @@ export class ShipScheduleComponent implements OnInit {
            this.voyageDataSource.data.push(voyage);
         }
     }
-
+     this.voyageDataSource.data.sort((a, b) => a["route"]["vessel"]['name'].localeCompare(b["route"]["vessel"]['name']));
      this.voyageDataSource._updateChangeSubscription();
   }
   updateDate(d){

@@ -16,6 +16,7 @@
 
 import { Component, OnInit, ViewChild, SystemJsNgModuleLoader } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
+import {MatSort, MatSortable} from '@angular/material/sort';
 import { Voyage } from 'src/app/core/models/voyage';
 import { Route } from 'src/app/core/models/route';
 import { Ship } from 'src/app/core/models/ship';
@@ -50,14 +51,16 @@ export class ShipScheduleComponent implements OnInit {
 
   progressbarValue = 0;
   voyages: Voyage[] = [];
-  voyageDataSource = new MatTableDataSource(this.voyages);
+  voyageDataSource;// = new MatTableDataSource(this.voyages);
   expandedElement:Voyage | null;
   shipTableColumns: string[] = [ 'vessel', 'progress', 'orders','maxCapacity', 'freeCapacity'];
   stompClient:any;
   webSocket: SocketService;
+  @ViewChild(MatSort, { static: false }) sort: MatSort;
 
   constructor(private restService: RestService, private webSocketService : SocketService) {
     this.webSocket = webSocketService;
+    this.voyageDataSource = new MatTableDataSource(this.voyages );
 
     this.restService.currentDate().subscribe((data) => {
       this.updateDate(data);
@@ -114,7 +117,9 @@ export class ShipScheduleComponent implements OnInit {
     });
     this.getActiveVoyages();
   }
-
+  ngAfterViewInit(){
+    this.voyageDataSource.sort = this.sort;
+  }
   update(event: Event) {
     console.log("Click "+event);
     this.restService.setSimulatorDelay(this.rate).subscribe((data) => {
@@ -149,6 +154,7 @@ export class ShipScheduleComponent implements OnInit {
            this.voyageDataSource.data.push(voyage);
         }
     }
+
      this.voyageDataSource._updateChangeSubscription();
   }
   updateDate(d){

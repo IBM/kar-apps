@@ -62,6 +62,7 @@ const  RestServerURL= 'http://localhost:9000';
     MatInputModule,
     MatTableModule,
     MatProgressBarModule,
+
     //SocketIoModule.forRoot(config),
   ],
   providers: [{provide:SocketService, useClass: SocketService}, {provide: LocationStrategy, useClass: HashLocationStrategy}],

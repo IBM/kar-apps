@@ -210,7 +210,8 @@ export class OrderViewComponent implements OnInit {
     request['updateFrequency'] = this.orderUpdates.toString();
 
     this.restService.setOrderSimControls(request).subscribe((data) => {
- //     console.log(data);
+      console.log(data);
+      this.orderTarget = data;
     });
     this.restService.getOrderTargetAndSimDelay().subscribe((data) => {
       if ( this.orderTarget > 0 && data.delay > 0 ) {

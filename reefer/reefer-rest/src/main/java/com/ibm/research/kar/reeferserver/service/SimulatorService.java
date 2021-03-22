@@ -17,6 +17,7 @@
 package com.ibm.research.kar.reeferserver.service;
 
 import javax.json.Json;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
@@ -45,14 +46,17 @@ public class SimulatorService {
         }
     }
 
-    public void setSimOrderTarget(int orderTarget) {
+    public int setSimOrderTarget(int orderTarget) {
          try {
             JsonObject body = Json.createObjectBuilder().add("value", orderTarget).build();
              Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/setordertarget", body);
              JsonValue respValue = response.readEntity(JsonValue.class);
+             System.out.println("SimultatorService.setSimOrderTarget() ******************** target:"+respValue);
+             return ((JsonNumber)respValue).intValue();
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
         }
+         return 0;
     }
 
     public void setSimOrderWindow(int window) {
@@ -75,14 +79,21 @@ public class SimulatorService {
         }
     }
 
-    public void updateOrderSimControls(int orderTarget, int window, int updateFrequency) {
+    public int updateOrderSimControls(int orderTarget, int window, int updateFrequency) {
         try {
-            setSimOrderTarget(orderTarget);
-            setSimOrderWindow(window);
-            setSimOrderUpdateFrequency(updateFrequency);
+            JsonObject body = Json.createObjectBuilder().
+                    add("ordertarget", orderTarget).
+                    add("orderupdates", updateFrequency).
+                    add("orderwindow", window).
+                    build();
+            Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/setordercontrols", body);
+            JsonValue v = response.readEntity(JsonValue.class);
+
+            return v.asJsonObject().getInt("ordertarget");
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
         }
+        return 0;
     }
 
     public OrderSimControls getOrderSimControls() {

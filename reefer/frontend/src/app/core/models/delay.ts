@@ -15,5 +15,5 @@
  */
 
 export interface Delay {
-    delay : number;
+    delay : string;
   }

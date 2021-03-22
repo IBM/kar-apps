@@ -216,7 +216,7 @@ setOrderTarget(request) {
 setOrderSimControls(request) {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const params = request;
-  return this.httpClient.post<String>(this.REST_API_SERVER+'/simulator/setordersimcontrols',params).pipe(retry(3), catchError(this.handleError));
+  return this.httpClient.post<number>(this.REST_API_SERVER+'/simulator/setordersimcontrols',params).pipe(retry(3), catchError(this.handleError));
 }
 getOrderSimControls() {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -263,7 +263,7 @@ getSimulatorDelay() {
   return this.httpClient.post<number>(this.REST_API_SERVER+'/simulator/getdelay', options).pipe(retry(3), catchError(this.handleError));
 
 }
-setSimulatorDelay(delayTime: number) {
+setSimulatorDelay(delayTime: string) {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams()};
   const body : Delay = {

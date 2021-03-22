@@ -122,7 +122,7 @@ export class ShipScheduleComponent implements OnInit {
   }
   update(event: Event) {
     console.log("Click "+event);
-    this.restService.setSimulatorDelay(this.rate).subscribe((data) => {
+    this.restService.setSimulatorDelay(this.rate.toString()).subscribe((data) => {
       console.log(data);
     });
   }

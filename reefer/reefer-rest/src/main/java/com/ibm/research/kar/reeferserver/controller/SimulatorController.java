@@ -98,15 +98,16 @@ public class SimulatorController {
   }
 
   @PostMapping("/simulator/setsimordertarget")
-  public void setSimOrderTarget(@RequestBody String body) {
+  public int  setSimOrderTarget(@RequestBody String body) {
     int orderTarget = 0;
     try (JsonReader jsonReader = Json.createReader(new StringReader(body))) {
       JsonObject req = jsonReader.readObject();
       orderTarget = Integer.valueOf(req.getJsonString("target").toString().replace("\"", ""));
-      simulatorService.setSimOrderTarget(orderTarget);
+      return simulatorService.setSimOrderTarget(orderTarget);
     } catch (Exception e) {
       logger.log(Level.WARNING,"",e);
     }
+    return 0;
   }
 
   @GetMapping("/simulator/controls")
@@ -129,7 +130,7 @@ public class SimulatorController {
   }
 
   @PostMapping("/simulator/setordersimcontrols")
-  public void setOrderSimControls(@RequestBody String body) {
+  public int setOrderSimControls(@RequestBody String body) {
     int orderTarget = 0;
     int orderWindow = 0;
     int updateFrequency = 0;
@@ -138,10 +139,12 @@ public class SimulatorController {
       orderTarget = Integer.valueOf(req.getJsonString("target").toString().replace("\"", ""));
       orderWindow = Integer.valueOf(req.getJsonString("window").toString().replace("\"", ""));
       updateFrequency = Integer.valueOf(req.getJsonString("updateFrequency").toString().replace("\"", ""));
-      simulatorService.updateOrderSimControls(orderTarget, orderWindow, updateFrequency);
+      // The sim does range check and returns a value
+      orderTarget = simulatorService.updateOrderSimControls(orderTarget, orderWindow, updateFrequency);
     } catch (Exception e) {
       logger.log(Level.WARNING,"",e);
     }
+    return orderTarget;
   }
 
   @GetMapping("/simulator/getordersimcontrols")

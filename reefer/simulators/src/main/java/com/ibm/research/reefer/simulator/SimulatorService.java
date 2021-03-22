@@ -349,7 +349,7 @@ public class SimulatorService {
       newval = Json.createValue(((JsonNumber) value).intValue());
     }
     newval = newval.intValue() > 0 ? newval : (JsonNumber) Json.createValue(0);
-    newval = newval.intValue() < 85 ? newval : (JsonNumber) Json.createValue(85);
+    newval = newval.intValue() < 95 ? newval : (JsonNumber) Json.createValue(95);
     synchronized (ordertarget) {
       // if ordertarget > 0 then Order thread is enabled
       // if running and newval == 0 then interrupt thread

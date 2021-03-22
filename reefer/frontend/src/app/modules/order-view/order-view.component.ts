@@ -41,7 +41,7 @@ import { OrderStats } from 'src/app/core/models/order-stats';
 })
 export class OrderViewComponent implements OnInit {
   selection = new SelectionModel<Order>(false, []);
-  displayedColumns: string[] = ['select',  'id', 'customerId','status','product', 'productQty', 'voyageId'];
+  displayedColumns: string[] = ['select',  'id', 'customerId','product', 'productQty', 'voyageId'];
   orders: Order[] = [];
   orderTarget : number ;
   windowSize : number;
@@ -200,6 +200,11 @@ export class OrderViewComponent implements OnInit {
   updateOrderSimulatorControlls(event: Event) {
     console.log("Click >>>>>"+event +" Order Target:"+this.orderTarget);
     const request = {};
+    if ( this.orderTarget < 0 ) {
+       this.orderTarget = 0;
+    } else if ( this.orderTarget > 100 ) {
+       this.orderTarget = 100;
+    }
     request['target'] = this.orderTarget.toString();
     request['window'] = this.windowSize.toString();
     request['updateFrequency'] = this.orderUpdates.toString();

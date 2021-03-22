@@ -12,7 +12,7 @@
                     <div class="example-container">
                         <mat-form-field  style="width:330px !important" [style.width]="'45%'" appearance="fill">
                             <input matInput  min="0" step="5" ngStep="5" (change)="delayChange($event)" name="rate" [(ngModel)]="rate" name="rate" type="number" placeholder="0" [style.fontSize.px]="'17'" required>
-                            <!--input matInput  ng-change="delayChange()" ng-model="rate" name="rate" type="number" placeholder="0" required -->
+
                             <mat-hint align="front">Advance Delay (sec) ... 0 = Manual</mat-hint>
                         </mat-form-field>
                         <button  fxLayoutGap="2px" align="end" style="margin-left:10px;" (click)="update($event)" mat-raised-button  color="primary" [style.width]="'52%'" [style.height.px]="'55'" [style.fontSize.px]="'17'">Update</button>

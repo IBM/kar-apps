@@ -101,8 +101,11 @@ public class OrderService extends AbstractPersistentService {
     private List<Order> jsonToOrderList(List<JsonValue> jsonOrders) {
         List<Order> orders = new ArrayList<>();
         for (JsonValue v : jsonOrders) {
-            Order order = new Order(v.asJsonObject().getString(Constants.ORDER_ID_KEY), "", 0,
-                    v.asJsonObject().getString(Constants.VOYAGE_ID_KEY), "", new ArrayList());
+            Order order = new Order(v.asJsonObject().getString(Constants.ORDER_ID_KEY),
+                    v.asJsonObject() == JsonValue.NULL ? "" : v.asJsonObject().getString(Constants.ORDER_PRODUCT_KEY),
+                    v.asJsonObject() == JsonValue.NULL ? 0 :  v.asJsonObject().getInt(Constants.ORDER_PRODUCT_QTY_KEY),
+                    v.asJsonObject() == JsonValue.NULL ? "" : v.asJsonObject().getString(Constants.VOYAGE_ID_KEY),
+                    v.asJsonObject() == JsonValue.NULL ? "" : v.asJsonObject().getString(Constants.ORDER_STATUS_KEY), new ArrayList());
             orders.add(order);
         }
         return Collections.unmodifiableList(orders);
@@ -172,8 +175,13 @@ public class OrderService extends AbstractPersistentService {
     public Order createOrder(OrderProperties orderProperties) {
         Order order = new Order(orderProperties);
         synchronized (OrderService.class) {
-            JsonValue newOrder = Json.createObjectBuilder().add("orderId", order.getId())
-                    .add("voyageId", order.getVoyageId()).build();
+            JsonValue newOrder = Json.createObjectBuilder().
+                    add("orderId", order.getId()).
+                    add("voyageId", order.getVoyageId()).
+                    add("product", order.getProduct()).
+                    add("productQty", order.getProductQty()).
+                    add("order-status", order.getStatus()).
+                    build();
 
             JsonArrayBuilder bookedOrderArrayBuilder = Json
                     .createArrayBuilder(getListAJsonArray(Constants.BOOKED_ORDERS_KEY));

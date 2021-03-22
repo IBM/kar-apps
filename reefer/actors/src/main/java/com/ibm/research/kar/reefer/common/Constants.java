@@ -45,8 +45,8 @@ public class Constants {
 
    public static final String ORDER_ID_KEY="orderId";
    public static final String ORDER_STATUS_KEY="order-status";
-   public static final String ORDER_KEY="order";
-
+   public static final String ORDER_PRODUCT_KEY="product";
+   public static final String ORDER_PRODUCT_QTY_KEY="productQty";
    public static final String CURRENT_DATE_KEY="current-date";
    public static final String SCHEDULE_BASE_DATE_KEY="schedule-base-date";
    public static final String SCHEDULE_END_DATE_KEY="schedule-end-date";

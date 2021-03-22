@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.json.JsonString;
 
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.DelayTarget;
@@ -56,7 +57,7 @@ public class SimulatorController {
     try (JsonReader jsonReader = Json.createReader(new StringReader(delay))) {
 
       JsonObject req = jsonReader.readObject();
-      delayTime = req.getInt("delay");
+      delayTime = Integer.valueOf(req.getString("delay"));
     } catch (Exception e) {
       logger.log(Level.WARNING,"",e);
     }

@@ -17,84 +17,103 @@
 package com.ibm.research.kar.reefer.model;
 
 public class OrderProperties {
-    String orderId;  
+    String orderId;
     String customerId;
-  String product;
-  int productQty;
-  String originPort;
-  String destinationPort;
-  String voyageId;
-  String date;
+    String product;
+    String originPort;
+    String destinationPort;
+    String voyageId;
+    String date;
+    String bookingStatus;
+    String msg;
+    int productQty;
 
-  public OrderProperties() {}
+    public OrderProperties() {
+    }
 
-  public OrderProperties(String product, int productQty, String voyageId) {
-      this.product = product;
-      this.productQty = productQty;
-      this.voyageId = voyageId;
-  }
+    public OrderProperties(String product, int productQty, String voyageId) {
+        this.product = product;
+        this.productQty = productQty;
+        this.voyageId = voyageId;
+    }
 
-  public String getProduct() {
-      return product;
-  }
+    public String getMsg() {
+        return msg;
+    }
 
-  public void setProduct(String product) {
-      this.product = product;
-  }
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
 
-  public int getProductQty() {
-      return productQty;
-  }
+    public String getBookingStatus() {
+        return bookingStatus;
+    }
 
-  public void setProductQty(int productQty) {
-      this.productQty = productQty;
-  }
+    public void setBookingStatus(String bookingStatus) {
+        this.bookingStatus = bookingStatus;
+    }
 
-  public String getVoyageId() {
-      return voyageId;
-  }
+    public String getProduct() {
+        return product;
+    }
 
-  public void setVoyageId(String voyageId) {
-      this.voyageId = voyageId;
-  }
+    public void setProduct(String product) {
+        this.product = product;
+    }
 
-  public String getOriginPort() {
-      return originPort;
-  }
+    public int getProductQty() {
+        return productQty;
+    }
 
-  public void setOriginPort(String originPort) {
-      this.originPort = originPort;
-  }
+    public void setProductQty(int productQty) {
+        this.productQty = productQty;
+    }
 
-  public String getDestinationPort() {
-      return destinationPort;
-  }
+    public String getVoyageId() {
+        return voyageId;
+    }
 
-  public void setDestinationPort(String destinationPort) {
-      this.destinationPort = destinationPort;
-  }
+    public void setVoyageId(String voyageId) {
+        this.voyageId = voyageId;
+    }
 
-  public String getOrderId() {
-      return orderId;
-  }
+    public String getOriginPort() {
+        return originPort;
+    }
 
-  public void setOrderId(String orderId) {
-      this.orderId = orderId;
-  }
+    public void setOriginPort(String originPort) {
+        this.originPort = originPort;
+    }
 
-  public String getDate() {
-      return date;
-  }
+    public String getDestinationPort() {
+        return destinationPort;
+    }
 
-  public void setDate(String date) {
-      this.date = date;
-  }
+    public void setDestinationPort(String destinationPort) {
+        this.destinationPort = destinationPort;
+    }
 
-  public String getCustomerId() {
-      return customerId;
-  }
+    public String getOrderId() {
+        return orderId;
+    }
 
-  public void setCustomerId(String customerId) {
-      this.customerId = customerId;
-  }
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
 }

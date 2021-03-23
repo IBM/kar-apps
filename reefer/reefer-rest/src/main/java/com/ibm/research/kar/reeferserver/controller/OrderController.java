@@ -146,7 +146,15 @@ public class OrderController {
 		// get Java POJO with order properties from json messages
 		OrderProperties orderProperties = jsonToOrderProperties(message);
 		try {
-
+			// check if the new order exceeds ship's free capacity
+			int howManyReefersNeeded = Double.valueOf(Math.ceil(orderProperties.getProductQty()/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
+			if ( scheduleService.shipCapacityExceeded(orderProperties.getVoyageId(), howManyReefersNeeded)) {
+				orderProperties.setBookingStatus(Constants.FAILED);
+				orderProperties.setOrderId("N/A");
+				orderProperties.setMsg("Error - ship capacity exceeded - current available capacity:"+scheduleService.getShipCapacity(orderProperties.getVoyageId())*1000+
+						" - reduce product quantity or choose a different voyage");
+				return orderProperties;
+			}
 			Order order = orderService.createOrder(orderProperties);
 			JsonObjectBuilder orderParamsBuilder = Json.createObjectBuilder();
 			orderParamsBuilder.add("orderId", order.getId()).add("orderVoyageId", order.getVoyageId()).add("orderProductQty",
@@ -154,6 +162,7 @@ public class OrderController {
 			JsonObjectBuilder jsonOrderBuilder = Json.createObjectBuilder();
 			jsonOrderBuilder.add("order", orderParamsBuilder.build());
 			JsonObject params = jsonOrderBuilder.build();
+
 
 			ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
 			// call Order actor to create the order
@@ -172,8 +181,12 @@ public class OrderController {
 			voyage.setOrderCount(voyage.getOrderCount()+1);
 			int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY);
 			gui.updateFutureOrderCount(futureOrderCount);
+			orderProperties.setBookingStatus(Constants.OK);
+			orderProperties.setMsg("");
 		} catch (Exception e) {
 			logger.log(Level.WARNING,e.getMessage(),e);
+			orderProperties.setBookingStatus(Constants.FAILED);
+			orderProperties.setMsg(e.getMessage());
 		}
 		return orderProperties;
 	}

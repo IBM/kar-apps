@@ -134,11 +134,14 @@ console.log("Date:"+this.date);
         originPort: val.originPort,
         destinationPort: val.destinationPort,
         voyageId: val.voyageId,
+        bookingStatus: '',
+        msg:''
     };
-    this.restService.saveOrder(order).subscribe((data) => {
-
+    this.restService.saveOrder(order).subscribe((data : OrderProperties) => {
+      console.log("order-create - saveOrder - rest reply:"+data.orderId+" status:"+data.bookingStatus+" msg:"+data.msg);
       this.resetVoyages();
-      this.showOrderIdDialog(data.orderId );
+      //this.showOrderIdDialog(data.orderId );
+       this.showOrderIdDialog(data );
       })
   }
   resetVoyages() {
@@ -149,15 +152,18 @@ console.log("Date:"+this.date);
 
     this.dataSource.data = [];
   }
-  showOrderIdDialog(orderId: string) {
+  //showOrderIdDialog(orderId: string) {
+  showOrderIdDialog(orderProperties: OrderProperties) {
     const dialogConfig = new MatDialogConfig();
 
     dialogConfig.disableClose = true;
     dialogConfig.autoFocus = true;
     dialogConfig.width="600px";
     dialogConfig.data = {
-      orderId: orderId,
-
+     // orderId: orderId,
+      orderId: orderProperties.orderId,
+      status: orderProperties.bookingStatus,
+      msg: orderProperties.msg,
     };
 
     const dialogRef = this.dialog.open(OrderBookedDialogComponent,

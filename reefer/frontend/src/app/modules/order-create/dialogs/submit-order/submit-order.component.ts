@@ -18,7 +18,6 @@ import { Component, OnInit, Inject } from '@angular/core';
 import {MatDialog, MatDialogConfig, MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {FormBuilder, Validators, FormGroup} from "@angular/forms";
 import { OrderProperties } from 'src/app/core/models/order-properties';
-//import { OrderProperties }
 
 
 @Component({

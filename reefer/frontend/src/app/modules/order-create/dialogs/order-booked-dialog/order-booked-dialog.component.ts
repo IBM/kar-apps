@@ -17,6 +17,7 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { OrderProperties } from 'src/app/core/models/order-properties';
 
 @Component({
   selector: 'app-order-booked-dialog',
@@ -28,8 +29,15 @@ export class OrderBookedDialogComponent implements OnInit {
 
   constructor( private dialogRef: MatDialogRef<OrderBookedDialogComponent>,
     @Inject(MAT_DIALOG_DATA) data) {
-     this.description = 'Your Order Has Been Booked - Order ID:'+data.orderId;
-      }
+    console.log("order-booked-dialog - "+ data.orderId);
+    if ( data.status === 'OK') {
+       this.description = 'Your Order Has Been Booked - Order ID:'+data.orderId;
+    } else {
+       this.description =  'Order:'+data.orderId+' Booking Status:'+data.status+' '+data.msg;
+    }
+
+
+  }
   ngOnInit(): void {
 
   }

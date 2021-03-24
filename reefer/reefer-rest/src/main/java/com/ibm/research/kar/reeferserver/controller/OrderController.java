@@ -161,7 +161,6 @@ public class OrderController {
 			jsonOrderBuilder.add("order", orderParamsBuilder.build());
 			JsonObject params = jsonOrderBuilder.build();
 
-
 			ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
 			// call Order actor to create the order
 			JsonValue reply = Kar.Actors.call(orderActor, "createOrder", params);
@@ -172,10 +171,6 @@ public class OrderController {
 				order.setStatus(OrderStatus.BOOKED.getLabel());
 				// extract reefer ids assigned to the order
 				JsonArray reefers = reply.asJsonObject().getJsonObject("booking").getJsonArray("reefers");
-				// reduce ship free capacity by the number of reefers
-				int shipFreeCapacity = scheduleService.updateFreeCapacity(order.getVoyageId(), reefers.size());
-
-				simulatorService.updateVoyageCapacity(order.getVoyageId(), shipFreeCapacity);
 				voyage.setOrderCount(voyage.getOrderCount()+1);
 				int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY);
 				gui.updateFutureOrderCount(futureOrderCount);

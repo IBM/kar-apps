@@ -274,14 +274,7 @@ public class ScheduleService extends AbstractPersistentService {
             return new ArrayList<Voyage>(masterSchedule);
         }
     }
-    public boolean shipCapacityExceeded(String voyageId, int reeferCount)  throws VoyageNotFoundException {
-        Voyage voyage = getVoyage(voyageId);
-        return (voyage.getRoute().getVessel().getFreeCapacity() - reeferCount ) < 0;
-    }
-    public int getShipCapacity(String voyageId)  throws VoyageNotFoundException {
-        Voyage voyage = getVoyage(voyageId);
-        return voyage.getRoute().getVessel().getFreeCapacity() ;
-    }
+
     public int updateFreeCapacity(String voyageId, int reeferCount)
             throws VoyageNotFoundException, ShipCapacityExceeded {
         Voyage voyage = getVoyage(voyageId);

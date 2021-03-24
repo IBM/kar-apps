@@ -202,30 +202,6 @@ public class VoyageController {
     }
 
     /**
-     * Updates reefer counts
-     *
-     * @param message
-     * @throws VoyageNotFoundException
-     */
-    @PostMapping("/voyage/update")
-    public void updateReeferInventory(@RequestBody String message) {
-        try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
-            JsonObject req = jsonReader.readObject();
-            String voyageId = req.getString("voyageId");
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("VoyageController.updateReeferInventory() voyageId=" + voyageId + " Voyage Status:"
-                        + voyageService.getVoyageStatus(voyageId));
-            }
-            if (req.containsKey("reeferCount")) {
-                reeferInventoryChange(req);
-            }
-
-        } catch (Exception e) {
-            logger.log(Level.WARNING, e.getMessage(), e);
-        }
-    }
-
-    /**
      * Returns all routes
      *
      * @return - list of routes

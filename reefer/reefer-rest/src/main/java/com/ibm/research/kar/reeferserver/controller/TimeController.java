@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.json.Json;
 import javax.json.JsonObject;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,6 +55,13 @@ public class TimeController {
     @PostMapping("/time/currentDate")
     public Instant getCurrentDate() {
         return TimeUtils.getInstance().getCurrentDate();
+    }
+
+    @PostMapping("/time/tomorrowsDate")
+    public Instant getTomorrowsDate() {
+        Instant currentDate =  TimeUtils.getInstance().getCurrentDate();
+        Instant t = currentDate.plus(1,ChronoUnit.DAYS);
+        return t;
     }
 
     /*

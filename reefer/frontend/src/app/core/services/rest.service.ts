@@ -192,6 +192,12 @@ currentDate() {
 
   return this.httpClient.post<String>(this.REST_API_SERVER+'/time/currentDate', options).pipe(retry(3), catchError(this.handleError));
 }
+tomorrowsDate() {
+  let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  const options = { header: headers, params: new HttpParams()};
+
+  return this.httpClient.post<string>(this.REST_API_SERVER+'/time/tomorrowsDate', options).pipe(retry(3), catchError(this.handleError));
+}
 getAllPorts()  {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams() };

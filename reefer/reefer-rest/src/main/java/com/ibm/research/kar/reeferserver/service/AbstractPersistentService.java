@@ -49,6 +49,9 @@ public abstract class AbstractPersistentService {
         persistentData.put(key, value);
         return Json.createValue(Kar.Actors.State.set(aref, key, value));
     }
+    protected void remove(List<String> keys) {
+        Kar.Actors.State.removeAll(aref, keys);
+    }
 
     /**
      * Returns a list of unique voyage ids generated from ReeferProvisioner's reefer inventory.

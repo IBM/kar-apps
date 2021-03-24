@@ -197,7 +197,9 @@ public class OrderService extends AbstractPersistentService {
 
         return order;
     }
-
+    public void remove(List<String> keys) {
+        super.remove(keys);
+    }
     private Set<Voyage> findVoyagesBeyondDepartureDate(JsonArray bookedOrders) {
         Instant today = TimeUtils.getInstance().getCurrentDate();
         return bookedOrders.

@@ -103,6 +103,7 @@ public class OrderActor extends BaseActor {
                 }
                 return Json.createObjectBuilder().add(JsonOrder.OrderBookingKey, voyageBookingResult).build();
             } else {
+                Kar.Actors.remove(this);
                 return voyageBookingResult;
             }
         } catch (Exception e) {

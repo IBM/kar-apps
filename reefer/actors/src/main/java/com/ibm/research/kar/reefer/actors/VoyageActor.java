@@ -30,6 +30,7 @@ import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reefer.model.VoyageStatus;
+import org.apache.commons.math3.analysis.function.Constant;
 
 import javax.json.*;
 import javax.ws.rs.core.Response;
@@ -180,6 +181,15 @@ public class VoyageActor extends BaseActor {
         }
 
         try {
+            int howManyReefersNeeded = Double.valueOf(Math.ceil(order.getProductQty()/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
+
+            if ( (voyage.getRoute().getVessel().getFreeCapacity() - howManyReefersNeeded ) < 0) {
+                String msg = "Error - ship capacity exceeded - current available capacity:"+voyage.getRoute().getVessel().getFreeCapacity()*1000+
+                        " - reduce product quantity or choose a different voyage";
+                return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED)
+                        .add("ERROR", msg).build();
+            }
+
             // Book reefers for this order through the ReeferProvisioner
             bookingStatus = Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "bookReefers", message);

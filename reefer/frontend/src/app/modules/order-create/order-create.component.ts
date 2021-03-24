@@ -69,19 +69,20 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
 
   connected: Subscription;
   isConnected = false;
-  date = new Date(new Date().setDate(new Date().getDate()+1));
+  date : Date;
 
   displayedColumns: string[] = ['select', 'voyageId', 'vessel', 'origin', 'destination','sailDate', 'transitTime', 'freeCapacity'];
 
   messages: Subject<any>;
   @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
-
+  //@ViewChild(MatDatepicker)
+  //picker1: MatDatepicker<Moment>;
 
   constructor(private dialog: MatDialog, private shipSchedule: ShipScheduleService,private restService: RestService) {
-console.log("Date:"+this.date);
-    this.restService.getRoutes().subscribe((data) => {
+      //this.getTomorrowsDate();
+      this.restService.getRoutes().subscribe((data) => {
      // console.log(data);
-     this.allRoutes = data;
+      this.allRoutes = data;
 
       var origins = [];
       data.map( routeData => {
@@ -140,17 +141,35 @@ console.log("Date:"+this.date);
     this.restService.saveOrder(order).subscribe((data : OrderProperties) => {
       console.log("order-create - saveOrder - rest reply:"+data.orderId+" status:"+data.bookingStatus+" msg:"+data.msg);
       this.resetVoyages();
+      //location.reload();
       //this.showOrderIdDialog(data.orderId );
        this.showOrderIdDialog(data );
+
       })
   }
   resetVoyages() {
     this.selectedOriginPort="";
     this.selectedDestinationPort="";
-
-    this.departureDate = new Date();
-
+    //this.getTomorrowsDate();
     this.dataSource.data = [];
+    this.originPorts = [];
+    this.destinationPorts = [];
+    this.departureDate = undefined;
+    this.date = undefined;
+    //this.picker1.select(undefined);
+    this.selectedProduct = "";
+    this.customerId = "";
+    var origins = [];
+    this.allRoutes.map( routeData => {
+           // combine origin and destination port (to and from routes)
+           this.originPorts.push(routeData.originPort);
+           this.originPorts.push(routeData.destinationPort);
+           this.destinationPorts.push(routeData.destinationPort);
+           this.destinationPorts.push(routeData.originPort);
+     });
+     // remove duplicates
+     this.originPorts = Array.from(new Set(this.originPorts));
+     this.allPorts = this.originPorts;
   }
   //showOrderIdDialog(orderId: string) {
   showOrderIdDialog(orderProperties: OrderProperties) {
@@ -269,23 +288,41 @@ console.log("Date:"+this.date);
 
   search() {
     console.log('search called - Origin:'+this.selectedOriginPort+' Destination:'+this.selectedDestinationPort);
-    this.restService.getMatchingVoyages(this.selectedOriginPort, this.selectedDestinationPort,this.departureDate.toISOString()).subscribe((data) => {
-      console.log(data);
-      this.dataSource.data = data;
+    if ( this.customerId && this.selectedProduct && this.productQty && this.selectedOriginPort && this.selectedDestinationPort && this.departureDate.toISOString() ) {
+        this.restService.getMatchingVoyages(this.selectedOriginPort, this.selectedDestinationPort,this.departureDate.toISOString()).subscribe((data) => {
+          console.log(data);
+          this.dataSource.data = data;
+        });
+    } else {
+      alert("Error - Required data is missing - check customerId, product, productQty, origin port, destination port and departure date");
     }
-
-    );
   }
 
+  opened() {
+    this.getTomorrowsDate();
+  }
+ toggleNoOp(ref){
+
+  }
+  toggle(ref){
+    this.getTomorrowsDate();
+  }
   ngOnInit(): void {
-    this.restService.currentDate().subscribe((data) => {
-      console.log("nextDay() - Current Date:" + data.substr(0,10));
-      // start the Date picker with tommorrow as the earliest date to order
-      this.date = new Date(new Date().setDate(new Date(data.toString()).getDate()+1));
-    });
+    this.getTomorrowsDate();
     this.dataSource.paginator = this.paginator;
-   this.send();
+    this.send();
   }
+
+  getTomorrowsDate() {
+     this.restService.tomorrowsDate().subscribe((tomorrowsDate) => {
+          this.date = this.getNowUTC(new Date(tomorrowsDate));
+          console.log("nextDay() -  Date:" + tomorrowsDate.substr(0,10));
+     });
+  }
+  private getNowUTC(now: Date) {
+    return new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
+  }
+
   ngOnDestroy() {
     console.log('Closing WebSocket Connection');
   }

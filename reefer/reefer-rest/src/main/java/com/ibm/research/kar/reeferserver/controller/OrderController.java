@@ -18,6 +18,7 @@ package com.ibm.research.kar.reeferserver.controller;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,11 +37,9 @@ import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.actors.VoyageActor;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
-import com.ibm.research.kar.reefer.model.Order;
+import com.ibm.research.kar.reefer.common.time.TimeUtils;
+import com.ibm.research.kar.reefer.model.*;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
-import com.ibm.research.kar.reefer.model.OrderProperties;
-import com.ibm.research.kar.reefer.model.OrderStats;
-import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
@@ -146,15 +145,14 @@ public class OrderController {
 		// get Java POJO with order properties from json messages
 		OrderProperties orderProperties = jsonToOrderProperties(message);
 		try {
-			// check if the new order exceeds ship's free capacity
-			int howManyReefersNeeded = Double.valueOf(Math.ceil(orderProperties.getProductQty()/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
-			if ( scheduleService.shipCapacityExceeded(orderProperties.getVoyageId(), howManyReefersNeeded)) {
+			Voyage voyage = scheduleService.getVoyage(orderProperties.getVoyageId());
+			if (TimeUtils.getInstance().getCurrentDate().isAfter(voyage.getSailDateObject())) {
 				orderProperties.setBookingStatus(Constants.FAILED);
 				orderProperties.setOrderId("N/A");
-				orderProperties.setMsg("Error - ship capacity exceeded - current available capacity:"+scheduleService.getShipCapacity(orderProperties.getVoyageId())*1000+
-						" - reduce product quantity or choose a different voyage");
+				orderProperties.setMsg(" - selected voyage has already sailed - pick another voyage");
 				return orderProperties;
 			}
+
 			Order order = orderService.createOrder(orderProperties);
 			JsonObjectBuilder orderParamsBuilder = Json.createObjectBuilder();
 			orderParamsBuilder.add("orderId", order.getId()).add("orderVoyageId", order.getVoyageId()).add("orderProductQty",
@@ -170,19 +168,29 @@ public class OrderController {
 			if ( logger.isLoggable(Level.FINE)) {
 				logger.fine("OrderController.bookOrder - Order Actor reply:" + reply);
 			}
-			order.setStatus(OrderStatus.BOOKED.getLabel());
-			// extract reefer ids assigned to the order
-			JsonArray reefers = reply.asJsonObject().getJsonObject("booking").getJsonArray("reefers");
-			// reduce ship free capacity by the number of reefers
-			int shipFreeCapacity = scheduleService.updateFreeCapacity(order.getVoyageId(), reefers.size());
-			
-			simulatorService.updateVoyageCapacity(order.getVoyageId(), shipFreeCapacity);
-			Voyage voyage = scheduleService.getVoyage(order.getVoyageId());
-			voyage.setOrderCount(voyage.getOrderCount()+1);
-			int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY);
-			gui.updateFutureOrderCount(futureOrderCount);
-			orderProperties.setBookingStatus(Constants.OK);
-			orderProperties.setMsg("");
+			if ( reply.asJsonObject().getJsonObject(JsonOrder.OrderBookingKey).getString(Constants.STATUS_KEY).equals(Constants.OK)) {
+				order.setStatus(OrderStatus.BOOKED.getLabel());
+				// extract reefer ids assigned to the order
+				JsonArray reefers = reply.asJsonObject().getJsonObject("booking").getJsonArray("reefers");
+				// reduce ship free capacity by the number of reefers
+				int shipFreeCapacity = scheduleService.updateFreeCapacity(order.getVoyageId(), reefers.size());
+
+				simulatorService.updateVoyageCapacity(order.getVoyageId(), shipFreeCapacity);
+				voyage.setOrderCount(voyage.getOrderCount()+1);
+				int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY);
+				gui.updateFutureOrderCount(futureOrderCount);
+				orderProperties.setBookingStatus(Constants.OK);
+				orderProperties.setMsg("");
+			} else {
+				orderProperties.setBookingStatus(Constants.FAILED);
+				orderProperties.setOrderId("N/A");
+				orderProperties.setMsg(reply.asJsonObject().getString("ERROR"));
+			}
+
+		} catch (VoyageNotFoundException e) {
+			logger.log(Level.WARNING,e.getMessage(),e);
+			orderProperties.setBookingStatus(Constants.FAILED);
+			orderProperties.setMsg(" - voyage not found - possibly already arrived");
 		} catch (Exception e) {
 			logger.log(Level.WARNING,e.getMessage(),e);
 			orderProperties.setBookingStatus(Constants.FAILED);

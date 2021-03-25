@@ -244,6 +244,17 @@ public class ReeferProvisionerActor extends BaseActor {
                 return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "ProductQuantityMissing")
                         .add(JsonOrder.IdKey, order.getId()).build();
             }
+            // determine number of reefers needed for the order
+            int reefersNeededForOrder = ReeferAllocator.howManyReefersNeeded( order.getProductQty());
+            // check if there are enough reefers in the inventory to satisfy the order
+            if ( !inventoryAvailable(reefersNeededForOrder)) {
+
+                return Json.createObjectBuilder().
+                        add(Constants.STATUS_KEY, "FAILED").
+                        add("ERROR", "Not enough reefers in the inventory to allocate for the order:"+
+                                order.getId()+" voyage:"+order.getVoyageId()+" number of reefers requested:"+reefersNeededForOrder).
+                        build();
+            }
             // allocate enough reefers to cary products in the order
             List<ReeferDTO> orderReefers = ReeferAllocator.allocateReefers(reeferMasterInventory, order.getProductQty(),
                     order.getId(), order.getVoyageId());
@@ -267,11 +278,27 @@ public class ReeferProvisionerActor extends BaseActor {
             return Json.createObjectBuilder().add("status", "OK").add("reefers", arrayBuilder.build())
                     .add(JsonOrder.OrderKey, order.getAsObject()).build();
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             logger.log(Level.WARNING, "ReeferProvisioner.bookReefers() - Error ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(JsonOrder.IdKey, "").build();
         }
+    }
+    private boolean inventoryAvailable(int reefersNeededForOrder) {
+        Long availableReeferCount = Arrays.stream(reeferMasterInventory).
+                filter(reefer -> {
+                    return reefer == null ||
+                            ( !reefer.getState().equals(ReeferState.State.ALLOCATED) &&
+                                    !reefer.getState().equals(ReeferState.State.MAINTENANCE) &&
+                                    !reefer.getState().equals(ReeferState.State.SPOILT)  );
+                }).
+                count();
+        if ( availableReeferCount < reefersNeededForOrder ) {
+            logger.log(Level.WARNING, "ReeferProvisioner.inventoryAvailable() - Error Not enough reefers in the inventory to allocate for the order - number of reefers requested:"+
+                    reefersNeededForOrder +" currently available:"+availableReeferCount);
+        }
+
+        return availableReeferCount >= reefersNeededForOrder;
     }
 
     /**

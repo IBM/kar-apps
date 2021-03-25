@@ -76,6 +76,9 @@ public class ReeferAllocator {
     }
     */
 
+    public static int howManyReefersNeeded(int productQuantity) {
+        return Double.valueOf(Math.ceil(productQuantity/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
+    }
     public static List<Integer> allocateReefers( ReeferState.State[] reeferStateList, int productQuantity) {
         List<Integer>  reefers = new ArrayList<>();
         // simple calculation for how many reefers are needed for the order.

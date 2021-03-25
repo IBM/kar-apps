@@ -170,8 +170,15 @@ public class OrderController {
 			if ( reply.asJsonObject().getJsonObject(JsonOrder.OrderBookingKey).getString(Constants.STATUS_KEY).equals(Constants.OK)) {
 				order.setStatus(OrderStatus.BOOKED.getLabel());
 				// extract reefer ids assigned to the order
-				JsonArray reefers = reply.asJsonObject().getJsonObject("booking").getJsonArray("reefers");
-				voyage.setOrderCount(voyage.getOrderCount()+1);
+				//JsonArray reefers = reply.asJsonObject().getJsonObject("booking").getJsonArray("reefers");
+				// voyage actor computes freeCapacity
+                int freeCapacity = reply.asJsonObject().getJsonObject("booking").getInt(Constants.VOYAGE_FREE_CAPACITY_KEY);
+				// set ship free capacity, this value will be sent to the GUI
+				scheduleService.updateFreeCapacity(order.getVoyageId(), freeCapacity);
+				// notify simulator of changed free capacity
+				simulatorService.updateVoyageCapacity(order.getVoyageId(), freeCapacity);
+
+				voyage.incrementOrderCount();
 				int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY);
 				gui.updateFutureOrderCount(futureOrderCount);
 				orderProperties.setBookingStatus(Constants.OK);

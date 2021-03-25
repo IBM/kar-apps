@@ -32,6 +32,7 @@ public class Constants {
    public static final String VOYAGE_INFO_KEY="voyage-info";
    public static final String VOYAGE_STATUS_KEY="voyage-status";
    public static final String VOYAGE_DAYSATSEA_KEY="daysAtSea";
+   public static final String VOYAGE_FREE_CAPACITY_KEY="free-capacity";
 
    public static final String REEFER_PROVISIONER_STATE_KEY="provisionerState";
 

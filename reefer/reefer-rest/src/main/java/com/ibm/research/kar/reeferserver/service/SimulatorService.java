@@ -36,6 +36,8 @@ import java.util.logging.Logger;
 @Service
 public class SimulatorService {
     private static final Logger logger = Logger.getLogger(SimulatorService.class.getName());
+
+
     public void updateVoyageCapacity(String voyageId, int freeCapacity) {
         JsonObject params = Json.createObjectBuilder().add("voyageId", voyageId).add("freeCapacity", freeCapacity)
                 .build();

@@ -92,6 +92,9 @@ public class Voyage implements Comparable<Voyage>{
     public void setOrderCount(int orderCount) {
         this.orderCount = orderCount;
     }
+    public void incrementOrderCount() {
+        this.orderCount++;
+    }
     public int getReeferCount() {
         return reeferCount;
     }

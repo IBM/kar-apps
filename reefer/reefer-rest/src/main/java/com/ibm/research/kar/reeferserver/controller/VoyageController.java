@@ -221,13 +221,6 @@ public class VoyageController {
 
     }
 
-    private void reeferInventoryChange(JsonObject req) throws VoyageNotFoundException, ShipCapacityExceeded {
-        int reeferCount = req.getInt("reeferCount");
-        String voyageId = req.getString("voyageId");
-        int shipFreeCapacity = shipScheduleService.updateFreeCapacity(voyageId, reeferCount);
-        updateSimulator(voyageId, shipFreeCapacity);
-    }
-
     /**
      * Returns a list of voyages currently at sea
      *

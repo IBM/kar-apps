@@ -175,7 +175,7 @@ public class VoyageActor extends BaseActor {
         if (orders.containsKey(order.getId())) {
             // this order has already been processed so return result
             if (bookingStatus.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-                return buildResponse(bookingStatus, order);
+                return buildResponse(bookingStatus, order, voyage.getRoute().getVessel().getFreeCapacity());
             }
             return orders.get(order.getId()).asJsonObject();
         }
@@ -199,6 +199,12 @@ public class VoyageActor extends BaseActor {
                 JsonArray reefers = bookingStatus.asJsonObject().getJsonArray(Constants.REEFERS_KEY);
                 if (reefers != null && reefers.size() > 0) {
                     voyage.setReeferCount(voyage.getReeferCount() + reefers.size());
+                    voyage.getRoute().getVessel()
+                            .setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity() - reefers.size());
+                    if (logger.isLoggable(Level.INFO)) {
+                        logger.info("VoyageActor.reserve() - Vessel " + voyage.getRoute().getVessel().getName() + " Updated Free Capacity "
+                                + voyage.getRoute().getVessel().getFreeCapacity());
+                    }
                 }
                 voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
                 JsonObjectBuilder jb = Json.createObjectBuilder();
@@ -210,7 +216,7 @@ public class VoyageActor extends BaseActor {
                         Json.createValue(order.getId()));
                 orders.put(String.valueOf(order.getId()), bookingStatus);
                 voyage.setOrderCount(orders.size());
-                return buildResponse(bookingStatus, order);
+                return buildResponse(bookingStatus, order, voyage.getRoute().getVessel().getFreeCapacity());
             }
             // return failure
             return bookingStatus.asJsonObject();
@@ -221,10 +227,12 @@ public class VoyageActor extends BaseActor {
         }
     }
 
-    private JsonObject buildResponse(final JsonValue bookingStatus, final JsonOrder order) {
+    private JsonObject buildResponse(final JsonValue bookingStatus, final JsonOrder order, final int freeCapacity) {
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
-                .add(Constants.REEFERS_KEY, bookingStatus.asJsonObject().getJsonArray(Constants.REEFERS_KEY))
-                .add(JsonOrder.OrderKey, order.getAsObject()).build();
+                //.add(Constants.REEFERS_KEY, bookingStatus.asJsonObject().getJsonArray(Constants.REEFERS_KEY))
+                .add(JsonOrder.OrderKey, order.getAsObject())
+                .add(Constants.VOYAGE_FREE_CAPACITY_KEY, freeCapacity)
+                .build();
     }
 
     /**

@@ -275,20 +275,10 @@ public class ScheduleService extends AbstractPersistentService {
         }
     }
 
-    public int updateFreeCapacity(String voyageId, int reeferCount)
-            throws VoyageNotFoundException, ShipCapacityExceeded {
+    public void updateFreeCapacity(String voyageId, int freeCapacity)
+            throws VoyageNotFoundException {
         Voyage voyage = getVoyage(voyageId);
-        if (voyage.getRoute().getVessel().getFreeCapacity() - reeferCount >= 0) {
-            voyage.getRoute().getVessel()
-                    .setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity() - reeferCount);
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("ScheduleService.updateFreeCapacity() - Vessel " + voyage.getRoute().getVessel().getName() + " Updated Free Capacity "
-                        + voyage.getRoute().getVessel().getFreeCapacity());
-            }
-            return voyage.getRoute().getVessel().getFreeCapacity();
-        }
-        throw new ShipCapacityExceeded(
-                "VoyageID:" + voyageId + " Unable to book ship due to lack of capacity. Current capacity:"
-                        + voyage.getRoute().getVessel().getFreeCapacity() + " Order reefer count:" + reeferCount);
+        voyage.getRoute().getVessel()
+                .setFreeCapacity(freeCapacity);
     }
 }

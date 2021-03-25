@@ -575,29 +575,6 @@ public class ReeferProvisionerActor extends BaseActor {
             reefer.reset();
         }
 
-       /*
-        if (reeferMasterInventory[reefer.getId()].getState().equals(ReeferState.State.MAINTENANCE)) {
-            logger.warning(
-                    "ReeferProvisionerActor.unreserveReefer() - reefer >>>>>>> " + reefer.getId() + " is on-maintenance unexpectedly - it should be spoilt instead");
-        }
-        JsonObjectBuilder jb = Json.createObjectBuilder();
-        // Reefers can be marked as spoilt only during the voyage. When a voyage ends
-        // all spoilt reefers are automatically put on maintenance.
-        if (reeferMasterInventory[reefer.getId()].getState().equals(ReeferState.State.SPOILT)) {
-            reeferMasterInventory[reefer.getId()].removeFromVoyage();
-            setReeferOnMaintenance(reeferMasterInventory[reefer.getId()],
-                    TimeUtils.getInstance().getCurrentDate().toString());
-            spoiltTotalCount.decrementAndGet();
-            jb.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount.intValue()));
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("ReeferProvisioner.unreserveReefer() - spoilt reefer:" + reefer.getId()
-                        + " arrived - changed state to OnMaintenance - total spoilt reefers:" + spoiltTotalCount.get());
-            }
-        } else {
-            reeferMasterInventory[reefer.getId()].reset();
-        }
-
-        */
         inTransitTotalCount.decrementAndGet();
         jb.add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount.intValue()));
         Kar.Actors.State.set(this, jb.build());

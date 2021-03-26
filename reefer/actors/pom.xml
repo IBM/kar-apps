@@ -6,12 +6,12 @@
 	<parent>
 		<groupId>com.ibm.research.kar.reefer</groupId>
 		<artifactId>reeferapp</artifactId>
-		<version>1.0.1-SNAPSHOT</version>
+		<version>1.0.1</version>
 	</parent>
 
 	<groupId>com.ibm.research.kar.reefer</groupId>
 	<artifactId>reefer-kar-actor-server</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<packaging>war</packaging>
 
 	<dependencies>

@@ -7,12 +7,12 @@
     <parent>
         <groupId>com.ibm.research.kar.reefer</groupId>
         <artifactId>reeferapp</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2-SNAPSHOT</version>
     </parent>
 
     <groupId>com.ibm.research.kar.reefer</groupId>
     <artifactId>reefer-kar-rest-server</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
     <name>reefer-rest-server</name>
 
 

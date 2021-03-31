@@ -63,6 +63,10 @@ async function main () {
       counts: {
 	alias: 'c',
 	description: 'output order & reefer counts'
+      },
+      stamp: {
+	alias: 's',
+	description: 'add timestamp'
       }
     })
     .argv;
@@ -106,6 +110,14 @@ async function main () {
   }
   if (argv.counts) {
     counts=argv.counts
+  }
+
+  var stamp=0
+  if ( process.env.ORDERSTATS_STAMP ) {
+    stamp=process.env.ORDERSTATS_STAMP
+  }
+  if (argv.stamp) {
+    stamp=argv.stamp
   }
 
   // reporting loop
@@ -166,7 +178,13 @@ async function main () {
 	              '\n   reefer counts:'+JSON.stringify(objrefcounts)
     }
 
-    console.log(output)
+    if ( stamp > 0 ) {
+      var timestamp = new Date().toLocaleString('en-US', { hour12: false })
+      console.log(timestamp+' '+output)
+    }
+    else {
+      console.log(output)
+    }
 
     // check if auto reset time
     if ( reset > 0 ) {

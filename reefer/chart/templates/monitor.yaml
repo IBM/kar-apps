@@ -59,3 +59,5 @@ spec:
           value: {{ .Values.reefer.monitor.reset | quote }}
         - name: ORDERSTATS_COUNTS
           value: {{ .Values.reefer.monitor.counts | quote }}
+        - name: ORDERSTATS_STAMP
+          value: {{ .Values.reefer.monitor.stamp | quote }}

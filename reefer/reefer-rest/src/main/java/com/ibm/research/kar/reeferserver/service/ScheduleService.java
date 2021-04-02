@@ -16,6 +16,9 @@
 
 package com.ibm.research.kar.reeferserver.service;
 
+import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
@@ -26,6 +29,8 @@ import com.ibm.research.kar.reeferserver.scheduler.ShippingScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import java.time.Instant;
@@ -45,6 +50,8 @@ public class ScheduleService extends AbstractPersistentService {
     private ShippingScheduler scheduler;
     @Autowired
     private TimeService timeService;
+    @Autowired
+    private OrderService orderService;
 
     private Set<Voyage> masterSchedule = new TreeSet<>();
     SortedSet<Voyage> schedule = null;
@@ -249,6 +256,17 @@ public class ScheduleService extends AbstractPersistentService {
                 });
                 logger.fine(sb.toString());
             }
+            Set<Voyage> neverArrivedList =
+                    findVoyagesBeyondArrivalDate(orderService.toJsonArray(orderService.getMutableOrderList(Constants.ACTIVE_ORDERS_KEY)));
+
+            neverArrivedList.forEach(v -> {
+                logger.warning("ScheduleService.getActiveSchedule() - voyage:"+v.getId()+" should have arrived on "+v.getArrivalDate()+" but didn't as of today "+currentDate+" - telling voyageActor change position to force arrival");
+                //v.changePosition(v.getRoute().getDaysAtSea());   // force arrival
+                ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, v.getId());
+                Kar.Actors.tell(voyageActor, "changePosition",
+                        Json.createObjectBuilder().add(Constants.VOYAGE_DAYSATSEA_KEY,Json.createValue(v.getRoute().getDaysAtSea())).build());
+                orderService.voyageArrived(v.getId());
+            });
             for (Voyage voyage : masterSchedule) {
                 if (voyage.getSailDateObject().isAfter(currentDate)) {
                     // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate
@@ -268,7 +286,21 @@ public class ScheduleService extends AbstractPersistentService {
         }
         return activeSchedule;
     }
-
+    public Set<Voyage> findVoyagesBeyondArrivalDate(JsonArray activeOrders) {
+        Instant today = TimeUtils.getInstance().getCurrentDate();
+        return activeOrders.
+                stream().
+                map(jv -> {
+                    try {
+                        return getVoyage(jv.asJsonObject().getString(Constants.VOYAGE_ID_KEY));
+                    } catch (VoyageNotFoundException e) {
+                        return null;
+                    }
+                }).
+                filter(Objects::nonNull).
+                filter(v -> TimeUtils.getInstance().getDaysBetween(Instant.parse(v.getArrivalDate()), today) > 5).
+                collect(Collectors.toSet());
+    }
     public List<Voyage> get() {
         synchronized (ScheduleService.class) {
             return new ArrayList<Voyage>(masterSchedule);

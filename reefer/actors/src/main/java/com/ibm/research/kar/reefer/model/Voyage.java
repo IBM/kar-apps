@@ -85,6 +85,12 @@ public class Voyage implements Comparable<Voyage>{
         return sailDateObject;
     }
 
+    public boolean capacityAvailable(int howManyReefersNeeded) {
+        return (getRoute().getVessel().getFreeCapacity() - howManyReefersNeeded) >= 0;
+    }
+    public void updateFreeCapacity(int reduceBy) {
+        getRoute().getVessel().setFreeCapacity( getRoute().getVessel().getFreeCapacity() - reduceBy);
+    }
     public int getOrderCount() {
         return orderCount;
     }

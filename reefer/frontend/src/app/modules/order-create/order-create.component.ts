@@ -127,8 +127,10 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
 
   }
   bookOrder(val: any) {
+  var today = new Date();
+
    const order:  OrderProperties = {
-        orderId:'',
+        orderId:today.getTime().toString(),
         customerId:val.customerId,
         product: val.product,
         productQty: val.productQty,

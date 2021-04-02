@@ -16,6 +16,9 @@
 
 package com.ibm.research.kar.reefer.model;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +53,7 @@ public class Order {
         this(orderProperties.getCustomerId(),orderProperties.getProduct(),
             orderProperties.getProductQty(),orderProperties.getVoyageId(),
             OrderStatus.PENDING.getLabel(),new ArrayList<>());
+        orderProperties.setOrderId(getId());
     }
     public Order(OrderDTO dto) {
         this(dto.getId(), dto.getCustomerId(), dto.getProduct(), 
@@ -119,5 +123,14 @@ public class Order {
 
     public void setCustomerId(String customerId) {
         this.customerId = customerId;
+    }
+
+    public JsonObject getOrderParams() {
+        JsonObjectBuilder orderParamsBuilder = Json.createObjectBuilder();
+        orderParamsBuilder.add("orderId", getId()).add("orderVoyageId", getVoyageId()).add("orderProductQty",
+                getProductQty());
+        JsonObjectBuilder jsonOrderBuilder = Json.createObjectBuilder();
+        jsonOrderBuilder.add("order", orderParamsBuilder.build());
+        return jsonOrderBuilder.build();
     }
 }

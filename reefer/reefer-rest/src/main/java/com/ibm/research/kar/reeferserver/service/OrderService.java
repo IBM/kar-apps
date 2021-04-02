@@ -166,14 +166,7 @@ public class OrderService extends AbstractPersistentService {
         return false;
     }
 
-    /**
-     * Called when a new order is received.
-     *
-     * @param orderProperties Order properties
-     * @return new Order instance
-     */
-    public Order createOrder(OrderProperties orderProperties) {
-        Order order = new Order(orderProperties);
+    public void saveOrder(Order order) {
         synchronized (OrderService.class) {
             JsonValue newOrder = Json.createObjectBuilder().
                     add("orderId", order.getId()).
@@ -182,7 +175,6 @@ public class OrderService extends AbstractPersistentService {
                     add("productQty", order.getProductQty()).
                     add("order-status", order.getStatus()).
                     build();
-
             JsonArrayBuilder bookedOrderArrayBuilder = Json
                     .createArrayBuilder(getListAJsonArray(Constants.BOOKED_ORDERS_KEY));
             bookedOrderArrayBuilder.add(newOrder);
@@ -192,10 +184,7 @@ public class OrderService extends AbstractPersistentService {
                 logger.info("OrderService.createOrder() - added future order id:" + order.getId() + " voyageId:"
                         + order.getVoyageId() + " booked Order:" + bookedOrdersArray.size());
             }
-            orderProperties.setOrderId(order.getId());
         }
-
-        return order;
     }
     public void remove(List<String> keys) {
         super.remove(keys);
@@ -216,7 +205,7 @@ public class OrderService extends AbstractPersistentService {
                 collect(Collectors.toSet());
     }
 
-    private Set<Voyage> findVoyagesBeyondArrivalDate(JsonArray activeOrders) {
+    public Set<Voyage> findVoyagesBeyondArrivalDate(JsonArray activeOrders) {
         Instant today = TimeUtils.getInstance().getCurrentDate();
         return activeOrders.
                 stream().
@@ -269,7 +258,7 @@ public class OrderService extends AbstractPersistentService {
         return 0;
     }
 
-    private JsonArray toJsonArray(List<JsonValue> list) {
+    public JsonArray toJsonArray(List<JsonValue> list) {
         JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
         for (JsonValue v : list) {
             arrayBuilder.add(v);
@@ -321,7 +310,7 @@ public class OrderService extends AbstractPersistentService {
 
     }
 
-    private List<JsonValue> getMutableOrderList(String orderListKind) {
+    public List<JsonValue> getMutableOrderList(String orderListKind) {
         // fetch immutable list of orders from Kar persistent storage
         JsonArray orders = getListAJsonArray(orderListKind);
         // Can't use Collectors.toList() here since we need mutable list. According
@@ -348,7 +337,7 @@ public class OrderService extends AbstractPersistentService {
      *
      * @param voyageId
      */
-    private void voyageArrived(String voyageId) {
+    public void voyageArrived(String voyageId) {
         synchronized (OrderService.class) {
             List<JsonValue> newSpoiltList = getMutableOrderList(Constants.SPOILT_ORDERS_KEY);
             List<JsonValue> newActiveList = getMutableOrderList(Constants.ACTIVE_ORDERS_KEY);
@@ -381,10 +370,10 @@ public class OrderService extends AbstractPersistentService {
         if (OrderStatus.DELIVERED.equals(status)) {
             voyageArrived(voyageId);
             // check if there are voyages that should have arrived but didn't (due to REST crash)
-            Set<Voyage> neverArrivedList =
-                    findVoyagesBeyondArrivalDate(toJsonArray(getMutableOrderList(Constants.ACTIVE_ORDERS_KEY)));
+  //          Set<Voyage> neverArrivedList =
+  //                  findVoyagesBeyondArrivalDate(toJsonArray(getMutableOrderList(Constants.ACTIVE_ORDERS_KEY)));
             // force arrival to reclaim reefers and clean orders
-            neverArrivedList.forEach(v -> forceArrival(v));
+ //           neverArrivedList.forEach(v -> forceArrival(v));
         } else if (OrderStatus.INTRANSIT.equals(status)) {
             voyageDeparted(voyageId);
             // check if there are voyages that should have departed but didn't (due to REST crash)

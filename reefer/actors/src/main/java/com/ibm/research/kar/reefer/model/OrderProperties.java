@@ -16,6 +16,8 @@
 
 package com.ibm.research.kar.reefer.model;
 
+import com.ibm.research.kar.reefer.common.Constants;
+
 public class OrderProperties {
     String orderId;
     String customerId;
@@ -41,16 +43,18 @@ public class OrderProperties {
         return msg;
     }
 
-    public void setMsg(String msg) {
+    public OrderProperties setMsg(String msg) {
         this.msg = msg;
+        return this;
     }
 
     public String getBookingStatus() {
         return bookingStatus;
     }
 
-    public void setBookingStatus(String bookingStatus) {
+    public OrderProperties setBookingStatus(String bookingStatus) {
         this.bookingStatus = bookingStatus;
+        return this;
     }
 
     public String getProduct() {
@@ -97,8 +101,9 @@ public class OrderProperties {
         return orderId;
     }
 
-    public void setOrderId(String orderId) {
+    public OrderProperties setOrderId(String orderId) {
         this.orderId = orderId;
+        return this;
     }
 
     public String getDate() {
@@ -116,4 +121,5 @@ public class OrderProperties {
     public void setCustomerId(String customerId) {
         this.customerId = customerId;
     }
+
 }

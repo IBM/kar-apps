@@ -92,204 +92,211 @@ public class OrderThread extends Thread {
 
 
         while (running) {
-
-            if (!SimulatorService.reeferRestRunning.get()) {
-                logger.warning("orderthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
-            } else {
-
-                // If new date ...
-                // Count any missed orders from yesterday
-                // pull fresh list of voyages within the order window
-                // compute the total order capacity, "ordercap" to be made today for each voyage
-                // set the loop count for max number of orders to make for each voyage, "updatesPerDay"
-                JsonValue date = (JsonValue) SimulatorService.currentDate.get();
-                if (startup || oneshot || !currentDate.equals(date)) {
-                    dayEndTime = System.currentTimeMillis() + 1000 * SimulatorService.unitdelay.intValue();
-                    if (updatesDoneToday < updatesPerDay) {
-                        SimulatorService.os.addMissed(updatesPerDay - updatesDoneToday);
-                        logger.warning("orderthread: " + updatesDoneToday + " of " + updatesPerDay + " completed yesterday");
-                    }
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.fine("orderthread: new day = " + date.toString());
-                    }
-                    updatesDoneToday = 0;
-                    totalOrderTime = 0;
-                    startup = false;
-                    currentDate = date;
-
-                    synchronized (SimulatorService.voyageFreeCap) {
-                        // clear so any order update between now and when the map is recreated are not lost
-                        SimulatorService.voyageFreeCap.clear();
-                    }
-
-                    // pick up any changes
-                    updatesPerDay = SimulatorService.orderupdates.intValue();
-                    if (updatesPerDay < 1) {
-                        updatesPerDay = 1;
-                    }
-
-                    // ... fetch all future voyages leaving in the next N days
-                    today = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
-
-                    int windowsize = SimulatorService.orderwindow.intValue();
-                    // ignore voyages leaving today
-                    Instant startday = today.plus(1, ChronoUnit.DAYS);
-                    Instant endday = today.plus(1 + windowsize, ChronoUnit.DAYS);
-                    endday = endday.minusSeconds(1);
-                    JsonObject message = Json.createObjectBuilder().add("startDate", startday.toString())
-                            .add("endDate", endday.toString()).build();
+            try {
 
 
-                    try {
-                        Response response = Kar.Services.post(Constants.REEFERSERVICE, "voyage/inrange", message);
-                        futureVoyages = response.readEntity(JsonValue.class);
-                    } catch (Exception e) {
-                        logger.warning("orderthread: unable to fetch future voyages from REST - cause:" + e.getMessage());
-                    }
+                if (!SimulatorService.reeferRestRunning.get()) {
+                    logger.warning("orderthread: reefer-rest service ignored. POST to simulator/togglereeferrest to enable");
+                } else {
 
-                    // Response response = Kar.Services.post(Constants.REEFERSERVICE, "voyage/inrange", message);
-                    // futureVoyages = response.readEntity(JsonValue.class);
-                    if (logger.isLoggable(Level.INFO)) {
-                        logger.info("orderthread: received " + futureVoyages.asJsonArray().size() + " future voyages");
-                    }
-
-                    // ... create MAP of target voyages with computed freecap
-                    synchronized (SimulatorService.voyageFreeCap) {
-                        for (JsonValue v : futureVoyages.asJsonArray()) {
-                            String id = v.asJsonObject().getString("id");
-                            Instant sd = Instant.parse(
-                                    v.asJsonObject().getString("sailDateObject").replaceAll("^\"|\"$", ""));
-                            int daysbefore = (int) ChronoUnit.DAYS.between(today, sd);
-                            int maxcap = v.asJsonObject().get("route").asJsonObject().get("vessel").asJsonObject()
-                                    .getInt("maxCapacity");
-                            int freecap = v.asJsonObject().get("route").asJsonObject().get("vessel")
-                                    .asJsonObject().getInt("freeCapacity");
-                            int utilization = (maxcap - freecap) * 100 / maxcap;
-
-                            // set target utilization threshold
-                            int ordertarget = SimulatorService.ordertarget.intValue() > 0
-                                    ? SimulatorService.ordertarget.intValue()
-                                    : 85;
-
-                            // compute ordercap for the day
-                            double d_ordercap = 0;
-                            if (daysbefore > 0) {
-                                d_ordercap = (ordertarget * maxcap / 100.0 - (maxcap - freecap)) / daysbefore;
-                            }
-                            int ordercap = (int) Math.ceil(d_ordercap);
-
-                            // fill map, picking up new freecap values since map was cleared
-                            if (SimulatorService.voyageFreeCap.containsKey(id)) {
-                                SimulatorService.voyageFreeCap.get(id).setDaysBefore(daysbefore);
-                                SimulatorService.voyageFreeCap.get(id).setMaxCapacity(maxcap);
-                                SimulatorService.voyageFreeCap.get(id).setOrderCapacity(ordercap);
-                                SimulatorService.voyageFreeCap.get(id).setUtilization(utilization);
-                            } else {
-                                SimulatorService.voyageFreeCap.put(id,
-                                        new FutureVoyage(daysbefore, maxcap, freecap, ordercap, utilization));
-                            }
+                    // If new date ...
+                    // Count any missed orders from yesterday
+                    // pull fresh list of voyages within the order window
+                    // compute the total order capacity, "ordercap" to be made today for each voyage
+                    // set the loop count for max number of orders to make for each voyage, "updatesPerDay"
+                    JsonValue date = (JsonValue) SimulatorService.currentDate.get();
+                    if (startup || oneshot || !currentDate.equals(date)) {
+                        dayEndTime = System.currentTimeMillis() + 1000 * SimulatorService.unitdelay.intValue();
+                        if (updatesDoneToday < updatesPerDay) {
+                            SimulatorService.os.addMissed(updatesPerDay - updatesDoneToday);
+                            logger.warning("orderthread: " + updatesDoneToday + " of " + updatesPerDay + " completed yesterday");
                         }
-                    }
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.fine("orderthread: dumping voyageFreeCap MAP ----------");
-                        SimulatorService.voyageFreeCap.forEach((key, value) ->
-                                logger.fine("orderthread: " + key + " " + value.toString()));
-                    }
-                }
+                        if (logger.isLoggable(Level.FINE)) {
+                            logger.fine("orderthread: new day = " + date.toString());
+                        }
+                        updatesDoneToday = 0;
+                        totalOrderTime = 0;
+                        startup = false;
+                        currentDate = date;
 
-                // Update processing ...
-                if (updatesPerDay > updatesDoneToday++) {
-                    long snapshot = System.currentTimeMillis();
-                    // create one order for every voyage below threshold
-                    for (Entry<String, FutureVoyage> entry : SimulatorService.voyageFreeCap.entrySet()) {
-                        // System.out.println(entry.getKey() + "/" + entry.getValue());
-                        if (entry.getValue().orderCapacity > 0) {
-                            // divide orderCap into specified number of orders per day
-                            int ordersize = (entry.getValue().orderCapacity * 1000) / updatesPerDay;
-                            if (logger.isLoggable(Level.FINE)) {
-                                logger.fine("orderthread: create order size=" + ordersize + " for " + entry.getKey());
-                            }
-                            JsonObject order = Json.createObjectBuilder().add("voyageId", entry.getKey())
-                                    .add("customerId", "simulator").add("product", "pseudoBanana")
-                                    .add("productQty", ordersize).build();
-                            long ordersnap = System.nanoTime();
-                            JsonValue rsp = null;
+                        synchronized (SimulatorService.voyageFreeCap) {
+                            // clear so any order update between now and when the map is recreated are not lost
+                            SimulatorService.voyageFreeCap.clear();
+                        }
 
-                            try {
-                                Response response = Kar.Services.post(Constants.REEFERSERVICE, "orders", order);
-                                rsp = response.readEntity(JsonValue.class);
-                            } catch (Exception e) {
-                                logger.warning("orderthread: error posting order " + e.toString());
-                            }
-                            if (null == rsp || null == rsp.asJsonObject().getString("voyageId")) {
-                                SimulatorService.os.addFailed();
-                                logger.warning("orderthread: bad response when submitting order: " + order.toString());
-                            } else {
-                                int otime = (int) ((System.nanoTime() - ordersnap) / 1000000);
-                                if (SimulatorService.os.addSuccessful(otime)) {
-                                    // orderstats indicates an outlier
-                                    String orderid = rsp.asJsonObject().getString("orderId");
-                                    logger.warning("orderthread: order latency outlier voyage=" + entry.getKey() +
-                                            " order=" + orderid + " ===> " + otime);
+                        // pick up any changes
+                        updatesPerDay = SimulatorService.orderupdates.intValue();
+                        if (updatesPerDay < 1) {
+                            updatesPerDay = 1;
+                        }
+
+                        // ... fetch all future voyages leaving in the next N days
+                        today = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
+
+                        int windowsize = SimulatorService.orderwindow.intValue();
+                        // ignore voyages leaving today
+                        Instant startday = today.plus(1, ChronoUnit.DAYS);
+                        Instant endday = today.plus(1 + windowsize, ChronoUnit.DAYS);
+                        endday = endday.minusSeconds(1);
+                        JsonObject message = Json.createObjectBuilder().add("startDate", startday.toString())
+                                .add("endDate", endday.toString()).build();
+
+
+                        try {
+                            Response response = Kar.Services.post(Constants.REEFERSERVICE, "voyage/inrange", message);
+                            futureVoyages = response.readEntity(JsonValue.class);
+                        } catch (Exception e) {
+                            logger.warning("orderthread: unable to fetch future voyages from REST - cause:" + e.getMessage());
+                        }
+
+                        // Response response = Kar.Services.post(Constants.REEFERSERVICE, "voyage/inrange", message);
+                        // futureVoyages = response.readEntity(JsonValue.class);
+                        if (logger.isLoggable(Level.INFO)) {
+                            logger.info("orderthread: received " + futureVoyages.asJsonArray().size() + " future voyages");
+                        }
+
+                        // ... create MAP of target voyages with computed freecap
+                        synchronized (SimulatorService.voyageFreeCap) {
+                            for (JsonValue v : futureVoyages.asJsonArray()) {
+                                String id = v.asJsonObject().getString("id");
+                                Instant sd = Instant.parse(
+                                        v.asJsonObject().getString("sailDateObject").replaceAll("^\"|\"$", ""));
+                                int daysbefore = (int) ChronoUnit.DAYS.between(today, sd);
+                                int maxcap = v.asJsonObject().get("route").asJsonObject().get("vessel").asJsonObject()
+                                        .getInt("maxCapacity");
+                                int freecap = v.asJsonObject().get("route").asJsonObject().get("vessel")
+                                        .asJsonObject().getInt("freeCapacity");
+                                int utilization = (maxcap - freecap) * 100 / maxcap;
+
+                                // set target utilization threshold
+                                int ordertarget = SimulatorService.ordertarget.intValue() > 0
+                                        ? SimulatorService.ordertarget.intValue()
+                                        : 85;
+
+                                // compute ordercap for the day
+                                double d_ordercap = 0;
+                                if (daysbefore > 0) {
+                                    d_ordercap = (ordertarget * maxcap / 100.0 - (maxcap - freecap)) / daysbefore;
+                                }
+                                int ordercap = (int) Math.ceil(d_ordercap);
+
+                                // fill map, picking up new freecap values since map was cleared
+                                if (SimulatorService.voyageFreeCap.containsKey(id)) {
+                                    SimulatorService.voyageFreeCap.get(id).setDaysBefore(daysbefore);
+                                    SimulatorService.voyageFreeCap.get(id).setMaxCapacity(maxcap);
+                                    SimulatorService.voyageFreeCap.get(id).setOrderCapacity(ordercap);
+                                    SimulatorService.voyageFreeCap.get(id).setUtilization(utilization);
+                                } else {
+                                    SimulatorService.voyageFreeCap.put(id,
+                                            new FutureVoyage(daysbefore, maxcap, freecap, ordercap, utilization));
                                 }
                             }
                         }
-                    }
-                    totalOrderTime += System.currentTimeMillis() - snapshot;
-                }
-            }
-
-            // sleep if not a oneshot order command
-            if (!oneshot) {
-                try {
-                    long timeToSleep = 990 * SimulatorService.unitdelay.intValue();
-                    // compute next sleep time
-                    if (SimulatorService.reeferRestRunning.get()) {
-                        long timeRemaining = dayEndTime - System.currentTimeMillis();
-                        long orderTimeRemaining = totalOrderTime / updatesDoneToday * (updatesPerDay - updatesDoneToday);
-                        if (timeRemaining < 1 && orderTimeRemaining > 0) {
-                            timeToSleep = 10;
-                        } else if (orderTimeRemaining > 0 && timeRemaining > 0) {
-                            timeToSleep = (timeRemaining - orderTimeRemaining) / (1 + updatesPerDay - updatesDoneToday);
-                            timeToSleep = (timeToSleep < 10) ? 10 : timeToSleep;
-                        } else {
-                            timeToSleep = 1000 * SimulatorService.unitdelay.intValue();
-                        }
                         if (logger.isLoggable(Level.FINE)) {
-                            logger.fine("orderthread: timeRemaining=" + timeRemaining + " orderTimeRemaining=" + orderTimeRemaining +
-                                    " totalOrderTime=" + totalOrderTime + " updatesDoneToday=" + updatesDoneToday + " timeToSleep=" + timeToSleep);
+                            logger.fine("orderthread: dumping voyageFreeCap MAP ----------");
+                            SimulatorService.voyageFreeCap.forEach((key, value) ->
+                                    logger.fine("orderthread: " + key + " " + value.toString()));
                         }
                     }
-                    Thread.sleep(timeToSleep);
-                } catch (InterruptedException e) {
-                    // this is expected
+
+                    // Update processing ...
+                    if (updatesPerDay > updatesDoneToday++) {
+                        long snapshot = System.currentTimeMillis();
+                        // create one order for every voyage below threshold
+                        for (Entry<String, FutureVoyage> entry : SimulatorService.voyageFreeCap.entrySet()) {
+                            // System.out.println(entry.getKey() + "/" + entry.getValue());
+                            if (entry.getValue().orderCapacity > 0) {
+                                // divide orderCap into specified number of orders per day
+                                int ordersize = (entry.getValue().orderCapacity * 1000) / updatesPerDay;
+                                if (logger.isLoggable(Level.FINE)) {
+                                    logger.fine("orderthread: create order size=" + ordersize + " for " + entry.getKey());
+                                }
+                                JsonObject order = Json.createObjectBuilder().add("voyageId", entry.getKey())
+                                        .add("customerId", "simulator").add("product", "pseudoBanana")
+                                        .add("productQty", ordersize).build();
+                                long ordersnap = System.nanoTime();
+                                JsonValue rsp = null;
+
+                                try {
+                                    Response response = Kar.Services.post(Constants.REEFERSERVICE, "orders", order);
+                                    rsp = response.readEntity(JsonValue.class);
+                                } catch (Exception e) {
+                                    logger.warning("orderthread: error posting order " + e.toString());
+                                }
+                                if (null == rsp || !Constants.OK.equals(rsp.asJsonObject().getString("bookingStatus")) || null == rsp.asJsonObject().getString("voyageId")) {
+                                    SimulatorService.os.addFailed();
+                                    logger.warning("orderthread: bad response when submitting order: " + order.toString() + "\nresponse:" + rsp);
+                                } else {
+                                    int otime = (int) ((System.nanoTime() - ordersnap) / 1000000);
+                                    if (SimulatorService.os.addSuccessful(otime)) {
+                                        // orderstats indicates an outlier
+                                        String orderid = rsp.asJsonObject().getString("orderId");
+                                        logger.warning("orderthread: order latency outlier voyage=" + entry.getKey() +
+                                                " order=" + orderid + " ===> " + otime);
+                                    }
+                                }
+                            }
+                        }
+                        totalOrderTime += System.currentTimeMillis() - snapshot;
+                    }
                 }
-            }
 
-            // check if auto mode should be turned off
-            synchronized (SimulatorService.ordertarget) {
-                if (0 == SimulatorService.ordertarget.intValue()
-                        || 0 == SimulatorService.unitdelay.intValue() || oneshot) {
-                    if (logger.isLoggable(Level.INFO)) {
-                        logger.info("orderthread: Stopping Thread " + Thread.currentThread().getId() + " LOUD HORN");
+                // sleep if not a oneshot order command
+                if (!oneshot) {
+                    try {
+                        long timeToSleep = 990 * SimulatorService.unitdelay.intValue();
+                        // compute next sleep time
+                        if (SimulatorService.reeferRestRunning.get()) {
+                            long timeRemaining = dayEndTime - System.currentTimeMillis();
+                            long orderTimeRemaining = totalOrderTime / updatesDoneToday * (updatesPerDay - updatesDoneToday);
+                            if (timeRemaining < 1 && orderTimeRemaining > 0) {
+                                timeToSleep = 10;
+                            } else if (orderTimeRemaining > 0 && timeRemaining > 0) {
+                                timeToSleep = (timeRemaining - orderTimeRemaining) / (1 + updatesPerDay - updatesDoneToday);
+                                timeToSleep = (timeToSleep < 10) ? 10 : timeToSleep;
+                            } else {
+                                timeToSleep = 1000 * SimulatorService.unitdelay.intValue();
+                            }
+                            if (logger.isLoggable(Level.FINE)) {
+                                logger.fine("orderthread: timeRemaining=" + timeRemaining + " orderTimeRemaining=" + orderTimeRemaining +
+                                        " totalOrderTime=" + totalOrderTime + " updatesDoneToday=" + updatesDoneToday + " timeToSleep=" + timeToSleep);
+                            }
+                        }
+                        Thread.sleep(timeToSleep);
+                    } catch (InterruptedException e) {
+                        // this is expected
                     }
-                    running = false;
+                }
 
-                    if (0 < SimulatorService.orderthreadcount.decrementAndGet()) {
-                        logger.warning("orderthread: we have an extra ship thread running!");
-                    }
+                // check if auto mode should be turned off
+                synchronized (SimulatorService.ordertarget) {
+                    if (0 == SimulatorService.ordertarget.intValue()
+                            || 0 == SimulatorService.unitdelay.intValue() || oneshot) {
+                        if (logger.isLoggable(Level.INFO)) {
+                            logger.info("orderthread: Stopping Thread " + Thread.currentThread().getId() + " LOUD HORN");
+                        }
+                        running = false;
 
-                    // check for threads leftover from a hot method replace
-                    Set<Thread> threadset = Thread.getAllStackTraces().keySet();
-                    for (Thread thread : threadset) {
-                        if (thread.getName().equals("orderthread")
-                                && thread.getId() != Thread.currentThread().getId()) {
-                            logger.warning("orderthread: killing leftover order threadid=" + thread.getId());
-                            thread.interrupt();
+                        if (0 < SimulatorService.orderthreadcount.decrementAndGet()) {
+                            logger.warning("orderthread: we have an extra ship thread running!");
+                        }
+
+                        // check for threads leftover from a hot method replace
+                        Set<Thread> threadset = Thread.getAllStackTraces().keySet();
+                        for (Thread thread : threadset) {
+                            if (thread.getName().equals("orderthread")
+                                    && thread.getId() != Thread.currentThread().getId()) {
+                                logger.warning("orderthread: killing leftover order threadid=" + thread.getId());
+                                thread.interrupt();
+                            }
                         }
                     }
                 }
+            } catch (Throwable e) {
+                logger.warning("orderthread:" + e);
             }
         }
+        logger.warning("orderthread: Thread terminated");
     }
+
 }

@@ -198,14 +198,6 @@ public class ReeferProvisionerActor extends BaseActor {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("ReeferProvisionerActor.voyageReefersDeparted() - message:" + message + " update reefers in transit:" + voyageReefersInTransit);
         }
-        // incoming message includes number of reefers on a voyage. Verification is made to
-        // make sure expected matches 'actual computed above
-        if (message.containsKey(Constants.VOYAGE_REEFERS_KEY)) {
-            int expectedVoyageReeferCount = message.getInt(Constants.VOYAGE_REEFERS_KEY);
-            if (expectedVoyageReeferCount != voyageReefersInTransit) {
-                logger.log(Level.WARNING, "ReeferProvisioner.voyageReefersDeparted() - actual reefer count does not match reefers in-transit for voyage:" + voyageId + " expected count:" + expectedVoyageReeferCount + " computed count:" + voyageReefersInTransit);
-            }
-        }
 
         if (voyageReefersInTransit > 0) {
             if ((bookedTotalCount.get() - voyageReefersInTransit.intValue()) >= 0) {
@@ -234,10 +226,10 @@ public class ReeferProvisionerActor extends BaseActor {
         try {
             // wrap Json with POJO
             JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
-            // check if this method is being called more than once for the same order
+            // idempotence check if this method is being called more than once for the same order
             List<String> ids = orderReeferList(order.getId());
             if (!ids.isEmpty()) {
-                return Json.createObjectBuilder().add("status", "OK").add("reefers", Json.createArrayBuilder(ids).build())
+                return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add("reefers", Json.createArrayBuilder(ids).build())
                         .add(JsonOrder.OrderKey, order.getAsObject()).build();
             }
             if (!order.containsKey(JsonOrder.ProductQtyKey)) {
@@ -275,7 +267,7 @@ public class ReeferProvisionerActor extends BaseActor {
             }
             // forces update thread to send reefer counts
             valuesChanged.set(true);
-            return Json.createObjectBuilder().add("status", "OK").add("reefers", arrayBuilder.build())
+            return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add("reefers", arrayBuilder.build())
                     .add(JsonOrder.OrderKey, order.getAsObject()).build();
 
         } catch (Throwable e) {
@@ -601,8 +593,9 @@ public class ReeferProvisionerActor extends BaseActor {
         } else {
             reefer.reset();
         }
-
-        inTransitTotalCount.decrementAndGet();
+        if ( inTransitTotalCount.get() > 0 ) {
+            inTransitTotalCount.decrementAndGet();
+        }
         jb.add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount.intValue()));
         Kar.Actors.State.set(this, jb.build());
 

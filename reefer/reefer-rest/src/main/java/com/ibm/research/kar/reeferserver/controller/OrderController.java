@@ -88,18 +88,23 @@ public class OrderController {
 			JsonObject req = jsonReader.readObject();
 
 			voyageId = req.getString(Constants.VOYAGE_ID_KEY);
-			Voyage voyage = scheduleService.getVoyage(voyageId);
-			
-			orderProperties.setProduct(req.getString("product"));
-			orderProperties.setProductQty(req.getInt("productQty"));
-			String customerId = "N/A";
-			if (req.containsKey("customerId")) {
-				customerId = req.getString("customerId");
+			Voyage voyage;
+			try {
+				voyage = scheduleService.getVoyage(voyageId);
+				orderProperties.setProduct(req.getString("product"));
+				orderProperties.setProductQty(req.getInt("productQty"));
+				String customerId = "N/A";
+				if (req.containsKey("customerId")) {
+					customerId = req.getString("customerId");
+				}
+				orderProperties.setCustomerId(customerId);
+				orderProperties.setVoyageId(voyageId);
+				orderProperties.setOriginPort(voyage.getRoute().getOriginPort());
+				orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
+			} catch(VoyageNotFoundException vnfe) {
+				orderProperties.setBookingStatus(Constants.FAILED).setMsg(" - voyage not found - possibly already arrived");
 			}
-			orderProperties.setCustomerId(customerId);
-			orderProperties.setVoyageId(voyageId);
-			orderProperties.setOriginPort(voyage.getRoute().getOriginPort());
-			orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
+
 		} catch (Exception e) {
 			logger.log(Level.WARNING,e.getMessage(),e);
 		}
@@ -120,6 +125,7 @@ public class OrderController {
 			JsonObject req = jsonReader.readObject();
 			String spoiltOrderId = req.getString(Constants.ORDER_ID_KEY);
 			if ( !orderService.orderAlreadySpoilt(spoiltOrderId)) {
+				// add order to the spoilt list
 				int totalSpoiltOrders = orderService.orderSpoilt(spoiltOrderId);
 				if ( logger.isLoggable(Level.INFO)) {
 					logger.info("OrderController.orderSpoilt() - order id:"+ spoiltOrderId+" has spoilt. Total spoilt orders:"+totalSpoiltOrders);
@@ -142,61 +148,53 @@ public class OrderController {
 		if ( logger.isLoggable(Level.FINE)) {
 			logger.fine("OrderController.bookOrder - Called -" + message);
 		}
-		// get Java POJO with order properties from json messages
-		OrderProperties orderProperties = jsonToOrderProperties(message);
+		OrderProperties orderProperties=null;
 		try {
+			// get Java POJO with order properties from json messages
+			orderProperties = jsonToOrderProperties(message);
 			Voyage voyage = scheduleService.getVoyage(orderProperties.getVoyageId());
+			// check if the provided voyage has already sailed. This is likely when creating manual orders
+			// through a GUI when days are short. By the time order details are provided by a user, the
+			// ship may have departed.
 			if (TimeUtils.getInstance().getCurrentDate().isAfter(voyage.getSailDateObject())) {
-				orderProperties.setBookingStatus(Constants.FAILED);
-				orderProperties.setOrderId("N/A");
-				orderProperties.setMsg(" - selected voyage has already sailed - pick another voyage");
+				orderProperties.setBookingStatus(Constants.FAILED).setOrderId("N/A").setMsg(" - selected voyage has already sailed - pick another voyage");
 				return orderProperties;
 			}
-
-			Order order = orderService.createOrder(orderProperties);
-			JsonObjectBuilder orderParamsBuilder = Json.createObjectBuilder();
-			orderParamsBuilder.add("orderId", order.getId()).add("orderVoyageId", order.getVoyageId()).add("orderProductQty",
-					order.getProductQty());
-			JsonObjectBuilder jsonOrderBuilder = Json.createObjectBuilder();
-			jsonOrderBuilder.add("order", orderParamsBuilder.build());
-			JsonObject params = jsonOrderBuilder.build();
-
+			Order order = new Order(orderProperties);
 			ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
-			// call Order actor to create the order
-			JsonValue reply = Kar.Actors.call(orderActor, "createOrder", params);
+			// call Order actor to create the order. This may time out
+			JsonValue reply = Kar.Actors.call(orderActor, "createOrder", order.getOrderParams());
 			if ( logger.isLoggable(Level.FINE)) {
 				logger.fine("OrderController.bookOrder - Order Actor reply:" + reply);
 			}
-			if ( reply.asJsonObject().getJsonObject(JsonOrder.OrderBookingKey).getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-				order.setStatus(OrderStatus.BOOKED.getLabel());
-				// extract reefer ids assigned to the order
-				//JsonArray reefers = reply.asJsonObject().getJsonObject("booking").getJsonArray("reefers");
-				// voyage actor computes freeCapacity
-                int freeCapacity = reply.asJsonObject().getJsonObject("booking").getInt(Constants.VOYAGE_FREE_CAPACITY_KEY);
-				// set ship free capacity, this value will be sent to the GUI
-				scheduleService.updateFreeCapacity(order.getVoyageId(), freeCapacity);
-				// notify simulator of changed free capacity
-				simulatorService.updateVoyageCapacity(order.getVoyageId(), freeCapacity);
-
-				voyage.incrementOrderCount();
-				int futureOrderCount = orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY);
-				gui.updateFutureOrderCount(futureOrderCount);
-				orderProperties.setBookingStatus(Constants.OK);
-				orderProperties.setMsg("");
+			if ( reply != null && reply.asJsonObject() != null && reply.asJsonObject().containsKey(Constants.STATUS_KEY)) {
+				// check if the order was booked
+				if ( reply.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
+					orderService.saveOrder(order);
+					order.setStatus(OrderStatus.BOOKED.getLabel());
+					// voyage actor computes freeCapacity
+					int freeCapacity = reply.asJsonObject().getInt(Constants.VOYAGE_FREE_CAPACITY_KEY);
+					// set ship free capacity, this value will be sent to the GUI
+					voyage.getRoute().getVessel()
+							.setFreeCapacity(freeCapacity);
+					// notify simulator of changed free capacity
+					simulatorService.updateVoyageCapacity(order.getVoyageId(), freeCapacity);
+					voyage.incrementOrderCount();
+					gui.updateFutureOrderCount(orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY));
+					orderProperties.setBookingStatus(Constants.OK).setMsg("");;
+				} else {
+					orderProperties.setBookingStatus(Constants.FAILED).setOrderId("N/A").setMsg(reply.asJsonObject().getString("ERROR"));
+				}
 			} else {
-				orderProperties.setBookingStatus(Constants.FAILED);
-				orderProperties.setOrderId("N/A");
-				orderProperties.setMsg(reply.asJsonObject().getString("ERROR"));
+				logger.log(Level.WARNING,"OrderController.bookOrder() - unexpected reply format - reply:"+reply);
 			}
+
 
 		} catch (VoyageNotFoundException e) {
 			logger.log(Level.WARNING,e.getMessage(),e);
-			orderProperties.setBookingStatus(Constants.FAILED);
-			orderProperties.setMsg(" - voyage not found - possibly already arrived");
 		} catch (Exception e) {
 			logger.log(Level.WARNING,e.getMessage(),e);
-			orderProperties.setBookingStatus(Constants.FAILED);
-			orderProperties.setMsg(e.getMessage());
+			orderProperties.setBookingStatus(Constants.FAILED).setMsg(e.getMessage());
 		}
 		return orderProperties;
 	}

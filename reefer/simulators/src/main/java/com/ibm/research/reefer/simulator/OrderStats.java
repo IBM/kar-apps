@@ -18,11 +18,16 @@ package com.ibm.research.reefer.simulator;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 // Class for accumulating order statistics
 // Method for computing running mean and standard deviation from
 // "Note on a Method for Calculating Corrected Sums of Squares and Products"
 // B. P. Welford, Pages 419-420 | Published online: 30 Apr 2012
+
+// Outlier threshold can be explicitly set (t>0) or dynamically computed (t==0)
+// latencies ignored for orders that failed
+// missed order count represents 
 
 public class OrderStats {
   private int successful_orders;
@@ -35,6 +40,7 @@ public class OrderStats {
   private int max_latency;
   private int outliers;
   private double threshold;
+  private int stat_count;
 
   public OrderStats(int t) {
     this.successful_orders = 0;
@@ -47,9 +53,10 @@ public class OrderStats {
     this.max_latency = 0;
     this.outliers = 0;
     this.threshold = t;
+    this.stat_count = 0;
   }
 
-  public OrderStats(int s, int f, int m, double om, double nm, double os, double ns, int ml, int or, double t) {
+  public OrderStats(int s, int f, int m, double om, double nm, double os, double ns, int ml, int or, double t, int sc) {
     this.successful_orders = s;
     this.failed_orders = f;
     this.missed_orders = m;
@@ -60,31 +67,40 @@ public class OrderStats {
     this.max_latency = ml;
     this.outliers = or;
     this.threshold = t;
+    this.stat_count = sc;
   }
 
+  // return true if latency is an outlier
   public boolean addSuccessful(int latency) {
     double thresh;
     synchronized (this) {
+      successful_orders++;
       if (latency > this.max_latency) {
         this.max_latency = latency;
       }
+      // threshold manually set
       if (this.threshold > 0) {
         thresh = this.threshold;
+        if (latency > thresh) {
+          outliers++;
+          return true;
+        }
       }
+      // threshold is dynamic, but need at least 10 latencies to use the estimate
       else {
         thresh = ( 3*getMean() > getMean()+5*getStddev() ) ? 3*getMean() : getMean()+5*getStddev();
+        if (latency > thresh && stat_count > 10) {
+          outliers++;
+          return true;
+        }
       }
-      if (latency > thresh && successful_orders > 10) {
-        outliers++;
-        return true;
-      }
-      successful_orders++;
-      if (successful_orders == 1) {
+      stat_count++;
+      if (stat_count == 1) {
         newM = oldM = latency;
         oldS = 0.0;
       }
       else {
-        newM = oldM + (latency - oldM)/successful_orders;
+        newM = oldM + (latency - oldM)/stat_count;
         newS = oldS + (latency - oldM)*(latency - newM);
         oldM = newM;
         oldS = newS;
@@ -118,11 +134,11 @@ public class OrderStats {
   }
 
   public double getMean() {
-    return (successful_orders > 0) ? newM : 0.0;
+    return (stat_count > 0) ? newM : 0.0;
   }
 
   public double getVar() {
-    return (successful_orders > 1) ? newS/(successful_orders - 1) : 0.0;
+    return (stat_count > 1) ? newS/(stat_count - 1) : 0.0;
   }
 
   public double getStddev() {
@@ -148,7 +164,8 @@ public class OrderStats {
         return (OrderStats) super.clone();
       } catch (CloneNotSupportedException e) {
         return new OrderStats(this.successful_orders, this.failed_orders, this.missed_orders,
-                this.oldM, this.newM, this.oldS, this.newS, this.max_latency, this.outliers, this.threshold);
+                this.oldM, this.newM, this.oldS, this.newS, this.max_latency, this.outliers,
+                this.threshold, this.stat_count);
       }
     }
   }
@@ -162,13 +179,14 @@ public class OrderStats {
     }
     
     OrderStats os = new OrderStats(0);
-    for (int i=1; i<=10; i++) {
+    Random rng = new Random();
+    for (int i=1; i<=100; i++) {
       switch (args[0]) {
-        case "successful" :  os.addSuccessful(i);
+        case "successful" :  os.addSuccessful((int) Math.round(rng.nextGaussian()*10+50));
         continue;
         case "failed" :  os.addFailed();
         continue;
-        case "missed" :  os.addMissed(i);
+        case "missed" :  os.addMissed(rng.nextInt(2));
         continue;
       }
     }

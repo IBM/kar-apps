@@ -33,6 +33,7 @@ import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferState;
+import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.OrderStatus;
 
 @Actor
@@ -146,13 +147,13 @@ public class ReeferActor extends BaseActor {
                 // reefer in-transit becomes spoilt and will transition to on-maintenance when ship arrives in port
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name()).add(Constants.ORDER_STATUS_KEY,
-                        OrderStatus.INTRANSIT.name());
+                        Order.OrderStatus.INTRANSIT.name());
             } else if ( orderBooked(orderReply)) {
                 // Booked orders have not yet departed. Spoiled reefers must be replaced in such
                 // case.
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.SPOILT.name()));
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name()).add(Constants.ORDER_STATUS_KEY,
-                        OrderStatus.BOOKED.name());
+                        Order.OrderStatus.BOOKED.name());
             } else {
                 // reefer neither booked nor in-transit goes on maintenance 
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.MAINTENANCE.name()));
@@ -169,10 +170,10 @@ public class ReeferActor extends BaseActor {
         return reply.build();
     }
     private boolean orderBooked( JsonObject orderReply) {
-        return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name());
+        return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(Order.OrderStatus.BOOKED.name());
     }
     private boolean orderInTransit(JsonObject orderReply) {
-        return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.INTRANSIT.name());
+        return orderReply.getString(Constants.ORDER_STATUS_KEY).equals(Order.OrderStatus.INTRANSIT.name());
     }
     /**
      * Notify Order actor about anomaly

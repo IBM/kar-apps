@@ -256,6 +256,7 @@ public class ScheduleService extends AbstractPersistentService {
                 });
                 logger.fine(sb.toString());
             }
+            /*
             Set<Voyage> neverArrivedList =
                     findVoyagesBeyondArrivalDate(orderService.toJsonArray(orderService.getMutableOrderList(Constants.ACTIVE_ORDERS_KEY)));
 
@@ -267,6 +268,8 @@ public class ScheduleService extends AbstractPersistentService {
                         Json.createObjectBuilder().add(Constants.VOYAGE_DAYSATSEA_KEY,Json.createValue(v.getRoute().getDaysAtSea())).build());
                 orderService.voyageArrived(v.getId());
             });
+
+             */
             for (Voyage voyage : masterSchedule) {
                 if (voyage.getSailDateObject().isAfter(currentDate)) {
                     // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate

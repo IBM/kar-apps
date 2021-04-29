@@ -91,11 +91,11 @@ public class OrderController {
 			Voyage voyage;
 			try {
 				voyage = scheduleService.getVoyage(voyageId);
-				orderProperties.setProduct(req.getString("product"));
-				orderProperties.setProductQty(req.getInt("productQty"));
+				orderProperties.setProduct(req.getString(Constants.ORDER_PRODUCT_KEY));
+				orderProperties.setProductQty(req.getInt(Constants.ORDER_PRODUCT_QTY_KEY));
 				String customerId = "N/A";
-				if (req.containsKey("customerId")) {
-					customerId = req.getString("customerId");
+				if (req.containsKey(Constants.ORDER_CUSTOMER_ID_KEY)) {
+					customerId = req.getString(Constants.ORDER_CUSTOMER_ID_KEY);
 				}
 				orderProperties.setCustomerId(customerId);
 				orderProperties.setVoyageId(voyageId);
@@ -130,6 +130,7 @@ public class OrderController {
 				if ( logger.isLoggable(Level.INFO)) {
 					logger.info("OrderController.orderSpoilt() - order id:"+ spoiltOrderId+" has spoilt. Total spoilt orders:"+totalSpoiltOrders);
 				}
+				//System.out.println("OrderController.orderSpoilt() - order id:"+ spoiltOrderId+" has spoilt. Total spoilt orders:"+totalSpoiltOrders);
 				gui.updateSpoiltOrderCount(totalSpoiltOrders);
 			}
 		} catch (Exception e) {
@@ -148,6 +149,7 @@ public class OrderController {
 		if ( logger.isLoggable(Level.FINE)) {
 			logger.fine("OrderController.bookOrder - Called -" + message);
 		}
+		long tt = System.currentTimeMillis();
 		OrderProperties orderProperties=null;
 		try {
 			// get Java POJO with order properties from json messages
@@ -161,24 +163,31 @@ public class OrderController {
 				return orderProperties;
 			}
 			Order order = new Order(orderProperties);
+			long t = System.currentTimeMillis();
 			ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
 			// call Order actor to create the order. This may time out
 			JsonValue reply = Kar.Actors.call(orderActor, "createOrder", order.getOrderParams());
+			System.out.println("OrderController.bookOrder -  id: "+order.getId()+ " Order Actor reserve process time:"+(System.currentTimeMillis() - t)+" millis");
 			if ( logger.isLoggable(Level.FINE)) {
 				logger.fine("OrderController.bookOrder - Order Actor reply:" + reply);
 			}
 			if ( reply != null && reply.asJsonObject() != null && reply.asJsonObject().containsKey(Constants.STATUS_KEY)) {
 				// check if the order was booked
 				if ( reply.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-					orderService.saveOrder(order);
+					t = System.currentTimeMillis();
 					order.setStatus(OrderStatus.BOOKED.getLabel());
+					orderService.saveOrder(order);
+					System.out.println("OrderController.bookOrder() - time to save order:"+(System.currentTimeMillis() - t)+" millis");
+
 					// voyage actor computes freeCapacity
 					int freeCapacity = reply.asJsonObject().getInt(Constants.VOYAGE_FREE_CAPACITY_KEY);
 					// set ship free capacity, this value will be sent to the GUI
 					voyage.getRoute().getVessel()
 							.setFreeCapacity(freeCapacity);
 					// notify simulator of changed free capacity
+					t = System.currentTimeMillis();
 					simulatorService.updateVoyageCapacity(order.getVoyageId(), freeCapacity);
+					System.out.println("OrderController.bookOrder() - update sim capacity call:"+(System.currentTimeMillis() - t)+" millis");
 					voyage.incrementOrderCount();
 					gui.updateFutureOrderCount(orderService.getOrderCount(Constants.BOOKED_ORDERS_KEY));
 					orderProperties.setBookingStatus(Constants.OK).setMsg("");;
@@ -195,6 +204,8 @@ public class OrderController {
 		} catch (Exception e) {
 			logger.log(Level.WARNING,e.getMessage(),e);
 			orderProperties.setBookingStatus(Constants.FAILED).setMsg(e.getMessage());
+		}  finally {
+			System.out.println("OrderController.bookOrder() - time spent processing in this method:"+(System.currentTimeMillis() - tt)+" millis");
 		}
 		return orderProperties;
 	}

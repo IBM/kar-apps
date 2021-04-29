@@ -16,20 +16,28 @@
 
 package com.ibm.research.kar.reefer.model;
 
+import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.time.TimeUtils;
+
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonValue;
 import java.time.Instant;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalField;
 import java.util.ArrayList;
 import java.util.List;
-//import java.util.concurrent.atomic.AtomicLong;
+import java.util.Locale;
 
 public class Order {
     public enum OrderStatus { 
         PENDING("Pending"),
         BOOKED("Booked"), 
         INTRANSIT("InTransit"), 
-        DELIVERED("Delivered");
+        DELIVERED("Delivered"),
+        SPOILT("Spoilt");
     
         private final String label;
         OrderStatus(String label) {
@@ -47,6 +55,8 @@ public class Order {
     int productQty;
     String voyageId;
     String status;
+    String date;
+    boolean spoilt;
     List<String> reeferIds;
 
     public Order(OrderProperties orderProperties) {
@@ -58,6 +68,16 @@ public class Order {
     public Order(OrderDTO dto) {
         this(dto.getId(), dto.getCustomerId(), dto.getProduct(), 
         dto.getProductQty(), dto.getVoyageId(), dto.getStatus(), new ArrayList<String>());
+    }
+    public Order(JsonValue jo ) {
+        this.id = jo.asJsonObject().getString(Constants.ORDER_ID_KEY);
+        this.customerId = jo.asJsonObject().getString(Constants.ORDER_CUSTOMER_ID_KEY);
+        this.product = jo.asJsonObject().getString(Constants.ORDER_PRODUCT_KEY);
+        this.productQty = jo.asJsonObject().getInt(Constants.ORDER_PRODUCT_QTY_KEY);
+        this.voyageId = jo.asJsonObject().getString(Constants.VOYAGE_ID_KEY);
+        this.status = jo.asJsonObject().getString(Constants.ORDER_STATUS_KEY);
+        this.date = jo.asJsonObject().getString(Constants.ORDER_DATE_KEY);
+        this.spoilt = jo.asJsonObject().getBoolean(Constants.ORDER_SPOILT_KEY);
     }
     public Order( String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
 
@@ -71,8 +91,28 @@ public class Order {
         this.voyageId = voyageId;
         this.status = status;
         this.reeferIds = reeferIds;
+        // the date is used for order sorting. The TimeUtils.getCurrentDate() not applicable as it advances
+        // date one day at a time and we need millis resolution
+        this.date = Instant.now().toString();
+        this.spoilt = false;
     }
- 
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public boolean isSpoilt() {
+        return spoilt;
+    }
+
+    public void setSpoilt(boolean spoilt) {
+        this.spoilt = spoilt;
+    }
+
     public String getId() {
         return id;
     }
@@ -125,12 +165,34 @@ public class Order {
         this.customerId = customerId;
     }
 
+    public JsonObject getAsJsonObject() {
+        JsonObjectBuilder orderBuilder = Json.createObjectBuilder();
+        orderBuilder.add(Constants.ORDER_ID_KEY, getId()).
+                add(Constants.VOYAGE_ID_KEY, getVoyageId()).
+                add(Constants.ORDER_PRODUCT_KEY, getProduct()).
+                add(Constants.ORDER_PRODUCT_QTY_KEY, getProductQty()).
+                add(Constants.ORDER_CUSTOMER_ID_KEY, getCustomerId()).
+                add(Constants.ORDER_STATUS_KEY, getStatus()).
+                add(Constants.ORDER_DATE_KEY, getDate()).
+                add(Constants.ORDER_SPOILT_KEY, isSpoilt()
+                );
+
+        return orderBuilder.build();
+    }
     public JsonObject getOrderParams() {
+        /*
         JsonObjectBuilder orderParamsBuilder = Json.createObjectBuilder();
-        orderParamsBuilder.add("orderId", getId()).add("orderVoyageId", getVoyageId()).add("orderProductQty",
-                getProductQty());
+        orderParamsBuilder.add(Constants.ORDER_ID_KEY, getId()).
+                add(Constants.VOYAGE_ID_KEY, getVoyageId()).
+                add(Constants.ORDER_PRODUCT_KEY, getProduct()).
+                add(Constants.ORDER_PRODUCT_QTY_KEY, getProductQty()).
+                add(Constants.ORDER_CUSTOMER_ID_KEY, getCustomerId()
+               );
+
+         */
+        JsonObject orderParams = this.getAsJsonObject();
         JsonObjectBuilder jsonOrderBuilder = Json.createObjectBuilder();
-        jsonOrderBuilder.add("order", orderParamsBuilder.build());
+        jsonOrderBuilder.add("order", orderParams);
         return jsonOrderBuilder.build();
     }
 }

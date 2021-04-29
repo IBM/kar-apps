@@ -29,6 +29,8 @@ public class ReeferAppConfig {
     public static final String ReeferProvisionerActorName="reefer-provisioner";
     public static final String VoyageActorName="voyage";
     public static final String OrderActorName="order";
+    public static final String RestActorName="resthelper";
+    public static final String RestActorId="reeferservice";
 
     // If the reefer capacity is greater or equal 60, it is considered full (ie. ALLOCATED)
     public static final int CapacityThresholdFloor = 60;

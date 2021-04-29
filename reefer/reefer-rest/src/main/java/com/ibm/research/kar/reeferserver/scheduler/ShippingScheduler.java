@@ -22,6 +22,7 @@ import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -39,19 +40,20 @@ import java.util.logging.Logger;
 
 @Component
 public class ShippingScheduler {
-    private static List<Route> routes = new ArrayList<Route>();
+    private static List<Route> routeList = new ArrayList<Route>();
     @Value("classpath:routes.json")
     private Resource routesJsonResource;
     private static final Logger logger = Logger.getLogger(ScheduleService.class.getName());
     private static Set<Voyage> sortedShipSchedule = new TreeSet<>();
-    @Value("classpath:ships.txt")
-    private static Resource ships;
+    @Autowired
+    private Routes routes;
     /**
      * Load voyages into memory from a config file
      *
      * @param routeConfigFile - voyage configuration file
      * @throws Exception
      */
+    /*
     public void initialize(final InputStream routeConfigFile) throws Exception {
 
         final ObjectMapper mapper = new ObjectMapper();
@@ -71,16 +73,21 @@ public class ShippingScheduler {
 
     }
 
+     */
+
     /**
      *
      * @return - List of Routes
      * @throws Exception
      */
     public List<Route> getRoutes() throws Exception {
-        if ( routes.isEmpty() ) {
-            this.initialize(routesJsonResource.getInputStream());
+        if ( routeList.isEmpty() ) {
+            System.out.println("ShippingSchedule.getRoutes() ------------------------------ calling generate");
+            //this.initialize(routesJsonResource.getInputStream());
+            routeList = routes.generate();
+            //routeList.forEach(r -> System.out.println(">>>>"+r));
         }
-        return routes;
+        return routeList;
     }
     /**
      * Generate route/ship schedule for a given range of dates. Each ship sails from origin port
@@ -148,7 +155,9 @@ public class ShippingScheduler {
         // skip over voyages that arrived before this date
         Instant arrivedDateThreshold =
                 currentDate.minus(ScheduleService.ARRIVED_THRESHOLD_IN_DAYS, ChronoUnit.DAYS);
-        for (final Route route : routes) {
+
+        for (final Route route : routeList) {
+            //System.out.println("::::"+route);
             // generate voyages for each route for a given range [firstDepartureDate, lastVoyageDate] and
             // add them to the schedule which sorts by departure date
             schedule.addAll(generateShipSchedule(route, departureDate, lastVoyageDate, arrivedDateThreshold));

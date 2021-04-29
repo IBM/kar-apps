@@ -29,6 +29,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 
+import com.ibm.research.kar.reefer.common.FleetCapacity;
 import com.ibm.research.kar.reefer.model.Port;
 import com.ibm.research.kar.reefer.model.Reefer;
 import com.ibm.research.kar.reefer.model.ReeferStats;
@@ -61,7 +62,9 @@ public class ReeferController {
 	private static final Logger logger = Logger.getLogger(ReeferController.class.getName());
 	@PostConstruct
 	public void init() {
-		List<Route> routes = shipScheduleService.getRoutes();
+		//List<Route> routes = shipScheduleService.getRoutes();
+		reeferInventorySize = FleetCapacity.totalSize(shipScheduleService.getRoutes());
+		/*
 		Set<String> fleet = new LinkedHashSet<>();
 		// using each ship capacity compute the total fleet reefer inventory size
 		long fleetMaxCapacity = 0;
@@ -73,7 +76,9 @@ public class ReeferController {
 			logger.info("RestController.init() - Fleet Size:"+fleet.size()+" Max Fleet Capacity:"+fleetMaxCapacity);
 		}
 		// increase total by additional 40% to ensure we always have reefers available
-		reeferInventorySize = Double.valueOf(fleet.size() * fleetMaxCapacity * 0.4).intValue();
+		reeferInventorySize = Double.valueOf(fleet.size() * fleetMaxCapacity * 0.3).intValue();
+
+		 */
 	}
 
 	@PostMapping("/reefers")

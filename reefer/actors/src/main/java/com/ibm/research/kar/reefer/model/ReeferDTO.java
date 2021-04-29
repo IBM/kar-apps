@@ -94,10 +94,10 @@ public class ReeferDTO {
 
     public boolean releaseFromMaintenanceToday(Instant today) {
         if (getMaintenanceReleaseDate() == null) {
-                System.out.println(
-                        "ReeferProvisionerActor.releaseFromMaintenanceToday() - maintenance release date not set for reefer:"
-                                + getId() + " state:" + getState().name() + " not booked yet");
-            return false;
+             //   System.out.println(
+            //            "ReeferProvisionerActor.releaseFromMaintenanceToday() - maintenance release date not set for reefer:"
+            //                    + getId() + " state:" + getState().name() + " not booked yet");
+            return true;
         }
         // reefer assigned to maintenance gets a date when it is taken off maintenance
         if (today.equals(Instant.parse(getMaintenanceReleaseDate()))

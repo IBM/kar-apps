@@ -141,12 +141,13 @@ public class VoyageController {
     public void arrived(@RequestBody String message) {
         try {
             String voyageId = JsonUtils.getVoyageId(message);
+            List<String> voyageOrderList = JsonUtils.getVoyageOrders(message);
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("VoyageController.delivered() - id:" + voyageId + " message:" + message);
             }
             shipScheduleService.updateDaysAtSea(voyageId, JsonUtils.getDaysAtSea(message));
             voyageService.voyageEnded(voyageId);
-            orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED);
+            orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED, voyageOrderList);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
         }
@@ -163,12 +164,13 @@ public class VoyageController {
     public void departed(@RequestBody String message) {
         try {
             String voyageId = JsonUtils.getVoyageId(message);
+            List<String> voyageOrderList = JsonUtils.getVoyageOrders(message);
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("VoyageController.departed() - id:" + voyageId + " message:" + message);
             }
             shipScheduleService.updateDaysAtSea(voyageId, JsonUtils.getDaysAtSea(message));
             voyageService.voyageDeparted(voyageId);
-            orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT);
+            orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT, voyageOrderList);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
         }

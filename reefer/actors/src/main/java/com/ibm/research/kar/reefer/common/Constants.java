@@ -25,7 +25,7 @@ public class Constants {
    public static final String ACTIVE_ORDERS_KEY="active-orders";
    public static final String BOOKED_ORDERS_KEY="booked-orders";
    public static final String SPOILT_ORDERS_KEY="spoilt-orders";
-
+   public static final String REST_ORDERS_KEY="rest-order-map";
    public static final String VOYAGE_ID_KEY="voyageId";
    public static final String VOYAGE_ORDERS_KEY="voyage-orders";
    public static final String VOYAGE_REEFERS_KEY="voyage-reefers";
@@ -35,6 +35,7 @@ public class Constants {
    public static final String VOYAGE_FREE_CAPACITY_KEY="free-capacity";
 
    public static final String REEFER_PROVISIONER_STATE_KEY="provisionerState";
+   public static final String REEFER_FLEET_SIZE_KEY="REEFER_FLEET_SIZE";
 
    public static final String TOTAL_REEFER_COUNT_KEY="total";
    public static final String REEFER_ID_KEY="reeferId";
@@ -45,9 +46,13 @@ public class Constants {
    public static final String REEFERS_MAINTENANCE_DATE="maintenanceDate";
 
    public static final String ORDER_ID_KEY="orderId";
+   public static final String ORDERS_KEY="orders";
+   public static final String ORDER_DATE_KEY="date";
+   public static final String ORDER_SPOILT_KEY="spoilt";
    public static final String ORDER_STATUS_KEY="order-status";
    public static final String ORDER_PRODUCT_KEY="product";
    public static final String ORDER_PRODUCT_QTY_KEY="productQty";
+   public static final String ORDER_CUSTOMER_ID_KEY="customerId";
    public static final String CURRENT_DATE_KEY="current-date";
    public static final String SCHEDULE_BASE_DATE_KEY="schedule-base-date";
    public static final String SCHEDULE_END_DATE_KEY="schedule-end-date";

@@ -20,14 +20,14 @@ import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Ship;
 
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonString;
-import javax.json.JsonValue;
-import javax.json.Json;
+import javax.json.*;
 
 import java.io.StringReader;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.ibm.research.kar.reefer.common.Constants;
 
 public class JsonUtils {
@@ -48,6 +48,16 @@ public class JsonUtils {
         return "";
     }
 
+    public static List<String> getVoyageOrders(String message ) throws Exception {
+        try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
+            JsonObject req = jsonReader.readObject();
+            JsonArray ja = req.getJsonArray(Constants.VOYAGE_ORDERS_KEY);
+            return ja.stream().map(jv -> ((JsonString)jv).getString()).collect(Collectors.toList());
+        } catch (Exception e) {
+            throw e;
+        }
+
+    }
     public static int getDaysAtSea(String message) {
         try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
             JsonObject req = jsonReader.readObject();

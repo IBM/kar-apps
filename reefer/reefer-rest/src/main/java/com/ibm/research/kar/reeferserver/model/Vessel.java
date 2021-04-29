@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.ibm.research.kar.reeferserver.model;
 
-package com.ibm.research.kar.reefer.model;
+public class Vessel {
+    public String name;
+    public String capacity;
 
-public enum OrderStatus {
-    /*
-    PENDING,
-    CREATED,
-    BOOKED,
-    INTRANSIT,
-    DELIVERED,
-    FAILED,
-    SPOILT,
-    REEFERS_ASSIGNED,
-    VOYAGE_ASSIGNED
+    public void setName(String name) {
+        this.name = name;
+    }
 
-     */
+    public void setCapacity(String maxCapacity) {
+        this.capacity = maxCapacity;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getCapacity() {
+        return capacity;
+    }
+
+
 }

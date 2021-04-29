@@ -16,6 +16,8 @@
 
 package com.ibm.research.kar.reefer.model;
 
+import com.ibm.research.kar.reefer.common.Constants;
+
 import java.time.Instant;
 
 import javax.json.JsonArray;
@@ -23,10 +25,13 @@ import javax.json.JsonObject;
 
 public class JsonOrder {
     public static final String OrderKey = "order";
+    /*
     public static final String OrderBookingKey = "booking";
     public static final String IdKey = "orderId";
     public static final String VoyageIdKey = "orderVoyageId";
     public static final String ProductQtyKey = "orderProductQty";
+
+     */
     public static final String OriginPortKey = "originPort";
     public static final String DestinationPortKey = "destinationPort";
     private JsonObject order;
@@ -36,7 +41,7 @@ public class JsonOrder {
     }
 
     public String getId() {
-        return order.getString(IdKey);
+        return order.getString(Constants.ORDER_ID_KEY);
     }
 
     public boolean containsKey(String key) {
@@ -44,7 +49,7 @@ public class JsonOrder {
     }
 
     public String getVoyageId() {
-        return order.getString(VoyageIdKey);
+        return order.getString(Constants.VOYAGE_ID_KEY);
     }
 
     public String getOriginPort() {
@@ -56,9 +61,16 @@ public class JsonOrder {
     }
 
     public int getProductQty() {
-        return order.getInt(ProductQtyKey);
+        return order.getInt(Constants.ORDER_PRODUCT_QTY_KEY);
     }
 
+    public String getProduct() {
+        return order.getString(Constants.ORDER_PRODUCT_KEY);
+    }
+
+    public String getCustomerId() {
+        return order.getString(Constants.ORDER_CUSTOMER_ID_KEY);
+    }
     public JsonObject getAsObject() {
         return order;
     }

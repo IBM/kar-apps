@@ -88,7 +88,6 @@ public class ReeferProvisionerActor extends BaseActor {
         } else {
             initMasterInventory(getReeferInventorySize());
             Kar.Actors.State.set(this, Constants.TOTAL_REEFER_COUNT_KEY, totalReeferInventory);
-            System.out.println("ReeferProvisionerActor.activate() - ................... saved totalReeferInventory = "+totalReeferInventory);
         }
 
         // update thread. Sends reefer count updates to the REST

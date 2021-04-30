@@ -38,6 +38,7 @@ public class FleetCapacity {
             logger.info("RestController.init() - Fleet Size:"+fleet.size()+" Max Fleet Capacity:"+fleetMaxCapacity);
         }
         // increase total by additional 30% to ensure we always have reefers available
-        return Double.valueOf(fleet.size() * fleetMaxCapacity * 0.3).intValue();
+        return Long.valueOf(fleetMaxCapacity * 3).intValue();
+        //return Double.valueOf(fleet.size() * fleetMaxCapacity * 0.3).intValue();
     }
 }

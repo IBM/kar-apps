@@ -72,16 +72,7 @@ public class ShipThread extends Thread {
     }
 
     private int events_from_fsize(int fsize) {
-      if (fsize < 2) return 1;
-      if (fsize < 3) return 2;
-      if (fsize < 4) return 3;
-      if (fsize < 5) return 4;
-      if (fsize < 10) return 5;
-      if (fsize < 25) return 6;
-      if (fsize < 50) return 7;
-      if (fsize < 100) return 8;
-      if (fsize < 200) return 9;
-      return 10;
+      return (fsize < 20) ? fsize : 20;
     }
     
     public void run() {
@@ -95,9 +86,21 @@ public class ShipThread extends Thread {
             logger.info("shipthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
         }
         int nextevent = 0;
-        //TODO get current fleet size from rest
-        int total_fleet_size = 7;
-        events_per_day = events_from_fsize(total_fleet_size);
+        // get number of routes from rest
+        JsonValue voyageRoutes = null;
+        if (SimulatorService.numberofroutes.get() == 0) {
+          try {
+			Response response = Kar.Services.get(Constants.REEFERSERVICE, "voyage/routes");
+			voyageRoutes = response.readEntity(JsonValue.class);
+		  } catch (Exception e) {
+			logger.warning("shipthread: Unable to fetch voyage routes from REST - cause:" + e.getMessage());
+		  }
+		  SimulatorService.numberofroutes.set(voyageRoutes.asJsonArray().size());
+		  if (logger.isLoggable(Level.INFO)) {
+			logger.info("shipthread: number of voyage routes = " + SimulatorService.numberofroutes.get());
+		  }
+        }
+        events_per_day = events_from_fsize(SimulatorService.numberofroutes.get());
         if (null == numevents || numevents.length != events_per_day) {
           numevents = new Integer[events_per_day];
           for (int i=0; i<numevents.length; i++) {
@@ -144,7 +147,7 @@ public class ShipThread extends Thread {
                             logger.info("shipthread: received " + activeVoyages.asJsonArray().size() + " active voyages");
                         }
                     } catch (Exception e) {
-                        logger.warning("shipthread: Unable to fetch active voayges from REST - cause:" + e.getMessage());
+                        logger.warning("shipthread: Unable to fetch active voyages from REST - cause:" + e.getMessage());
                     }
 
                     // tell other threads to wake up

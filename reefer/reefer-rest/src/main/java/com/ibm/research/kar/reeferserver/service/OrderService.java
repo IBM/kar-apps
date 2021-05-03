@@ -135,8 +135,9 @@ public class OrderService { //extends AbstractPersistentService {
      * @return order counts
      */
     public OrderStats getOrderStats() {
-        return new OrderStats(getOrderCount(Constants.ACTIVE_ORDERS_KEY), getOrderCount(Constants.BOOKED_ORDERS_KEY),
-                getOrderCount(Constants.SPOILT_ORDERS_KEY));
+        synchronized (OrderService.class) {
+            return new OrderStats(activeOrders.size(), bookedOrders.size(), spoiltOrders.size());
+        }
     }
 
     /**
@@ -179,15 +180,7 @@ public class OrderService { //extends AbstractPersistentService {
     private void voyageDeparted(String voyageId, List<String> voyageOrderList) {
         synchronized (OrderService.class) {
             if (!voyageOrderList.isEmpty()) {
-                List<Order> orders = new ArrayList<>();
-                try {
-                    orders = departedOrderList(voyageOrderList);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                System.out.println("OrderService.voyageDeparted() ++++++++++++++++++++++++++ voyageOrderList.size()=" + voyageOrderList.size() + " Adding:" + orders.size() + " bookedOrders.size()=" + bookedOrders.size());
-
+                List<Order> orders = departedOrderList(voyageOrderList);
                 Map<String, JsonValue> newActiveOrders =
                         orders.stream().filter(Objects::nonNull).
                                 peek(o -> o.setStatus(Order.OrderStatus.INTRANSIT.toString())).

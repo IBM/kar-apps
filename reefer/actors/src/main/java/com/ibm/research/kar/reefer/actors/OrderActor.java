@@ -73,7 +73,6 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject createOrder(JsonObject message) {
-        long tt = System.currentTimeMillis();
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(String.format("OrderActor.createOrder() - orderId: %s message: %s", getId(), message));
         }
@@ -87,9 +86,7 @@ public class OrderActor extends BaseActor {
             JsonOrder jsonOrder = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
             // Call Voyage actor to book the voyage for this order. This call also
             // reserves reefers
-            long t = System.currentTimeMillis();
             JsonObject voyageBookingResult = bookVoyage(jsonOrder);
-            System.out.println("OrderActor.createOrder() - id:"+getId()+" Voyage Actor reserve process time:"+(System.currentTimeMillis() - t)+" millis");
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine(String.format("OrderActor.createOrder() - orderId: %s VoyageActor reply: %s", getId(), voyageBookingResult));
             }
@@ -113,8 +110,6 @@ public class OrderActor extends BaseActor {
             logger.log(Level.WARNING, "OrderActor.createOrder() - Error - orderId " + getId() + " ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
-        }finally {
-            System.out.println("OrderActor.createOrder() - time spent processing in this method:"+(System.currentTimeMillis() - tt)+" millis");
         }
     }
 

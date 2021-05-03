@@ -167,7 +167,6 @@ public class VoyageActor extends BaseActor {
      */
     @Remote
     public JsonObject reserve(JsonObject message) {
-        long tt = System.currentTimeMillis();
         JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("VoyageActor.reserve() called Id:" + getId() + " " + message.toString() + " OrderID:"
@@ -193,11 +192,9 @@ public class VoyageActor extends BaseActor {
                 return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED)
                         .add("ERROR", msg).build();
             }
-            long t = System.currentTimeMillis();
             // Book reefers for this order through the ReeferProvisioner
             bookingStatus = Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "bookReefers", message);
-            System.out.println("VoyageActor.reserve() - time to book reefers to order:"+(System.currentTimeMillis() - t)+ " millis");
             // convenience wrapper for ReeferProvisioner json reply
             ReeferProvisionerReply reply = new ReeferProvisionerReply(bookingStatus);
             //System.out.println("VoyageActor.reserve() - Id:" + getId()+" ReeferProvisioner.book() reply:"+bookingStatus);
@@ -226,8 +223,6 @@ public class VoyageActor extends BaseActor {
             logger.log(Level.WARNING, "VoyageActor.reserve() - Error - voyageId " + getId() + " ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
-        } finally {
-            System.out.println("VoyageActor.reserve() - time spent processing in this method:"+(System.currentTimeMillis() - tt)+" millis");
         }
     }
 
@@ -368,7 +363,6 @@ public class VoyageActor extends BaseActor {
         protected int getReeferCount() {
             if (reeferCount == null) {
                 reeferCount = jv.asJsonObject().get(Constants.REEFERS_KEY);
-//                reefers = jv.asJsonObject().getJsonArray(Constants.REEFERS_KEY);
             }
             return ((JsonNumber)reeferCount).intValue(); //reefers.size();
         }

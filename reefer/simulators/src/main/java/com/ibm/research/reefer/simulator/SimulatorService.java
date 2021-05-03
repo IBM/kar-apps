@@ -57,6 +57,7 @@ public class SimulatorService {
   public final static AtomicInteger reeferthreadcount = new AtomicInteger(0);
   public final static AtomicInteger reeferupdates = new AtomicInteger(0);
   public final static Map<String, FutureVoyage> voyageFreeCap = new HashMap<String, FutureVoyage>();
+  public final static AtomicInteger numberofroutes = new AtomicInteger(0);
   private Thread shipthread;
   private Thread orderthread;
   private Thread reeferthread;
@@ -326,7 +327,7 @@ public class SimulatorService {
       newval = Json.createValue(((JsonNumber) value).intValue());
     }
     newval = newval.intValue() > 1 ? newval : (JsonNumber) Json.createValue(1);
-    newval = newval.intValue() < 28 ? newval : (JsonNumber) Json.createValue(28);
+    newval = newval.intValue() < 56 ? newval : (JsonNumber) Json.createValue(56);
     orderwindow.set(newval.intValue());
     this.set(Json.createValue("orderwindow"), newval);
     if (logger.isLoggable(Level.INFO)) {

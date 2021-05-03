@@ -296,7 +296,5 @@ public class OrderThread extends Thread {
                 logger.warning("orderthread:" + e);
             }
         }
-        logger.warning("orderthread: Thread terminated");
     }
-
 }

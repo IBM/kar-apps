@@ -135,7 +135,6 @@ public class ReeferProvisionerActor extends BaseActor {
     }
     @Remote
     public JsonObject getOrders() {
-        System.out.println("ReeferProvisioner.getOrders() - Called");
         Set<String> orders = order2ReeferMap.keySet().stream().collect(Collectors.toSet());
 
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
@@ -165,14 +164,23 @@ public class ReeferProvisionerActor extends BaseActor {
             logger.fine(
                     "ReeferProvisionerActor.releaseReefersfromMaintenance() - entry  message:" + message);
         }
-        if (!onMaintenanceMap.isEmpty()) {
-            // get current date. Its a date that the simulator advances at regular intervals.
-            Instant today = Instant.parse(message.getString(Constants.DATE_KEY));
-            List<String> reefers2Remove = getReefersToRemoveFromMaintenance(today);
-            Kar.Actors.State.Submap.removeAll(this, Constants.REEFER_MAP_KEY, reefers2Remove);
-            // forces update thread to send reefer counts
-            valuesChanged.set(true);
+        try {
+            if (!onMaintenanceMap.isEmpty()) {
+                // get current date. Its a date that the simulator advances at regular intervals.
+                Instant today = Instant.parse(message.getString(Constants.DATE_KEY));
+                List<String> reefers2Remove = getReefersToRemoveFromMaintenance(today);
+                Kar.Actors.State.Submap.removeAll(this, Constants.REEFER_MAP_KEY, reefers2Remove);
+                // forces update thread to send reefer counts
+                valuesChanged.set(true);
+                for( String reeferId : reefers2Remove ) {
+                    onMaintenanceMap.remove(Integer.parseInt(reeferId));
+                }
+            }
+        } catch( Exception e) {
+            logger.log(Level.WARNING, "ReeferProvisioner.releaseReefersfromMaintenance() - Error ", e);
+            throw e;
         }
+
         return Json.createObjectBuilder().build();
     }
     private List<String> getReefersToRemoveFromMaintenance(Instant today) {
@@ -184,7 +192,6 @@ public class ReeferProvisionerActor extends BaseActor {
             if (reefer != null && reefer.releaseFromMaintenanceToday(today)) {
                 reefer.reset();
                 reefers2Remove.add(String.valueOf(reefer.getId()));
-                it.remove();
             }
         }
         return reefers2Remove;
@@ -240,7 +247,6 @@ public class ReeferProvisionerActor extends BaseActor {
             // idempotence check if this method is being called more than once for the same order
             if ( order2ReeferMap.containsKey(order.getId())) {
                 Set<String> ids = order2ReeferMap.get(order.getId());
-                System.out.println("ReeferProvisioner.bookReefers() Time to get order reefer ids "+ (System.currentTimeMillis() - t)+" millis");
                 if (!ids.isEmpty()) {
                     return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add(Constants.REEFERS_KEY, Json.createValue(ids.size()))
                             .add(JsonOrder.OrderKey, order.getAsObject()).build();
@@ -256,7 +262,8 @@ public class ReeferProvisionerActor extends BaseActor {
                     order.getId(), order.getVoyageId());
             // create order to reefers mapping for in-memory cache to reduce latency
             Set<String> rids = orderReefers.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
-            order2ReeferMap.put(order.getId(), rids);
+
+            order2ReeferMap.put(order.getId().trim(), rids);
             // persists allocated reefers
             save(orderReefers);
             if (logger.isLoggable(Level.FINE)) {
@@ -273,8 +280,6 @@ public class ReeferProvisionerActor extends BaseActor {
             logger.log(Level.WARNING, "ReeferProvisioner.bookReefers() - Error ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, "").build();
-        } finally {
-            System.out.println("ReeferProvisionerActor.bookReefers() ----------------------- time2Process:"+(System.currentTimeMillis()-t)+" millis");
         }
     }
     private void save(List<ReeferDTO> orderReefers) {
@@ -344,14 +349,20 @@ public class ReeferProvisionerActor extends BaseActor {
             // remove reefers which just arrived. The reefer inventory should only contain
             // reefers which are booked, in-transit, and on-maintenance.
             Kar.Actors.State.Submap.removeAll(this, Constants.REEFER_MAP_KEY, reefers2Remove);
-        }
+            List<String> orderList = orders.stream().filter(Objects::nonNull).map(jv -> ((JsonString)jv).getString()).collect(Collectors.toList());
+            for( String orderId : orderList ) {
+                if ( order2ReeferMap.containsKey(orderId.trim())) {
+                    order2ReeferMap.remove(orderId.trim());
+                }
+            }
+            order2ReeferMap.keySet().removeAll(orderList);
+         }
         // forces update thread to send reefer counts
         valuesChanged.set(true);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("ReeferProvisionerActor.releaseVoyageReefers() - released reefers " + " total booked: "
                     + bookedTotalCount.get() + " totalInTransit:" + inTransitTotalCount.get());
         }
-        System.out.println("ReeferProvisionerActor.releaseVoyageReefers() - exit - time2process:"+ (System.currentTimeMillis()-t1)+" millis");
     }
 
     /**
@@ -375,7 +386,6 @@ public class ReeferProvisionerActor extends BaseActor {
                         reefers2Remove.add(reeferId);
                     }
                 });
-                order2ReeferMap.remove(id);
             }
         });
         return reefers2Remove;
@@ -613,7 +623,6 @@ public class ReeferProvisionerActor extends BaseActor {
         }
         reefer.reset();
         Kar.Actors.State.Submap.remove(this, Constants.REEFER_MAP_KEY, String.valueOf(reefer.getId()));
-       // Kar.Actors.State.Submap.remove(this, Constants.ON_MAINTENANCE_PROVISIONER_LIST, String.valueOf(reefer.getId()));
     }
 
     private void setReeferOnMaintenance(ReeferDTO reefer, String today) {
@@ -621,7 +630,6 @@ public class ReeferProvisionerActor extends BaseActor {
         reefer.setMaintenanceReleaseDate(today);
         reefer.setState(ReeferState.State.MAINTENANCE);
         updateStore(reefer);
-       // String reeferId = String.valueOf(reefer.getId());
         onMaintenanceMap.put(reefer.getId(), reefer.getId());
     }
 

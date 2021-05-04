@@ -30,10 +30,7 @@ import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.ReeferDTO;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
-import com.ibm.research.kar.reeferserver.service.OrderService;
-import com.ibm.research.kar.reeferserver.service.ScheduleService;
-import com.ibm.research.kar.reeferserver.service.VoyageService;
-import com.ibm.research.kar.reeferserver.service.TimeService;
+import com.ibm.research.kar.reeferserver.service.*;
 import com.ibm.research.kar.reeferserver.scheduler.ShippingScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,6 +62,8 @@ public class ReeferServerApplication {
 	@Autowired
 	private TimeService timeService;
 	@Autowired
+	private FleetService fleetService;
+	@Autowired
 	private OrderService orderService;
 	@Value("${start}")
 	private static String mode;
@@ -82,6 +81,7 @@ public class ReeferServerApplication {
 		// only exists if the REST service process stops.
 		Optional<Instant> scheduleBaseDate = timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY);
 		if ( scheduleBaseDate.isPresent()) {
+			System.out.println("ReeferServerApplication.init() - WARM START");
 			// WARM START
 			// recover current date which is persisted on every date change
 			Optional<Instant> date = timeService.recoverDate(Constants.CURRENT_DATE_KEY);
@@ -98,6 +98,7 @@ public class ReeferServerApplication {
 			//restoreOrders();
 		} else {
 			// COLD START
+			System.out.println("ReeferServerApplication.init() - COLD START");
 			Instant currentDate = TimeUtils.getInstance().getCurrentDate();
 			System.out.println("ReeferServerApplication.init() - Current Date:"+currentDate);
 			timeService.saveDate(currentDate, Constants.SCHEDULE_BASE_DATE_KEY);
@@ -105,8 +106,6 @@ public class ReeferServerApplication {
 			shipScheduleService.generateShipSchedule(currentDate);
 			System.out.println("ReeferServerApplication.init() - Saved Base Date:"+timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY).get());
 		}
-
-		//restoreOrders();
 	}
 	/*
 	private void restoreOrders() {

@@ -17,6 +17,9 @@ package com.ibm.research.kar.reeferserver.scheduler;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Ship;
@@ -26,6 +29,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import javax.json.Json;
+import javax.json.JsonNumber;
+import javax.json.JsonValue;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,25 +47,49 @@ public class Routes {
     @Value("classpath:ships.json")
     private Resource vesselJsonResource;
     private static final Logger logger = Logger.getLogger(Routes.class.getName());
+    private ActorRef aRef = Kar.Actors.ref(ReeferAppConfig.RestActorName, ReeferAppConfig.RestActorId);
     public List<Route> generate() throws Exception {
         Map<String, String> env = System.getenv();
 
         List<Vessel> vessels = loadVessels();
         List<Route> routes = loadRoutes();
         int shipIndex = 0;
-        int maxFleetSize = 7;  // default
-        if ( env.containsKey(Constants.REEFER_FLEET_SIZE_KEY)) {
-            maxFleetSize = Integer.parseInt(env.get(Constants.REEFER_FLEET_SIZE_KEY));
-        }
-        for( Route r : routes ) {
-            Vessel vessel = vessels.get(shipIndex++);
-            int capacity = Integer.parseInt(vessel.getCapacity().replace(",","").trim());
-            r.setVessel(new Ship(vessel.getName(), 0, capacity, capacity, "AtPort"));
-            if ( shipIndex > maxFleetSize) {
-                break;
+        int fleetSize = 10;  // default
+
+        try {
+            if ( env.containsKey(Constants.REEFER_FLEET_SIZE_KEY) &&
+                    env.get(Constants.REEFER_FLEET_SIZE_KEY) != null &&
+                    env.get(Constants.REEFER_FLEET_SIZE_KEY).trim().length() > 0 ) {
+                fleetSize = Integer.parseInt(env.get(Constants.REEFER_FLEET_SIZE_KEY));
             }
+            // if its a warm start, restore fleet size to previous value. User may change the fleet size through
+            // env variable but the code below ignores it if its different from the previous size.
+            JsonValue jv = Kar.Actors.State.get( aRef, Constants.REEFER_FLEET_SIZE_KEY);
+            if ( jv != null && jv != JsonValue.NULL) {
+                if (fleetSize != ((JsonNumber)jv).intValue()) {
+                    System.out.println("Routes.generate() - Warm start - using previously saved fleet size of "+((JsonNumber)jv).intValue());
+                    fleetSize = ((JsonNumber)jv).intValue();
+                }
+            } else {
+                Kar.Actors.State.set(aRef, Constants.REEFER_FLEET_SIZE_KEY, Json.createValue(fleetSize));
+                System.out.println("Routes.generate() ++++++++++++ saved fleet size:"+fleetSize);
+            }
+            System.out.println("Routes.generate() - starting with fleet size of:"+fleetSize);
+            for( Route r : routes ) {
+                Vessel vessel = vessels.get(shipIndex++);
+                int capacity = Integer.parseInt(vessel.getCapacity().replace(",","").trim());
+                r.setVessel(new Ship(vessel.getName(), 0, capacity, capacity, "AtPort"));
+                // if ( shipIndex > maxFleetSize) {
+                if ( shipIndex > fleetSize) {
+                    break;
+                }
+            }
+        } catch( Exception e) {
+            e.printStackTrace();
         }
-        return routes.subList(0,maxFleetSize);
+
+      //  return routes.subList(0,maxFleetSize);
+        return routes.subList(0,fleetSize);
     }
 
     public List<Vessel> loadVessels() throws IOException {

@@ -16,35 +16,43 @@
 
 package com.ibm.research.kar.reeferserver.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.Fleet;
 import com.ibm.research.kar.reefer.model.Ship;
 
 import org.springframework.stereotype.Component;
+
+import javax.json.Json;
+import javax.json.JsonNumber;
+import javax.json.JsonValue;
+
 @Component
 public class FleetService {
     private List<Fleet> fleets = new ArrayList<>();
-    private Map<String, Ship> atlanticFleet = new HashMap<>();
-    private Map<String, Ship> pacificFleet = new HashMap<>();
- 	
-	{
-		atlanticFleet.put("Abyss", new Ship("Abyss",0,5660, 2000, "AtPort"));
-		pacificFleet.put("Atlantis", new Ship("Atlantis",0,2000, 500, "AtPort"));
-		atlanticFleet.put("Black Pearl", new Ship("Black Pearl",0,1000, 233, "AtPort"));
-		atlanticFleet.put("Santa Maria", new Ship("Santa Maria",0,1444, 430, "AtPort"));
-		atlanticFleet.put("Andrea Gail", new Ship("Andrea Gail",0,1000, 300, "AtPort"));
-		atlanticFleet.put("Victoria", new Ship("Victoria",0,1566, 1000, "AtPort"));
-		atlanticFleet.put("Trinidad", new Ship("Trinidad",0,989, 120, "AtPort"));
-		 
-		fleets.add(new Fleet("Atlantic",  new ArrayList<Ship>(atlanticFleet.values())));
-		fleets.add(new Fleet("Pacific",  new ArrayList<Ship>(pacificFleet.values())));
-    }
-    
+    private int fleetSize=10;  //default
+
     public List<Fleet> getFleets() {
         return fleets;
     }
+	private ActorRef aRef = Kar.Actors.ref(ReeferAppConfig.RestActorName, ReeferAppConfig.RestActorId);
+
+    public void save(int fleetSize) {
+		Kar.Actors.State.set(aRef, Constants.REEFER_FLEET_SIZE_KEY, Json.createValue(fleetSize));
+		System.out.println("FleetService.save() ++++++++++++ saved fleet size:"+fleetSize);
+	}
+	public Optional<Integer> fleetSize() {
+
+    	JsonValue jv = Kar.Actors.State.get(aRef, Constants.REEFER_FLEET_SIZE_KEY);
+    	if ( jv != null && jv != JsonValue.NULL) {
+    		return Optional.of(Integer.valueOf(((JsonNumber)jv).intValue()));
+		} else {
+    		return Optional.empty();
+		}
+
+	}
 }

@@ -47,33 +47,6 @@ public class ShippingScheduler {
     private static Set<Voyage> sortedShipSchedule = new TreeSet<>();
     @Autowired
     private Routes routes;
-    /**
-     * Load voyages into memory from a config file
-     *
-     * @param routeConfigFile - voyage configuration file
-     * @throws Exception
-     */
-    /*
-    public void initialize(final InputStream routeConfigFile) throws Exception {
-
-        final ObjectMapper mapper = new ObjectMapper();
-        final TypeReference<List<Route>> typeReference = new TypeReference<List<Route>>() {
-        };
-
-        try {
-            routes = mapper.readValue(routeConfigFile, typeReference);
-            if (logger.isLoggable(Level.INFO)) {
-                routes.forEach(route -> logger.info("ShippingScheduler.initialize - Origin Port: " + route.getOriginPort()
-                        + " Ship:" + route.getVessel().getName() + " Ship Capacity:" + route.getVessel().getMaxCapacity())
-                );
-            }
-        } catch (IOException e) {
-            logger.log(Level.WARNING,"",e);
-        }
-
-    }
-
-     */
 
     /**
      *
@@ -82,13 +55,11 @@ public class ShippingScheduler {
      */
     public List<Route> getRoutes() throws Exception {
         if ( routeList.isEmpty() ) {
-            System.out.println("ShippingSchedule.getRoutes() ------------------------------ calling generate");
-            //this.initialize(routesJsonResource.getInputStream());
             routeList = routes.generate();
-            //routeList.forEach(r -> System.out.println(">>>>"+r));
         }
         return routeList;
     }
+
     /**
      * Generate route/ship schedule for a given range of dates. Each ship sails from origin port
      * to a destination port, stays at the destination port for a number of days (unload/reload) and sails back to the

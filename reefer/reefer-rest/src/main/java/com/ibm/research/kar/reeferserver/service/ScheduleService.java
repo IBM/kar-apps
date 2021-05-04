@@ -43,8 +43,8 @@ import java.util.stream.Collectors;
 @Component
 public class ScheduleService extends AbstractPersistentService {
 
-    public static final int THRESHOLD_IN_DAYS = 30; //100;
-    private static final int SCHEDULE_DAYS = 100; //365;
+    public static final int THRESHOLD_IN_DAYS = 100;
+    private static final int SCHEDULE_DAYS = 365;
     public static final int ARRIVED_THRESHOLD_IN_DAYS = 1;
     @Autowired
     private ShippingScheduler scheduler;

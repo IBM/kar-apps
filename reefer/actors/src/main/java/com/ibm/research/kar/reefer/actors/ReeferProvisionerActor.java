@@ -686,7 +686,7 @@ public class ReeferProvisionerActor extends BaseActor {
 
             if (valuesChanged.get()) {
                 try {
-                    Kar.Services.post(Constants.REEFERSERVICE, "/reefers/stats/update", getReeferStats());
+                    Kar.Services.postAsync(Constants.REEFERSERVICE, "/reefers/stats/update", getReeferStats());
                     valuesChanged.set(false);
                 } catch (Exception e) {
                     logger.warning("ReeferProvisioner- REST call /reefers/stats/update failed - cause:" + e.getMessage());

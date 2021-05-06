@@ -62,6 +62,11 @@ public class Routes {
                     env.get(Constants.REEFER_FLEET_SIZE_KEY).trim().length() > 0 ) {
                 fleetSize = Integer.parseInt(env.get(Constants.REEFER_FLEET_SIZE_KEY));
             }
+            if (fleetSize > vessels.size() ) {
+                System.out.println("Routes.generate() - the max fleet size is capped at "+vessels.size()+
+                        " - the REEFER_FLEET_SIZE env var is set to "+fleetSize+" - using default fleet size of 10");
+                fleetSize = 10;
+            }
             // if its a warm start, restore fleet size to previous value. User may change the fleet size through
             // env variable but the code below ignores it if its different from the previous size.
             JsonValue jv = Kar.Actors.State.get( aRef, Constants.REEFER_FLEET_SIZE_KEY);

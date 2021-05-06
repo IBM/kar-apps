@@ -118,7 +118,7 @@ public class TimeController {
     private void messageReeferProvisioner(String method, JsonObject message) {
         try {
             // Reefers on maintenance are freed automatically after a configurable number of days passes.
-            Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+            Kar.Actors.tell(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     method, message);
 
         } catch (Exception e) {

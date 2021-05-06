@@ -128,7 +128,7 @@ public class VoyageActor extends BaseActor {
                 logger.fine(
                         "VoyageActor.changePosition() voyage info:" + voyageInfo + " ship current date:" + shipCurrentDate);
             }
-            // if ship's current date matches arrival date, the ship arrived
+            // if ship's current date matches (or exceeds) its arrival date, the ship arrived
             if (voyage.shipArrived(shipCurrentDate, getVoyageStatus())) {
                 if (!VoyageStatus.DEPARTED.equals(getVoyageStatus()) ) {
                     logger.log(Level.WARNING, "VoyageActor.changePosition() - voyage:" + voyage.getId() + " arrived BUT its expected state is not DEPARTED. Instead it is " + getVoyageStatus());
@@ -199,22 +199,7 @@ public class VoyageActor extends BaseActor {
             ReeferProvisionerReply reply = new ReeferProvisionerReply(bookingStatus);
             //System.out.println("VoyageActor.reserve() - Id:" + getId()+" ReeferProvisioner.book() reply:"+bookingStatus);
             if (reply.success()) {
-                voyage.setReeferCount(voyage.getReeferCount() + reply.getReeferCount());
-                voyage.updateFreeCapacity(reply.getReeferCount());
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info("VoyageActor.reserve() - Vessel " + voyage.getRoute().getVessel().getName() + " Updated Free Capacity "
-                            + voyage.getRoute().getVessel().getFreeCapacity());
-                }
-                voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
-                JsonObjectBuilder jb = Json.createObjectBuilder();
-                jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus).
-                        add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
-                Kar.Actors.State.set(this, jb.build());
-                // add new order to this voyage order list
-                Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
-                        Json.createValue(order.getId()));
-                orders.put(String.valueOf(order.getId()), bookingStatus);
-                voyage.setOrderCount(orders.size());
+                save(reply, order, bookingStatus);
                 return buildResponse(bookingStatus, order, voyage.getRoute().getVessel().getFreeCapacity());
             }
             // return failure
@@ -225,7 +210,24 @@ public class VoyageActor extends BaseActor {
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
         }
     }
-
+    private void save(ReeferProvisionerReply booking, JsonOrder order, JsonValue bookingStatus) {
+        voyage.setReeferCount(voyage.getReeferCount() + booking.getReeferCount());
+        voyage.updateFreeCapacity(booking.getReeferCount());
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("VoyageActor.reserve() - Vessel " + voyage.getRoute().getVessel().getName() + " Updated Free Capacity "
+                    + voyage.getRoute().getVessel().getFreeCapacity());
+        }
+        voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
+        JsonObjectBuilder jb = Json.createObjectBuilder();
+        jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus).
+                add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
+        Kar.Actors.State.set(this, jb.build());
+        // add new order to this voyage order list
+        Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
+                Json.createValue(order.getId()));
+        orders.put(String.valueOf(order.getId()), bookingStatus);
+        voyage.setOrderCount(orders.size());
+    }
     private JsonObject buildResponse(final JsonValue bookingStatus, final JsonOrder order, final int freeCapacity) {
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                 .add(JsonOrder.OrderKey, order.getAsObject())

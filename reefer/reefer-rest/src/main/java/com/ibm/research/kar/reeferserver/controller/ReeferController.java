@@ -51,6 +51,13 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin("*")
 public class ReeferController {
 	private int reeferInventorySize = 0;
+
+	private int total = 0;
+	private int totalBooked = 0;
+	private int totalInTransit = 0;
+	private int totalSpoilt = 0;
+	private int totalOnMaintenance =0;
+
 	@Autowired
 	private ReeferService reeferService;
 	@Autowired
@@ -79,18 +86,19 @@ public class ReeferController {
 
 	@GetMapping("/reefers/stats")
 	public ReeferStats getReeferStats() {
-		return reeferService.getReeferStats();
+		return new ReeferStats(total, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance);
+		//return reeferService.getReeferStats();
 	}
 
 	@PostMapping("/reefers/stats/update")
 	public void updateGui(@RequestBody String stats) {
 		try (JsonReader jsonReader = Json.createReader(new StringReader(stats))) {
 			JsonObject req = jsonReader.readObject();
-			int total = req.getInt("total");
-			int totalBooked = req.getInt("totalBooked");
-			int totalInTransit = req.getInt("totalInTransit");
-			int totalSpoilt = req.getInt("totalSpoilt");
-			int totalOnMaintenance = req.getInt("totalOnMaintenance");
+			total = req.getInt("total");
+			totalBooked = req.getInt("totalBooked");
+			totalInTransit = req.getInt("totalInTransit");
+			totalSpoilt = req.getInt("totalSpoilt");
+			totalOnMaintenance = req.getInt("totalOnMaintenance");
 			gui.updateReeferStats(new ReeferStats(total, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance));
 		} catch (Exception e) {
 			logger.log(Level.WARNING,"",e);

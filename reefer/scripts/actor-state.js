@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#!/usr/bin/env node
+// #!/usr/bin/env node
 
 //
 // this tools dumps selected app data from Kar's persistent store

@@ -91,6 +91,9 @@ public class Voyage implements Comparable<Voyage>{
     public void updateFreeCapacity(int reduceBy) {
         getRoute().getVessel().setFreeCapacity( getRoute().getVessel().getFreeCapacity() - reduceBy);
     }
+    public void setFreeCapacity(int freeCapacity) {
+        getRoute().getVessel().setFreeCapacity( freeCapacity);
+    }
     public int getOrderCount() {
         return orderCount;
     }

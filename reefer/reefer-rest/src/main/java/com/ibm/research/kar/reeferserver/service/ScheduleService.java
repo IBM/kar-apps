@@ -22,8 +22,10 @@ import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
+import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
+import com.ibm.research.kar.reeferserver.controller.GuiController;
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
 import com.ibm.research.kar.reeferserver.scheduler.ShippingScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +45,8 @@ import java.util.stream.Collectors;
 @Component
 public class ScheduleService extends AbstractPersistentService {
 
-    public static final int THRESHOLD_IN_DAYS = 100;
-    private static final int SCHEDULE_DAYS = 365;
+    public static final int THRESHOLD_IN_DAYS = 100; //30; //100;
+    public static final int SCHEDULE_DAYS = 365; //60; //365;
     public static final int ARRIVED_THRESHOLD_IN_DAYS = 1;
     @Autowired
     private ShippingScheduler scheduler;
@@ -52,6 +54,8 @@ public class ScheduleService extends AbstractPersistentService {
     private TimeService timeService;
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private GuiController gui;
 
     private Set<Voyage> masterSchedule = new TreeSet<>();
     SortedSet<Voyage> schedule = null;
@@ -125,20 +129,30 @@ public class ScheduleService extends AbstractPersistentService {
         synchronized (ScheduleService.class) {
             List<Voyage> activeScheduleBefore = getActiveSchedule(currentDate);
             Instant baseDate = scheduleBaseDate.get();
-            int previousScheduleSize = masterSchedule.size();
+            // hold on to the current schedule. Need it to copy active and booked voyages
+            // order counts, progress and free capacities
+            Set<Voyage> previousSchedule = masterSchedule;
             // generate new schedule for a given range of dates. It will trim arrived
             // voyages to reduce schedule size.
             masterSchedule = scheduler.generateSchedule(baseDate, endDate, currentDate);
+            Map<String, Set<Order>> activeVoyageMap = orderService.activeVoyageOrderMap();
+            Map<String, Set<Order>> bookedVoyageMap = orderService.bookedVoyageOrderMap();
+            // update current active and booked voyages with data from previous schedule
+            masterSchedule.forEach( v -> {
+                if ( activeVoyageMap.containsKey(v.getId()) || bookedVoyageMap.containsKey(v.getId())) {
+                    updateVoyage(v, previousSchedule);
+                }
+            });
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("ScheduleService.extendSchedule() >>>> currentDate:" +
                         currentDate.toString().replace("T00:00:00Z", "") +
                         " baseDate:" + baseDate.toString().replace("T00:00:00Z", "") +
                         " endDate:" + endDate.toString().replace("T00:00:00Z", "") +
                         " trimDate:" + currentDate.minus(ScheduleService.ARRIVED_THRESHOLD_IN_DAYS, ChronoUnit.DAYS).toString().replace("T00:00:00Z", "") +
-                        " previous schedule size:" + previousScheduleSize +
+                        " previous schedule size:" + previousSchedule.size() +
                         " current schedule size:" + masterSchedule.size());
             }
-
+            previousSchedule.clear();
             // persist last voyage departure date which will be used to restore schedule after
             // REST restart
             timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
@@ -154,6 +168,17 @@ public class ScheduleService extends AbstractPersistentService {
         }
     }
 
+    private void updateVoyage(Voyage voyage, Set<Voyage> previousSchedule) {
+        for( Voyage v : previousSchedule ) {
+            if( v.getId().equals(voyage.getId())) {
+                voyage.setOrderCount(v.getOrderCount());
+                voyage.setFreeCapacity(v.getRoute().getVessel().getFreeCapacity());
+                voyage.setProgress(v.getProgress());
+                break;
+            }
+        }
+
+    }
     private void validateSchedule(List<Voyage> originalActiveSchedule, String lbl, Instant currentDate, Instant scheduleBaseDate) {
         List<Voyage> activeScheduleNow = getActiveSchedule(currentDate);
 
@@ -184,6 +209,7 @@ public class ScheduleService extends AbstractPersistentService {
     public Instant getLastVoyageDate() {
         JsonValue jv = super.get(Constants.SCHEDULE_END_DATE_KEY);
         if (jv == null || jv == JsonValue.NULL) {
+           // return TimeUtils.getInstance().futureDate(TimeUtils.getInstance().getCurrentDate(), this.SCHEDULE_DAYS);
             return TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate());
         }
         return Instant.parse(((JsonString) jv).getString());

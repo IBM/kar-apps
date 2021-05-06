@@ -23,6 +23,7 @@ import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.OrderStats;
+import com.ibm.research.kar.reefer.model.ReeferDTO;
 import org.springframework.stereotype.Service;
 
 import javax.json.JsonObject;
@@ -45,6 +46,20 @@ public class OrderService { //extends AbstractPersistentService {
     TreeSet<Order> bookedOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
     TreeSet<Order> spoiltOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
     private OrderPersistence storage = new OrderPersistence();
+
+    public Map<String, Set<Order>> activeVoyageOrderMap() {
+        synchronized (OrderService.class) {
+            return activeOrders.stream().filter(Objects::nonNull).
+                    collect(Collectors.groupingBy(Order::getVoyageId, Collectors.toSet()));
+        }
+
+    }
+    public Map<String, Set<Order>> bookedVoyageOrderMap() {
+        synchronized (OrderService.class) {
+            return bookedOrders.stream().filter(Objects::nonNull).
+                    collect(Collectors.groupingBy(Order::getVoyageId, Collectors.toSet()));
+        }
+    }
 
     /**
      * Returns N most recent active orders where N = MaxOrdersToReturn

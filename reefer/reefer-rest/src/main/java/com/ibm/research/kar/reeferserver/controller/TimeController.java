@@ -101,6 +101,9 @@ public class TimeController {
                 // On a day change generate a future schedule if necessary. The new schedule is generated if
                 // we reached a configured threshold of days before the end of current schedule.
                 scheduleService.extendSchedule(lastDepartureDate, today);
+               // System.out.println("TimeController.advance() >>>>>>>>>>>>>>> extended schedule");
+            } else {
+              //  System.out.println("TimeController.advance() >>>>>>>>>>>>>>> extending schedule in "+daysBetween+" days");
             }
             JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(today.toString()))
                     .build();

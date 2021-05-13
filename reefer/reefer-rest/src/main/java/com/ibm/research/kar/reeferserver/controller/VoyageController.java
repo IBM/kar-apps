@@ -17,23 +17,26 @@
 package com.ibm.research.kar.reeferserver.controller;
 
 import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
 import com.ibm.research.kar.reefer.common.json.JsonUtils;
+import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.error.VoyageNotFoundException;
+import com.ibm.research.kar.reeferserver.model.ShippingSchedule;
 import com.ibm.research.kar.reeferserver.service.OrderService;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 import com.ibm.research.kar.reeferserver.service.VoyageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
+import javax.json.*;
 import java.io.StringReader;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -41,6 +44,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin("*")
@@ -54,7 +58,7 @@ public class VoyageController {
     @Autowired
     private GuiController gui;
     private static final Logger logger = Logger.getLogger(VoyageController.class.getName());
-
+    private ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
     /**
      * Returns voyages matching given originPort, destinationPort and departure date
      *
@@ -68,18 +72,24 @@ public class VoyageController {
         Instant date = null;
 
         try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
-
+            JsonObjectBuilder job = Json.createObjectBuilder();
             JsonObject req = jsonReader.readObject();
             originPort = req.getString("origin");
             destinationPort = req.getString("destination");
             String departureDate = req.getString("departureDate");
+            job.add("origin", req.getString("origin")).
+                    add("destination", req.getString("destination")).
+                    add("departureDate",req.getString("departureDate") );
             date = Instant.parse(departureDate);
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("VoyageController.getMatchingVoyages() - origin:" + originPort + " destination:"
                         + destinationPort + " date:" + departureDate);
             }
+            JsonValue reply = Kar.Actors.call(scheduleActor, "matchingVoyages", job.build());
+            return getVoyages(reply);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
+            e.printStackTrace();
         }
         return shipScheduleService.getMatchingSchedule(originPort, destinationPort, date);
     }
@@ -96,7 +106,11 @@ public class VoyageController {
         Instant endDate;
 
         try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
-
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            JsonObject req = jsonReader.readObject();
+            job.add("startDate", req.getString("startDate")).add("endDate",req.getString("endDate"));
+            JsonValue reply = Kar.Actors.call(scheduleActor, "voyagesInRange", job.build());
+/*
             JsonObject req = jsonReader.readObject();
             startDate = Instant.parse(req.getString("startDate"));
             endDate = Instant.parse(req.getString("endDate"));
@@ -104,13 +118,24 @@ public class VoyageController {
                 logger.info("VoyageController.getVoyagesInRange() - startDate:" + startDate.toString() + " endDate:"
                         + endDate.toString());
             }
+
+ */
+            JsonArray ja = reply.asJsonArray();
+            return getVoyages(reply);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
+            e.printStackTrace();
             return new ArrayList<Voyage>();
         }
-        return shipScheduleService.getMatchingSchedule(startDate, endDate);
+      //  return shipScheduleService.getMatchingSchedule(startDate, endDate);
     }
-
+    private List<Voyage> getVoyages(JsonValue jv) {
+        JsonArray ja = jv.asJsonArray();
+        return ja.stream().map(v -> v.asJsonObject()).
+                map(VoyageJsonSerializer::deserialize).
+                peek(System.out::println).
+                collect(Collectors.toList());
+    }
     /**
      * Returns a list of active voyages which are currently at sea
      *
@@ -118,17 +143,41 @@ public class VoyageController {
      */
     @GetMapping("/voyage/active")
     public List<Voyage> getActiveVoyages() {
-        return shipScheduleService.getActiveSchedule();
+        System.out.println("VoyageController.getActiveVoyages() called --------------------");
+        try {
+           // JsonValue reply = Kar.Actors.call(scheduleActor, "activeVoyages");
+          //  return getVoyages(reply);
+            return activeVoyages();
+        } catch ( Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+
+       // return shipScheduleService.getActiveSchedule();
     }
 
     @GetMapping("/voyage/state/{id}")
     public Voyage getVoyageState(@PathVariable("id") String id) throws VoyageNotFoundException {
-        return shipScheduleService.getVoyage(id);
+        try {
+            JsonValue reply = Kar.Actors.call(scheduleActor, "voyageState");
+            return VoyageJsonSerializer.deserialize(reply.asJsonObject());
+            //return shipScheduleService.getVoyage(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @GetMapping("/voyage/info/{id}")
     public Voyage getVoyage(@PathVariable("id") String id) throws VoyageNotFoundException {
-        return shipScheduleService.getVoyage(id);
+        try {
+        JsonValue reply = Kar.Actors.call(scheduleActor, "voyage", Json.createValue(id));
+        return VoyageJsonSerializer.deserialize(reply.asJsonObject());
+        //return shipScheduleService.getVoyage(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     /**
@@ -150,6 +199,7 @@ public class VoyageController {
             orderService.updateOrderStatus(voyageId, OrderStatus.DELIVERED, voyageOrderList);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
+            e.printStackTrace();
         }
 
     }
@@ -173,6 +223,7 @@ public class VoyageController {
             orderService.updateOrderStatus(voyageId, OrderStatus.INTRANSIT, voyageOrderList);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
+            e.printStackTrace();
         }
 
     }
@@ -199,6 +250,7 @@ public class VoyageController {
             updateGuiSchedule(TimeUtils.getInstance().getCurrentDate().toString());
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
+            e.printStackTrace();
         }
 
     }
@@ -229,9 +281,27 @@ public class VoyageController {
      * @return
      */
     private List<Voyage> activeVoyages() {
-        return shipScheduleService.getActiveSchedule();
+        JsonValue reply = Kar.Actors.call(scheduleActor, "activeVoyages");
+        JsonArray ja = reply.asJsonArray();
+        return ja.stream().map(v -> v.asJsonObject()).
+                map(VoyageJsonSerializer::deserialize).
+                peek(System.out::println).
+                collect(Collectors.toList());
+        //return shipScheduleService.getActiveSchedule();
     }
 
+    private ShippingSchedule shippingSchedule() {
+        JsonValue reply = Kar.Actors.call(scheduleActor, "activeSchedule");
+        String currentDate = reply.asJsonObject().getString(Constants.CURRENT_DATE_KEY);
+
+        JsonArray ja = reply.asJsonObject().getJsonArray(Constants.ACTIVE_VOYAGES_KEY);
+        List<Voyage> voyages = ja.stream().map(v -> v.asJsonObject()).
+                map(VoyageJsonSerializer::deserialize).
+                peek(System.out::println).
+                collect(Collectors.toList());
+        voyages.sort(Comparator.comparing(v -> v.getRoute().getVessel().getName()));
+        return new ShippingSchedule(voyages, currentDate);
+    }
     /**
      * Update GUI order counts
      */
@@ -254,9 +324,10 @@ public class VoyageController {
             logger.fine("VoyageController.updateSchedule() - updating GUI with active schedule - currentDate:" + currentDate);
         }
         try {
-            List<Voyage> activeSchedule = shipScheduleService.getActiveSchedule();
-            activeSchedule.sort(Comparator.comparing(v -> v.getRoute().getVessel().getName()));
-            gui.sendActiveVoyageUpdate(activeSchedule, currentDate);
+            ShippingSchedule schedule = shippingSchedule();
+            //List<Voyage> activeSchedule = activeVoyages(); //shipScheduleService.getActiveSchedule();
+            //activeSchedule.sort(Comparator.comparing(v -> v.getRoute().getVessel().getName()));
+            gui.sendActiveVoyageUpdate(schedule); //activeSchedule, currentDate);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
         }

@@ -29,11 +29,14 @@ import com.ibm.research.kar.reefer.common.ReeferAllocator;
 import com.ibm.research.kar.reefer.common.ReeferState;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.JsonOrder;
+import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.ReeferDTO;
 
 import javax.json.*;
 import javax.ws.rs.core.Response;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -89,6 +92,7 @@ public class ReeferProvisionerActor extends BaseActor {
             initMasterInventory(getReeferInventorySize());
             Kar.Actors.State.set(this, Constants.TOTAL_REEFER_COUNT_KEY, totalReeferInventory);
         }
+        valuesChanged.set(true);
 
         // update thread. Sends reefer count updates to the REST
         TimerTask timerTask = new RestUpdateTask();
@@ -96,6 +100,10 @@ public class ReeferProvisionerActor extends BaseActor {
         // REST reefer counts at regular intervals (currently 100ms)
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(timerTask, 0, 100);
+
+      //  System.out.println("ReeferProvisionerActor.activate - starting reminders ..........");
+     //   Kar.Actors.Reminders.schedule(this,  "publish","webapi",Instant.now().plus(120, ChronoUnit.MILLIS), Duration.ofMillis(120));
+     //   System.out.println("ReeferProvisionerActor.activate - reminders running on 100ms clock..........");
     }
     private void restoreReeferInventory(Map<String, JsonValue> state ) {
         totalReeferInventory = state.get(Constants.TOTAL_REEFER_COUNT_KEY);
@@ -243,20 +251,24 @@ public class ReeferProvisionerActor extends BaseActor {
 
         try {
             // wrap Json with POJO
-            JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
+            //JsonOrder order = new JsonOrder(message.getJsonObject(JsonOrder.OrderKey));
+            Order order = new Order(message);
             // idempotence check if this method is being called more than once for the same order
             if ( order2ReeferMap.containsKey(order.getId())) {
                 Set<String> ids = order2ReeferMap.get(order.getId());
                 if (!ids.isEmpty()) {
                     return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add(Constants.REEFERS_KEY, Json.createValue(ids.size()))
-                            .add(JsonOrder.OrderKey, order.getAsObject()).build();
+                            .add(JsonOrder.OrderKey, order.getAsJsonObject()).build();
                 }
 
             }
+            /*
             if (!order.containsKey(Constants.ORDER_PRODUCT_QTY_KEY)) {
                 return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "ProductQuantityMissing")
                         .add(Constants.ORDER_ID_KEY, order.getId()).build();
             }
+
+             */
             // allocate enough reefers to cary products in the order
             List<ReeferDTO> orderReefers = ReeferAllocator.allocateReefers(reeferMasterInventory, order.getProductQty(),
                     order.getId(), order.getVoyageId());
@@ -274,7 +286,7 @@ public class ReeferProvisionerActor extends BaseActor {
             valuesChanged.set(true);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                     add(Constants.REEFERS_KEY, Json.createValue(orderReefers.size())).
-                    add(JsonOrder.OrderKey, order.getAsObject()).build();
+                    add(JsonOrder.OrderKey, order.getAsJsonObject()).build();
 
         } catch (Throwable e) {
             logger.log(Level.WARNING, "ReeferProvisioner.bookReefers() - Error ", e);
@@ -676,6 +688,19 @@ public class ReeferProvisionerActor extends BaseActor {
                         reefer.setState(ReeferState.State.INTRANSIT);
                     }
                 }).count();
+    }
+    @Remote
+    public void publish() {
+        System.out.println("ReeferProvisioner.publish() ...");
+        if (valuesChanged.get()) {
+            try {
+                Kar.Services.postAsync(Constants.REEFERSERVICE, "/reefers/stats/update", getReeferStats());
+                valuesChanged.set(false);
+                System.out.println("ReeferProvisioner.publish() ...dispatched rest notification");
+            } catch (Exception e) {
+                logger.warning("ReeferProvisioner- REST call /reefers/stats/update failed - cause:" + e.getMessage());
+            }
+        }
     }
     /**
      * Timer task to call REST to update its reefer counts

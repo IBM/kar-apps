@@ -26,6 +26,8 @@ import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.ReeferDTO;
 import org.springframework.stereotype.Service;
 
+import javax.json.JsonArray;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 import java.time.Instant;
@@ -45,6 +47,9 @@ public class OrderService { //extends AbstractPersistentService {
     TreeSet<Order> activeOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
     TreeSet<Order> bookedOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
     TreeSet<Order> spoiltOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
+
+    private ActorRef orderMgrActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
+
     private OrderPersistence storage = new OrderPersistence();
 
     public Map<String, Set<Order>> activeVoyageOrderMap() {
@@ -55,6 +60,7 @@ public class OrderService { //extends AbstractPersistentService {
 
     }
     public Map<String, Set<Order>> bookedVoyageOrderMap() {
+
         synchronized (OrderService.class) {
             return bookedOrders.stream().filter(Objects::nonNull).
                     collect(Collectors.groupingBy(Order::getVoyageId, Collectors.toSet()));
@@ -67,9 +73,14 @@ public class OrderService { //extends AbstractPersistentService {
      * @return- Most recent active orders
      */
     public List<Order> getActiveOrderList() {
+        System.out.println("OrderService.getActiveOrderList() ---------- returning active orders from OrderManager state");
+        return orders(Kar.Actors.State.get(orderMgrActor, Constants.ACTIVE_ORDERS_KEY));
+        /*
         synchronized (OrderService.class) {
             return activeOrders.descendingSet().stream().limit(MaxOrdersToReturn).collect(Collectors.toList());
         }
+
+         */
 
     }
 
@@ -79,9 +90,14 @@ public class OrderService { //extends AbstractPersistentService {
      * @return Most recent booked orders
      */
     public List<Order> getBookedOrderList() {
+        System.out.println("OrderService.getBookedOrderList() ---------- returning booked orders from OrderManager state");
+        return orders(Kar.Actors.State.get(orderMgrActor, Constants.BOOKED_ORDERS_KEY));
+/*
         synchronized (OrderService.class) {
             return bookedOrders.descendingSet().stream().limit(MaxOrdersToReturn).collect(Collectors.toList());
         }
+
+ */
 
     }
 
@@ -91,13 +107,24 @@ public class OrderService { //extends AbstractPersistentService {
      * @return Most recent spoilt orders
      */
     public List<Order> getSpoiltOrderList() {
+        System.out.println("OrderService.getSpoiltOrderList() ---------- returning spoilt orders from OrderManager state");
+        return orders(Kar.Actors.State.get(orderMgrActor, Constants.SPOILT_ORDERS_KEY));
+/*
         synchronized (OrderService.class) {
             return spoiltOrders.descendingSet().stream().limit(MaxOrdersToReturn).peek(o -> System.out.println(o.getDate())).collect(Collectors.toList());
         }
 
+ */
+
     }
 
-
+    private List<Order> orders(JsonValue jv)  {
+        if ( jv != null && jv != JsonValue.NULL) {
+            JsonArray ja = jv.asJsonArray();
+            return ja.stream().map( Order::new).collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+    }
     /**
      * Called when an order with given id gets spoiled which means that one or more
      * of its reefers became spoilt while in-transit.
@@ -150,9 +177,29 @@ public class OrderService { //extends AbstractPersistentService {
      * @return order counts
      */
     public OrderStats getOrderStats() {
+        Map<String, JsonValue> state = Kar.Actors.State.getAll(orderMgrActor);
+        int bookedTotalCount=0;
+        int inTransitTotalCount=0;
+        int spoiltTotalCount=0;
+
+        if (!state.isEmpty()) {
+            if (state.containsKey(Constants.TOTAL_BOOKED_KEY)) {
+                bookedTotalCount = ((JsonNumber) state.get(Constants.TOTAL_BOOKED_KEY)).intValue();
+            }
+            if (state.containsKey(Constants.TOTAL_INTRANSIT_KEY)) {
+                inTransitTotalCount = ((JsonNumber) state.get(Constants.TOTAL_INTRANSIT_KEY)).intValue();
+            }
+            if (state.containsKey(Constants.TOTAL_SPOILT_KEY)) {
+                spoiltTotalCount = ((JsonNumber) state.get(Constants.TOTAL_SPOILT_KEY)).intValue();
+            }
+        }
+        return new OrderStats(inTransitTotalCount, bookedTotalCount, spoiltTotalCount);
+        /*
         synchronized (OrderService.class) {
             return new OrderStats(activeOrders.size(), bookedOrders.size(), spoiltOrders.size());
         }
+
+         */
     }
 
     /**

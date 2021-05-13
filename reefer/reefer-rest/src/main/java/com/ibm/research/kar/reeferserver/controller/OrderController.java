@@ -162,8 +162,11 @@ public class OrderController {
 			}
 			Order order = new Order(orderProperties);
 			ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
+			//ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
 			// call Order actor to create the order. This may time out
-			JsonValue reply = Kar.Actors.call(orderActor, "createOrder", order.getOrderParams());
+			//JsonValue reply = Kar.Actors.call(orderActor, "createOrder", order.getOrderParams());
+			JsonValue reply = Kar.Actors.call(orderActor, "createOrder", order.getAsJsonObject()); //OrderParams());
+
 			if ( logger.isLoggable(Level.FINE)) {
 				logger.fine("OrderController.bookOrder - Order Actor reply:" + reply);
 			}

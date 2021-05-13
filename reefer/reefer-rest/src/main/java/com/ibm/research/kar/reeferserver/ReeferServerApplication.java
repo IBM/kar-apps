@@ -75,6 +75,10 @@ public class ReeferServerApplication {
 	}
 	@PostConstruct
 	public void init() {
+
+	//	ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+	//	Kar.Actors.tell(orderActor, "ping");
+
 		// load routes
 		List<Route> routes = shipScheduleService.getRoutes();
 		// The schedule base date is a date when the schedule was generated. It is saved persistently and

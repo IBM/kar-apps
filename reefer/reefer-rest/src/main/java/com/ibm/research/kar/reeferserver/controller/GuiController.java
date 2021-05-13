@@ -62,9 +62,9 @@ public class GuiController {
         timer.scheduleAtFixedRate(timerTask, 0, 100);
     }
 
-    public void sendActiveVoyageUpdate(List<Voyage> voyages, String currentDate) {
+    public void sendActiveVoyageUpdate( ShippingSchedule schedule) { //List<Voyage> voyages, String currentDate) {
         long start = System.currentTimeMillis();
-        ShippingSchedule schedule = new ShippingSchedule(voyages, currentDate);
+       // ShippingSchedule schedule = new ShippingSchedule(voyages, currentDate);
         template.convertAndSend("/topic/voyages", schedule);
         long end = System.currentTimeMillis();
         if ( logger.isLoggable(Level.INFO)) {

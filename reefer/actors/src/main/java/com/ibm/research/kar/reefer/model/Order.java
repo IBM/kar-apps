@@ -27,9 +27,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class Order {
     public enum OrderStatus { 
@@ -59,6 +57,7 @@ public class Order {
     boolean spoilt;
     List<String> reeferIds;
 
+
     public Order(OrderProperties orderProperties) {
         this(orderProperties.getCustomerId(),orderProperties.getProduct(),
             orderProperties.getProductQty(),orderProperties.getVoyageId(),
@@ -70,6 +69,7 @@ public class Order {
         dto.getProductQty(), dto.getVoyageId(), dto.getStatus(), new ArrayList<String>());
     }
     public Order(JsonValue jo ) {
+        /*
         this.id = jo.asJsonObject().getString(Constants.ORDER_ID_KEY);
         this.customerId = jo.asJsonObject().getString(Constants.ORDER_CUSTOMER_ID_KEY);
         this.product = jo.asJsonObject().getString(Constants.ORDER_PRODUCT_KEY);
@@ -78,7 +78,22 @@ public class Order {
         this.status = jo.asJsonObject().getString(Constants.ORDER_STATUS_KEY);
         this.date = jo.asJsonObject().getString(Constants.ORDER_DATE_KEY);
         this.spoilt = jo.asJsonObject().getBoolean(Constants.ORDER_SPOILT_KEY);
+
+         */
+        this(jo.asJsonObject());
     }
+    public Order(JsonObject jo ) {
+        this.id = jo.getString(Constants.ORDER_ID_KEY);
+        this.customerId = jo.getString(Constants.ORDER_CUSTOMER_ID_KEY);
+        this.product = jo.getString(Constants.ORDER_PRODUCT_KEY);
+        this.productQty = jo.getInt(Constants.ORDER_PRODUCT_QTY_KEY);
+        this.voyageId = jo.getString(Constants.VOYAGE_ID_KEY);
+        this.status = jo.getString(Constants.ORDER_STATUS_KEY);
+        this.date = jo.getString(Constants.ORDER_DATE_KEY);
+        this.spoilt = jo.getBoolean(Constants.ORDER_SPOILT_KEY);
+
+    }
+
     public Order( String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
 
         this(String.valueOf(Instant.now().toEpochMilli()), customerId, product, productQty, voyageId, status,reeferIds);
@@ -95,6 +110,19 @@ public class Order {
         // date one day at a time and we need millis resolution
         this.date = Instant.now().toString();
         this.spoilt = false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Order order = (Order) o;
+        return id.equals(order.id) && voyageId.equals(order.voyageId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, voyageId);
     }
 
     public String getDate() {
@@ -142,7 +170,7 @@ public class Order {
     }
 
     public String getStatus() {
-        return status;
+        return status.toUpperCase();
     }
 
     public void setStatus(String status) {

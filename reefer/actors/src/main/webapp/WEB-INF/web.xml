@@ -15,11 +15,13 @@
 			com.ibm.research.kar.reefer.actors.ReeferActor,
 			com.ibm.research.kar.reefer.actors.VoyageActor,
 			com.ibm.research.kar.reefer.actors.ReeferProvisionerActor,
-			com.ibm.research.kar.reefer.actors.RestHelper
+			com.ibm.research.kar.reefer.actors.RestHelper,
+			com.ibm.research.kar.reefer.actors.OrderManagerActor,
+			com.ibm.research.kar.reefer.actors.ScheduleManagerActor
 		</param-value>
 	</context-param>
 		<context-param>
 			<param-name>kar-actor-types</param-name>
-			<param-value>order,reefer,voyage,reefer-provisioner,resthelper</param-value>
+			<param-value>order,reefer,voyage,reefer-provisioner,resthelper,order-manager,schedule-manager</param-value>
 		</context-param>
 </web-app>

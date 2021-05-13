@@ -21,6 +21,7 @@ import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
+import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Route;
@@ -75,7 +76,12 @@ public class ScheduleService extends AbstractPersistentService {
     }
 
     public Voyage getVoyage(final String voyageId) throws VoyageNotFoundException {
+        ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+        JsonValue reply = Kar.Actors.call(scheduleActor, "voyage", Json.createValue(voyageId));
+        return VoyageJsonSerializer.deserialize(reply.asJsonObject());
+        /*
         synchronized (ScheduleService.class) {
+
             Optional<Voyage> voyage =
                     masterSchedule.stream().filter(v -> v.getId().equals(voyageId)).findFirst();
             if (voyage.isPresent()) {
@@ -84,6 +90,8 @@ public class ScheduleService extends AbstractPersistentService {
         }
 
         throw new VoyageNotFoundException("ScheduleService.getVoyage() - voyage:" + voyageId + " not found in MasterSchedule");
+
+         */
     }
 
     /**

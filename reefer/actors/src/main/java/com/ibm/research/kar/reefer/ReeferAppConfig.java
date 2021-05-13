@@ -24,11 +24,14 @@ public class ReeferAppConfig {
     public static final int ReeferMaxCapacityValue = 1000;
     public static final int ReeferInventorySize=1000000;
     public static final String ReeferProvisionerId = "ReeferManager";
-
+    public static final String OrderManagerId = "OrderManager";
+    public static final String ScheduleManagerId = "ScheduleManager";
     public static final String ReeferActorName="reefer";
     public static final String ReeferProvisionerActorName="reefer-provisioner";
     public static final String VoyageActorName="voyage";
     public static final String OrderActorName="order";
+    public static final String OrderManagerActorName="order-manager";
+    public static final String ScheduleManagerActorName="schedule-manager";
     public static final String RestActorName="resthelper";
     public static final String RestActorId="reeferservice";
 

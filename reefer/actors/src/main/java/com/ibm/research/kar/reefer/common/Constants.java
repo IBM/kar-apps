@@ -23,6 +23,7 @@ public class Constants {
    public static final String TOTAL_ONMAINTENANCE_KEY="totalOnMaintenance";
 
    public static final String ACTIVE_ORDERS_KEY="active-orders";
+   public static final String ACTIVE_VOYAGES_KEY="active-voyages";
    public static final String BOOKED_ORDERS_KEY="booked-orders";
    public static final String SPOILT_ORDERS_KEY="spoilt-orders";
    public static final String REST_ORDERS_KEY="rest-order-map";

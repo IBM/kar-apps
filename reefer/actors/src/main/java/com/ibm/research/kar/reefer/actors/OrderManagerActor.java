@@ -92,7 +92,7 @@ public class OrderManagerActor extends BaseActor {
                     spoiltOrderList.addAll(restoreRecentOrders(state.get(Constants.SPOILT_ORDERS_KEY)));
                 }
                 System.out.println("OrderManagerActor.restoreState() - activeOrders:" + activeOrderList.size() +
-                        " inTransitOrders:" + bookedOrderList.size() + " spoiltOrders:" + spoiltOrderList.size());
+                        " bookedOrders:" + bookedOrderList.size() + " spoiltOrders:" + spoiltOrderList.size());
             }
         } catch (Exception e) {
             e.printStackTrace();

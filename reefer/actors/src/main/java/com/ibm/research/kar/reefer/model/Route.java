@@ -15,6 +15,9 @@
  */
 
 package com.ibm.research.kar.reefer.model;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import java.time.Instant;
 public class Route {
     public static final String ROUTE="route";
@@ -87,7 +90,6 @@ public class Route {
     public void setDaysAtPort(int daysAtPort) {
         this.daysAtPort = daysAtPort;
     }
-
 
     @Override
     public String toString() {

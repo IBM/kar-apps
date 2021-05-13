@@ -153,6 +153,8 @@ public class Voyage implements Comparable<Voyage>{
                 ", arrivalDate='" + arrivalDate + '\'' +
                 ", displayArrivalDate='" + displayArrivalDate + '\'' +
                 ", orderCount=" + orderCount +
+                ", reeferCount=" + reeferCount +
+                ", progress=" +progress+
                 '}';
     }
 

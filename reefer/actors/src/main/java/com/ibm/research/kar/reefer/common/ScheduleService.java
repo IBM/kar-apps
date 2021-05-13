@@ -89,10 +89,10 @@ public class ScheduleService {
      *
      * @param baseScheduleDate
      */
-    public Instant generateShipSchedule(Instant baseScheduleDate, Instant lastVoyageDate) {
+    public Instant generateShipSchedule(Instant baseScheduleDate, Instant currentDate, Instant lastVoyageDate) {
 
         // masterSchedule = scheduler.generateSchedule(baseScheduleDate, getLastVoyageDate(), TimeUtils.getInstance().getCurrentDate());
-        masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, TimeUtils.getInstance().getCurrentDate());
+        masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, currentDate); //TimeUtils.getInstance().getCurrentDate());
         // save last voyage departure date to be able to restore schedule after REST service restarts
         // timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
         //System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());

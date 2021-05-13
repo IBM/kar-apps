@@ -22,6 +22,7 @@ import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.error.ShipCapacityExceeded;
 import com.ibm.research.kar.reefer.common.json.JsonUtils;
+import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
@@ -133,7 +134,7 @@ public class VoyageController {
         JsonArray ja = jv.asJsonArray();
         return ja.stream().map(v -> v.asJsonObject()).
                 map(VoyageJsonSerializer::deserialize).
-                peek(System.out::println).
+               // peek(System.out::println).
                 collect(Collectors.toList());
     }
     /**
@@ -262,7 +263,19 @@ public class VoyageController {
      */
     @GetMapping("/voyage/routes")
     public List<Route> getRoutes() {
-        return shipScheduleService.getRoutes();
+        try {
+            JsonValue reply = Kar.Actors.call(scheduleActor, "routes");
+            System.out.println("VoyageController.getRoutes() --------------------------"+ reply);
+            JsonArray ja = reply.asJsonArray();
+            List<Route> routes =
+                    ja.stream().map(jv -> jv.asJsonObject()).map(RouteJsonSerializer::deserialize).collect(Collectors.toList());
+            //return shipScheduleService.getRoutes();
+            return routes;
+        } catch( Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+
     }
 
     private void updateSimulator(String voyageId, int freeCapacity) {
@@ -285,19 +298,18 @@ public class VoyageController {
         JsonArray ja = reply.asJsonArray();
         return ja.stream().map(v -> v.asJsonObject()).
                 map(VoyageJsonSerializer::deserialize).
-                peek(System.out::println).
+                //peek(System.out::println).
                 collect(Collectors.toList());
-        //return shipScheduleService.getActiveSchedule();
     }
 
     private ShippingSchedule shippingSchedule() {
         JsonValue reply = Kar.Actors.call(scheduleActor, "activeSchedule");
         String currentDate = reply.asJsonObject().getString(Constants.CURRENT_DATE_KEY);
-
+        StringBuilder sb = new StringBuilder("Active Schedule:::");
         JsonArray ja = reply.asJsonObject().getJsonArray(Constants.ACTIVE_VOYAGES_KEY);
         List<Voyage> voyages = ja.stream().map(v -> v.asJsonObject()).
                 map(VoyageJsonSerializer::deserialize).
-                peek(System.out::println).
+                peek(voyage -> sb.append(voyage.toString())).
                 collect(Collectors.toList());
         voyages.sort(Comparator.comparing(v -> v.getRoute().getVessel().getName()));
         return new ShippingSchedule(voyages, currentDate);

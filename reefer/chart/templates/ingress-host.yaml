@@ -15,7 +15,7 @@
 #
 
 {{ if .Values.ingress.hostBased }}
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: reefer-ingress
@@ -30,14 +30,20 @@ spec:
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: reefer-rest
-          servicePort: {{ .Values.reefer.rest.port }}
+          service:
+            name: reefer-rest
+            port:
+              number: {{ .Values.reefer.rest.port }}
   - host: reefer-frontend.{{ .Values.ingress.subdomain }}
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: reefer-frontend
-          servicePort: {{ .Values.reefer.frontend.port }}
+          service:
+            name: reefer-frontend
+            port:
+              number: {{ .Values.reefer.frontend.port }}
 {{ end }}

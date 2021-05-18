@@ -20,11 +20,13 @@ kind: Ingress
 metadata:
   name: reefer-ingress
 spec:
+{{ if ne .Values.ingress.secret "none" }}
   tls:
   - hosts:
     - reefer-rest.{{ .Values.ingress.subdomain }}
     - reefer-frontend.{{ .Values.ingress.subdomain }}
     secretName: {{ .Values.ingress.secret }}
+{{ end }}
   rules:
   - host: reefer-rest.{{ .Values.ingress.subdomain }}
     http:

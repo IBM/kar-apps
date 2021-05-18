@@ -4,8 +4,10 @@ Then, open the URL below in your browser to access the
 Reefer Web Application:
 {{ if .Values.ingress.pathBased }}
   http://{{ .Values.ingress.subdomain }}/reefer-frontend/
-{{- else if .Values.ingress.hostBased }}
+{{- else if and .Values.ingress.hostBased (ne .Values.ingress.secret "none") }}
   https://reefer-frontend.{{ .Values.ingress.subdomain }}/
+{{- else if .Values.ingress.hostBased }}
+  http://reefer-frontend.{{ .Values.ingress.subdomain }}/
 {{- else }}
   http://localhost:{{ .Values.reefer.frontend.nodeport }}/
 {{ end }}

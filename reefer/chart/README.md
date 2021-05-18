@@ -37,7 +37,7 @@ helm install reefer chart --set ingress.pathBased=true --set kar.imagePrefix=qua
 ```
 
 ## To deploy on `IBM Cloud Kubernetes Service`
- * First use `ibmcloud` to determine the `Ingress Subdomain` and `Ingress Secret` for your cluster:  
+ * First use `ibmcloud` to determine the `Ingress Subdomain` and `Ingress Secret` for your cluster:
 ```shell
 ibmcloud cs cluster get --cluster your-cluster-name
 OK
@@ -54,6 +54,30 @@ the actual values for `your-ingress-subdomain` and `your-ingress-secret`
 ```shell
 helm install reefer chart --set ingress.hostBased=true --set kar.imagePrefix=quay.io/ibm --set ingress.subdomain=your-ingress-subdomain --set ingress.secret=your-ingress-secret
 ```
+## To deploy on `Red Hat OpenShift on IBM Cloud`
+ * First use `ibmcloud` to determine the `Ingress Subdomain` for your cluster:
+```shell
+ibmcloud cs cluster get --cluster your-cluster-name
+OK
+
+Name:                           your-cluster-name
+...
+Ingress Subdomain:              your-ingress-subdomain
+...
+```
+ * Next deploy the chart by executing the command below
+from `[kar-apps-install-dir]/reefer`, substituting in
+the actual value for `your-ingress-subdomain`
+```shell
+helm install reefer chart --set ingress.hostBased=true --set kar.imagePrefix=quay.io/ibm --set ingress.subdomain=your-ingress-subdomain
+```
+
+This will expose the Reefer application using http.  If you want to
+use https, you will have to manually copy the ingress TLS secret into
+your namespace as described in the IBM Cloud documentation
+[About Ingress on OpenShift 4](https://cloud.ibm.com/docs/openshift?topic=openshift-ingress-about-roks4).
+Then you can add `--set ingress.secret=your-ingress-secret` to your
+`helm install` command and deploy with an https enabled ingress.
 
 ## Wait for application to complete initialization
  * After deploying, wait about a minute to allow the application to

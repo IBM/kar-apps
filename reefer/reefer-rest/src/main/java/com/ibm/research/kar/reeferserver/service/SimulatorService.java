@@ -37,7 +37,11 @@ import java.util.logging.Logger;
 public class SimulatorService {
     private static final Logger logger = Logger.getLogger(SimulatorService.class.getName());
 
-
+    public int getDelay()  {
+        Response response = Kar.Services.get(Constants.SIMSERVICE,"simulator/getunitdelay");
+        JsonValue respValue = response.readEntity(JsonValue.class);
+        return Integer.parseInt(respValue.toString());
+    }
     public void updateVoyageCapacity(String voyageId, int freeCapacity) {
         JsonObject params = Json.createObjectBuilder().add("voyageId", voyageId).add("freeCapacity", freeCapacity)
                 .build();

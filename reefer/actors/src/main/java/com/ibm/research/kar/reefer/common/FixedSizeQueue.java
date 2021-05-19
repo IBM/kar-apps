@@ -17,7 +17,9 @@ package com.ibm.research.kar.reefer.common;
 
 import com.ibm.research.kar.reefer.model.Order;
 
-import javax.json.*;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.stream.Collectors;
 
@@ -38,24 +40,14 @@ public class FixedSizeQueue extends ArrayBlockingQueue<Order> {
         }
         return super.add(e);
     }
+
     public JsonArray getAll() {
         JsonArrayBuilder jab = Json.createArrayBuilder();
         super.stream().
-                map(this::convert).
+                map(Order::getAsJsonObject).
                 peek(o -> jab.add(o)).
                 collect(Collectors.toList());
 
         return jab.build();
-    }
-    public JsonObject convert(Order o) {
-        JsonObjectBuilder jab = Json.createObjectBuilder();
-        return jab.add(Constants.ORDER_ID_KEY, o.getId()).
-                add(Constants.VOYAGE_ID_KEY, o.getVoyageId()).
-                add(Constants.ORDER_STATUS_KEY, o.getStatus()).
-                add(Constants.ORDER_SPOILT_KEY, o.isSpoilt()).
-                add(Constants.ORDER_PRODUCT_KEY, o.getProduct()).
-                add(Constants.ORDER_PRODUCT_QTY_KEY, o.getProductQty()).
-                add(Constants.ORDER_CUSTOMER_ID_KEY, o.getCustomerId()).
-                add(Constants.ORDER_DATE_KEY, o.getDate()).build();
     }
 }

@@ -21,11 +21,11 @@ import java.time.Instant;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonString;
+import javax.json.*;
+import javax.ws.rs.core.Response;
 
+import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.DelayTarget;
 import com.ibm.research.kar.reefer.model.OrderSimControls;
@@ -58,10 +58,14 @@ public class SimulatorController {
 
       JsonObject req = jsonReader.readObject();
       delayTime = Integer.valueOf(req.getString("delay"));
+      JsonObject delayArg = Json.createObjectBuilder().add("value", delayTime).build();
+      Kar.Services.post(Constants.SIMSERVICE,"simulator/setunitdelay", delayArg);
+
     } catch (Exception e) {
       logger.log(Level.WARNING,"",e);
     }
-    voyageService.changeDelay(delayTime);
+    //voyageService.changeDelay(delayTime);
+
     return TimeUtils.getInstance().getCurrentDate();
   }
 
@@ -73,7 +77,7 @@ public class SimulatorController {
   @PostMapping("/simulator/getdelay")
   public int getShipSimulatorDelay() {
     try {
-      return voyageService.getDelay();
+      return simulatorService.getDelay();
     } catch (Exception e) {
       logger.log(Level.WARNING,"",e);
     }
@@ -83,7 +87,7 @@ public class SimulatorController {
   @GetMapping("/simulator/getdelayandtarget")
   public DelayTarget getDelayAndTarget() {
     try {
-      int delay = voyageService.getDelay();
+      int delay = simulatorService.getDelay();
       int target = simulatorService.getSimOrderTarget();
       return new DelayTarget(delay, target);
     } catch (Exception e) {

@@ -51,7 +51,7 @@ export class ShipScheduleComponent implements OnInit {
 
   progressbarValue = 0;
   voyages: Voyage[] = [];
-  voyageDataSource;// = new MatTableDataSource(this.voyages);
+  voyageDataSource;
   expandedElement:Voyage | null;
   shipTableColumns: string[] = [ 'vessel', 'progress', 'orders','maxCapacity', 'freeCapacity'];
   stompClient:any;
@@ -98,7 +98,7 @@ export class ShipScheduleComponent implements OnInit {
   delayChange(event: any) {
 
     let value = event.target.value;
-    this.rate = value; //Math.ceil(value/5)*5;
+    this.rate = value;
     console.log("Delay Change:"+this.rate);
   }
   ngOnInit(): void {

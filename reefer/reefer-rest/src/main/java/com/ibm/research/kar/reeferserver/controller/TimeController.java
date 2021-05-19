@@ -33,6 +33,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
+import javax.ws.rs.core.Response;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.logging.Level;
@@ -83,26 +84,38 @@ public class TimeController {
      */
     @PostMapping("/time/nextDay")
     public Instant nextDay() {
-        voyageService.nextDay();
-        Instant currentDate = getCurrentDate();
-        System.out.println("TimeController.nextDay() - new date:" + currentDate);
-        try {
+      //  voyageService.nextDay();
+        Response response = Kar.Services.post(Constants.SIMSERVICE, "simulator/advancetime", JsonValue.NULL);
+        JsonValue respValue = response.readEntity(JsonValue.class);
+        if ( logger.isLoggable(Level.INFO)) {
+            logger.info("TimeController.nextDay() -------------------------------- simulator reply:"+respValue);
+        }
+
+
+        JsonValue reply = Kar.Actors.call(scheduleActor, "currentDate");
+        return Instant.parse(((JsonString) reply).getString());
+ //       Instant currentDate = getCurrentDate();
+ //       System.out.println("TimeController.nextDay() - new date:" + currentDate);
+   //     try {
             /*
             JsonObject message = Json.createObjectBuilder()
                     .add(Constants.DATE_KEY, Json.createValue(TimeUtils.getInstance().getCurrentDate().toString()))
                     .build();
 
              */
+            /*
             JsonObject message = Json.createObjectBuilder()
                     .add(Constants.DATE_KEY, Json.createValue(currentDate.toString()))
                     .build();
             messageReeferProvisioner("releaseReefersfromMaintenance", message);
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
-            e.printStackTrace();
-        }
 
-        return currentDate; //TimeUtils.getInstance().getCurrentDate();
+             */
+  //      } catch (Exception e) {
+ //           logger.log(Level.WARNING, "", e);
+ //           e.printStackTrace();
+  //      }
+
+       //return currentDate; //TimeUtils.getInstance().getCurrentDate();
     }
 
     @PostMapping("/time/advance")
@@ -116,6 +129,7 @@ public class TimeController {
             System.out.println("TimeController.advance() - new date:" + reply);
             today = Instant.parse(reply.asJsonObject().getString(Constants.CURRENT_DATE_KEY).toString());
             System.out.println("TimeController.advance() - new date:" + reply + " today:" + today);
+  /*
             // persist current date
             timeService.saveDate(today, Constants.CURRENT_DATE_KEY);
 
@@ -137,6 +151,8 @@ public class TimeController {
             JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(today.toString()))
                     .build();
             messageReeferProvisioner("releaseReefersfromMaintenance", message);
+
+   */
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
             e.printStackTrace();

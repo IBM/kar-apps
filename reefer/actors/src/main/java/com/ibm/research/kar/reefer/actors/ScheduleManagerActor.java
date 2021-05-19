@@ -1,13 +1,12 @@
 package com.ibm.research.kar.reefer.actors;
 
 import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
-import com.ibm.research.kar.reefer.common.Constants;
-import com.ibm.research.kar.reefer.common.Routes;
-import com.ibm.research.kar.reefer.common.ScheduleService;
-import com.ibm.research.kar.reefer.common.ShippingScheduler;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.*;
 import com.ibm.research.kar.reefer.common.error.VoyageNotFoundException;
 import com.ibm.research.kar.reefer.common.json.JsonUtils;
 import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
@@ -29,10 +28,15 @@ public class ScheduleManagerActor extends BaseActor {
     private Routes routes = new Routes();
     private ScheduleService schedule;
     private Instant baseDate;
+    private int reeferInventorySize;
+
+    /*
     private TreeSet<Order> activeOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
     private TreeSet<Order> bookedOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
     private TreeSet<Order> spoiltOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
 
+
+     */
     private static final Logger logger = Logger.getLogger(OrderManagerActor.class.getName());
 
     @Activate
@@ -59,31 +63,60 @@ public class ScheduleManagerActor extends BaseActor {
                 Kar.Actors.State.set(this, Constants.REEFER_FLEET_SIZE_KEY, Json.createValue(fleetSize));
                 System.out.println("ScheduleManagerActor.activate() ++++++++++++ saved fleet size:" + fleetSize);
             }
+
+
+
+
             schedule = new ScheduleService(new ShippingScheduler(fleetSize));
+            reeferInventorySize = FleetCapacity.totalSize(schedule.getRoutes());
             JsonValue baseDateValue = state.get(Constants.SCHEDULE_BASE_DATE_KEY);
 
             Instant currentDate;
             Instant lastVoyageDate;
+            Instant lastScheduleDate;
             if (Objects.isNull(baseDateValue)) {
                 baseDate = currentDate = TimeUtils.getInstance().getCurrentDate();
                 lastVoyageDate = TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate());
                 Kar.Actors.State.set(this, Constants.SCHEDULE_BASE_DATE_KEY, Json.createValue(currentDate.toString()));
                 Kar.Actors.State.set(this, Constants.CURRENT_DATE_KEY, Json.createValue(currentDate.toString()));
+                lastScheduleDate = schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
             } else {
                 baseDate = Instant.parse(((JsonString) baseDateValue).getString());
                 JsonValue date = state.get(Constants.CURRENT_DATE_KEY);
                 currentDate = TimeUtils.getInstance(Instant.parse(((JsonString) date).getString())).getCurrentDate();
                 lastVoyageDate = Instant.parse(((JsonString) state.get(Constants.SCHEDULE_END_DATE_KEY)).getString());
+                lastScheduleDate = schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
                 System.out.println("ScheduleManagerActor.activate() - Restored Current Date:" + currentDate + " baseDate:" + baseDate + " endDate:" + lastVoyageDate);
+                restoreActiveVoyageOrders();
             }
-            Instant lastScheduleDate = schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
-            //timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
             Kar.Actors.State.set(this, Constants.SCHEDULE_END_DATE_KEY, Json.createValue(lastScheduleDate.toString()));
             System.out.println("ScheduleManagerActor.activate() ++++ Saved End Date:" + lastScheduleDate);
             System.out.println("ScheduleManagerActor.activate() - actor type:" + this.getType() + " generated routes - size:" + schedule.getRoutes().size());
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void restoreActiveVoyageOrders() {
+        List<Voyage> activeVoyages = schedule.getActiveSchedule();
+        for (Voyage voyage : activeVoyages) {
+            Optional<JsonObject> state = recoverVoyage(voyage.getId());
+            if (state.isPresent()) {
+                Voyage recoveredVoyageState = VoyageJsonSerializer.deserialize(state.get());
+                voyage.setOrderCount(recoveredVoyageState.getOrderCount());
+                voyage.changePosition(recoveredVoyageState.getRoute().getDaysAtSea());
+                voyage.setReeferCount(recoveredVoyageState.getReeferCount());
+            }
+        }
+    }
+
+    private Optional<JsonObject> recoverVoyage(String voyageId) {
+        ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, voyageId);
+        JsonValue jv = Kar.Actors.State.get(voyageActorRef, Constants.VOYAGE_INFO_KEY);
+        if (jv == null || jv == JsonValue.NULL) {
+            return Optional.empty();
+        }
+        return Optional.of(jv.asJsonObject());
     }
 
     @Remote
@@ -99,13 +132,11 @@ public class ScheduleManagerActor extends BaseActor {
     @Remote
     public JsonValue tomorrowsDate() {
         Instant currentDate = TimeUtils.getInstance().getCurrentDate();
-        //Instant t = currentDate.plus(1, ChronoUnit.DAYS);
         return Json.createValue(currentDate.plus(1, ChronoUnit.DAYS).toString());
     }
 
     @Remote
     public JsonObject advanceDate() {
-        System.out.println("ScheduleManagerActor.advanceDate() ------------------");
         Instant today = TimeUtils.getInstance().advanceDate(1);
         Kar.Actors.State.set(this, Constants.CURRENT_DATE_KEY, Json.createValue(today.toString()));
 
@@ -117,51 +148,31 @@ public class ScheduleManagerActor extends BaseActor {
                 // we reached a configured threshold of days before the end of current schedule.
                 Instant scheduleEndDate = schedule.extendSchedule(baseDate, lastDepartureDate, today);
                 Kar.Actors.State.set(this, Constants.SCHEDULE_END_DATE_KEY, Json.createValue(scheduleEndDate.toString()));
-                // System.out.println("TimeController.advance() >>>>>>>>>>>>>>> extended schedule");
-            } else {
-                //  System.out.println("TimeController.advance() >>>>>>>>>>>>>>> extending schedule in "+daysBetween+" days");
             }
-
+            JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(today.toString()))
+                    .build();
+            // Reefers on maintenance are freed automatically after a configurable number of days passes.
+            Kar.Actors.tell(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+                    "releaseReefersfromMaintenance", message);
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
         }
-        System.out.println("ScheduleManagerActor.advanceDate() ------------------returning current date:" + today);
         JsonObjectBuilder reply = Json.createObjectBuilder();
         return reply.add(Constants.STATUS_KEY, Constants.OK).add(Constants.CURRENT_DATE_KEY, today.toString()).build();
     }
 
     @Remote
-    public void positionChanged(JsonObject message) {
-        System.out.println("ScheduleManagerActor.positionChanged() ------------------");
-        try {
-            //String voyageId = JsonUtils.getVoyageId(message);
-            // int daysAtSea = JsonUtils.getDaysAtSea(message);
-            String voyageId = JsonUtils.getVoyageId(message.toString());
-            int daysAtSea = JsonUtils.getDaysAtSea(message.toString());
-            /*
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("ScheduleManager.positionChanged() - voyageId:" + voyageId + " Voyage Status:"
-                        + schedule.getVoyageStatus(voyageId) + " daysAtSea: " + daysAtSea);
-            }
-
-             */
-            if (daysAtSea > 0) {
-                schedule.updateDaysAtSea(voyageId, daysAtSea);
-            }
-            // updateGuiSchedule(TimeUtils.getInstance().getCurrentDate().toString());
-        } catch (Exception e) {
-            logger.log(Level.WARNING, e.getMessage(), e);
-        }
-
+    public JsonValue reeferInventorySize() {
+        return Json.createValue(reeferInventorySize);
     }
-
     @Remote
     public void updateVoyage(JsonObject message) {
-        System.out.println("ScheduleManagerActor.updateVoyage() ------------------");
         try {
-            Voyage voyage = schedule.getVoyage(message.getString(Constants.VOYAGE_ID_KEY));
-            voyage.setFreeCapacity(message.getInt(Constants.VOYAGE_FREE_CAPACITY_KEY));
-            voyage.setOrderCount(message.getInt(Constants.VOYAGE_ORDERS_KEY));
+            Voyage voyage = VoyageJsonSerializer.deserialize(message);
+            Voyage scheduledVoyage = schedule.getVoyage(voyage.getId());//message.getString(Constants.VOYAGE_ID_KEY));
+            scheduledVoyage.setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity()); //message.getInt(Constants.VOYAGE_FREE_CAPACITY_KEY));
+            scheduledVoyage.setOrderCount(voyage.getOrderCount()); ///message.getInt(Constants.VOYAGE_ORDERS_KEY));
+            scheduledVoyage.setReeferCount((voyage.getReeferCount()));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -169,14 +180,11 @@ public class ScheduleManagerActor extends BaseActor {
 
     @Remote
     public JsonValue activeVoyages() {
-        System.out.println("ScheduleManagerActor.activeVoyages() ------------------");
-
         return voyageListToJsonArray(schedule.getActiveSchedule());
     }
 
     @Remote
     public JsonObject activeSchedule() {
-        System.out.println("ScheduleManagerActor.activeSchedule() ------------------");
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add(Constants.CURRENT_DATE_KEY, TimeUtils.getInstance().getCurrentDate().toString()).
                 add(Constants.ACTIVE_VOYAGES_KEY, voyageListToJsonArray(schedule.getActiveSchedule()));
@@ -189,7 +197,6 @@ public class ScheduleManagerActor extends BaseActor {
             jab.add(VoyageJsonSerializer.serialize(voyage));
         });
         JsonArray ja = jab.build();
-        System.out.println("ScheduleManagerActor.activeVoyages() ------------------ active voyages:" + ja);
         return ja;
     }
 
@@ -213,39 +220,58 @@ public class ScheduleManagerActor extends BaseActor {
         String originPort = "";
         String destinationPort = "";
         Instant date = null;
-
-
-        // originPort = message.getString("origin");
-        //   destinationPort = message.getString("destination");
         String departureDate = message.getString("departureDate");
         date = Instant.parse(departureDate);
         if (logger.isLoggable(Level.INFO)) {
             logger.info("ScheduleManagerActor.getMatchingVoyages() - origin:" + originPort + " destination:"
                     + destinationPort + " date:" + departureDate);
         }
-
-        //return schedule.getMatchingSchedule(message.getString("origin"), message.getString("destination"), date);
         return voyageListToJsonArray(schedule.getMatchingSchedule(message.getString("origin"), message.getString("destination"), date));
     }
 
     @Remote
     public void voyageDeparted(JsonObject message) {
         try {
-
-            String voyageId = JsonUtils.getVoyageId(message.toString());
-            int daysAtSea = JsonUtils.getDaysAtSea(message.toString());
-            System.out.println("ScheduleManagerActor.voyageDeparted() ------------------ voyage departed:" + voyageId);
-            //   List<String> voyageOrderList = JsonUtils.getVoyageOrders(message.toString());
+            Voyage voyage = VoyageJsonSerializer.deserialize(message);
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("ScheduleManagerActor.departed() - id:" + voyageId + " message:" + message);
+                logger.info("ScheduleManagerActor.departed() - id:" + voyage.getId() + " message:" + message);
             }
-            schedule.updateDaysAtSea(voyageId, daysAtSea);
-            // voyageService.voyageDeparted(voyageId);
-            // orderService.updateOrderStatus(voyageId, Order.OrderStatus.INTRANSIT, voyageOrderList);
+            Voyage activeVoyage = schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
+            activeVoyage.setOrderCount(voyage.getOrderCount());
+            activeVoyage.setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity());
+            activeVoyage.setReeferCount(voyage.getReeferCount());
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
             e.printStackTrace();
         }
+    }
+
+    @Remote
+    public void voyageArrived(JsonObject message) {
+        try {
+            Voyage voyage = VoyageJsonSerializer.deserialize(message);
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("VoyageController.delivered() - id:" + voyage.getId() + " message:" + message);
+            }
+            schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
+            voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
+        } catch (Exception e) {
+            logger.log(Level.WARNING, e.getMessage(), e);
+            e.printStackTrace();
+        }
+    }
+
+    @Remote
+    public void positionChanged(JsonObject message) {
+        try {
+            Voyage voyage = VoyageJsonSerializer.deserialize(message);
+            if (voyage.getProgress() > 0) {
+                schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING, e.getMessage(), e);
+        }
+
     }
 
     @Remote
@@ -271,24 +297,6 @@ public class ScheduleManagerActor extends BaseActor {
 
     }
 
-    @Remote
-    public void voyageArrived(JsonObject message) {
-        try {
-            String voyageId = JsonUtils.getVoyageId(message.toString());
-            int daysAtSea = JsonUtils.getDaysAtSea(message.toString());
-            System.out.println("ScheduleManagerActor.voyageArrived() ------------------ voyage arrived:" + voyageId);
-            //List<String> voyageOrderList = JsonUtils.getVoyageOrders(message.toString());
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("VoyageController.delivered() - id:" + voyageId + " message:" + message);
-            }
-            schedule.updateDaysAtSea(voyageId, daysAtSea);
-            //voyageService.voyageEnded(voyageId);
-            // orderService.updateOrderStatus(voyageId, Order.OrderStatus.DELIVERED, voyageOrderList);
-        } catch (Exception e) {
-            logger.log(Level.WARNING, e.getMessage(), e);
-            e.printStackTrace();
-        }
-    }
 
     @Remote
     public JsonValue routes() {

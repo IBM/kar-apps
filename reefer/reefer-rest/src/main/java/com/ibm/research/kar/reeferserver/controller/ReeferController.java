@@ -87,7 +87,6 @@ public class ReeferController {
 	@GetMapping("/reefers/stats")
 	public ReeferStats getReeferStats() {
 		return new ReeferStats(total, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance);
-		//return reeferService.getReeferStats();
 	}
 
 	@PostMapping("/reefers/stats/update")

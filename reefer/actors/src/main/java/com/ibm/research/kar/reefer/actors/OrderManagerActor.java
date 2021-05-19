@@ -27,8 +27,6 @@ import com.ibm.research.kar.reefer.model.Order;
 import javax.json.*;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -54,21 +52,6 @@ public class OrderManagerActor extends BaseActor {
 
     @Activate
     public void activate() {
-        restoreState();
-        /*
-        // update thread. Sends order count updates to the REST
-        TimerTask timerTask = new OrderManagerActor.RestUpdateTask();
-        // running timer task as daemon thread. It updates
-        // REST order counts at regular intervals (currently 100ms)
-        Timer timer = new Timer(true);
-        valuesChanged.set(true);
-        timer.scheduleAtFixedRate(timerTask, 0, 100);
-        //Kar.Actors.Reminders.schedule(this, "publish","webapi", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(1));
-
-         */
-    }
-
-    private void restoreState() {
         Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
         try {
             // initial actor invocation should handle no state
@@ -91,8 +74,8 @@ public class OrderManagerActor extends BaseActor {
                 if (state.containsKey(Constants.SPOILT_ORDERS_KEY)) {
                     spoiltOrderList.addAll(restoreRecentOrders(state.get(Constants.SPOILT_ORDERS_KEY)));
                 }
-                System.out.println("OrderManagerActor.restoreState() - activeOrders:" + activeOrderList.size() +
-                        " bookedOrders:" + bookedOrderList.size() + " spoiltOrders:" + spoiltOrderList.size());
+                System.out.println("OrderManagerActor.restoreState() - Totals - totalInTransit:"+inTransitTotalCount+" totalBooked: "+bookedTotalCount+" totalSpoilt:"+spoiltTotalCount+" activeOrdersList:" + activeOrderList.size() +
+                        " bookedOrdersList:" + bookedOrderList.size() + " spoiltOrdersList:" + spoiltOrderList.size());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -101,100 +84,103 @@ public class OrderManagerActor extends BaseActor {
     }
 
     private List<Order> restoreRecentOrders(JsonValue jv) throws Exception {
-        if (jv != null && jv != JsonValue.NULL) {
-            JsonArray ja = jv.asJsonArray();
-            return ja.stream().map(Order::new).collect(Collectors.toList());
+        try {
+            if (jv != null && jv != JsonValue.NULL) {
+                JsonArray ja = jv.asJsonArray();
+                return ja.stream().map(Order::new).collect(Collectors.toList());
+            }
+        } catch ( Exception e) {
+            e.printStackTrace();
         }
+
         throw new IllegalArgumentException("Not able to restore order list - the list is null");
     }
 
     @Remote
-    public void publish() {
-        // System.out.println("OrderManagerActor.publish() ...");
-        if (valuesChanged.get()) {
-            try {
-                Kar.Services.postAsync(Constants.REEFERSERVICE, "/orders/stats/update", getOrderStats());
-                valuesChanged.set(false);
-                // System.out.println("OrderManagerActor.publish() ...dispatched rest notification");
-            } catch (Exception e) {
-                logger.warning("OrderManagerActor- REST call /orders/stats/update failed - cause:" + e.getMessage());
-            }
-        }
-    }
-
-    @Remote
     public void orderBooked(JsonObject message) {
-        System.out.println("OrderManagerActor.orderCreated() --- called - message:" + message);
-        JsonObjectBuilder jo = Json.createObjectBuilder();
-        Order order = new Order(message);
-        bookedOrderList.add(order);
-        valuesChanged.set(true);
-        bookedTotalCount.incrementAndGet();
-        JsonObjectBuilder job = Json.createObjectBuilder();
-        job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount.intValue())).
-                add(Constants.BOOKED_ORDERS_KEY, bookedOrderList.getAll());
-        Kar.Actors.State.set(this, job.build());
-    }
-
-    @Remote
-    public void orderDeparted(JsonValue message) {
-        Order order = new Order(message);
-        activeOrderList.add(order);
-        bookedOrderList.remove(order);
-        inTransitTotalCount.incrementAndGet();
-        valuesChanged.set(true);
-        JsonObjectBuilder job = Json.createObjectBuilder();
-        job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount.intValue())).
-                add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount.intValue())).
-                add(Constants.BOOKED_ORDERS_KEY, bookedOrderList.getAll()).
-                add(Constants.ACTIVE_ORDERS_KEY, activeOrderList.getAll());
-
-        Kar.Actors.State.set(this, job.build());
-    }
-
-    @Remote
-    public void orderArrived(JsonValue message) {
-        Order order = new Order(message);
-        activeOrderList.remove(order);
-        spoiltOrderList.remove(order);
-        inTransitTotalCount.addAndGet(-1);
-        if (order.isSpoilt()) {
-            spoiltTotalCount.addAndGet(-1);
+        try {
+            JsonObjectBuilder jo = Json.createObjectBuilder();
+            Order order = new Order(message);
+            bookedOrderList.add(order);
+            valuesChanged.set(true);
+            bookedTotalCount.incrementAndGet();
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount.intValue())).
+                    add(Constants.BOOKED_ORDERS_KEY, bookedOrderList.getAll());
+            Kar.Actors.State.set(this, job.build());
+        } catch( Exception e) {
+            e.printStackTrace();
         }
-        valuesChanged.set(true);
-        JsonObjectBuilder job = Json.createObjectBuilder();
-        job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount.intValue())).
-                add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount.intValue())).
-                add(Constants.ACTIVE_ORDERS_KEY, activeOrderList.getAll()).
-                add(Constants.SPOILT_ORDERS_KEY, spoiltOrderList.getAll());
-        Kar.Actors.State.set(this, job.build());
+
     }
 
     @Remote
-    public void orderSpoilt(JsonValue message) {
-        Order order = new Order(message);
-        spoiltOrderList.add(order);
-        spoiltTotalCount.incrementAndGet();
-        valuesChanged.set(true);
-        JsonObjectBuilder job = Json.createObjectBuilder();
-        job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount.intValue())).add(Constants.SPOILT_ORDERS_KEY, spoiltOrderList.getAll());
-        Kar.Actors.State.set(this, job.build());
-    }
+    public void ordersDeparted(JsonValue message) {
+        try {
+            JsonArray ja = message.asJsonObject().getJsonArray(Constants.VOYAGE_ORDERS_KEY);
+            ja.forEach(jo -> {
+                Order order = new Order(jo.asJsonObject());
+                activeOrderList.add(order);
+                bookedOrderList.remove(order);
+                inTransitTotalCount.incrementAndGet();
+                long b = bookedTotalCount.get();
+                bookedTotalCount.addAndGet(-1);
+            });
+            valuesChanged.set(true);
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount.intValue())).
+                    add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount.intValue())).
+                    add(Constants.BOOKED_ORDERS_KEY, bookedOrderList.getAll()).
+                    add(Constants.ACTIVE_ORDERS_KEY, activeOrderList.getAll());
 
-    private JsonObject getOrderStats() {
-        return Json.createObjectBuilder().add(Constants.TOTAL_BOOKED_KEY, bookedTotalCount.get())
-                .add(Constants.TOTAL_INTRANSIT_KEY, inTransitTotalCount.get()).add(Constants.TOTAL_SPOILT_KEY, spoiltTotalCount.get())
-                .build();
-    }
-
-    /**
-     * Timer task to call REST to update its reefer counts
-     */
-    private class RestUpdateTask extends TimerTask {
-        @Override
-        public void run() {
-            publish();
+            Kar.Actors.State.set(this, job.build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
+    @Remote
+    public void ordersArrived(JsonValue message) {
+        try {
+            JsonArray ja = message.asJsonObject().getJsonArray(Constants.VOYAGE_ORDERS_KEY);
+            ja.forEach(jo -> {
+                Order order = new Order(jo.asJsonObject());
+                activeOrderList.remove(order);
+                spoiltOrderList.remove(order);
+                long t = inTransitTotalCount.get();
+                inTransitTotalCount.addAndGet(-1);
+                if (order.isSpoilt()) {
+                    spoiltTotalCount.addAndGet(-1);
+                }
+            });
+            valuesChanged.set(true);
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount.intValue())).
+                    add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount.intValue())).
+                    add(Constants.ACTIVE_ORDERS_KEY, activeOrderList.getAll()).
+                    add(Constants.SPOILT_ORDERS_KEY, spoiltOrderList.getAll());
+            Kar.Actors.State.set(this, job.build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    @Remote
+    public void orderSpoilt(JsonObject message) {
+        try {
+            Order order = new Order(message);
+            spoiltOrderList.add(order);
+            spoiltTotalCount.incrementAndGet();
+            valuesChanged.set(true);
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount.intValue())).add(Constants.SPOILT_ORDERS_KEY, spoiltOrderList.getAll());
+            Kar.Actors.State.set(this, job.build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+
+    }
 }

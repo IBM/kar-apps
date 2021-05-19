@@ -226,7 +226,7 @@ public class ShipThread extends Thread {
             nextevent++;
             if (events_per_day == nextevent) {
                 nextevent = 0;
-
+/*
                 // tell GUI to update active voyages
                 snapshot = System.nanoTime();
 
@@ -238,6 +238,8 @@ public class ShipThread extends Thread {
                 if (logger.isLoggable(Level.FINE)) {
                     logger.fine("shipthread: updateGui took " + (System.nanoTime() - snapshot) / 1000000 + " ms");
                 }
+
+ */
             }
 
             try {

@@ -37,10 +37,12 @@ import javax.json.*;
 import javax.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Actor
 public class VoyageActor extends BaseActor {
@@ -79,13 +81,22 @@ public class VoyageActor extends BaseActor {
             if (state.containsKey(Constants.VOYAGE_STATUS_KEY)) {
                 voyageStatus = state.get(Constants.VOYAGE_STATUS_KEY);
             }
-            restoreOrdersMap(state);
+
+            //restoreOrdersMap();
+            orders.putAll(Kar.Actors.State.Submap.getAll(this, Constants.VOYAGE_ORDERS_KEY));
+            if (orders.isEmpty()) {
+                System.out.println("VoyageActor.init() actorID:" + this.getId() + " !!!!!!!!!!!!!!!! EMPTY ORDERS MAP !!!!!!!!!!!");
+            }
         }
         voyage = VoyageJsonSerializer.deserialize(voyageInfo);
     }
-    private void restoreOrdersMap(Map<String, JsonValue> state) {
-        if (state.containsKey(Constants.VOYAGE_ORDERS_KEY)) {
-            JsonValue jv = state.get(Constants.VOYAGE_ORDERS_KEY);
+    /*
+    private void restoreOrdersMap() {
+      //  if (state.containsKey(Constants.VOYAGE_ORDERS_KEY)) {
+           // JsonValue jv = state.get(Constants.VOYAGE_ORDERS_KEY);
+            orders = Kar.Actors.State.Submap.getAll(this, Constants.VOYAGE_ORDERS_KEY);
+
+
             // since we already have all orders by calling actorGetAllState() above we can
             // deserialize them using Jackson's ObjectMapper. Alternatively, one can
             // use Kar.actorSubMapGet() which is an extra call.
@@ -96,9 +107,25 @@ public class VoyageActor extends BaseActor {
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
-        }
+      //  }
     }
 
+     */
+    @Remote
+    public void orderSpoilt(JsonObject message) {
+        Order order = new Order(message);
+
+        if ( orders.containsKey(order.getId())) {
+            JsonValue booking = orders.get(order.getId());
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            job.add(Constants.STATUS_KEY, booking.asJsonObject().getJsonString(Constants.STATUS_KEY)).
+                    add(Constants.REEFERS_KEY, booking.asJsonObject().getInt(Constants.REEFERS_KEY)).add(Constants.ORDER_KEY, order.getAsJsonObject());
+            JsonObject jo = job.build();
+            Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), jo );
+         //   System.out.println("VoyageActor.orderSpoilt() - "+getId()+" >>>>>>>>>>>>>>>>>>> updating voyage order with:"+jo+" map original content:"+booking);
+            orders.put(order.getId(), jo);
+        }
+    }
     /**
      * Called on ship position change. Determines if the ship departed from
      * its origin port or arrived at the destination. Updates REST ship
@@ -129,6 +156,7 @@ public class VoyageActor extends BaseActor {
                 logger.fine(
                         "VoyageActor.changePosition() voyage info:" + voyageInfo + " ship current date:" + shipCurrentDate);
             }
+            voyage.changePosition(daysOutAtSea);
             // if ship's current date matches (or exceeds) its arrival date, the ship arrived
             if (voyage.shipArrived(shipCurrentDate, getVoyageStatus())) {
                 if (!VoyageStatus.DEPARTED.equals(getVoyageStatus()) ) {
@@ -142,14 +170,15 @@ public class VoyageActor extends BaseActor {
             } else {
                 JsonObjectBuilder jb = Json.createObjectBuilder();
                 if (voyage.shipDeparted(shipCurrentDate, getVoyageStatus())) {
+
                     // notify voyage orders of departure
                     processDepartedVoyage(voyage, daysOutAtSea);
                     voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
                     jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus);
                 } else {  // voyage in transit
                     // update REST voyage days at sea
-                    messageRest("/voyage/update/position", daysOutAtSea, Json.createArrayBuilder().build());
-                    messageSchedulerActor("positionChanged", daysOutAtSea);
+                   // messageRest("/voyage/update/position", daysOutAtSea, Json.createArrayBuilder().build());
+                    messageSchedulerActor("positionChanged", voyage); //daysOutAtSea);
                 }
                 voyage.changePosition(daysOutAtSea);
                 jb.add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
@@ -176,15 +205,15 @@ public class VoyageActor extends BaseActor {
             logger.fine("VoyageActor.reserve() called Id:" + getId() + " " + message.toString() + " OrderID:"
                     + order.getId() + " Orders size=" + orders.size());
         }
-        JsonValue bookingStatus = null;
+
         // Idempotence check. If a given order is in this voyage order list it must have already been processed.
         if (orders.containsKey(order.getId())) {
-            bookingStatus = orders.get(order.getId());
+            JsonValue booking = orders.get(order.getId());
             // this order has already been processed so return result
-            if (bookingStatus.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-                return buildResponse(bookingStatus, order, voyage.getRoute().getVessel().getFreeCapacity());
+            if (booking.asJsonObject().getJsonObject(Constants.ORDER_BOOKING_STATUS_KEY).getString(Constants.STATUS_KEY).equals(Constants.OK)) {
+                return buildResponse( order, voyage.getRoute().getVessel().getFreeCapacity());
             }
-            return orders.get(order.getId()).asJsonObject();
+            return orders.get(order.getId()).asJsonObject().getJsonObject(Constants.ORDER_BOOKING_STATUS_KEY);
         }
 
         try {
@@ -197,35 +226,31 @@ public class VoyageActor extends BaseActor {
                         .add("ERROR", msg).build();
             }
             // Book reefers for this order through the ReeferProvisioner
-            bookingStatus = Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
+            JsonValue booking = Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "bookReefers", message);
             // convenience wrapper for ReeferProvisioner json reply
-            ReeferProvisionerReply reply = new ReeferProvisionerReply(bookingStatus);
+            ReeferProvisionerReply reply =
+                    new ReeferProvisionerReply(booking);
             //System.out.println("VoyageActor.reserve() - Id:" + getId()+" ReeferProvisioner.book() reply:"+bookingStatus);
             if (reply.success()) {
-                save(reply, order, bookingStatus);
-                JsonObject params = Json.createObjectBuilder().
-                        add(Constants.VOYAGE_ID_KEY, getId()).
-                        add(Constants.VOYAGE_FREE_CAPACITY_KEY, voyage.getRoute().getVessel().getFreeCapacity()).
-                        add(Constants.VOYAGE_ORDERS_KEY, orders.size()).
-                        build();
+                save(reply, order, booking);
                 ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
-                Kar.Actors.tell(orderActor, "updateVoyage", params);
-                return buildResponse(bookingStatus, order, voyage.getRoute().getVessel().getFreeCapacity());
+                Kar.Actors.tell(orderActor, "updateVoyage", VoyageJsonSerializer.serialize(voyage));//params);
+                return buildResponse( order, voyage.getRoute().getVessel().getFreeCapacity());
             }
             // return failure
-            return bookingStatus.asJsonObject();
+            return booking.asJsonObject();
         } catch (Exception e) {
             logger.log(Level.WARNING, "VoyageActor.reserve() - Error - voyageId " + getId() + " ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
-                    .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
+                    .add(Constants.ORDER_ID_KEY, this.getId()).build();
         }
     }
     private void save(ReeferProvisionerReply booking, Order order, JsonValue bookingStatus) {
         voyage.setReeferCount(voyage.getReeferCount() + booking.getReeferCount());
         voyage.updateFreeCapacity(booking.getReeferCount());
         if (logger.isLoggable(Level.INFO)) {
-            logger.info("VoyageActor.reserve() - Vessel " + voyage.getRoute().getVessel().getName() + " Updated Free Capacity "
+            logger.info("VoyageActor.save() - Vessel " + voyage.getRoute().getVessel().getName() + " Updated Free Capacity "
                     + voyage.getRoute().getVessel().getFreeCapacity());
         }
         voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
@@ -233,13 +258,17 @@ public class VoyageActor extends BaseActor {
         jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus).
                 add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
         Kar.Actors.State.set(this, jb.build());
+
+        //JsonObjectBuilder job = Json.createObjectBuilder();
+       // JsonObject jo = job.add(Constants.ORDER_BOOKING_STATUS_KEY, bookingStatus).build();
+        //System.out.println("VoyageActor.save()- order.id:"+order.getId()+" bookingStatus: "+" >>>>>> jo:"+jo);
         // add new order to this voyage order list
-        Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, String.valueOf(order.getId()),
-                Json.createValue(order.getId()));
-        orders.put(String.valueOf(order.getId()), bookingStatus);
+        Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), bookingStatus);
+
+        orders.put(order.getId(), bookingStatus);
         voyage.setOrderCount(orders.size());
     }
-    private JsonObject buildResponse(final JsonValue bookingStatus, final Order order, final int freeCapacity) {
+    private JsonObject buildResponse( final Order order, final int freeCapacity) {
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                 .add(JsonOrder.OrderKey, order.getAsJsonObject())
                 .add(Constants.VOYAGE_FREE_CAPACITY_KEY, freeCapacity)
@@ -266,24 +295,34 @@ public class VoyageActor extends BaseActor {
                 }
                 messageOrderActor("delivered", orderId);
             });
-            messageSchedulerActor("voyageDeparted", daysAtSea);
+            messageSchedulerActor("voyageDeparted", voyage); //daysAtSea);
         } catch( Exception e) {
             logger.log(Level.WARNING, "VoyageActor.processArrivedVoyage() - Error while notifying order of arrival- voyageId " + getId() + " ", e);
         }
-        JsonArray voyageOrders = null;
+
         if ( !orders.isEmpty()) {
-           voyageOrders = Json.createArrayBuilder(orders.keySet()).build();
+           //voyageOrders = Json.createArrayBuilder(orders.keySet()).build();
+           // JsonArrayBuilder voyageOrders  = Json.createArrayBuilder();
+          //  orders.values().stream().map(json -> json.asJsonObject()).map(jsono -> jsono.getJsonObject(Constants.ORDER_KEY)).peek(jo -> voyageOrders.add(jo));
+            JsonArray voyageOrders= voyageOrders();
+
+            List<String> orderIds = voyageOrders.stream().map(jo -> jo.asJsonObject().getJsonString(Constants.ORDER_ID_KEY).getString()).collect(Collectors.toList());
+
             Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "releaseVoyageReefers",
+                    Json.createObjectBuilder().add(Constants.VOYAGE_ORDERS_KEY, Json.createArrayBuilder(orderIds).build()).build());
+            Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId),
+                    "ordersArrived",
                     Json.createObjectBuilder().add(Constants.VOYAGE_ORDERS_KEY, voyageOrders).build());
-                   //  Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).build());
-        } else {
-            voyageOrders = Json.createArrayBuilder().build();
         }
-
-       // messageRest("/voyage/update/arrived", daysAtSea, voyageOrders);
     }
-
+    private JsonArray voyageOrders() {
+        JsonArrayBuilder voyageOrders  = Json.createArrayBuilder();
+        for( JsonValue jv : orders.values() ) {
+            voyageOrders.add(jv.asJsonObject().getJsonObject(Constants.ORDER_KEY));
+        }
+        return voyageOrders.build();
+    }
     /**
      * Calls REST and Order actors when a ship departs from the origin port
      *
@@ -301,12 +340,9 @@ public class VoyageActor extends BaseActor {
                     logger.fine("VoyageActor.processDepartedVoyage() voyageId=" + voyage.getId()
                             + " Notifying Order Actor of departure - OrderID:" + orderId);
                 }
-                System.out.println("VoyageActor.processDepartedVoyage() voyageId=" + voyage.getId()
-                        + " Notifying Order Actor of departure - OrderID:" + orderId);
                 messageOrderActor("departed", orderId);
             });
-
-            messageSchedulerActor("voyageDeparted", daysAtSea);
+            messageSchedulerActor("voyageDeparted", voyage);
             ActorRef reeferProvisionerActor = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName,
                     ReeferAppConfig.ReeferProvisionerId);
             JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).
@@ -317,13 +353,23 @@ public class VoyageActor extends BaseActor {
                         "VoyageActor.processDepartedVoyage() - calling ReeferProvisionerActor voyageReefersDeparted - voyageId:" + getId());
             }
             Kar.Actors.call(reeferProvisionerActor, "voyageReefersDeparted", params);
-            JsonArray voyageOrders = null;
+
             if ( !orders.isEmpty()) {
-                voyageOrders = Json.createArrayBuilder(orders.keySet()).build();
-            } else {
-                voyageOrders = Json.createArrayBuilder().build();
+                JsonArray voyageOrders = voyageOrders();
+                /*
+                JsonArrayBuilder voyageOrders  = Json.createArrayBuilder();
+                for( JsonValue jv : orders.values() ) {
+                    voyageOrders.add(jv.asJsonObject().getJsonObject(Constants.ORDER_KEY));
+                }
+                JsonArray ja = voyageOrders.build();
+
+                 */
+              //  System.out.println("VoyageActor.processDepartedVoyage() --- "+ja);
+                //voyageOrders = Json.createArrayBuilder(orders.keySet()).build();
+                Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId),
+                        "ordersDeparted",
+                        Json.createObjectBuilder().add(Constants.VOYAGE_ORDERS_KEY, voyageOrders).build());
             }
-          //  messageRest("/voyage/update/departed", daysAtSea, voyageOrders);
         } catch( Exception e) {
             e.printStackTrace();
         }
@@ -360,6 +406,7 @@ public class VoyageActor extends BaseActor {
      * @param daysOutAtSea     - ship position
      * @param methodToCall - actor method to call
      */
+    /*
     private void messageSchedulerActor(String methodToCall, int daysOutAtSea ) {
         JsonObject params = Json.createObjectBuilder().
                 add(Constants.VOYAGE_ID_KEY, getId()).add(Constants.VOYAGE_DAYSATSEA_KEY, daysOutAtSea).
@@ -367,6 +414,21 @@ public class VoyageActor extends BaseActor {
         ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
         Kar.Actors.tell(orderActor, methodToCall, params);
     }
+
+     */
+
+    /**
+     * Call ScheduleManagerActor when a ship changes position
+     *
+     * @param voyage     - voyage details
+     * @param methodToCall - actor method to call
+     */
+    private void messageSchedulerActor(String methodToCall, Voyage voyage ) {
+        ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+        JsonObject jo = VoyageJsonSerializer.serialize(voyage);
+        Kar.Actors.tell(scheduleActor, methodToCall, jo);
+    }
+
     /**
      * Converts voyage status from JsonValue to VoyageStatus
      *
@@ -390,7 +452,7 @@ public class VoyageActor extends BaseActor {
 
         protected boolean success() {
             return jv != null &&
-                    jv.asJsonObject() != null &&
+                    jv.asJsonObject() != null && jv.asJsonObject() != null &&
                     jv.asJsonObject().containsKey(Constants.STATUS_KEY) &&
                     jv.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK);
         }
@@ -399,7 +461,7 @@ public class VoyageActor extends BaseActor {
             if (reeferCount == null) {
                 reeferCount = jv.asJsonObject().get(Constants.REEFERS_KEY);
             }
-            return ((JsonNumber)reeferCount).intValue(); //reefers.size();
+            return ((JsonNumber)reeferCount).intValue();
         }
     }
 }

@@ -28,15 +28,5 @@ import java.util.Optional;
 @Component
 public class TimeService extends AbstractPersistentService {
 
-    public void saveDate(Instant date, String key) {
-        super.set(key, Json.createValue(date.toString()));
-    }
 
-    public Optional<Instant> recoverDate(String key) {
-        JsonValue jv = super.get(key);
-        if (Objects.isNull(jv)) {
-            return Optional.empty();
-        }
-        return Optional.of(Instant.parse(((JsonString) jv).getString()));
-    }
 }

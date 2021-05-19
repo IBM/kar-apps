@@ -35,7 +35,7 @@ public class VoyageJsonSerializer {
         Voyage voyage = new Voyage(id, route, sailDate, arrivalDate);
         voyage.setOrderCount(jsonVoyage.getInt(Voyage.ORDER_COUNT));
         voyage.setReeferCount(jsonVoyage.getInt(Voyage.REEFER_COUNT));
-        voyage.setProgress(jsonVoyage.getInt(Voyage.PROGRESS));
+        voyage.changePosition(Long.valueOf(route.getVessel().getPosition()).intValue());
         return voyage;
     }
 
@@ -52,13 +52,11 @@ public class VoyageJsonSerializer {
         String shipId = jsonShip.getString(Ship.VESSEL_ID);
         String name = jsonShip.getString(Ship.VESSEL_NAME);
         long position = jsonShip.getInt(Ship.POSITION);
-        //int progress = jsonShip.getInt(Ship.PROGRESS);
         int maxCapacity = jsonShip.getInt(Ship.MAX_CAPACITY);
         int freeCapacity = jsonShip.getInt(Ship.FREE_CAPACITY);
         String location = jsonShip.getString(Ship.LOCATION);
         Ship ship = new Ship(name, position, maxCapacity, freeCapacity, location);
         ship.setId(shipId);
-       // ship.setProgress(progress);
         return ship;
     }
 
@@ -90,7 +88,6 @@ public class VoyageJsonSerializer {
                 add(Ship.VESSEL_ID,s.getId()).
                 add(Ship.VESSEL_NAME,s.getName()).
                 add(Ship.POSITION,s.getPosition()).
-             //   add(Ship.PROGRESS,s.getProgress()).
                 add(Ship.MAX_CAPACITY,s.getMaxCapacity()).
                 add(Ship.FREE_CAPACITY,s.getFreeCapacity()).
                 add(Ship.LOCATION,s.getLocation()).

@@ -54,12 +54,14 @@ public class GuiController {
     private AtomicBoolean valuesChanged = new AtomicBoolean();
     private static final Logger logger = Logger.getLogger(GuiController.class.getName());
     public GuiController() {
-
+/*
         TimerTask timerTask = new GuiUpdateTask();
         // running timer task as daemon thread. It updates
         // the GUI counts at regular intervals
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(timerTask, 0, 100);
+
+ */
     }
 
     public void sendActiveVoyageUpdate( ShippingSchedule schedule) { //List<Voyage> voyages, String currentDate) {
@@ -77,12 +79,18 @@ public class GuiController {
         template.convertAndSend("/topic/orders", order);
     }
     public void updateOrderCounts(OrderStats stats) {
+        if (stats != null) {
+            template.convertAndSend("/topic/orders/stats", stats);
+        }
+        /*
         inTransitOrderCount.set(stats.getInTransitOrderCount());
         futureOrderCount.set(stats.getFutureOrderCount());
         spoiltOrderCount.set(stats.getSpoiltOrderCount());
         valuesChanged.set(true);
-    }
 
+         */
+    }
+/*
     public void updateInTransitOrderCount(int orderCount) {
         inTransitOrderCount.set(orderCount);
         valuesChanged.set(true);
@@ -100,9 +108,17 @@ public class GuiController {
 
 
 
+ */
+
     public void updateReeferStats(ReeferStats stats) {
+        if (stats != null) {
+            template.convertAndSend("/topic/reefers/stats", stats);
+        }
+        /*
         reeferStats = stats;
         valuesChanged.set(true);
+
+         */
 
     }
 

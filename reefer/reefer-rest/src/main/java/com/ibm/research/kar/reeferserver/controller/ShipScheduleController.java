@@ -17,7 +17,13 @@
 package com.ibm.research.kar.reeferserver.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
+import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reeferserver.service.ScheduleService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,20 +32,28 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ibm.research.kar.reefer.model.*;
 
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
+
 @RestController
 @CrossOrigin("*")
 public class ShipScheduleController {
 
-  @Autowired
-  private ScheduleService shipScheduleService;
-
-  @GetMapping("/schedules")
-  public List<Voyage> getShippingSchedule() {
-    return shipScheduleService.get();
-  }
-
   @GetMapping("/routes")
   public List<Route> getRoutes() {
-    return shipScheduleService.getRoutes();
+    try {
+      ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+      JsonValue reply = Kar.Actors.call(scheduleActor, "routes");
+      JsonArray ja = reply.asJsonArray();
+      List<Route> routes =
+              ja.stream().map(jv -> jv.asJsonObject()).map(RouteJsonSerializer::deserialize).collect(Collectors.toList());
+      return routes;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
+
+
 }

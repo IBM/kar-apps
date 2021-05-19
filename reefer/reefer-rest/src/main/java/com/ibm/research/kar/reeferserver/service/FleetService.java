@@ -39,7 +39,8 @@ public class FleetService {
     public List<Fleet> getFleets() {
         return fleets;
     }
-	private ActorRef aRef = Kar.Actors.ref(ReeferAppConfig.RestActorName, ReeferAppConfig.RestActorId);
+	/*
+    private ActorRef aRef = Kar.Actors.ref(ReeferAppConfig.RestActorName, ReeferAppConfig.RestActorId);
 
     public void save(int fleetSize) {
 		Kar.Actors.State.set(aRef, Constants.REEFER_FLEET_SIZE_KEY, Json.createValue(fleetSize));
@@ -55,4 +56,6 @@ public class FleetService {
 		}
 
 	}
+
+	 */
 }

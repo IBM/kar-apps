@@ -55,7 +55,7 @@ public class Order {
     String status;
     String date;
     boolean spoilt;
-    List<String> reeferIds;
+    boolean multipleSpoiltReefers;
 
 
     public Order(OrderProperties orderProperties) {
@@ -69,17 +69,6 @@ public class Order {
         dto.getProductQty(), dto.getVoyageId(), dto.getStatus(), new ArrayList<String>());
     }
     public Order(JsonValue jo ) {
-        /*
-        this.id = jo.asJsonObject().getString(Constants.ORDER_ID_KEY);
-        this.customerId = jo.asJsonObject().getString(Constants.ORDER_CUSTOMER_ID_KEY);
-        this.product = jo.asJsonObject().getString(Constants.ORDER_PRODUCT_KEY);
-        this.productQty = jo.asJsonObject().getInt(Constants.ORDER_PRODUCT_QTY_KEY);
-        this.voyageId = jo.asJsonObject().getString(Constants.VOYAGE_ID_KEY);
-        this.status = jo.asJsonObject().getString(Constants.ORDER_STATUS_KEY);
-        this.date = jo.asJsonObject().getString(Constants.ORDER_DATE_KEY);
-        this.spoilt = jo.asJsonObject().getBoolean(Constants.ORDER_SPOILT_KEY);
-
-         */
         this(jo.asJsonObject());
     }
     public Order(JsonObject jo ) {
@@ -91,11 +80,10 @@ public class Order {
         this.status = jo.getString(Constants.ORDER_STATUS_KEY);
         this.date = jo.getString(Constants.ORDER_DATE_KEY);
         this.spoilt = jo.getBoolean(Constants.ORDER_SPOILT_KEY);
-
+        this.multipleSpoiltReefers = jo.getBoolean(Constants.ORDER_ALREADY_SPOILT_KEY);
     }
 
     public Order( String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
-
         this(String.valueOf(Instant.now().toEpochMilli()), customerId, product, productQty, voyageId, status,reeferIds);
     }
     public Order( String id, String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
@@ -105,11 +93,11 @@ public class Order {
         this.productQty = productQty;
         this.voyageId = voyageId;
         this.status = status;
-        this.reeferIds = reeferIds;
         // the date is used for order sorting. The TimeUtils.getCurrentDate() not applicable as it advances
         // date one day at a time and we need millis resolution
         this.date = Instant.now().toString();
         this.spoilt = false;
+        this.multipleSpoiltReefers = false;
     }
 
     @Override
@@ -177,14 +165,12 @@ public class Order {
         this.status = status;
     }
 
-    public List<String> getReeferIds() {
-        return reeferIds;
+    public void setAlreadySpoilt() {
+        this.multipleSpoiltReefers = true;
     }
-
-    public void setReeferIds(List<String> reeferIds) {
-        this.reeferIds.addAll(reeferIds);
+    public boolean alreadySpoilt() {
+        return multipleSpoiltReefers;
     }
-
     public String getCustomerId() {
         return customerId;
     }
@@ -202,22 +188,12 @@ public class Order {
                 add(Constants.ORDER_CUSTOMER_ID_KEY, getCustomerId()).
                 add(Constants.ORDER_STATUS_KEY, getStatus()).
                 add(Constants.ORDER_DATE_KEY, getDate()).
-                add(Constants.ORDER_SPOILT_KEY, isSpoilt()
-                );
+                add(Constants.ORDER_SPOILT_KEY, isSpoilt()).
+                add(Constants.ORDER_ALREADY_SPOILT_KEY, alreadySpoilt());
 
         return orderBuilder.build();
     }
     public JsonObject getOrderParams() {
-        /*
-        JsonObjectBuilder orderParamsBuilder = Json.createObjectBuilder();
-        orderParamsBuilder.add(Constants.ORDER_ID_KEY, getId()).
-                add(Constants.VOYAGE_ID_KEY, getVoyageId()).
-                add(Constants.ORDER_PRODUCT_KEY, getProduct()).
-                add(Constants.ORDER_PRODUCT_QTY_KEY, getProductQty()).
-                add(Constants.ORDER_CUSTOMER_ID_KEY, getCustomerId()
-               );
-
-         */
         JsonObject orderParams = this.getAsJsonObject();
         JsonObjectBuilder jsonOrderBuilder = Json.createObjectBuilder();
         jsonOrderBuilder.add("order", orderParams);

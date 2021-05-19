@@ -48,8 +48,10 @@ public class Constants {
 
    public static final String ORDER_ID_KEY="orderId";
    public static final String ORDERS_KEY="orders";
+   public static final String ORDER_KEY="order";
    public static final String ORDER_DATE_KEY="date";
    public static final String ORDER_SPOILT_KEY="spoilt";
+   public static final String ORDER_ALREADY_SPOILT_KEY="spoilt-already";
    public static final String ORDER_STATUS_KEY="order-status";
    public static final String ORDER_PRODUCT_KEY="product";
    public static final String ORDER_PRODUCT_QTY_KEY="productQty";
@@ -57,6 +59,7 @@ public class Constants {
    public static final String CURRENT_DATE_KEY="current-date";
    public static final String SCHEDULE_BASE_DATE_KEY="schedule-base-date";
    public static final String SCHEDULE_END_DATE_KEY="schedule-end-date";
+   public static final String ORDER_BOOKING_STATUS_KEY="booking-status";
    public static final String VOYAGE_ORDER_MAP_KEY="voyage-order-map";
 
    // each reefer can hold up to 1000 product units. Simplification is that

@@ -16,102 +16,82 @@
 
 package com.ibm.research.kar.reeferserver.controller;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.annotation.PostConstruct;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-
-import com.ibm.research.kar.reefer.common.FleetCapacity;
-import com.ibm.research.kar.reefer.model.Port;
-import com.ibm.research.kar.reefer.model.Reefer;
+import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.model.ReeferStats;
-import com.ibm.research.kar.reefer.model.Route;
-import com.ibm.research.kar.reeferserver.model.ReeferSupply;
-import com.ibm.research.kar.reeferserver.service.PortService;
-import com.ibm.research.kar.reeferserver.service.ReeferService;
-import com.ibm.research.kar.reeferserver.service.ScheduleService;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.PostConstruct;
+import javax.json.JsonNumber;
+import javax.json.JsonValue;
+import java.util.Map;
+import java.util.logging.Logger;
 
 @RestController
 @CrossOrigin("*")
 public class ReeferController {
-	private int reeferInventorySize = 0;
 
-	private int total = 0;
-	private int totalBooked = 0;
-	private int totalInTransit = 0;
-	private int totalSpoilt = 0;
-	private int totalOnMaintenance =0;
+    private int reeferInventorySize = 0;
+    private int totalBooked = 0;
+    private int totalInTransit = 0;
+    private int totalSpoilt = 0;
+    private int totalOnMaintenance = 0;
 
-	@Autowired
-	private ReeferService reeferService;
-	@Autowired
-	private PortService portService;
-	@Autowired
-	private GuiController gui;
-	@Autowired
-	private ScheduleService shipScheduleService;
-	private static final Logger logger = Logger.getLogger(ReeferController.class.getName());
-	@PostConstruct
-	public void init() {
-		reeferInventorySize = FleetCapacity.totalSize(shipScheduleService.getRoutes());
-	}
 
-	@PostMapping("/reefers")
-	public List<Port> addReefers(@RequestBody ReeferSupply reeferAdd) throws IOException {
-		reeferService.addPortReefers(reeferAdd.getPort(), reeferAdd.getReeferInventoryCount());
-		portService.incrementReefersAtPort(reeferAdd.getPort(), reeferAdd.getReeferInventoryCount());
-		return portService.getPorts();
-	}
+    @Autowired
+    private GuiController gui;
+    ActorRef provisioner = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
 
-	@GetMapping("/reefers")
-	public List<Reefer> getAllReefers() {
-		return reeferService.getReefers();
-	}
+    private static final Logger logger = Logger.getLogger(ReeferController.class.getName());
 
-	@GetMapping("/reefers/stats")
-	public ReeferStats getReeferStats() {
-		return new ReeferStats(total, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance);
-	}
+    @PostConstruct
+    public void init() {
+        getReeferStats();
+    }
 
-	@PostMapping("/reefers/stats/update")
-	public void updateGui(@RequestBody String stats) {
-		try (JsonReader jsonReader = Json.createReader(new StringReader(stats))) {
-			JsonObject req = jsonReader.readObject();
-			total = req.getInt("total");
-			totalBooked = req.getInt("totalBooked");
-			totalInTransit = req.getInt("totalInTransit");
-			totalSpoilt = req.getInt("totalSpoilt");
-			totalOnMaintenance = req.getInt("totalOnMaintenance");
-			gui.updateReeferStats(new ReeferStats(total, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance));
-		} catch (Exception e) {
-			logger.log(Level.WARNING,"",e);
-		}
-	}
+    @GetMapping("/reefers/stats")
+    public ReeferStats getReeferStats() {
 
-	@GetMapping("/reefers/inventory/size")
-	public int getReeferInventorySize() {
-		return reeferInventorySize;
-	}
+        Map<String, JsonValue> reeferStatsMap = Kar.Actors.State.Submap.getAll(provisioner, Constants.REEFER_STATS_MAP_KEY);
+        if (reeferStatsMap.containsKey(Constants.TOTAL_BOOKED_KEY)) {
+            totalBooked = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_BOOKED_KEY)).intValue();
+        }
+        if (reeferStatsMap.containsKey(Constants.TOTAL_INTRANSIT_KEY)) {
+            totalInTransit = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_INTRANSIT_KEY)).intValue();
+        }
+        if (reeferStatsMap.containsKey(Constants.TOTAL_SPOILT_KEY)) {
+            totalSpoilt = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_SPOILT_KEY)).intValue();
+        }
+        if (reeferStatsMap.containsKey(Constants.TOTAL_ONMAINTENANCE_KEY)) {
+            totalOnMaintenance = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_ONMAINTENANCE_KEY)).intValue();
+        }
+        if (reeferStatsMap.containsKey(Constants.TOTAL_REEFER_COUNT_KEY)) {
+            reeferInventorySize = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_REEFER_COUNT_KEY)).intValue();
+        }
+     //   System.out.println("ReeferController.getReeferStats()  ********** Booked:" + totalBooked +
+    //            " -- InTransit:" + totalInTransit + " -- Spoilt:" + totalSpoilt + " -- onMaintenance:" + totalOnMaintenance);
 
-	@GetMapping("/reefers/{port}")
-	public List<Reefer> getReefers(@RequestParam("port") String port) {
-		return reeferService.getReefers(port);
-	}
+        return new ReeferStats(reeferInventorySize, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance);
+    }
 
+    @GetMapping("/reefers/inventory/size")
+    public int getReeferInventorySize() {
+        return reeferInventorySize;
+    }
+
+    @Scheduled(fixedRate = 100)
+    public void scheduleGuiUpdate() {
+        try {
+            gui.updateReeferStats(getReeferStats());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 }

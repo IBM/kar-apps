@@ -54,6 +54,7 @@ public class VoyageController {
      * @param message - json encoded message with query params
      * @return - list of voyages matching the query
      */
+
     @PostMapping("/voyage/matching")
     public List<Voyage> getMatchingVoyages(@RequestBody String message) {
         String originPort = "";
@@ -83,12 +84,14 @@ public class VoyageController {
         }
     }
 
+
     /**
      * Returns voyages which are in-transit within a given date range
      *
      * @param message - json encoded query params
      * @return - list of voyages
      */
+
     @PostMapping("/voyage/inrange")
     public List<Voyage> getVoyagesInRange(@RequestBody String message) {
 
@@ -107,6 +110,7 @@ public class VoyageController {
         }
 
     }
+
 
     private List<Voyage> getVoyages(JsonValue jv) {
         JsonArray ja = jv.asJsonArray();
@@ -158,30 +162,6 @@ public class VoyageController {
         }
     }
 
-
-    /**
-     * Updates ship current position
-     *
-     * @param message - json encoded params: daysAtSea, voyageId
-     * @throws VoyageNotFoundException
-     */
-    /*
-    @PostMapping("/voyage/update/position")
-    public void updateShipPosition(@RequestBody String message) {
-        System.out.println("VoyageController.updateShipPosition() - message:" + message);
-
-        // This just updates GUI for now
-        try {
-       //     updateGuiSchedule();
-        } catch (Exception e) {
-            logger.log(Level.WARNING, e.getMessage(), e);
-            e.printStackTrace();
-        }
-
-    }
-
-     */
-
     /**
      * Returns all routes
      *
@@ -206,36 +186,15 @@ public class VoyageController {
     private ShippingSchedule shippingSchedule() {
         JsonValue reply = Kar.Actors.call(scheduleActor, "activeSchedule");
         String currentDate = reply.asJsonObject().getString(Constants.CURRENT_DATE_KEY);
-      //  StringBuilder sb = new StringBuilder("Active Schedule:::");
+
         JsonArray ja = reply.asJsonObject().getJsonArray(Constants.ACTIVE_VOYAGES_KEY);
 
         List<Voyage> voyages = ja.stream().map(v -> v.asJsonObject()).
                 map(VoyageJsonSerializer::deserialize).
-         //       peek(voyage -> sb.append(voyage.toString())).
                 collect(Collectors.toList());
         voyages.sort(Comparator.comparing(v -> v.getRoute().getVessel().getName()));
         return new ShippingSchedule(voyages, currentDate);
     }
-
-    /**
-     * Update GUI order counts
-     */
-/*
-    @PostMapping("/voyage/updateGui")
-    public void updateGui(@RequestBody String currentDate) {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("VoyageController.updateGui() - updating GUI with active schedule - currentDate:" + currentDate);
-        }
-        try {
-            // gui.sendActiveVoyageUpdate(shipScheduleService.getActiveSchedule(), currentDate);
-            //        OrderStats stats = orderService.getOrderStats();
-            //        gui.updateOrderCounts(stats);
-        } catch (Exception e) {
-            logger.log(Level.WARNING, e.getMessage(), e);
-        }
-    }
-
- */
 
     public void updateGuiSchedule() {
         try {

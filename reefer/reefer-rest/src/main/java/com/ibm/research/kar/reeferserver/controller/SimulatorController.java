@@ -31,7 +31,6 @@ import com.ibm.research.kar.reefer.model.DelayTarget;
 import com.ibm.research.kar.reefer.model.OrderSimControls;
 import com.ibm.research.kar.reefer.model.ReeferSimControls;
 import com.ibm.research.kar.reeferserver.service.SimulatorService;
-import com.ibm.research.kar.reeferserver.service.VoyageService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -43,8 +42,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @CrossOrigin("*")
 public class SimulatorController {
-  @Autowired
-  private VoyageService voyageService;
 
   @Autowired
   private SimulatorService simulatorService;

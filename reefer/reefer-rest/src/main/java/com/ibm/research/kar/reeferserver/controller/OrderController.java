@@ -218,11 +218,11 @@ public class OrderController {
                 spoiltTotalCount = ((JsonNumber) state.get(Constants.TOTAL_SPOILT_KEY)).intValue();
             }
         }
-        System.out.println("OrderController.getOrderStats()  ********** Booked:" + bookedTotalCount + " -- InTransit:" + inTransitTotalCount + " -- Spoilt:" + spoiltTotalCount);
+     //   System.out.println("OrderController.getOrderStats()  ********** Booked:" + bookedTotalCount + " -- InTransit:" + inTransitTotalCount + " -- Spoilt:" + spoiltTotalCount);
         return new OrderStats(inTransitTotalCount, bookedTotalCount, spoiltTotalCount);
     }
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedRate = 100)
     public void scheduleGuiUpdate() {
         gui.updateOrderCounts(getOrderStats());
     }

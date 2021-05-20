@@ -52,6 +52,7 @@ public class OrderManagerActor extends BaseActor {
 
     @Activate
     public void activate() {
+
         Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
         try {
             // initial actor invocation should handle no state
@@ -74,10 +75,10 @@ public class OrderManagerActor extends BaseActor {
                 if (state.containsKey(Constants.SPOILT_ORDERS_KEY)) {
                     spoiltOrderList.addAll(restoreRecentOrders(state.get(Constants.SPOILT_ORDERS_KEY)));
                 }
-                System.out.println("OrderManagerActor.restoreState() - Totals - totalInTransit:"+inTransitTotalCount+" totalBooked: "+bookedTotalCount+" totalSpoilt:"+spoiltTotalCount+" activeOrdersList:" + activeOrderList.size() +
+                System.out.println("OrderManagerActor.activate() - Totals - totalInTransit:"+inTransitTotalCount+" totalBooked: "+bookedTotalCount+" totalSpoilt:"+spoiltTotalCount+" activeOrdersList:" + activeOrderList.size() +
                         " bookedOrdersList:" + bookedOrderList.size() + " spoiltOrdersList:" + spoiltOrderList.size());
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
@@ -98,6 +99,7 @@ public class OrderManagerActor extends BaseActor {
 
     @Remote
     public void orderBooked(JsonObject message) {
+
         try {
             JsonObjectBuilder jo = Json.createObjectBuilder();
             Order order = new Order(message);

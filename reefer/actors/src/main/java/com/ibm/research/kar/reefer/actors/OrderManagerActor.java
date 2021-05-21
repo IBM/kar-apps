@@ -25,6 +25,7 @@ import com.ibm.research.kar.reefer.common.FixedSizeQueue;
 import com.ibm.research.kar.reefer.model.Order;
 
 import javax.json.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -137,10 +138,15 @@ public class OrderManagerActor extends BaseActor {
             throw e;
         }
     }
-
     @Remote
     public void ordersArrived(JsonValue message) {
+
+    }
+    @Remote
+    public void orderArrived(JsonValue message) {
         try {
+            Order order = new Order(message);
+            /*
             JsonArray ja = message.asJsonObject().getJsonArray(Constants.VOYAGE_ORDERS_KEY);
             ja.forEach(jo -> {
                 Order order = new Order(jo.asJsonObject());
@@ -152,6 +158,13 @@ public class OrderManagerActor extends BaseActor {
                 }
             });
 
+             */
+            activeOrderList.remove(order);
+            inTransitTotalCount--;
+            if (order.isSpoilt()) {
+                spoiltTotalCount--;
+                spoiltOrderList.remove(order);
+            }
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount)).
                     add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount)).
@@ -168,6 +181,7 @@ public class OrderManagerActor extends BaseActor {
     public void orderSpoilt(JsonObject message) {
         try {
             Order order = new Order(message);
+
             spoiltOrderList.add(order);
             spoiltTotalCount++;
             JsonObjectBuilder job = Json.createObjectBuilder();

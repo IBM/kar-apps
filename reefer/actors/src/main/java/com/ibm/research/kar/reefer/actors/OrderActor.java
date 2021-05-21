@@ -127,7 +127,7 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject delivered() {
-        //messageOrderManager("orderArrived");
+        messageOrderManager("orderArrived");
         Kar.Actors.remove(this);
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
@@ -197,9 +197,11 @@ public class OrderActor extends BaseActor {
             order.setSpoilt(true);
             ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
             Kar.Actors.call(orderManagerActor, "orderSpoilt", order.getAsJsonObject());
-
+/*
             ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, order.getVoyageId());
             Kar.Actors.tell(voyageActor, "orderSpoilt", order.getAsJsonObject());
+
+ */
 
         } else {
             // needed to prevent double counting of spoilt orders

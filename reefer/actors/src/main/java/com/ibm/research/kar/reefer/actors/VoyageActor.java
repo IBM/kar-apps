@@ -101,7 +101,7 @@ public class VoyageActor extends BaseActor {
         }
 
     }
-
+/*
     @Remote
     public void orderSpoilt(JsonObject message) {
         Order order = new Order(message);
@@ -115,9 +115,11 @@ public class VoyageActor extends BaseActor {
             Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), jo );
             orders.put(order.getId(), jo);
         } else {
-            System.out.println("VoyageActor.orderSpoilt() - order:"+order.getId()+" not booked with voyage:"+getId());
+            System.out.println("VoyageActor.orderSpoilt() - order:"+order.getId()+" not booked with voyage:"+getId()+" voyage status:"+voyageStatus+" orders map size:"+orders.size());
         }
     }
+
+ */
     /**
      * Called on ship position change. Determines if the ship departed from
      * its origin port or arrived at the destination. Updates REST ship
@@ -303,9 +305,9 @@ public class VoyageActor extends BaseActor {
             Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
                     "releaseVoyageReefers",
                     Json.createObjectBuilder().add(Constants.VOYAGE_ORDERS_KEY, Json.createArrayBuilder(orderIds).build()).build());
-            Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId),
-                    "ordersArrived",
-                    Json.createObjectBuilder().add(Constants.VOYAGE_ORDERS_KEY, voyageOrders).build());
+//            Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId),
+  //                  "ordersArrived",
+    //                Json.createObjectBuilder().add(Constants.VOYAGE_ORDERS_KEY, voyageOrders).build());
         }
     }
     private JsonArray voyageOrders() {
@@ -356,7 +358,7 @@ public class VoyageActor extends BaseActor {
                 JsonArray ja = voyageOrders.build();
 
                  */
-              //  System.out.println("VoyageActor.processDepartedVoyage() --- "+ja);
+                System.out.println("VoyageActor.processDepartedVoyage() --- voyage:"+getId()+" orders:"+voyageOrders);
                 //voyageOrders = Json.createArrayBuilder(orders.keySet()).build();
                 Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId),
                         "ordersDeparted",

@@ -43,10 +43,9 @@ public class OrderManagerActor extends BaseActor {
     private FixedSizeQueue bookedOrderList = new FixedSizeQueue(maxOrderCount);
     private FixedSizeQueue spoiltOrderList = new FixedSizeQueue(maxOrderCount);
 
-    private AtomicBoolean valuesChanged = new AtomicBoolean();
-    private AtomicInteger bookedTotalCount = new AtomicInteger();
-    private AtomicInteger inTransitTotalCount = new AtomicInteger();
-    private AtomicInteger spoiltTotalCount = new AtomicInteger();
+    private int bookedTotalCount = 0;
+    private int inTransitTotalCount = 0;
+    private int spoiltTotalCount = 0;
 
     private static final Logger logger = Logger.getLogger(OrderManagerActor.class.getName());
 
@@ -58,13 +57,13 @@ public class OrderManagerActor extends BaseActor {
             // initial actor invocation should handle no state
             if (!state.isEmpty()) {
                 if (state.containsKey(Constants.TOTAL_BOOKED_KEY)) {
-                    bookedTotalCount.set(((JsonNumber) state.get(Constants.TOTAL_BOOKED_KEY)).intValue());
+                    bookedTotalCount = (((JsonNumber) state.get(Constants.TOTAL_BOOKED_KEY)).intValue());
                 }
                 if (state.containsKey(Constants.TOTAL_INTRANSIT_KEY)) {
-                    inTransitTotalCount.set(((JsonNumber) state.get(Constants.TOTAL_INTRANSIT_KEY)).intValue());
+                    inTransitTotalCount = (((JsonNumber) state.get(Constants.TOTAL_INTRANSIT_KEY)).intValue());
                 }
                 if (state.containsKey(Constants.TOTAL_SPOILT_KEY)) {
-                    spoiltTotalCount.set(((JsonNumber) state.get(Constants.TOTAL_SPOILT_KEY)).intValue());
+                    spoiltTotalCount = (((JsonNumber) state.get(Constants.TOTAL_SPOILT_KEY)).intValue());
                 }
                 if (state.containsKey(Constants.BOOKED_ORDERS_KEY)) {
                     bookedOrderList.addAll(restoreRecentOrders(state.get(Constants.BOOKED_ORDERS_KEY)));
@@ -104,10 +103,9 @@ public class OrderManagerActor extends BaseActor {
             JsonObjectBuilder jo = Json.createObjectBuilder();
             Order order = new Order(message);
             bookedOrderList.add(order);
-            valuesChanged.set(true);
-            bookedTotalCount.incrementAndGet();
+            bookedTotalCount++;
             JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount.intValue())).
+            job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount)).
                     add(Constants.BOOKED_ORDERS_KEY, bookedOrderList.getAll());
             Kar.Actors.State.set(this, job.build());
         } catch( Exception e) {
@@ -124,14 +122,12 @@ public class OrderManagerActor extends BaseActor {
                 Order order = new Order(jo.asJsonObject());
                 activeOrderList.add(order);
                 bookedOrderList.remove(order);
-                inTransitTotalCount.incrementAndGet();
-                long b = bookedTotalCount.get();
-                bookedTotalCount.addAndGet(-1);
+                inTransitTotalCount++;
+                bookedTotalCount--;
             });
-            valuesChanged.set(true);
             JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount.intValue())).
-                    add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount.intValue())).
+            job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount)).
+                    add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount)).
                     add(Constants.BOOKED_ORDERS_KEY, bookedOrderList.getAll()).
                     add(Constants.ACTIVE_ORDERS_KEY, activeOrderList.getAll());
 
@@ -149,17 +145,16 @@ public class OrderManagerActor extends BaseActor {
             ja.forEach(jo -> {
                 Order order = new Order(jo.asJsonObject());
                 activeOrderList.remove(order);
-                spoiltOrderList.remove(order);
-                long t = inTransitTotalCount.get();
-                inTransitTotalCount.addAndGet(-1);
+                inTransitTotalCount--;
                 if (order.isSpoilt()) {
-                    spoiltTotalCount.addAndGet(-1);
+                    spoiltTotalCount--;
+                    spoiltOrderList.remove(order);
                 }
             });
-            valuesChanged.set(true);
+
             JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount.intValue())).
-                    add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount.intValue())).
+            job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount)).
+                    add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount)).
                     add(Constants.ACTIVE_ORDERS_KEY, activeOrderList.getAll()).
                     add(Constants.SPOILT_ORDERS_KEY, spoiltOrderList.getAll());
             Kar.Actors.State.set(this, job.build());
@@ -174,10 +169,9 @@ public class OrderManagerActor extends BaseActor {
         try {
             Order order = new Order(message);
             spoiltOrderList.add(order);
-            spoiltTotalCount.incrementAndGet();
-            valuesChanged.set(true);
+            spoiltTotalCount++;
             JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount.intValue())).add(Constants.SPOILT_ORDERS_KEY, spoiltOrderList.getAll());
+            job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount)).add(Constants.SPOILT_ORDERS_KEY, spoiltOrderList.getAll());
             Kar.Actors.State.set(this, job.build());
         } catch (Exception e) {
             e.printStackTrace();

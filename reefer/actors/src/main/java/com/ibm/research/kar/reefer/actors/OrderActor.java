@@ -195,10 +195,8 @@ public class OrderActor extends BaseActor {
         int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
         if (!order.isSpoilt()) {
             order.setSpoilt(true);
-            Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
-
-            ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
-            Kar.Actors.call(orderActor, "orderSpoilt", order.getAsJsonObject());
+            ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
+            Kar.Actors.call(orderManagerActor, "orderSpoilt", order.getAsJsonObject());
 
             ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, order.getVoyageId());
             Kar.Actors.tell(voyageActor, "orderSpoilt", order.getAsJsonObject());
@@ -206,8 +204,8 @@ public class OrderActor extends BaseActor {
         } else {
             // needed to prevent double counting of spoilt orders
             order.setAlreadySpoilt();
-            Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
         }
+        Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
         if (logger.isLoggable(Level.INFO)) {
             logger.info(String.format("OrderActor.tagAsSpoilt() - orderId: %s spoilt: %s", getId(),
                     order.isSpoilt()));

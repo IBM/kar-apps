@@ -88,11 +88,11 @@ public class VoyageActor extends BaseActor {
                     voyageStatus = state.get(Constants.VOYAGE_STATUS_KEY);
                 }
                 if (state.containsKey(Constants.VOYAGE_ORDERS_KEY)) {
-                    orders = state.get(Constants.VOYAGE_ORDERS_KEY).asJsonObject();
+                   // orders = state.get(Constants.VOYAGE_ORDERS_KEY).asJsonObject();
+                    orders.putAll(state.get(Constants.VOYAGE_ORDERS_KEY).asJsonObject());
                 }
 
-                //restoreOrdersMap();
-                //orders.putAll(Kar.Actors.State.Submap.getAll(this, Constants.VOYAGE_ORDERS_KEY));
+               // orders.putAll(Kar.Actors.State.Submap.getAll(this, Constants.VOYAGE_ORDERS_KEY));
 
             }
             voyage = VoyageJsonSerializer.deserialize(voyageInfo);
@@ -114,6 +114,8 @@ public class VoyageActor extends BaseActor {
             JsonObject jo = job.build();
             Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), jo );
             orders.put(order.getId(), jo);
+        } else {
+            System.out.println("VoyageActor.orderSpoilt() - order:"+order.getId()+" not booked with voyage:"+getId());
         }
     }
     /**

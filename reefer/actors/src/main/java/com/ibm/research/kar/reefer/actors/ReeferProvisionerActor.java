@@ -345,19 +345,10 @@ public class ReeferProvisionerActor extends BaseActor {
         if ( orders != null ) {
             reefers2Remove = getArrivedReefers(orders, arrivedOnMaintenanceMap);
         }
-        /*
-        JsonObjectBuilder jb = Json.createObjectBuilder();
-        jb.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount));
-        jb.add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount));
-        jb.add(Constants.TOTAL_ONMAINTENANCE_KEY, Json.createValue(onMaintenanceTotalCount));
 
-
-         */
         Map<String, JsonValue> updateMap = new HashMap<>();
         updateMap.put(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount));
         updateMap.put(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount));
-
-
 
         Map<String, JsonValue> maintenanceMap = new HashMap<>();
         arrivedOnMaintenanceMap.keySet().forEach(reeferId -> maintenanceMap.put(reeferId, Json.createValue(reeferId)));
@@ -368,7 +359,6 @@ public class ReeferProvisionerActor extends BaseActor {
             Kar.Actors.State.Submap.set(this, Constants.REEFER_MAP_KEY, arrivedOnMaintenanceMap);
         }
         Kar.Actors.State.Submap.set(this, Constants.REEFER_STATS_MAP_KEY, updateMap);
-       // Kar.Actors.State.set(this, jb.build());
 
         if ( !reefers2Remove.isEmpty()) {
             // remove reefers which just arrived. The reefer inventory should only contain

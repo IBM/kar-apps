@@ -41,42 +41,17 @@ public class Routes {
     private static final Logger logger = Logger.getLogger(Routes.class.getName());
 
     public List<Route> generate(int fleetSize) throws Exception {
-        //Map<String, String> env = System.getenv();
-        //ActorRef aRef = Kar.Actors.ref(actorName, actorId);
-       // private ActorRef aRef = Kar.Actors.ref(ReeferAppConfig.RestActorName, ReeferAppConfig.RestActorId);
-        List<Vessel> vessels = loadVessels();
+         List<Vessel> vessels = loadVessels();
         List<Route> routes = loadRoutes();
         int shipIndex = 0;
 
         try {
-            /*
-            if ( env.containsKey(Constants.REEFER_FLEET_SIZE_KEY) &&
-                    env.get(Constants.REEFER_FLEET_SIZE_KEY) != null &&
-                    env.get(Constants.REEFER_FLEET_SIZE_KEY).trim().length() > 0 ) {
-                fleetSize = Integer.parseInt(env.get(Constants.REEFER_FLEET_SIZE_KEY));
-            }
-
-             */
             if (fleetSize > vessels.size() ) {
                 System.out.println("Routes.generate() - the max fleet size is capped at "+vessels.size()+
                         " - the REEFER_FLEET_SIZE env var is set to "+fleetSize+" - using default fleet size of 10");
                 fleetSize = 10;
             }
-            /*
-            // if its a warm start, restore fleet size to previous value. User may change the fleet size through
-            // env variable but the code below ignores it if its different from the previous size.
-            JsonValue jv = Kar.Actors.State.get( aRef, Constants.REEFER_FLEET_SIZE_KEY);
-            if ( jv != null && jv != JsonValue.NULL) {
-                if (fleetSize != ((JsonNumber)jv).intValue()) {
-                    System.out.println("Routes.generate() - Warm start - using previously saved fleet size of "+((JsonNumber)jv).intValue());
-                    fleetSize = ((JsonNumber)jv).intValue();
-                }
-            } else {
-                Kar.Actors.State.set(aRef, Constants.REEFER_FLEET_SIZE_KEY, Json.createValue(fleetSize));
-                System.out.println("Routes.generate() ++++++++++++ saved fleet size:"+fleetSize);
-            }
 
-             */
             System.out.println("Routes.generate() - starting with fleet size of:"+fleetSize);
             for( Route r : routes ) {
                 Vessel vessel = vessels.get(shipIndex++);

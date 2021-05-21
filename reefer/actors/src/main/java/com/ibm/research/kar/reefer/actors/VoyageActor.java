@@ -59,58 +59,49 @@ public class VoyageActor extends BaseActor {
      */
     @Activate
     public void activate() {
-        // fetch actor state from Kar storage
-        Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("VoyageActor.init() actorID:" + this.getId() + " all state" + state);
+        try {
+            // fetch actor state from Kar storage
+            Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("VoyageActor.init() actorID:" + this.getId() + " all state" + state);
+            }
+            // initial actor invocation should handle no state
+            if (state.isEmpty()) {
+                // call REST just once to get static voyage information like departure and arrival dates, etc
+                // Response response = Kar.Services.get("reeferservice", "/voyage/info/" + getId());
+                // voyageInfo = response.readEntity(JsonValue.class).asJsonObject();
+
+                JsonObject params = Json.createObjectBuilder().
+                        add(Constants.VOYAGE_ID_KEY, getId()).add(Constants.VOYAGE_ID_KEY, getId()).
+                        build();
+                ActorRef scheduleManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+                JsonValue jv = Kar.Actors.call(scheduleManager, "voyage", Json.createValue(getId()));
+                voyageInfo = jv.asJsonObject();
+                // store voyage information in Kar storage for reuse
+                Kar.Actors.State.set(this, Constants.VOYAGE_INFO_KEY, voyageInfo);
+            } else {
+
+                if (state.containsKey(Constants.VOYAGE_INFO_KEY)) {
+                    voyageInfo = state.get(Constants.VOYAGE_INFO_KEY).asJsonObject();
+                }
+                if (state.containsKey(Constants.VOYAGE_STATUS_KEY)) {
+                    voyageStatus = state.get(Constants.VOYAGE_STATUS_KEY);
+                }
+                if (state.containsKey(Constants.VOYAGE_ORDERS_KEY)) {
+                    orders = state.get(Constants.VOYAGE_ORDERS_KEY).asJsonObject();
+                }
+
+                //restoreOrdersMap();
+                //orders.putAll(Kar.Actors.State.Submap.getAll(this, Constants.VOYAGE_ORDERS_KEY));
+
+            }
+            voyage = VoyageJsonSerializer.deserialize(voyageInfo);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-
-        // initial actor invocation should handle no state
-        if (state.isEmpty()) {
-            // call REST just once to get static voyage information like departure and arrival dates, etc
-            Response response = Kar.Services.get("reeferservice", "/voyage/info/" + getId());
-            voyageInfo = response.readEntity(JsonValue.class).asJsonObject();
-            // store voyage information in Kar storage for reuse
-            Kar.Actors.State.set(this, Constants.VOYAGE_INFO_KEY, voyageInfo);
-        } else {
-
-            if (state.containsKey(Constants.VOYAGE_INFO_KEY)) {
-                voyageInfo = state.get(Constants.VOYAGE_INFO_KEY).asJsonObject();
-            }
-            if (state.containsKey(Constants.VOYAGE_STATUS_KEY)) {
-                voyageStatus = state.get(Constants.VOYAGE_STATUS_KEY);
-            }
-
-            //restoreOrdersMap();
-            orders.putAll(Kar.Actors.State.Submap.getAll(this, Constants.VOYAGE_ORDERS_KEY));
-            if (orders.isEmpty()) {
-                System.out.println("VoyageActor.init() actorID:" + this.getId() + " !!!!!!!!!!!!!!!! EMPTY ORDERS MAP !!!!!!!!!!!");
-            }
-        }
-        voyage = VoyageJsonSerializer.deserialize(voyageInfo);
-    }
-    /*
-    private void restoreOrdersMap() {
-      //  if (state.containsKey(Constants.VOYAGE_ORDERS_KEY)) {
-           // JsonValue jv = state.get(Constants.VOYAGE_ORDERS_KEY);
-            orders = Kar.Actors.State.Submap.getAll(this, Constants.VOYAGE_ORDERS_KEY);
-
-
-            // since we already have all orders by calling actorGetAllState() above we can
-            // deserialize them using Jackson's ObjectMapper. Alternatively, one can
-            // use Kar.actorSubMapGet() which is an extra call.
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                // deserialize json orders into a HashMap
-                orders = mapper.readValue(jv.toString(), HashMap.class);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-      //  }
     }
 
-     */
     @Remote
     public void orderSpoilt(JsonObject message) {
         Order order = new Order(message);
@@ -122,7 +113,6 @@ public class VoyageActor extends BaseActor {
                     add(Constants.REEFERS_KEY, booking.asJsonObject().getInt(Constants.REEFERS_KEY)).add(Constants.ORDER_KEY, order.getAsJsonObject());
             JsonObject jo = job.build();
             Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), jo );
-         //   System.out.println("VoyageActor.orderSpoilt() - "+getId()+" >>>>>>>>>>>>>>>>>>> updating voyage order with:"+jo+" map original content:"+booking);
             orders.put(order.getId(), jo);
         }
     }

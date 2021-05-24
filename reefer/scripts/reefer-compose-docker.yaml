@@ -81,7 +81,22 @@ services:
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
       REDIS_PASSWORD: passw0rd
-      KAR_EXTRA_ARGS: -actors order,reefer,voyage,reefer-provisioner
+      KAR_EXTRA_ARGS: -actors order,reefer,voyage
+  singletons:
+    image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-actors
+    command: ["/bin/bash","-c","/kar/bin/runner"]
+    networks:
+      - kar-bus
+    environment:
+      REEFER_FLEET_SIZE: 25
+      KAR_SIDECAR_IN_CONTAINER: "true"
+      KAR_APP: reefer
+      KAFKA_BROKERS:  kar_kafka:9092
+      KAFKA_VERSION:  2.4.0
+      REDIS_HOST:     kar_redis
+      REDIS_PORT:     6379
+      REDIS_PASSWORD: passw0rd
+      KAR_EXTRA_ARGS: -actors schedule-manager,reefer-provisioner,order-manager -actor_collector_interval 24h
   frontend:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-frontend
     command: ["/bin/bash","-c","/kar/bin/fe-start.sh"]

@@ -205,7 +205,7 @@ public class VoyageController {
         }
     }
 
-    @Scheduled(fixedRate = 100)
+    @Scheduled(fixedDelay = 1000)
     public void scheduleGuiUpdate() {
         updateGuiSchedule();
     }

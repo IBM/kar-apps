@@ -50,6 +50,11 @@ public class ReeferController {
 
     private static final Logger logger = Logger.getLogger(ReeferController.class.getName());
 
+    private int max_period = 10;
+    private int period = 1;
+    private int counter = 1;
+    private ReeferStats oldStats = new ReeferStats(0, 0, 0, 0, 0);
+
     @PostConstruct
     public void init() {
         getReeferStats();
@@ -85,10 +90,24 @@ public class ReeferController {
         return reeferInventorySize;
     }
 
-    @Scheduled(fixedRate = 100)
+    @Scheduled(fixedDelay = 1000)
     public void scheduleGuiUpdate() {
         try {
-            gui.updateReeferStats(getReeferStats());
+            if ( 0 >= --counter ) {
+                ReeferStats newStats = getReeferStats();
+                if ( newStats.getTotalBooked() != oldStats.getTotalBooked() ||
+                     newStats.getTotalInTransit() != oldStats.getTotalInTransit() ||
+                     newStats.getTotalOnMaintenance() != oldStats.getTotalOnMaintenance() ||
+                     newStats.getTotalSpoilt() != oldStats.getTotalSpoilt() ) {
+                    gui.updateReeferStats(newStats);
+                    oldStats = newStats;
+                    period = period/2 < 1 ? 1 : period/2;
+                }
+                else {
+                    period = 2*period > max_period ? max_period : 2*period;
+                }
+                counter = period;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

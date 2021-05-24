@@ -17,23 +17,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: reefer-actors
+  name: reefer-singletons
   labels:
-    name: reefer-actors
+    name: reefer-singletons
 spec:
-  replicas: {{ .Values.reefer.actors.replicas }}
+  replicas: 1
   selector:
     matchLabels:
-      name: reefer-actors
+      name: reefer-singletons
   template:
     metadata:
       labels:
-        name: reefer-actors
+        name: reefer-singletons
       annotations:
         kar.ibm.com/app: reefer
-        kar.ibm.com/actors: order,reefer,voyage
+        kar.ibm.com/actors: reefer-provisioner,order-manager,schedule-manager
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.actors.port | quote }}
+        kar.ibm.com/extraArgs: -actor_collector_interval,24h
     spec:
       imagePullSecrets:
          - name: {{ .Values.kar.imagePullSecret }}
@@ -42,4 +43,4 @@ spec:
         image: {{ .Values.kar.imagePrefix }}/{{ .Values.reefer.actors.imageName }}
         ports:
         - name: app
-          containerPort: {{ .Values.reefer.actors.port }}
+          containerPort: {{ .Values.reefer.singletons.port }}

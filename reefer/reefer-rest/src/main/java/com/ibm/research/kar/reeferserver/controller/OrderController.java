@@ -55,6 +55,12 @@ public class OrderController {
 
     private static final Logger logger = Logger.getLogger(OrderController.class.getName());
 
+    private int max_period = 10;
+    private int period = 1;
+    private int counter = 1;
+    private OrderStats oldStats = new OrderStats(0, 0, 0);
+
+
     /**
      * Convert json order to OrderProperties
      *
@@ -222,8 +228,21 @@ public class OrderController {
         return new OrderStats(inTransitTotalCount, bookedTotalCount, spoiltTotalCount);
     }
 
-    @Scheduled(fixedRate = 100)
+    @Scheduled(fixedDelay = 100)
     public void scheduleGuiUpdate() {
-        gui.updateOrderCounts(getOrderStats());
+        if ( 0 >= --counter ) {
+            OrderStats newStats = getOrderStats();
+            if ( newStats.getFutureOrderCount() != oldStats.getFutureOrderCount() ||
+                 newStats.getSpoiltOrderCount() != oldStats.getSpoiltOrderCount() ||
+                 newStats.getInTransitOrderCount() != oldStats.getInTransitOrderCount() ) {
+                gui.updateOrderCounts(newStats);
+                oldStats = newStats;
+                period = period/2 < 1 ? 1 : period/2;
+            }
+            else {
+                period = 2*period > max_period ? max_period : 2*period;
+            }
+            counter = period;
+        }
     }
 }

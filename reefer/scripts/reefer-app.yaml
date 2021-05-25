@@ -30,7 +30,7 @@ spec:
     env:
     - name: HOSTNAME
       value: zookeeper
-    image: docker.io/wurstmeister/zookeeper:3.4.6
+    image: wurstmeister/zookeeper:3.4.6
     name: zookeeper
     resources: {}
     securityContext:
@@ -55,7 +55,7 @@ spec:
       value: /opt/kafka
     - name: HOSTNAME
       value: kafka
-    image: docker.io/wurstmeister/kafka:2.12-2.4.0
+    image: wurstmeister/kafka:2.13-2.6.0
     name: kafka
     resources: {}
     securityContext:
@@ -72,7 +72,7 @@ spec:
     env:
     - name: HOSTNAME
       value: redis
-    image: docker.io/library/redis:5.0
+    image: redis:5.0
     name: redis
     resources: {}
     securityContext:
@@ -130,8 +130,6 @@ spec:
       capabilities: {}
       privileged: false
       readOnlyRootFilesystem: false
-      runAsGroup: 0
-      runAsUser: 1001
       seLinuxOptions: {}
     workingDir: /
 ### Frontend
@@ -155,8 +153,6 @@ spec:
       capabilities: {}
       privileged: false
       readOnlyRootFilesystem: false
-      runAsGroup: 0
-      runAsUser: 1001
       seLinuxOptions: {}
     workingDir: /
 ### Reefer-rest
@@ -194,8 +190,6 @@ spec:
       capabilities: {}
       privileged: false
       readOnlyRootFilesystem: false
-      runAsGroup: 0
-      runAsUser: 1001
       seLinuxOptions: {}
     workingDir: /
 ### Monitor
@@ -241,8 +235,6 @@ spec:
       capabilities: {}
       privileged: false
       readOnlyRootFilesystem: false
-      runAsGroup: 1000
-      runAsUser: 1000
       seLinuxOptions: {}
     workingDir: /kar/bin
 ### Actors
@@ -268,7 +260,7 @@ spec:
     - name: KAFKA_VERSION
       value: 2.4.0
     - name: KAR_EXTRA_ARGS
-      value: -actors order,reefer,voyage,reefer-provisioner
+      value: -actors order,reefer,voyage
     - name: KAR_SIDECAR_IN_CONTAINER
       value: "true"
     - name: HOSTNAME
@@ -280,8 +272,45 @@ spec:
       capabilities: {}
       privileged: false
       readOnlyRootFilesystem: false
-      runAsGroup: 0
-      runAsUser: 1001
+      seLinuxOptions: {}
+    workingDir: /
+### Singletons
+  - command:
+    - /bin/bash
+    - -c
+    - sleep 15 && /kar/bin/runner
+    env:
+    - name: PATH
+      value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    - name: JAVA_HOME
+      value: /opt/java/openjdk
+    - name: REDIS_HOST
+      value: localhost
+    - name: REDIS_PORT
+      value: "31379"
+    - name: KAR_APP
+      value: reefer
+    - name: KAFKA_BROKERS
+      value: localhost:31093
+    - name: REDIS_PASSWORD
+      value: passw0rd
+    - name: KAFKA_VERSION
+      value: 2.4.0
+    - name: KAR_EXTRA_ARGS
+      value: -actors reefer-provisioner,schedule-manager,order-manager -actor_collector_interval 24h
+    - name: KAR_SIDECAR_IN_CONTAINER
+      value: "true"
+    - name: REEFER_FLEET_SIZE
+      value: 25
+    - name: HOSTNAME
+    image: $IMAGE_PREFIX/kar-app-reefer-actors:latest
+    name: singletons
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities: {}
+      privileged: false
+      readOnlyRootFilesystem: false
       seLinuxOptions: {}
     workingDir: /
 

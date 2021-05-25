@@ -115,6 +115,7 @@ public class OrderController {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("OrderController.bookOrder - Called -" + message);
         }
+        long t = System.currentTimeMillis();
         OrderProperties orderProperties = null;
         try {
             // get Java POJO with order properties from json messages
@@ -128,9 +129,10 @@ public class OrderController {
                 return orderProperties;
             }
             Order order = new Order(orderProperties);
+            long t2 = System.currentTimeMillis();
             ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
             JsonValue reply = Kar.Actors.call(orderActor, "createOrder", order.getAsJsonObject()); //OrderParams());
-
+           // System.out.println("OrderController.bookOrder() - time spent calling order actor: order:"+order.getId()+" - " + (System.currentTimeMillis()-t2)+" ms");
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("OrderController.bookOrder - Order Actor reply:" + reply);
             }
@@ -142,7 +144,6 @@ public class OrderController {
                     // notify simulator of changed free capacity
                     simulatorService.updateVoyageCapacity(order.getVoyageId(), freeCapacity);
                     orderProperties.setBookingStatus(Constants.OK).setMsg("");
-                    ;
                 } else {
                     orderProperties.setBookingStatus(Constants.FAILED).setOrderId("N/A").setMsg(reply.asJsonObject().getString("ERROR"));
                 }
@@ -153,6 +154,7 @@ public class OrderController {
             logger.log(Level.WARNING, e.getMessage(), e);
             orderProperties.setBookingStatus(Constants.FAILED).setMsg(e.getMessage());
         }
+      //  System.out.println("OrderController.bookOrder() - time spent here - " + (System.currentTimeMillis()-t)+" ms");
         return orderProperties;
     }
 

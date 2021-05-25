@@ -30,13 +30,6 @@ public class ScheduleManagerActor extends BaseActor {
     private Instant baseDate;
     private int reeferInventorySize;
 
-    /*
-    private TreeSet<Order> activeOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
-    private TreeSet<Order> bookedOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
-    private TreeSet<Order> spoiltOrders = new TreeSet<>(Comparator.comparing(o -> Instant.parse(o.getDate())));
-
-
-     */
     private static final Logger logger = Logger.getLogger(OrderManagerActor.class.getName());
 
     @Activate
@@ -169,9 +162,9 @@ public class ScheduleManagerActor extends BaseActor {
     public void updateVoyage(JsonObject message) {
         try {
             Voyage voyage = VoyageJsonSerializer.deserialize(message);
-            Voyage scheduledVoyage = schedule.getVoyage(voyage.getId());//message.getString(Constants.VOYAGE_ID_KEY));
-            scheduledVoyage.setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity()); //message.getInt(Constants.VOYAGE_FREE_CAPACITY_KEY));
-            scheduledVoyage.setOrderCount(voyage.getOrderCount()); ///message.getInt(Constants.VOYAGE_ORDERS_KEY));
+            Voyage scheduledVoyage = schedule.getVoyage(voyage.getId());
+            scheduledVoyage.setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity());
+            scheduledVoyage.setOrderCount(voyage.getOrderCount());
             scheduledVoyage.setReeferCount((voyage.getReeferCount()));
         } catch (Exception e) {
             e.printStackTrace();

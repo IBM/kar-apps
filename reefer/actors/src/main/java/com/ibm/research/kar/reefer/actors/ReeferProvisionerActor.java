@@ -123,10 +123,7 @@ public class ReeferProvisionerActor extends BaseActor {
         JsonValue jv2 = state.get(Constants.REEFER_MAP_KEY);
         Map<String, JsonValue> reeferInventory = jv2.asJsonObject();
         System.out.println("ReeferProvisionerActor.restoreReeferInventory - deserialization took  .........."+(System.currentTimeMillis() - t)+" inventory size:"+reeferInventory.size());
-        // fetch reefer map
-        long t2 = System.currentTimeMillis();
-        Map<String, JsonValue> test = Kar.Actors.State.Submap.getAll(this, Constants.REEFER_MAP_KEY);
-        System.out.println("ReeferProvisionerActor.restoreReeferInventory - Submap.getAll call - (test Map) size:"+test.size()+"  completed in .........."+(System.currentTimeMillis() - t2));
+        
         if (logger.isLoggable(Level.INFO)) {
             logger.info("ReeferProvisionerActor.init() - Fetched size of the reefer inventory:"
                     + reeferInventory.size());

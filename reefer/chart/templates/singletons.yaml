@@ -21,7 +21,7 @@ metadata:
   labels:
     name: reefer-singletons
 spec:
-  replicas: 1
+  replicas: {{ .Values.reefer.singletons.replicas }}
   selector:
     matchLabels:
       name: reefer-singletons

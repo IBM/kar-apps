@@ -25,13 +25,8 @@ import com.ibm.research.kar.reefer.common.FixedSizeQueue;
 import com.ibm.research.kar.reefer.model.Order;
 
 import javax.json.*;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 @Actor
 public class OrderManagerActor extends BaseActor {
@@ -67,7 +62,7 @@ public class OrderManagerActor extends BaseActor {
                     spoiltTotalCount = (((JsonNumber) state.get(Constants.TOTAL_SPOILT_KEY)).intValue());
                 }
 
-                System.out.println("OrderManagerActor.activate() - Totals - totalInTransit:"+inTransitTotalCount+" totalBooked: "+bookedTotalCount+" totalSpoilt:"+spoiltTotalCount);
+                System.out.println("OrderManagerActor.activate() - Totals - totalInTransit:" + inTransitTotalCount + " totalBooked: " + bookedTotalCount + " totalSpoilt:" + spoiltTotalCount);
 
             }
         } catch (Throwable e) {
@@ -87,7 +82,7 @@ public class OrderManagerActor extends BaseActor {
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount));
             Kar.Actors.State.set(this, job.build());
-        } catch( Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             //System.out.println("OrderManager.orderBooked - time spent here - " + (System.currentTimeMillis()-t)+" ms");
@@ -96,16 +91,15 @@ public class OrderManagerActor extends BaseActor {
     }
 
     @Remote
-    public void ordersDeparted(JsonValue message) {
+    public void orderDeparted(JsonValue message) {
         try {
-            JsonArray ja = message.asJsonObject().getJsonArray(Constants.VOYAGE_ORDERS_KEY);
-            ja.forEach(jo -> {
-                Order order = new Order(jo.asJsonObject());
-                activeOrderList.add(order);
-                bookedOrderList.remove(order);
-                inTransitTotalCount++;
-                bookedTotalCount--;
-            });
+            Order order = new Order(message);
+
+            activeOrderList.add(order);
+            bookedOrderList.remove(order);
+            inTransitTotalCount++;
+            bookedTotalCount--;
+
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount)).
                     add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount));
@@ -116,24 +110,20 @@ public class OrderManagerActor extends BaseActor {
             throw e;
         }
     }
-    @Remote
-    public void ordersArrived(JsonValue message) {
 
-    }
     @Remote
     public void orderArrived(JsonValue message) {
         try {
             Order order = new Order(message);
-
+            JsonObjectBuilder job = Json.createObjectBuilder();
             activeOrderList.remove(order);
             inTransitTotalCount--;
+            job.add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount));
             if (order.isSpoilt()) {
                 spoiltTotalCount--;
                 spoiltOrderList.remove(order);
+                job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount));
             }
-            JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount)).
-                    add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount));
             Kar.Actors.State.set(this, job.build());
         } catch (Exception e) {
             e.printStackTrace();

@@ -198,7 +198,6 @@ public class VoyageActor extends BaseActor {
             // convenience wrapper for ReeferProvisioner json reply
             ReeferProvisionerReply reply =
                     new ReeferProvisionerReply(booking);
-            //System.out.println("VoyageActor.reserve() - Id:" + getId()+" ReeferProvisioner.book() reply:"+bookingStatus);
             if (reply.success()) {
                 save(reply, order, booking);
                 ActorRef orderActorManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
@@ -313,12 +312,6 @@ public class VoyageActor extends BaseActor {
             }
             Kar.Actors.call(reeferProvisionerActor, "voyageReefersDeparted", params);
 
-            if ( !orders.isEmpty()) {
-                JsonArray voyageOrders = voyageOrders();
-                Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId),
-                        "ordersDeparted",
-                        Json.createObjectBuilder().add(Constants.VOYAGE_ORDERS_KEY, voyageOrders).build());
-            }
         } catch( Exception e) {
             e.printStackTrace();
         }

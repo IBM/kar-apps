@@ -123,7 +123,7 @@ public class ReeferProvisionerActor extends BaseActor {
         JsonValue jv2 = state.get(Constants.REEFER_MAP_KEY);
         Map<String, JsonValue> reeferInventory = jv2.asJsonObject();
         System.out.println("ReeferProvisionerActor.restoreReeferInventory - deserialization took  .........."+(System.currentTimeMillis() - t)+" inventory size:"+reeferInventory.size());
-        
+
         if (logger.isLoggable(Level.INFO)) {
             logger.info("ReeferProvisionerActor.init() - Fetched size of the reefer inventory:"
                     + reeferInventory.size());

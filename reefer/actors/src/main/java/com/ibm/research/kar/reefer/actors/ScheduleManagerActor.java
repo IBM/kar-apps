@@ -57,9 +57,6 @@ public class ScheduleManagerActor extends BaseActor {
                 System.out.println("ScheduleManagerActor.activate() ++++++++++++ saved fleet size:" + fleetSize);
             }
 
-
-
-
             schedule = new ScheduleService(new ShippingScheduler(fleetSize));
             reeferInventorySize = FleetCapacity.totalSize(schedule.getRoutes());
             JsonValue baseDateValue = state.get(Constants.SCHEDULE_BASE_DATE_KEY);
@@ -80,7 +77,7 @@ public class ScheduleManagerActor extends BaseActor {
                 lastVoyageDate = Instant.parse(((JsonString) state.get(Constants.SCHEDULE_END_DATE_KEY)).getString());
                 lastScheduleDate = schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
                 System.out.println("ScheduleManagerActor.activate() - Restored Current Date:" + currentDate + " baseDate:" + baseDate + " endDate:" + lastVoyageDate);
-                restoreActiveVoyageOrders();
+                restoreActiveVoyages();
             }
             Kar.Actors.State.set(this, Constants.SCHEDULE_END_DATE_KEY, Json.createValue(lastScheduleDate.toString()));
             System.out.println("ScheduleManagerActor.activate() ++++ Saved End Date:" + lastScheduleDate);
@@ -90,7 +87,7 @@ public class ScheduleManagerActor extends BaseActor {
         }
     }
 
-    private void restoreActiveVoyageOrders() {
+    private void restoreActiveVoyages() {
         List<Voyage> activeVoyages = schedule.getActiveSchedule();
         for (Voyage voyage : activeVoyages) {
             Optional<JsonObject> state = recoverVoyage(voyage.getId());
@@ -99,6 +96,7 @@ public class ScheduleManagerActor extends BaseActor {
                 voyage.setOrderCount(recoveredVoyageState.getOrderCount());
                 voyage.changePosition(recoveredVoyageState.getRoute().getDaysAtSea());
                 voyage.setReeferCount(recoveredVoyageState.getReeferCount());
+                voyage.setFreeCapacity(recoveredVoyageState.getRoute().getVessel().getFreeCapacity());
             }
         }
     }

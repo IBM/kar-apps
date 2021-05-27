@@ -47,7 +47,7 @@ reefer:
     imageName: kar-app-reefer-monitor
     port: 7082
     replicas: 1
-    threshold: 0
+    threshold: 500
     reset: 1
     delay: 60
     counts: 0
@@ -56,10 +56,10 @@ reefer:
   actors:
     imageName: kar-app-reefer-actors
     port: 8080
-    replicas: 1
+    replicas: 2
 
   singletons:
     imageName: kar-app-reefer-actors
     port: 8080
-    replicas: 1
+    replicas: 2
 

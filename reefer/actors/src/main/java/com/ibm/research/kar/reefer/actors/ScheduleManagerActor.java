@@ -12,14 +12,16 @@ import com.ibm.research.kar.reefer.common.json.JsonUtils;
 import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
-import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
 
 import javax.json.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,48 +37,18 @@ public class ScheduleManagerActor extends BaseActor {
     @Activate
     public void activate() {
         Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
-        Map<String, String> env = System.getenv();
-        int fleetSize = 10;
         try {
-            if (env.containsKey(Constants.REEFER_FLEET_SIZE_KEY) &&
-                    env.get(Constants.REEFER_FLEET_SIZE_KEY) != null &&
-                    env.get(Constants.REEFER_FLEET_SIZE_KEY).trim().length() > 0) {
-                fleetSize = Integer.parseInt(env.get(Constants.REEFER_FLEET_SIZE_KEY));
-            }
 
-            // if its a warm start, restore fleet size to previous value. User may change the fleet size through
-            // env variable but the code below ignores it if its different from the previous size.
-            JsonValue jv = state.get(Constants.REEFER_FLEET_SIZE_KEY);
-            if (jv != null && jv != JsonValue.NULL) {
-                if (fleetSize != ((JsonNumber) jv).intValue()) {
-                    System.out.println("ScheduleManagerActor.activate() - Warm start - using previously saved fleet size of " + ((JsonNumber) jv).intValue());
-                    fleetSize = ((JsonNumber) jv).intValue();
-                }
-            } else {
-                Kar.Actors.State.set(this, Constants.REEFER_FLEET_SIZE_KEY, Json.createValue(fleetSize));
-                System.out.println("ScheduleManagerActor.activate() ++++++++++++ saved fleet size:" + fleetSize);
-            }
-
+            int fleetSize = getFleetSize(state);
             schedule = new ScheduleService(new ShippingScheduler(fleetSize));
             reeferInventorySize = FleetCapacity.totalSize(schedule.getRoutes());
-            JsonValue baseDateValue = state.get(Constants.SCHEDULE_BASE_DATE_KEY);
 
-            Instant currentDate;
-            Instant lastVoyageDate;
+            JsonValue baseDateValue = state.get(Constants.SCHEDULE_BASE_DATE_KEY);
             Instant lastScheduleDate;
             if (Objects.isNull(baseDateValue)) {
-                baseDate = currentDate = TimeUtils.getInstance().getCurrentDate();
-                lastVoyageDate = TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate());
-                Kar.Actors.State.set(this, Constants.SCHEDULE_BASE_DATE_KEY, Json.createValue(currentDate.toString()));
-                Kar.Actors.State.set(this, Constants.CURRENT_DATE_KEY, Json.createValue(currentDate.toString()));
-                lastScheduleDate = schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
+                lastScheduleDate = coldStart();
             } else {
-                baseDate = Instant.parse(((JsonString) baseDateValue).getString());
-                JsonValue date = state.get(Constants.CURRENT_DATE_KEY);
-                currentDate = TimeUtils.getInstance(Instant.parse(((JsonString) date).getString())).getCurrentDate();
-                lastVoyageDate = Instant.parse(((JsonString) state.get(Constants.SCHEDULE_END_DATE_KEY)).getString());
-                lastScheduleDate = schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
-                System.out.println("ScheduleManagerActor.activate() - Restored Current Date:" + currentDate + " baseDate:" + baseDate + " endDate:" + lastVoyageDate);
+                lastScheduleDate = warmStart(state, baseDateValue);
                 restoreActiveVoyages();
             }
             Kar.Actors.State.set(this, Constants.SCHEDULE_END_DATE_KEY, Json.createValue(lastScheduleDate.toString()));
@@ -85,6 +57,54 @@ public class ScheduleManagerActor extends BaseActor {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private Instant coldStart() {
+        Instant currentDate;
+        Instant lastVoyageDate;
+        baseDate = currentDate = TimeUtils.getInstance().getCurrentDate();
+        lastVoyageDate = TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate());
+        Kar.Actors.State.set(this, Constants.SCHEDULE_BASE_DATE_KEY, Json.createValue(currentDate.toString()));
+        Kar.Actors.State.set(this, Constants.CURRENT_DATE_KEY, Json.createValue(currentDate.toString()));
+        return schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
+    }
+
+    private Instant warmStart(Map<String, JsonValue> state, JsonValue baseDateValue) {
+        Instant currentDate;
+        Instant lastVoyageDate;
+
+        baseDate = Instant.parse(((JsonString) baseDateValue).getString());
+        JsonValue date = state.get(Constants.CURRENT_DATE_KEY);
+        currentDate = TimeUtils.getInstance(Instant.parse(((JsonString) date).getString())).getCurrentDate();
+        lastVoyageDate = Instant.parse(((JsonString) state.get(Constants.SCHEDULE_END_DATE_KEY)).getString());
+        System.out.println("ScheduleManagerActor.activate() - Restored Current Date:" + currentDate + " baseDate:" + baseDate + " endDate:" + lastVoyageDate);
+        return schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
+
+    }
+
+    private int getFleetSize(Map<String, JsonValue> state) {
+        Map<String, String> env = System.getenv();
+        int fleetSize = 10;
+
+        if (env.containsKey(Constants.REEFER_FLEET_SIZE_KEY) &&
+                env.get(Constants.REEFER_FLEET_SIZE_KEY) != null &&
+                env.get(Constants.REEFER_FLEET_SIZE_KEY).trim().length() > 0) {
+            fleetSize = Integer.parseInt(env.get(Constants.REEFER_FLEET_SIZE_KEY));
+        }
+
+        // if its a warm start, restore fleet size to previous value. User may change the fleet size through
+        // env variable but the code below ignores it if its different from the previous size.
+        JsonValue jv = state.get(Constants.REEFER_FLEET_SIZE_KEY);
+        if (jv != null && jv != JsonValue.NULL) {
+            if (fleetSize != ((JsonNumber) jv).intValue()) {
+                System.out.println("ScheduleManagerActor.activate() - Warm start - using previously saved fleet size of " + ((JsonNumber) jv).intValue());
+                fleetSize = ((JsonNumber) jv).intValue();
+            }
+        } else {
+            Kar.Actors.State.set(this, Constants.REEFER_FLEET_SIZE_KEY, Json.createValue(fleetSize));
+            System.out.println("ScheduleManagerActor.activate() ++++++++++++ saved fleet size:" + fleetSize);
+        }
+        return fleetSize;
     }
 
     private void restoreActiveVoyages() {

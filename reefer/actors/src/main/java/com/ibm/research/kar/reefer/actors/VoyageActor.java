@@ -137,6 +137,7 @@ public class VoyageActor extends BaseActor {
                 // voyage arrived, no longer need the state
                 Kar.Actors.remove(this);
             } else {
+                voyage.changePosition(daysOutAtSea);
                 JsonObjectBuilder jb = Json.createObjectBuilder();
                 if (voyage.shipDeparted(shipCurrentDate, getVoyageStatus())) {
 
@@ -147,7 +148,7 @@ public class VoyageActor extends BaseActor {
                 } else {  // voyage in transit
                     messageSchedulerActor("positionChanged", voyage); //daysOutAtSea);
                 }
-                voyage.changePosition(daysOutAtSea);
+
                 jb.add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
                 Kar.Actors.State.set(this, jb.build());
             }

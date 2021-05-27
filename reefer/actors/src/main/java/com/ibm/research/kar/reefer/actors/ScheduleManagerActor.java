@@ -114,7 +114,7 @@ public class ScheduleManagerActor extends BaseActor {
             if (state.isPresent()) {
                 Voyage recoveredVoyageState = VoyageJsonSerializer.deserialize(state.get());
                 voyage.setOrderCount(recoveredVoyageState.getOrderCount());
-                voyage.changePosition(recoveredVoyageState.getRoute().getDaysAtSea());
+                voyage.changePosition( Long.valueOf(recoveredVoyageState.getRoute().getVessel().getPosition()).intValue());
                 voyage.setReeferCount(recoveredVoyageState.getReeferCount());
                 voyage.setFreeCapacity(recoveredVoyageState.getRoute().getVessel().getFreeCapacity());
             }

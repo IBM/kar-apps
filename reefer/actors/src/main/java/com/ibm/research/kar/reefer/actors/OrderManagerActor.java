@@ -147,4 +147,21 @@ public class OrderManagerActor extends BaseActor {
         }
 
     }
+    @Remote
+    public JsonValue ordersBooked() {
+        return getOrderList(bookedOrderList);
+    }
+    @Remote
+    public JsonValue ordersSpoilt() {
+        return getOrderList(spoiltOrderList);
+    }
+    @Remote
+    public JsonValue ordersInTransit() {
+        return getOrderList(activeOrderList);
+    }
+    private JsonValue getOrderList(FixedSizeQueue orders) {
+        JsonArrayBuilder jab = Json.createArrayBuilder();
+        orders.forEach(order -> jab.add(order.getAsJsonObject()));
+        return jab.build();
+    }
 }

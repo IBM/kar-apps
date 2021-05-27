@@ -18,6 +18,7 @@ package com.ibm.research.kar.reeferserver.controller;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
@@ -158,14 +159,6 @@ public class OrderController {
         return orderProperties;
     }
 
-    private List<Order> orders(JsonValue jv) {
-        if (jv != null && jv != JsonValue.NULL) {
-            JsonArray ja = jv.asJsonArray();
-            return ja.stream().map(Order::new).collect(Collectors.toList());
-        }
-        return Collections.emptyList();
-    }
-
     /**
      * Returns a list of voyages that are currently at sea
      *
@@ -173,7 +166,8 @@ public class OrderController {
      */
     @GetMapping("/orders/list/active")
     public List<Order> getActiveOrderList() {
-        return orders(Kar.Actors.State.get(orderMgrActor, Constants.ACTIVE_ORDERS_KEY));
+        JsonValue reply = Kar.Actors.call(orderMgrActor, "ordersInTransit");
+        return reply.asJsonArray().stream().map(Order::new).collect(Collectors.toList());
     }
 
     /**
@@ -183,13 +177,8 @@ public class OrderController {
      */
     @GetMapping("/orders/list/booked")
     public List<Order> getBookedOrderList() {
-        try {
-            return orders(Kar.Actors.State.get(orderMgrActor, Constants.BOOKED_ORDERS_KEY));
-        } catch(Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
-
+        JsonValue reply = Kar.Actors.call(orderMgrActor, "ordersBooked");
+        return reply.asJsonArray().stream().map(Order::new).collect(Collectors.toList());
     }
 
     /**
@@ -199,7 +188,8 @@ public class OrderController {
      */
     @GetMapping("/orders/list/spoilt")
     public List<Order> getSpoiltOrderList() {
-        return orders(Kar.Actors.State.get(orderMgrActor, Constants.SPOILT_ORDERS_KEY));
+        JsonValue reply = Kar.Actors.call(orderMgrActor, "ordersSpoilt");
+        return reply.asJsonArray().stream().map(Order::new).collect(Collectors.toList());
     }
 
     /**

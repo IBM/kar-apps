@@ -146,7 +146,7 @@ public class VoyageActor extends BaseActor {
                     voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
                     jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus);
                 } else {  // voyage in transit
-                    messageSchedulerActor("positionChanged", voyage); //daysOutAtSea);
+                    messageSchedulerActor("positionChanged", voyage);
                 }
 
                 jb.add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
@@ -202,7 +202,7 @@ public class VoyageActor extends BaseActor {
             if (reply.success()) {
                 save(reply, order, booking);
                 ActorRef orderActorManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
-                Kar.Actors.tell(orderActorManager, "updateVoyage", VoyageJsonSerializer.serialize(voyage));//params);
+                Kar.Actors.tell(orderActorManager, "updateVoyage", VoyageJsonSerializer.serialize(voyage));
                 return buildResponse( order, voyage.getRoute().getVessel().getFreeCapacity());
             }
             // return failure
@@ -222,6 +222,8 @@ public class VoyageActor extends BaseActor {
             logger.info("VoyageActor.save() - Vessel " + voyage.getRoute().getVessel().getName() + " Updated Free Capacity "
                     + voyage.getRoute().getVessel().getFreeCapacity());
         }
+        orders.put(order.getId(), bookingStatus);
+        voyage.setOrderCount(orders.size());
         voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
         JsonObjectBuilder jb = Json.createObjectBuilder();
         jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus).
@@ -230,8 +232,7 @@ public class VoyageActor extends BaseActor {
         // add new order to this voyage order list
         Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), bookingStatus);
 
-        orders.put(order.getId(), bookingStatus);
-        voyage.setOrderCount(orders.size());
+
     }
     private JsonObject buildResponse( final Order order, final int freeCapacity) {
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)

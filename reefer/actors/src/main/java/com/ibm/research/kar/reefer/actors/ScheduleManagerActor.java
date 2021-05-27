@@ -205,6 +205,15 @@ public class ScheduleManagerActor extends BaseActor {
     private JsonArray voyageListToJsonArray(List<Voyage> voyages) {
         JsonArrayBuilder jab = Json.createArrayBuilder();
         voyages.forEach(voyage -> {
+            if ( voyage.getProgress() == 0 && voyage.getOrderCount() == 0) {
+                Optional<JsonObject> actualVoyageState = recoverVoyage(voyage.getId());
+                if (actualVoyageState.isPresent()) {
+                    Voyage recoveredVoyageState = VoyageJsonSerializer.deserialize(actualVoyageState.get());
+                    voyage.setOrderCount(recoveredVoyageState.getOrderCount());
+                    voyage.setReeferCount(recoveredVoyageState.getReeferCount());
+                    voyage.setFreeCapacity(recoveredVoyageState.getRoute().getVessel().getFreeCapacity());
+                }
+            }
             jab.add(VoyageJsonSerializer.serialize(voyage));
         });
         JsonArray ja = jab.build();

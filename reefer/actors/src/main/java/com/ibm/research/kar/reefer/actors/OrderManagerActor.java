@@ -55,18 +55,7 @@ public class OrderManagerActor extends BaseActor {
         try {
             // initial actor invocation should handle no state
             if (!state.isEmpty()) {
-                /*
-                if (state.containsKey(Constants.TOTAL_BOOKED_KEY)) {
-                    bookedTotalCount = (((JsonNumber) state.get(Constants.TOTAL_BOOKED_KEY)).intValue());
-                }
-                if (state.containsKey(Constants.TOTAL_INTRANSIT_KEY)) {
-                    inTransitTotalCount = (((JsonNumber) state.get(Constants.TOTAL_INTRANSIT_KEY)).intValue());
-                }
-                if (state.containsKey(Constants.TOTAL_SPOILT_KEY)) {
-                    spoiltTotalCount = (((JsonNumber) state.get(Constants.TOTAL_SPOILT_KEY)).intValue());
-                }
 
-                 */
                 if (state.containsKey(Constants.ORDER_METRICS_KEY)) {
                     orderMetrics = (((JsonString) state.get(Constants.ORDER_METRICS_KEY)).getString());
                     String[] values = orderMetrics.split(":");
@@ -118,19 +107,18 @@ public class OrderManagerActor extends BaseActor {
             if ( activeOrders.containsKey(order.getId())) {
                 Order activeOrder = new Order(activeOrders.get(order.getId()));
                 // idempotence check to prevent double counting
-                if ( !Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus())) {
+                if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus())) {
                     activeOrderList.add(order);
                     bookedOrderList.remove(order);
                     inTransitTotalCount++;
                     bookedTotalCount--;
+                    // update
+                    activeOrders.put(order.getId(), order.getAsJsonObject());
                     order.setStatus(Order.OrderStatus.INTRANSIT.name());
                     Kar.Actors.State.Submap.set(this, Constants.ORDERS_KEY, order.getId(), order.getAsJsonObject());
 
                     saveMetrics();
                 }
-
-            } else {
-
             }
 
         } catch (Exception e) {
@@ -145,15 +133,18 @@ public class OrderManagerActor extends BaseActor {
             Order order = new Order(message);
             if ( activeOrders.containsKey(order.getId())) {
                 Order activeOrder = new Order(activeOrders.get(order.getId()));
-                activeOrderList.remove(order);
-                inTransitTotalCount--;
-                activeOrders.remove(order);
-                Kar.Actors.State.Submap.remove(this, Constants.ORDERS_KEY, order.getId() );
-                if (activeOrder.isSpoilt()) {
-                    spoiltTotalCount--;
-                    spoiltOrderList.remove(activeOrder);
+                if (!Order.OrderStatus.DELIVERED.name().equals(activeOrder.getStatus())) {
+                    activeOrderList.remove(order);
+                    inTransitTotalCount--;
+                    activeOrders.remove(order);
+                    Kar.Actors.State.Submap.remove(this, Constants.ORDERS_KEY, order.getId() );
+                    if (activeOrder.isSpoilt()) {
+                        spoiltTotalCount--;
+                        spoiltOrderList.remove(activeOrder);
+                    }
+                    saveMetrics();
                 }
-                saveMetrics();
+
             }
 
         } catch (Exception e) {
@@ -170,16 +161,12 @@ public class OrderManagerActor extends BaseActor {
                 Order activeOrder = new Order(activeOrders.get(order.getId()));
                 // idempotence check to prevent double counting
                 if (!activeOrder.isSpoilt()) {
-
                     spoiltOrderList.add(order);
                     spoiltTotalCount++;
-                    //System.out.println("OrderManager.orderSpoilt() - order spoilt - count:"+spoiltTotalCount);
-                    order.setSpoilt(true);
+                    activeOrders.put(order.getId(), order.getAsJsonObject());
                     Kar.Actors.State.Submap.set(this, Constants.ORDERS_KEY, order.getId(), order.getAsJsonObject());
                     saveMetrics();
                 }
-            } else {
-                System.out.println("OrderManager.orderSpoilt() - order spoilt - but not found in orders map - id:"+order.getId());
             }
 
         } catch (Exception e) {

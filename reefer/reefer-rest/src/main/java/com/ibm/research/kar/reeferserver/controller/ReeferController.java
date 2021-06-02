@@ -62,8 +62,9 @@ public class ReeferController {
 
     @GetMapping("/reefers/stats")
     public ReeferStats getReeferStats() {
-
+        System.out.println("ReeferController.getReeferStats()  - calling Submap.getAll()");
         Map<String, JsonValue> reeferStatsMap = Kar.Actors.State.Submap.getAll(provisioner, Constants.REEFER_STATS_MAP_KEY);
+        System.out.println("ReeferController.getReeferStats()  - reefer stats map size:"+reeferStatsMap.size());
         if (reeferStatsMap.containsKey(Constants.TOTAL_BOOKED_KEY)) {
             totalBooked = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_BOOKED_KEY)).intValue();
         }
@@ -79,8 +80,8 @@ public class ReeferController {
         if (reeferStatsMap.containsKey(Constants.TOTAL_REEFER_COUNT_KEY)) {
             reeferInventorySize = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_REEFER_COUNT_KEY)).intValue();
         }
-     //   System.out.println("ReeferController.getReeferStats()  ********** Booked:" + totalBooked +
-    //            " -- InTransit:" + totalInTransit + " -- Spoilt:" + totalSpoilt + " -- onMaintenance:" + totalOnMaintenance);
+        System.out.println("ReeferController.getReeferStats()  ********** Booked:" + totalBooked +
+                " -- InTransit:" + totalInTransit + " -- Spoilt:" + totalSpoilt + " -- onMaintenance:" + totalOnMaintenance);
 
         return new ReeferStats(reeferInventorySize, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance);
     }

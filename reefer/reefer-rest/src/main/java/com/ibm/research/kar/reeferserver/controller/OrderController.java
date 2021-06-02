@@ -215,6 +215,14 @@ public class OrderController {
             if (state.containsKey(Constants.TOTAL_SPOILT_KEY)) {
                 spoiltTotalCount = ((JsonNumber) state.get(Constants.TOTAL_SPOILT_KEY)).intValue();
             }
+            if (state.containsKey(Constants.ORDER_METRICS_KEY)) {
+                String metrics = ((JsonString) state.get(Constants.ORDER_METRICS_KEY)).getString();
+                String[] values = metrics.split(":");
+
+                bookedTotalCount = Integer.valueOf(values[0].trim());
+                inTransitTotalCount = Integer.valueOf(values[1].trim());
+                spoiltTotalCount = Integer.valueOf(values[2].trim());
+            }
         }
      //   System.out.println("OrderController.getOrderStats()  ********** Booked:" + bookedTotalCount + " -- InTransit:" + inTransitTotalCount + " -- Spoilt:" + spoiltTotalCount);
         return new OrderStats(inTransitTotalCount, bookedTotalCount, spoiltTotalCount);

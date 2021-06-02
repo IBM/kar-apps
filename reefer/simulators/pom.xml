@@ -12,7 +12,7 @@
 
 	<groupId>com.ibm.research.kar.reefer</groupId>
 	<artifactId>reefer-kar-simulator-server</artifactId>
-	<version>1.0.2-SNAPSHOT</version>
+	<version>1.0.4-SNAPSHOT</version>
 	<packaging>war</packaging>
 
 	<dependencies>

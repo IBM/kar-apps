@@ -132,7 +132,9 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject delivered() {
-        messageOrderManager("orderArrived");
+        if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus())){
+            messageOrderManager("orderArrived");
+        }
         Kar.Actors.remove(this);
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
@@ -145,7 +147,7 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject departed() {
-        if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus())) {
+        if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
             saveOrderStatusChange(OrderStatus.INTRANSIT);
             messageOrderManager("orderDeparted");
         }
@@ -199,6 +201,7 @@ public class OrderActor extends BaseActor {
 
         int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
         if (!order.isSpoilt()) {
+            //System.out.println("OrderActor.tagAsSpoilt() - order:"+order.getId()+" has spoilt");
             order.setSpoilt(true);
             JsonObject jo = order.getAsJsonObject();
             ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);

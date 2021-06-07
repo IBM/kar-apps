@@ -29,6 +29,7 @@ public class Constants {
    public static final String SPOILT_ORDERS_KEY="spoilt-orders";
    public static final String REST_ORDERS_KEY="rest-order-map";
    public static final String VOYAGE_ID_KEY="voyageId";
+   public static final String VOYAGE_ARRIVAL_DATE_KEY="voyage-arrival-date";
    public static final String VOYAGE_ORDERS_KEY="voyage-orders";
    public static final String VOYAGE_REEFERS_KEY="voyage-reefers";
    public static final String VOYAGE_INFO_KEY="voyage-info";

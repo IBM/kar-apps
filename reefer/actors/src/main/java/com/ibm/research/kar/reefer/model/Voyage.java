@@ -128,8 +128,8 @@ public class Voyage implements Comparable<Voyage>{
     }
     public boolean shipArrived(Instant shipCurrentDate, VoyageStatus status) {
         Instant scheduledArrivalDate = Instant.parse(getArrivalDate());
-        return ((shipCurrentDate.equals(scheduledArrivalDate)
-                || (shipCurrentDate.isAfter(scheduledArrivalDate) && !VoyageStatus.ARRIVED.equals(status))));
+        return ( !VoyageStatus.ARRIVED.equals(status) && (shipCurrentDate.equals(scheduledArrivalDate)
+                || shipCurrentDate.isAfter(scheduledArrivalDate)));
     }
     public boolean shipArrived(Instant currentDate) {
         Instant scheduledArrivalDate = Instant.parse(getArrivalDate());
@@ -137,8 +137,14 @@ public class Voyage implements Comparable<Voyage>{
     }
     public boolean shipDeparted(Instant shipCurrentDate, VoyageStatus status) {
         Instant scheduledDepartureDate = getSailDateObject();
+        return (!VoyageStatus.DEPARTED.equals(status) && (shipCurrentDate.equals(scheduledDepartureDate)
+                || shipCurrentDate.isAfter(scheduledDepartureDate)));
+/*
         return ((shipCurrentDate.equals(scheduledDepartureDate)
                 || (shipCurrentDate.isAfter(scheduledDepartureDate) && !VoyageStatus.DEPARTED.equals(status))));
+
+ */
+
     }
     public void setProgress(int progress) {
         this.progress = progress;

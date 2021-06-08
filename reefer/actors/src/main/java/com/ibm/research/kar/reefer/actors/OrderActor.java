@@ -131,15 +131,8 @@ public class OrderActor extends BaseActor {
      * @return
      */
     @Remote
-    public JsonObject delivered() {
-        if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus())){
-            order.setStatus(OrderStatus.DELIVERED.name());
-            saveOrderStatusChange(OrderStatus.DELIVERED);
-            messageOrderManager("orderArrived");
-        }
+    public void delivered() {
         Kar.Actors.remove(this);
-        return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
-                .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
     }
 
     /**

@@ -131,6 +131,10 @@ public class VoyageActor extends BaseActor {
                 voyageStatus = Json.createValue(VoyageStatus.ARRIVED.name());
                 // notify voyage orders of arrival
                 processArrivedVoyage(voyage, daysOutAtSea);
+                JsonObjectBuilder jb = Json.createObjectBuilder();
+                jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus);
+                Kar.Actors.State.set(this, jb.build());
+
                 // voyage arrived, no longer need the state
                 Kar.Actors.remove(this);
             } else {
@@ -183,10 +187,10 @@ public class VoyageActor extends BaseActor {
         if (orders.containsKey(order.getId())) {
             JsonValue booking = orders.get(order.getId());
             // this order has already been processed so return result
-            if (booking.asJsonObject().getJsonObject(Constants.ORDER_BOOKING_STATUS_KEY).getString(Constants.STATUS_KEY).equals(Constants.OK)) {
+            if (booking.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
                 return buildResponse( order, voyage.getRoute().getVessel().getFreeCapacity());
             }
-            return orders.get(order.getId()).asJsonObject().getJsonObject(Constants.ORDER_BOOKING_STATUS_KEY);
+            return orders.get(order.getId()).asJsonObject();
         }
 
         try {
@@ -216,9 +220,7 @@ public class VoyageActor extends BaseActor {
             logger.log(Level.WARNING, "VoyageActor.reserve() - Error - voyageId " + getId() + " ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, this.getId()).build();
-        } finally {
-           // System.out.println("VoyageActor.reserve() - order:"+order.getId()+" time spent here - " + (System.currentTimeMillis()-t)+" ms");
-        }
+        } 
     }
     private void save(ReeferProvisionerReply booking, Order order, JsonValue bookingStatus) {
         voyage.setReeferCount(voyage.getReeferCount() + booking.getReeferCount());
@@ -254,19 +256,48 @@ public class VoyageActor extends BaseActor {
      */
     private void processArrivedVoyage(final Voyage voyage, int daysAtSea) {
         if (logger.isLoggable(Level.INFO)) {
-            logger.info("VoyageActor.changePosition() voyageId=" + voyage.getId()
+            logger.info("VoyageActor.processArrivedVoyage() voyageId=" + voyage.getId()
                     + " has ARRIVED ------------------------------------------------------");
         }
         try {
+            JsonArrayBuilder voyageOrderIds = Json.createArrayBuilder();
             // notify each order actor that the ship arrived
             orders.keySet().forEach(orderId -> {
                 if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("VoyageActor.changePosition() voyageId=" + voyage.getId()
+                    logger.fine("VoyageActor.processArrivedVoyage() voyageId=" + voyage.getId()
                             + " Notifying Order Actor of arrival - OrderID:" + orderId);
                 }
-                messageOrderActor("delivered", orderId);
+                JsonValue booking = orders.get(orderId);
+                 Order order = new Order(booking.asJsonObject().getJsonObject(Constants.ORDER_KEY));
+                if ( !Order.OrderStatus.DELIVERED.name().equals(order.getStatus()) ) {
+                    try {
+                        messageOrderActor("delivered", orderId);
+                    } catch( Exception orderActorException ) {
+                        // KAR sometimes fails to locate order actor instance even though it exists in REDIS. This can happen
+                        // after process restart
+                        if ( orderActorException.getMessage().startsWith("Actor instance not found:")) {
+                            // ignore the error for now, eventually KAR will not throw this error
+                            logger.log(Level.WARNING, "VoyageActor.processArrivedVoyage() - KAR failed to locate order actor instance " + getId() );
+                        } else {
+                            orderActorException.printStackTrace();
+                        }
+                    }
+                    voyageOrderIds.add(orderId);
+                    order.setStatus(Order.OrderStatus.DELIVERED.name());
+                    JsonObjectBuilder job = Json.createObjectBuilder();
+                    job.add(Constants.STATUS_KEY, booking.asJsonObject().getString(Constants.STATUS_KEY)).
+                            add( Constants.REEFERS_KEY, booking.asJsonObject().getJsonNumber(Constants.REEFERS_KEY).intValue()).
+                            add(Constants.ORDER_KEY, order.getAsJsonObject());
+                    JsonObject jo = job.build();
+                    orders.put(order.getId(), jo);
+                    Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), jo);
+                }
             });
-            messageSchedulerActor("voyageDeparted", voyage);
+
+            messageSchedulerActor("voyageArrived", voyage);
+            ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
+            Kar.Actors.call(orderActor, "ordersArrived", voyageOrderIds.build());
+
         } catch( Exception e) {
             logger.log(Level.WARNING, "VoyageActor.processArrivedVoyage() - Error while notifying order of arrival- voyageId " + getId() + " ", e);
         }

@@ -25,7 +25,9 @@ import com.ibm.research.kar.reefer.common.FixedSizeQueue;
 import com.ibm.research.kar.reefer.model.Order;
 
 import javax.json.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -36,7 +38,7 @@ public class OrderManagerActor extends BaseActor {
     // need separate queues for each state type. Can't use single list as the
     // booked orders are more frequent and would push all the other types out of
     // the bounded queue
-    private FixedSizeQueue activeOrderList = new FixedSizeQueue(maxOrderCount);
+    private FixedSizeQueue inTransitOrderList = new FixedSizeQueue(maxOrderCount);
     private FixedSizeQueue bookedOrderList = new FixedSizeQueue(maxOrderCount);
     private FixedSizeQueue spoiltOrderList = new FixedSizeQueue(maxOrderCount);
 
@@ -67,7 +69,7 @@ public class OrderManagerActor extends BaseActor {
                 if (state.containsKey(Constants.ORDERS_KEY)) {
                     long t = System.currentTimeMillis();
                     activeOrders.putAll(state.get(Constants.ORDERS_KEY).asJsonObject());
-                    System.out.println("OrderManagerActor.activate() - time to restore active orders:"+ (System.currentTimeMillis() - t) + " millis");
+                    System.out.println("OrderManagerActor.activate() - time to restore active orders:" + (System.currentTimeMillis() - t) + " millis");
                 }
                 System.out.println("OrderManagerActor.activate() - Totals - totalInTransit:" + inTransitTotalCount + " totalBooked: " + bookedTotalCount + " totalSpoilt:" + spoiltTotalCount);
 
@@ -83,7 +85,7 @@ public class OrderManagerActor extends BaseActor {
         long t = System.currentTimeMillis();
         try {
             Order order = new Order(message);
-            if ( !activeOrders.containsKey(order.getId())) {
+            if (!activeOrders.containsKey(order.getId())) {
                 JsonObjectBuilder jo = Json.createObjectBuilder();
                 activeOrders.put(order.getId(), order.getAsJsonObject());
                 Kar.Actors.State.Submap.set(this, Constants.ORDERS_KEY, order.getId(), order.getAsJsonObject());
@@ -94,21 +96,18 @@ public class OrderManagerActor extends BaseActor {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            //System.out.println("OrderManager.orderBooked - time spent here - " + (System.currentTimeMillis()-t)+" ms");
         }
-
     }
 
     @Remote
     public void orderDeparted(JsonValue message) {
         try {
             Order order = new Order(message);
-            if ( activeOrders.containsKey(order.getId())) {
+            if (activeOrders.containsKey(order.getId())) {
                 Order activeOrder = new Order(activeOrders.get(order.getId()));
                 // idempotence check to prevent double counting
                 if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus())) {
-                    activeOrderList.add(order);
+                    inTransitOrderList.add(order);
                     bookedOrderList.remove(order);
                     inTransitTotalCount++;
                     bookedTotalCount--;
@@ -127,26 +126,40 @@ public class OrderManagerActor extends BaseActor {
         }
     }
 
+
     @Remote
-    public void orderArrived(JsonValue message) {
+    public void ordersArrived(JsonValue message) {
+        List<String> orders2Remove = new ArrayList<>();
+        JsonArray ja = message.asJsonArray();
+        ja.forEach(oId -> {
+            String orderId = ((JsonString)oId).getString();
+            if (activeOrders.containsKey(orderId)) {
+                if ( orderArrived(new Order(activeOrders.get(orderId))) ) {
+                    orders2Remove.add(orderId);
+                }
+            }
+        });
+
+        Kar.Actors.State.Submap.removeAll(this, Constants.ORDERS_KEY, orders2Remove);
+        saveMetrics();
+    }
+
+    private boolean orderArrived(Order order) {
         try {
-            Order order = new Order(message);
-            if ( activeOrders.containsKey(order.getId())) {
+            if (activeOrders.containsKey(order.getId())) {
                 Order activeOrder = new Order(activeOrders.get(order.getId()));
                 if (!Order.OrderStatus.DELIVERED.name().equals(activeOrder.getStatus())) {
-                    activeOrderList.remove(order);
+                    inTransitOrderList.remove(order);
                     inTransitTotalCount--;
                     activeOrders.remove(order);
-                    Kar.Actors.State.Submap.remove(this, Constants.ORDERS_KEY, order.getId() );
                     if (activeOrder.isSpoilt()) {
                         spoiltTotalCount--;
                         spoiltOrderList.remove(activeOrder);
                     }
-                    saveMetrics();
+                    return true;
                 }
-
             }
-
+            return false;
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -157,7 +170,7 @@ public class OrderManagerActor extends BaseActor {
     public void orderSpoilt(JsonObject message) {
         try {
             Order order = new Order(message);
-            if ( activeOrders.containsKey(order.getId())) {
+            if (activeOrders.containsKey(order.getId())) {
                 Order activeOrder = new Order(activeOrders.get(order.getId()));
                 // idempotence check to prevent double counting
                 if (!activeOrder.isSpoilt()) {
@@ -175,23 +188,28 @@ public class OrderManagerActor extends BaseActor {
         }
 
     }
+
     @Remote
     public JsonValue ordersBooked() {
         return getOrderList(bookedOrderList);
     }
+
     @Remote
     public JsonValue ordersSpoilt() {
         return getOrderList(spoiltOrderList);
     }
+
     @Remote
     public JsonValue ordersInTransit() {
-        return getOrderList(activeOrderList);
+        return getOrderList(inTransitOrderList);
     }
+
     private JsonValue getOrderList(FixedSizeQueue orders) {
         JsonArrayBuilder jab = Json.createArrayBuilder();
         orders.forEach(order -> jab.add(order.getAsJsonObject()));
         return jab.build();
     }
+
     private void saveMetrics() {
         String metrics = String.format("%d:%d:%d", bookedTotalCount, inTransitTotalCount, spoiltTotalCount);
         //System.out.println("OrderManager.saveMetrics() - "+metrics);

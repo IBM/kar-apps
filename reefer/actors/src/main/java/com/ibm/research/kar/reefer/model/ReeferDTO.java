@@ -88,7 +88,6 @@ public class ReeferDTO {
 	        // on maintenance reefers are not associated with a voyage or order
             this.voyageId = "";
 	        this.orderId = "";
-            //maintenanceReleaseDate = TimeUtils.getInstance().futureDate( Instant.parse(today), Constants.REEFER_DAYS_ON_MAINTENANCE).toString();
             maintenanceReleaseDate = Instant.parse(today).plus(Constants.REEFER_DAYS_ON_MAINTENANCE, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS).toString();
         }
         

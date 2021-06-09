@@ -220,7 +220,7 @@ public class VoyageActor extends BaseActor {
             logger.log(Level.WARNING, "VoyageActor.reserve() - Error - voyageId " + getId() + " ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, this.getId()).build();
-        } 
+        }
     }
     private void save(ReeferProvisionerReply booking, Order order, JsonValue bookingStatus) {
         voyage.setReeferCount(voyage.getReeferCount() + booking.getReeferCount());
@@ -267,36 +267,13 @@ public class VoyageActor extends BaseActor {
                     logger.fine("VoyageActor.processArrivedVoyage() voyageId=" + voyage.getId()
                             + " Notifying Order Actor of arrival - OrderID:" + orderId);
                 }
-                JsonValue booking = orders.get(orderId);
-                 Order order = new Order(booking.asJsonObject().getJsonObject(Constants.ORDER_KEY));
-                if ( !Order.OrderStatus.DELIVERED.name().equals(order.getStatus()) ) {
-                    try {
-                        messageOrderActor("delivered", orderId);
-                    } catch( Exception orderActorException ) {
-                        // KAR sometimes fails to locate order actor instance even though it exists in REDIS. This can happen
-                        // after process restart
-                        if ( orderActorException.getMessage().startsWith("Actor instance not found:")) {
-                            // ignore the error for now, eventually KAR will not throw this error
-                            logger.log(Level.WARNING, "VoyageActor.processArrivedVoyage() - KAR failed to locate order actor instance " + getId() );
-                        } else {
-                            orderActorException.printStackTrace();
-                        }
-                    }
-                    voyageOrderIds.add(orderId);
-                    order.setStatus(Order.OrderStatus.DELIVERED.name());
-                    JsonObjectBuilder job = Json.createObjectBuilder();
-                    job.add(Constants.STATUS_KEY, booking.asJsonObject().getString(Constants.STATUS_KEY)).
-                            add( Constants.REEFERS_KEY, booking.asJsonObject().getJsonNumber(Constants.REEFERS_KEY).intValue()).
-                            add(Constants.ORDER_KEY, order.getAsJsonObject());
-                    JsonObject jo = job.build();
-                    orders.put(order.getId(), jo);
-                    Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), jo);
-                }
+                notifyVoyageOrder(orderId, Order.OrderStatus.DELIVERED, "delivered");
+                voyageOrderIds.add(orderId);
             });
 
             messageSchedulerActor("voyageArrived", voyage);
-            ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
-            Kar.Actors.call(orderActor, "ordersArrived", voyageOrderIds.build());
+            ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
+            Kar.Actors.call(orderManagerActor, "ordersArrived", voyageOrderIds.build());
 
         } catch( Exception e) {
             logger.log(Level.WARNING, "VoyageActor.processArrivedVoyage() - Error while notifying order of arrival- voyageId " + getId() + " ", e);
@@ -336,7 +313,7 @@ public class VoyageActor extends BaseActor {
                     logger.fine("VoyageActor.processDepartedVoyage() voyageId=" + voyage.getId()
                             + " Notifying Order Actor of departure - OrderID:" + orderId);
                 }
-                messageOrderActor("departed", orderId);
+                notifyVoyageOrder(orderId, Order.OrderStatus.INTRANSIT, "departed");
             });
             messageSchedulerActor("voyageDeparted", voyage);
             ActorRef reeferProvisionerActor = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName,
@@ -355,19 +332,31 @@ public class VoyageActor extends BaseActor {
         }
 
     }
-
-    /**
-     * Update REST with ship position
-     *
-     * @param methodToCall -  REST API to call
-     * @param daysAtSea    - ship days at sea
-     */
-    private void messageRest(String methodToCall, int daysAtSea, JsonArray voyageOrders) {
-        JsonObject params = Json.createObjectBuilder().
-                add(Constants.VOYAGE_ID_KEY, getId()).add("daysAtSea", daysAtSea).
-                add(Constants.VOYAGE_ORDERS_KEY, voyageOrders).
-                build();
-        Kar.Services.post(Constants.REEFERSERVICE, methodToCall, params);
+    private void notifyVoyageOrder(String orderId, Order.OrderStatus orderStatus, String methodName) {
+        JsonValue booking = orders.get(orderId);
+        Order order = new Order(booking.asJsonObject().getJsonObject(Constants.ORDER_KEY));
+        if ( !orderStatus.name().equals(order.getStatus()) ) {
+            try {
+                messageOrderActor(methodName, orderId);
+            } catch( Exception orderActorException ) {
+                // KAR sometimes fails to locate order actor instance even though it exists in REDIS. This can happen
+                // after process restart
+                if ( orderActorException.getMessage().startsWith("Actor instance not found:")) {
+                    // ignore the error for now, eventually KAR will not throw this error
+                    logger.log(Level.WARNING, "VoyageActor.notifyVoyageOrder() - KAR failed to locate order actor instance " + getId() );
+                } else {
+                    orderActorException.printStackTrace();
+                }
+            }
+            order.setStatus(orderStatus.name());
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            job.add(Constants.STATUS_KEY, booking.asJsonObject().getString(Constants.STATUS_KEY)).
+                    add( Constants.REEFERS_KEY, booking.asJsonObject().getJsonNumber(Constants.REEFERS_KEY).intValue()).
+                    add(Constants.ORDER_KEY, order.getAsJsonObject());
+            JsonObject jo = job.build();
+            orders.put(order.getId(), jo);
+            Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), jo);
+        }
     }
 
     /**

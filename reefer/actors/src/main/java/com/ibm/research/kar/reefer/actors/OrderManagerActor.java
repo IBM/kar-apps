@@ -132,9 +132,9 @@ public class OrderManagerActor extends BaseActor {
         List<String> orders2Remove = new ArrayList<>();
         JsonArray ja = message.asJsonArray();
         ja.forEach(oId -> {
-            String orderId = ((JsonString)oId).getString();
+            String orderId = ((JsonString) oId).getString();
             if (activeOrders.containsKey(orderId)) {
-                if ( orderArrived(new Order(activeOrders.get(orderId))) ) {
+                if (orderArrived(new Order(activeOrders.get(orderId)))) {
                     orders2Remove.add(orderId);
                 }
             }
@@ -146,19 +146,18 @@ public class OrderManagerActor extends BaseActor {
 
     private boolean orderArrived(Order order) {
         try {
-            if (activeOrders.containsKey(order.getId())) {
-                Order activeOrder = new Order(activeOrders.get(order.getId()));
-                if (!Order.OrderStatus.DELIVERED.name().equals(activeOrder.getStatus())) {
-                    inTransitOrderList.remove(order);
-                    inTransitTotalCount--;
-                    activeOrders.remove(order);
-                    if (activeOrder.isSpoilt()) {
-                        spoiltTotalCount--;
-                        spoiltOrderList.remove(activeOrder);
-                    }
-                    return true;
+            Order activeOrder = new Order(activeOrders.get(order.getId()));
+            if (!Order.OrderStatus.DELIVERED.name().equals(activeOrder.getStatus())) {
+                inTransitOrderList.remove(order);
+                inTransitTotalCount--;
+                activeOrders.remove(order);
+                if (activeOrder.isSpoilt()) {
+                    spoiltTotalCount--;
+                    spoiltOrderList.remove(activeOrder);
                 }
+                return true;
             }
+
             return false;
         } catch (Exception e) {
             e.printStackTrace();

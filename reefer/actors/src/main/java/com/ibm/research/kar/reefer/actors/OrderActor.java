@@ -143,8 +143,8 @@ public class OrderActor extends BaseActor {
     @Remote
     public JsonObject departed() {
         if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
-            saveOrderStatusChange(OrderStatus.INTRANSIT);
             messageOrderManager("orderDeparted");
+            saveOrderStatusChange(OrderStatus.INTRANSIT);
         }
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();

@@ -83,11 +83,6 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject createOrder(JsonObject message) {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine(String.format("OrderActor.createOrder() - orderId: %s message: %s", getId(), message));
-        }
-        long t = System.currentTimeMillis();
-
         // Idempotence test. Check if this order has already been booked.
         if (order != null && OrderStatus.BOOKED.name().equals(order.getStatus())) {
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
@@ -114,10 +109,7 @@ public class OrderActor extends BaseActor {
             logger.log(Level.WARNING, "OrderActor.createOrder() - Error - orderId " + getId() + " ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
-        } finally {
-            //System.out.println("OrderActor.createOrder() - "+getId()+" time spent here - " + (System.currentTimeMillis()-t)+" ms");
         }
-
     }
 
     private void messageOrderManager(String methodToCall) {
@@ -196,7 +188,6 @@ public class OrderActor extends BaseActor {
 
         int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
         if (!order.isSpoilt()) {
-            //System.out.println("OrderActor.tagAsSpoilt() - order:"+order.getId()+" has spoilt");
             order.setSpoilt(true);
             JsonObject jo = order.getAsJsonObject();
             ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);

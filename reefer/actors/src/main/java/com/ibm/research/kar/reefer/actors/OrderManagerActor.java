@@ -25,10 +25,7 @@ import com.ibm.research.kar.reefer.common.FixedSizeQueue;
 import com.ibm.research.kar.reefer.model.Order;
 
 import javax.json.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 @Actor
@@ -88,14 +85,15 @@ public class OrderManagerActor extends BaseActor {
             if (!activeOrders.containsKey(order.getId())) {
                 JsonObjectBuilder jo = Json.createObjectBuilder();
                 activeOrders.put(order.getId(), order.getAsJsonObject());
-                Kar.Actors.State.Submap.set(this, Constants.ORDERS_KEY, order.getId(), order.getAsJsonObject());
 
-                bookedOrderList.add(order);
                 bookedTotalCount++;
-                saveMetrics();
+                Map<String, JsonValue> updateMap = new HashMap<>();
+                updateMap.put(order.getId(), order.getAsJsonObject());
+                updateStore(Collections.emptyMap(), updateMap);
             }
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
     }
 
@@ -114,9 +112,10 @@ public class OrderManagerActor extends BaseActor {
                     // update
                     activeOrders.put(order.getId(), order.getAsJsonObject());
                     order.setStatus(Order.OrderStatus.INTRANSIT.name());
-                    Kar.Actors.State.Submap.set(this, Constants.ORDERS_KEY, order.getId(), order.getAsJsonObject());
 
-                    saveMetrics();
+                    Map<String, JsonValue> updateMap = new HashMap<>();
+                    updateMap.put(order.getId(), order.getAsJsonObject());
+                    updateStore(Collections.emptyMap(), updateMap);
                 }
             }
 
@@ -140,8 +139,9 @@ public class OrderManagerActor extends BaseActor {
             }
         });
 
-        Kar.Actors.State.Submap.removeAll(this, Constants.ORDERS_KEY, orders2Remove);
-        saveMetrics();
+        Map<String, List<String>> deleteMap = new HashMap<>();
+        deleteMap.put(Constants.ORDERS_KEY, orders2Remove);
+        updateStore(deleteMap, Collections.emptyMap());
     }
 
     private boolean orderArrived(Order order) {
@@ -176,8 +176,10 @@ public class OrderManagerActor extends BaseActor {
                     spoiltOrderList.add(order);
                     spoiltTotalCount++;
                     activeOrders.put(order.getId(), order.getAsJsonObject());
-                    Kar.Actors.State.Submap.set(this, Constants.ORDERS_KEY, order.getId(), order.getAsJsonObject());
-                    saveMetrics();
+
+                    Map<String, JsonValue> updateMap = new HashMap<>();
+                    updateMap.put(order.getId(), order.getAsJsonObject());
+                    updateStore(Collections.emptyMap(), updateMap);
                 }
             }
 
@@ -209,9 +211,17 @@ public class OrderManagerActor extends BaseActor {
         return jab.build();
     }
 
-    private void saveMetrics() {
+
+    private void updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap) {
         String metrics = String.format("%d:%d:%d", bookedTotalCount, inTransitTotalCount, spoiltTotalCount);
-        //System.out.println("OrderManager.saveMetrics() - "+metrics);
-        Kar.Actors.State.set(this, Constants.ORDER_METRICS_KEY, Json.createValue(metrics));
+
+        Map<String, JsonValue> actorStateMap = new HashMap<>();
+        actorStateMap.put(Constants.ORDER_METRICS_KEY, Json.createValue(metrics));
+
+        Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
+        subMapUpdates.put(Constants.ORDERS_KEY, updateMap);
+
+        Kar.Actors.State.update(this, Collections.emptyList(), deleteMap, actorStateMap, subMapUpdates);
     }
+
 }

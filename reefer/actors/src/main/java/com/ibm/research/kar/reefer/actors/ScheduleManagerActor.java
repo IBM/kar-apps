@@ -64,8 +64,11 @@ public class ScheduleManagerActor extends BaseActor {
         Instant lastVoyageDate;
         baseDate = currentDate = TimeUtils.getInstance().getCurrentDate();
         lastVoyageDate = TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate());
-        Kar.Actors.State.set(this, Constants.SCHEDULE_BASE_DATE_KEY, Json.createValue(currentDate.toString()));
-        Kar.Actors.State.set(this, Constants.CURRENT_DATE_KEY, Json.createValue(currentDate.toString()));
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        job.add(Constants.SCHEDULE_BASE_DATE_KEY, Json.createValue(currentDate.toString()));
+        job.add(Constants.CURRENT_DATE_KEY, Json.createValue(currentDate.toString()));
+
+        Kar.Actors.State.set(this, job.build());
         return schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
     }
 

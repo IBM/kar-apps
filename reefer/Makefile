@@ -19,8 +19,7 @@ DOCKER_NAMESPACE ?= kar
 DOCKER_IMAGE_PREFIX ?= $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/
 DOCKER_IMAGE_TAG ?= latest
 KAR_IMAGE_PREFIX ?= quay.io/ibm/
-#KAR_IMAGE_TAG ?= 1.0.3
-KAR_IMAGE_TAG=latest
+KAR_IMAGE_TAG ?= 1.0.4
 
 KAR_JAVA_SDK=$(KAR_IMAGE_PREFIX)kar-sdk-java-builder-11:$(KAR_IMAGE_TAG)
 KAR_JAVA_RUNTIME=$(KAR_IMAGE_PREFIX)kar-sdk-java-runtime-11:$(KAR_IMAGE_TAG)
@@ -37,7 +36,7 @@ reeferImages: reeferBuilder reeferActors reeferSimulators reeferRest reeferFront
 
 
 reeferMonitor:
-	cd simulators && docker build -f Dockerfile.monitor -t $(REEFER_MONITOR) .
+	cd simulators && docker build -f Dockerfile.monitor --build-arg JS_RUNTIME=$(KAR_JS_SDK) -t $(REEFER_MONITOR) .
 
 reeferFrontend:
 	docker build -f frontend/Dockerfile --build-arg JAVA_BUILDER=$(KAR_JAVA_SDK) --build-arg JAVA_RUNTIME=$(KAR_JAVA_RUNTIME) -t $(REEFER_FRONTEND) .

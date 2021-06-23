@@ -20,21 +20,21 @@ public class FutureVoyage {
 	int daysBefore;
 	int maxCapacity;
 	int freeCapacity;
-	int orderCapacity;
+	int orderSize;
 	int utilization;
 
 	public FutureVoyage(int db, int mc, int fc, int oc, int ut) {
 		daysBefore = db;
 		maxCapacity = mc;
 		freeCapacity = fc;
-		orderCapacity = oc;
+		orderSize = oc;
 		utilization = ut;
 	}
 
     @Override
     public String toString(){
       return "daysBefore="+daysBefore+" maxCapacity="+maxCapacity+" freeCapacity="+freeCapacity
-    		  +" orderCapacity="+orderCapacity+" utilization="+utilization+"\n";
+    		  +" orderCapacity="+orderSize+" utilization="+utilization+"\n";
     }
 
     public void setDaysBefore(int db) {
@@ -46,8 +46,8 @@ public class FutureVoyage {
 	public void setFreeCapacity(int fc) {
 		freeCapacity = fc;
 	}
-	public void setOrderCapacity(int oc) {
-		orderCapacity = oc;
+	public void setOrderSize(int oc) {
+		orderSize = oc;
 	}
 	public void setUtilization(int ut) {
 		utilization = ut;
@@ -62,8 +62,8 @@ public class FutureVoyage {
 	public int getFreeCapacity() {
 		return freeCapacity;
 	}
-	public int getOrderCapacity() {
-		return orderCapacity;
+	public int getOrderSize() {
+		return orderSize;
 	}
 	public int getUtilization() {
 		return utilization;

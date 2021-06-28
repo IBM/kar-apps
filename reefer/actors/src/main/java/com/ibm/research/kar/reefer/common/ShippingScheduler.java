@@ -45,12 +45,7 @@ public class ShippingScheduler {
      * @throws Exception
      */
     public List<Route> getRoutes() throws Exception {
-        /*
-        if ( routeList.isEmpty() ) {
-            routeList = routes.generate();
-        }
 
-         */
         return routeList;
     }
 

@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 
-ARG JS_RUNTIME=quay.io/ibm/kar-sdk-nodejs-v12:1.0.3
-
+ARG JS_RUNTIME
 FROM $JS_RUNTIME
 
 WORKDIR /kar/app

@@ -196,7 +196,7 @@ kar run -app_port 9080 -app reefer -v info -service reeferservice mvn liberty:ru
 ```
 cd [kar-apps-install-dir]/reefer/actors
 source [kar-install-dir]/scripts/kar-env-local.sh
-kar run -app reefer -v info -actors order,reefer,voyage,reefer-provisioner mvn liberty:run
+kar run -app reefer -v info -actors order,reefer,voyage,reefer-provisioner,resthelper,order-manager,schedule-manager mvn liberty:run
 ```
 
 - Simulators window

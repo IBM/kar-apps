@@ -25,7 +25,7 @@ import com.ibm.research.kar.reefer.common.FixedSizeQueue;
 import com.ibm.research.kar.reefer.model.Order;
 
 import javax.json.*;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 @Actor
@@ -35,14 +35,16 @@ public class OrderManagerActor extends BaseActor {
     // need separate queues for each state type. Can't use single list as the
     // booked orders are more frequent and would push all the other types out of
     // the bounded queue
-    private FixedSizeQueue activeOrderList = new FixedSizeQueue(maxOrderCount);
+    private FixedSizeQueue inTransitOrderList = new FixedSizeQueue(maxOrderCount);
     private FixedSizeQueue bookedOrderList = new FixedSizeQueue(maxOrderCount);
     private FixedSizeQueue spoiltOrderList = new FixedSizeQueue(maxOrderCount);
 
+    private Map<String, JsonValue> activeOrders = new HashMap<>();
     private int bookedTotalCount = 0;
     private int inTransitTotalCount = 0;
     private int spoiltTotalCount = 0;
 
+    private String orderMetrics = "";
     private static final Logger logger = Logger.getLogger(OrderManagerActor.class.getName());
 
     @Activate
@@ -52,16 +54,20 @@ public class OrderManagerActor extends BaseActor {
         try {
             // initial actor invocation should handle no state
             if (!state.isEmpty()) {
-                if (state.containsKey(Constants.TOTAL_BOOKED_KEY)) {
-                    bookedTotalCount = (((JsonNumber) state.get(Constants.TOTAL_BOOKED_KEY)).intValue());
-                }
-                if (state.containsKey(Constants.TOTAL_INTRANSIT_KEY)) {
-                    inTransitTotalCount = (((JsonNumber) state.get(Constants.TOTAL_INTRANSIT_KEY)).intValue());
-                }
-                if (state.containsKey(Constants.TOTAL_SPOILT_KEY)) {
-                    spoiltTotalCount = (((JsonNumber) state.get(Constants.TOTAL_SPOILT_KEY)).intValue());
-                }
 
+                if (state.containsKey(Constants.ORDER_METRICS_KEY)) {
+                    orderMetrics = (((JsonString) state.get(Constants.ORDER_METRICS_KEY)).getString());
+                    String[] values = orderMetrics.split(":");
+
+                    bookedTotalCount = Integer.valueOf(values[0].trim());
+                    inTransitTotalCount = Integer.valueOf(values[1].trim());
+                    spoiltTotalCount = Integer.valueOf(values[2].trim());
+                }
+                if (state.containsKey(Constants.ORDERS_KEY)) {
+                    long t = System.currentTimeMillis();
+                    activeOrders.putAll(state.get(Constants.ORDERS_KEY).asJsonObject());
+                    System.out.println("OrderManagerActor.activate() - time to restore active orders:" + (System.currentTimeMillis() - t) + " millis");
+                }
                 System.out.println("OrderManagerActor.activate() - Totals - totalInTransit:" + inTransitTotalCount + " totalBooked: " + bookedTotalCount + " totalSpoilt:" + spoiltTotalCount);
 
             }
@@ -75,36 +81,16 @@ public class OrderManagerActor extends BaseActor {
     public void orderBooked(JsonObject message) {
         long t = System.currentTimeMillis();
         try {
-            JsonObjectBuilder jo = Json.createObjectBuilder();
             Order order = new Order(message);
-            bookedOrderList.add(order);
-            bookedTotalCount++;
-            JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount));
-            Kar.Actors.State.set(this, job.build());
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            //System.out.println("OrderManager.orderBooked - time spent here - " + (System.currentTimeMillis()-t)+" ms");
-        }
+            if (!activeOrders.containsKey(order.getId())) {
+                JsonObjectBuilder jo = Json.createObjectBuilder();
+                activeOrders.put(order.getId(), order.getAsJsonObject());
 
-    }
-
-    @Remote
-    public void orderDeparted(JsonValue message) {
-        try {
-            Order order = new Order(message);
-
-            activeOrderList.add(order);
-            bookedOrderList.remove(order);
-            inTransitTotalCount++;
-            bookedTotalCount--;
-
-            JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.TOTAL_BOOKED_KEY, Json.createValue(bookedTotalCount)).
-                    add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount));
-
-            Kar.Actors.State.set(this, job.build());
+                bookedTotalCount++;
+                Map<String, JsonValue> updateMap = new HashMap<>();
+                updateMap.put(order.getId(), order.getAsJsonObject());
+                updateStore(Collections.emptyMap(), updateMap);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -112,19 +98,67 @@ public class OrderManagerActor extends BaseActor {
     }
 
     @Remote
-    public void orderArrived(JsonValue message) {
+    public void orderDeparted(JsonValue message) {
         try {
             Order order = new Order(message);
-            JsonObjectBuilder job = Json.createObjectBuilder();
-            activeOrderList.remove(order);
-            inTransitTotalCount--;
-            job.add(Constants.TOTAL_INTRANSIT_KEY, Json.createValue(inTransitTotalCount));
-            if (order.isSpoilt()) {
-                spoiltTotalCount--;
-                spoiltOrderList.remove(order);
-                job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount));
+            if (activeOrders.containsKey(order.getId())) {
+                Order activeOrder = new Order(activeOrders.get(order.getId()));
+                // idempotence check to prevent double counting
+                if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus())) {
+                    inTransitOrderList.add(order);
+                    bookedOrderList.remove(order);
+                    inTransitTotalCount++;
+                    bookedTotalCount--;
+                    // update
+                    activeOrders.put(order.getId(), order.getAsJsonObject());
+                    order.setStatus(Order.OrderStatus.INTRANSIT.name());
+
+                    Map<String, JsonValue> updateMap = new HashMap<>();
+                    updateMap.put(order.getId(), order.getAsJsonObject());
+                    updateStore(Collections.emptyMap(), updateMap);
+                }
             }
-            Kar.Actors.State.set(this, job.build());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+
+    @Remote
+    public void ordersArrived(JsonValue message) {
+        List<String> orders2Remove = new ArrayList<>();
+        JsonArray ja = message.asJsonArray();
+        ja.forEach(oId -> {
+            String orderId = ((JsonString) oId).getString();
+            if (activeOrders.containsKey(orderId)) {
+                if (orderArrived(new Order(activeOrders.get(orderId)))) {
+                    orders2Remove.add(orderId);
+                }
+            }
+        });
+
+        Map<String, List<String>> deleteMap = new HashMap<>();
+        deleteMap.put(Constants.ORDERS_KEY, orders2Remove);
+        updateStore(deleteMap, Collections.emptyMap());
+    }
+
+    private boolean orderArrived(Order order) {
+        try {
+            Order activeOrder = new Order(activeOrders.get(order.getId()));
+            if (!Order.OrderStatus.DELIVERED.name().equals(activeOrder.getStatus())) {
+                inTransitOrderList.remove(order);
+                inTransitTotalCount--;
+                activeOrders.remove(order);
+                if (activeOrder.isSpoilt()) {
+                    spoiltTotalCount--;
+                    spoiltOrderList.remove(activeOrder);
+                }
+                return true;
+            }
+
+            return false;
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -135,33 +169,59 @@ public class OrderManagerActor extends BaseActor {
     public void orderSpoilt(JsonObject message) {
         try {
             Order order = new Order(message);
+            if (activeOrders.containsKey(order.getId())) {
+                Order activeOrder = new Order(activeOrders.get(order.getId()));
+                // idempotence check to prevent double counting
+                if (!activeOrder.isSpoilt()) {
+                    spoiltOrderList.add(order);
+                    spoiltTotalCount++;
+                    activeOrders.put(order.getId(), order.getAsJsonObject());
 
-            spoiltOrderList.add(order);
-            spoiltTotalCount++;
-            JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltTotalCount));
-            Kar.Actors.State.set(this, job.build());
+                    Map<String, JsonValue> updateMap = new HashMap<>();
+                    updateMap.put(order.getId(), order.getAsJsonObject());
+                    updateStore(Collections.emptyMap(), updateMap);
+                }
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         }
 
     }
+
     @Remote
     public JsonValue ordersBooked() {
         return getOrderList(bookedOrderList);
     }
+
     @Remote
     public JsonValue ordersSpoilt() {
         return getOrderList(spoiltOrderList);
     }
+
     @Remote
     public JsonValue ordersInTransit() {
-        return getOrderList(activeOrderList);
+        return getOrderList(inTransitOrderList);
     }
+
     private JsonValue getOrderList(FixedSizeQueue orders) {
         JsonArrayBuilder jab = Json.createArrayBuilder();
         orders.forEach(order -> jab.add(order.getAsJsonObject()));
         return jab.build();
     }
+
+
+    private void updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap) {
+        String metrics = String.format("%d:%d:%d", bookedTotalCount, inTransitTotalCount, spoiltTotalCount);
+
+        Map<String, JsonValue> actorStateMap = new HashMap<>();
+        actorStateMap.put(Constants.ORDER_METRICS_KEY, Json.createValue(metrics));
+
+        Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
+        subMapUpdates.put(Constants.ORDERS_KEY, updateMap);
+
+        Kar.Actors.State.update(this, Collections.emptyList(), deleteMap, actorStateMap, subMapUpdates);
+    }
+
 }

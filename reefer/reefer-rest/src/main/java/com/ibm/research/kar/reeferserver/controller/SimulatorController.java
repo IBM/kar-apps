@@ -61,7 +61,6 @@ public class SimulatorController {
     } catch (Exception e) {
       logger.log(Level.WARNING,"",e);
     }
-    //voyageService.changeDelay(delayTime);
 
     return TimeUtils.getInstance().getCurrentDate();
   }

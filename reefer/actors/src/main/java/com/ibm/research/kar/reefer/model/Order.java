@@ -55,8 +55,6 @@ public class Order {
     String status;
     String date;
     boolean spoilt;
-    boolean multipleSpoiltReefers;
-
 
     public Order(OrderProperties orderProperties) {
         this(orderProperties.getCustomerId(),orderProperties.getProduct(),
@@ -80,7 +78,6 @@ public class Order {
         this.status = jo.getString(Constants.ORDER_STATUS_KEY);
         this.date = jo.getString(Constants.ORDER_DATE_KEY);
         this.spoilt = jo.getBoolean(Constants.ORDER_SPOILT_KEY);
-        this.multipleSpoiltReefers = jo.getBoolean(Constants.ORDER_ALREADY_SPOILT_KEY);
     }
 
     public Order( String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
@@ -97,7 +94,6 @@ public class Order {
         // date one day at a time and we need millis resolution
         this.date = Instant.now().toString();
         this.spoilt = false;
-        this.multipleSpoiltReefers = false;
     }
 
     @Override
@@ -165,12 +161,6 @@ public class Order {
         this.status = status;
     }
 
-    public void setAlreadySpoilt() {
-        this.multipleSpoiltReefers = true;
-    }
-    public boolean alreadySpoilt() {
-        return multipleSpoiltReefers;
-    }
     public String getCustomerId() {
         return customerId;
     }
@@ -188,8 +178,7 @@ public class Order {
                 add(Constants.ORDER_CUSTOMER_ID_KEY, getCustomerId()).
                 add(Constants.ORDER_STATUS_KEY, getStatus()).
                 add(Constants.ORDER_DATE_KEY, getDate()).
-                add(Constants.ORDER_SPOILT_KEY, isSpoilt()).
-                add(Constants.ORDER_ALREADY_SPOILT_KEY, alreadySpoilt());
+                add(Constants.ORDER_SPOILT_KEY, isSpoilt());
 
         return orderBuilder.build();
     }

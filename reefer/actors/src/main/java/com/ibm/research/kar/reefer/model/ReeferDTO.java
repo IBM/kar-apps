@@ -17,6 +17,7 @@
 package com.ibm.research.kar.reefer.model;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.logging.Level;
 
 import com.ibm.research.kar.reefer.common.Constants;
@@ -87,16 +88,13 @@ public class ReeferDTO {
 	        // on maintenance reefers are not associated with a voyage or order
             this.voyageId = "";
 	        this.orderId = "";
-            maintenanceReleaseDate = TimeUtils.getInstance().futureDate( Instant.parse(today), Constants.REEFER_DAYS_ON_MAINTENANCE).toString();
+            maintenanceReleaseDate = Instant.parse(today).plus(Constants.REEFER_DAYS_ON_MAINTENANCE, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS).toString();
         }
         
     }
 
     public boolean releaseFromMaintenanceToday(Instant today) {
         if (getMaintenanceReleaseDate() == null) {
-             //   System.out.println(
-            //            "ReeferProvisionerActor.releaseFromMaintenanceToday() - maintenance release date not set for reefer:"
-            //                    + getId() + " state:" + getState().name() + " not booked yet");
             return true;
         }
         // reefer assigned to maintenance gets a date when it is taken off maintenance

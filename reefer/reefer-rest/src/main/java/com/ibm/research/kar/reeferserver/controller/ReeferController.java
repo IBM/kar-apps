@@ -28,7 +28,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
+import javax.json.Json;
 import javax.json.JsonNumber;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -63,24 +65,20 @@ public class ReeferController {
     @GetMapping("/reefers/stats")
     public ReeferStats getReeferStats() {
 
-        Map<String, JsonValue> reeferStatsMap = Kar.Actors.State.Submap.getAll(provisioner, Constants.REEFER_STATS_MAP_KEY);
-        if (reeferStatsMap.containsKey(Constants.TOTAL_BOOKED_KEY)) {
-            totalBooked = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_BOOKED_KEY)).intValue();
+        JsonValue metrics = Kar.Actors.State.get(provisioner, Constants.REEFER_METRICS_KEY);
+        if ( metrics != null && metrics != JsonValue.NULL) {
+            String[] values = ((JsonString)metrics).getString().split(":");
+
+            totalBooked = Integer.valueOf(values[0].trim());
+            totalInTransit = Integer.valueOf(values[1].trim());
+            totalSpoilt = Integer.valueOf(values[2].trim());
+            totalOnMaintenance = Integer.valueOf(values[3].trim());
+            reeferInventorySize = Integer.valueOf(values[4].trim());
+
         }
-        if (reeferStatsMap.containsKey(Constants.TOTAL_INTRANSIT_KEY)) {
-            totalInTransit = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_INTRANSIT_KEY)).intValue();
-        }
-        if (reeferStatsMap.containsKey(Constants.TOTAL_SPOILT_KEY)) {
-            totalSpoilt = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_SPOILT_KEY)).intValue();
-        }
-        if (reeferStatsMap.containsKey(Constants.TOTAL_ONMAINTENANCE_KEY)) {
-            totalOnMaintenance = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_ONMAINTENANCE_KEY)).intValue();
-        }
-        if (reeferStatsMap.containsKey(Constants.TOTAL_REEFER_COUNT_KEY)) {
-            reeferInventorySize = ((JsonNumber) reeferStatsMap.get(Constants.TOTAL_REEFER_COUNT_KEY)).intValue();
-        }
-     //   System.out.println("ReeferController.getReeferStats()  ********** Booked:" + totalBooked +
-    //            " -- InTransit:" + totalInTransit + " -- Spoilt:" + totalSpoilt + " -- onMaintenance:" + totalOnMaintenance);
+
+        //System.out.println("ReeferController.getReeferStats()  ********** Booked:" + totalBooked +
+          //      " -- InTransit:" + totalInTransit + " -- Spoilt:" + totalSpoilt + " -- onMaintenance:" + totalOnMaintenance);
 
         return new ReeferStats(reeferInventorySize, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance);
     }

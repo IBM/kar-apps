@@ -18,7 +18,6 @@ package com.ibm.research.kar.reefer.common;
 
 import com.ibm.research.kar.reefer.common.error.VoyageNotFoundException;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
-import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
 
@@ -37,18 +36,7 @@ public class ScheduleService {
     public static final int SCHEDULE_DAYS = 365; //60; //365;
     public static final int ARRIVED_THRESHOLD_IN_DAYS = 1;
 
-    // @Autowired
     private ShippingScheduler scheduler;
-    /*
-    @Autowired
-    private TimeService timeService;
-    @Autowired
-    private OrderService orderService;
-    @Autowired
-    private GuiController gui;
-
-
-   */
 
     private Set<Voyage> masterSchedule = new TreeSet<>();
     SortedSet<Voyage> schedule = null;
@@ -90,13 +78,8 @@ public class ScheduleService {
      * @param baseScheduleDate
      */
     public Instant generateShipSchedule(Instant baseScheduleDate, Instant currentDate, Instant lastVoyageDate) {
-
-        // masterSchedule = scheduler.generateSchedule(baseScheduleDate, getLastVoyageDate(), TimeUtils.getInstance().getCurrentDate());
         masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, currentDate); //TimeUtils.getInstance().getCurrentDate());
-        // save last voyage departure date to be able to restore schedule after REST service restarts
-        // timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
-        //System.out.println("ScheduleService.generateShipSchedule ++++ Saved End Date:" + ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject());
-        dumpVoyages(masterSchedule);
+         dumpVoyages(masterSchedule);
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
 
     }
@@ -124,8 +107,6 @@ public class ScheduleService {
         // add N (where N=SCHEDULE_DAYS) days to the end of the current schedule.
         Instant endDate = TimeUtils.getInstance().futureDate(currentScheduleEndDate, SCHEDULE_DAYS);
         // every schedule starts on the same date (date of the REST cold start)
-        //Optional<Instant> scheduleBaseDate = timeService.recoverDate(Constants.SCHEDULE_BASE_DATE_KEY);
-
 
         List<Voyage> activeScheduleBefore = getActiveSchedule(currentDate);
         //Instant baseDate = scheduleBaseDate.get();
@@ -135,17 +116,9 @@ public class ScheduleService {
         // generate new schedule for a given range of dates. It will trim arrived
         // voyages to reduce schedule size.
         masterSchedule = scheduler.generateSchedule(baseDate, endDate, currentDate);
-        //Map<String, Set<Order>> activeVoyageMap = orderService.activeVoyageOrderMap();
-      //  Map<String, Set<Order>> bookedVoyageMap = orderService.bookedVoyageOrderMap();
         // update current active and booked voyages with data from previous schedule
         masterSchedule.forEach(v -> {
             updateVoyage(v, previousSchedule);
-/*
-            if (activeVoyageMap.containsKey(v.getId()) || bookedVoyageMap.containsKey(v.getId())) {
-                updateVoyage(v, previousSchedule);
-            }
-
- */
         });
         if (logger.isLoggable(Level.INFO)) {
             logger.info("ScheduleService.extendSchedule() >>>> currentDate:" +
@@ -159,7 +132,6 @@ public class ScheduleService {
         previousSchedule.clear();
         // persist last voyage departure date which will be used to restore schedule after
         // REST restart
-        // timeService.saveDate(((TreeSet<Voyage>) masterSchedule).last().getSailDateObject(), Constants.SCHEDULE_END_DATE_KEY);
         if (logger.isLoggable(Level.INFO)) {
             masterSchedule.forEach(v -> System.out.println(">>>> Voyage:" +
                     v.getId() +
@@ -210,17 +182,6 @@ public class ScheduleService {
         }
         return actives1.stream().allMatch(v -> actives2.contains(v));
     }
-/*
-    public Instant getLastVoyageDate() {
-        JsonValue jv = super.get(Constants.SCHEDULE_END_DATE_KEY);
-        if (jv == null || jv == JsonValue.NULL) {
-           // return TimeUtils.getInstance().futureDate(TimeUtils.getInstance().getCurrentDate(), this.SCHEDULE_DAYS);
-            return TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate());
-        }
-        return Instant.parse(((JsonString) jv).getString());
-    }
-
- */
 
     public Voyage updateDaysAtSea(String voyageId, int daysOutAtSea) throws VoyageNotFoundException {
 
@@ -238,7 +199,7 @@ public class ScheduleService {
             }
 
         }
-        throw new VoyageNotFoundException("Voyage " + voyageId + " Not Found");
+        throw new VoyageNotFoundException("Voyage " + voyageId + " Not Found - current date: "+TimeUtils.getInstance().getCurrentDate());
     }
 
     public List<Voyage> getMatchingSchedule(Instant startDate, Instant endDate) {
@@ -288,20 +249,7 @@ public class ScheduleService {
             });
             logger.fine(sb.toString());
         }
-            /*
-            Set<Voyage> neverArrivedList =
-                    findVoyagesBeyondArrivalDate(orderService.toJsonArray(orderService.getMutableOrderList(Constants.ACTIVE_ORDERS_KEY)));
 
-            neverArrivedList.forEach(v -> {
-                logger.warning("ScheduleService.getActiveSchedule() - voyage:"+v.getId()+" should have arrived on "+v.getArrivalDate()+" but didn't as of today "+currentDate+" - telling voyageActor change position to force arrival");
-                //v.changePosition(v.getRoute().getDaysAtSea());   // force arrival
-                ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, v.getId());
-                Kar.Actors.tell(voyageActor, "changePosition",
-                        Json.createObjectBuilder().add(Constants.VOYAGE_DAYSATSEA_KEY,Json.createValue(v.getRoute().getDaysAtSea())).build());
-                orderService.voyageArrived(v.getId());
-            });
-
-             */
         for (Voyage voyage : masterSchedule) {
             if (voyage.getSailDateObject().isAfter(currentDate)) {
                 // masterSchedule is sorted by sailDate, so if voyage sailDate > currentDate

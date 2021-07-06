@@ -18,11 +18,9 @@ package com.ibm.research.kar.reeferserver.controller;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
-import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
-import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.OrderProperties;
 import com.ibm.research.kar.reefer.model.OrderStats;
@@ -35,7 +33,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.json.*;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -122,18 +119,11 @@ public class OrderController {
             // get Java POJO with order properties from json messages
             orderProperties = jsonToOrderProperties(message);
             Voyage voyage = getVoyage(orderProperties.getVoyageId());
-            // check if the provided voyage has already sailed. This is likely when creating manual orders
-            // through a GUI when days are short. By the time order details are provided by a user, the
-            // ship may have departed.
-            if (TimeUtils.getInstance().getCurrentDate().isAfter(voyage.getSailDateObject())) {
-                orderProperties.setBookingStatus(Constants.FAILED).setOrderId("N/A").setMsg(" - selected voyage has already sailed - pick another voyage");
-                return orderProperties;
-            }
+
             Order order = new Order(orderProperties);
             long t2 = System.currentTimeMillis();
             ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
-            JsonValue reply = Kar.Actors.call(orderActor, "createOrder", order.getAsJsonObject()); //OrderParams());
-           // System.out.println("OrderController.bookOrder() - time spent calling order actor: order:"+order.getId()+" - " + (System.currentTimeMillis()-t2)+" ms");
+            JsonValue reply = Kar.Actors.call(orderActor, "createOrder", order.getAsJsonObject());
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("OrderController.bookOrder - Order Actor reply:" + reply);
             }
@@ -155,7 +145,6 @@ public class OrderController {
             logger.log(Level.WARNING, e.getMessage(), e);
             orderProperties.setBookingStatus(Constants.FAILED).setMsg(e.getMessage());
         }
-      //  System.out.println("OrderController.bookOrder() - time spent here - " + (System.currentTimeMillis()-t)+" ms");
         return orderProperties;
     }
 
@@ -215,24 +204,31 @@ public class OrderController {
             if (state.containsKey(Constants.TOTAL_SPOILT_KEY)) {
                 spoiltTotalCount = ((JsonNumber) state.get(Constants.TOTAL_SPOILT_KEY)).intValue();
             }
+            if (state.containsKey(Constants.ORDER_METRICS_KEY)) {
+                String metrics = ((JsonString) state.get(Constants.ORDER_METRICS_KEY)).getString();
+                String[] values = metrics.split(":");
+
+                bookedTotalCount = Integer.valueOf(values[0].trim());
+                inTransitTotalCount = Integer.valueOf(values[1].trim());
+                spoiltTotalCount = Integer.valueOf(values[2].trim());
+            }
         }
-     //   System.out.println("OrderController.getOrderStats()  ********** Booked:" + bookedTotalCount + " -- InTransit:" + inTransitTotalCount + " -- Spoilt:" + spoiltTotalCount);
+        //   System.out.println("OrderController.getOrderStats()  ********** Booked:" + bookedTotalCount + " -- InTransit:" + inTransitTotalCount + " -- Spoilt:" + spoiltTotalCount);
         return new OrderStats(inTransitTotalCount, bookedTotalCount, spoiltTotalCount);
     }
 
     @Scheduled(fixedDelay = 100)
     public void scheduleGuiUpdate() {
-        if ( 0 >= --counter ) {
+        if (0 >= --counter) {
             OrderStats newStats = getOrderStats();
-            if ( newStats.getFutureOrderCount() != oldStats.getFutureOrderCount() ||
-                 newStats.getSpoiltOrderCount() != oldStats.getSpoiltOrderCount() ||
-                 newStats.getInTransitOrderCount() != oldStats.getInTransitOrderCount() ) {
+            if (newStats.getFutureOrderCount() != oldStats.getFutureOrderCount() ||
+                    newStats.getSpoiltOrderCount() != oldStats.getSpoiltOrderCount() ||
+                    newStats.getInTransitOrderCount() != oldStats.getInTransitOrderCount()) {
                 gui.updateOrderCounts(newStats);
                 oldStats = newStats;
-                period = period/2 < 1 ? 1 : period/2;
-            }
-            else {
-                period = 2*period > max_period ? max_period : 2*period;
+                period = period / 2 < 1 ? 1 : period / 2;
+            } else {
+                period = 2 * period > max_period ? max_period : 2 * period;
             }
             counter = period;
         }

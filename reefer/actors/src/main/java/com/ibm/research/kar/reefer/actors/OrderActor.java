@@ -83,11 +83,6 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject createOrder(JsonObject message) {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine(String.format("OrderActor.createOrder() - orderId: %s message: %s", getId(), message));
-        }
-        long t = System.currentTimeMillis();
-
         // Idempotence test. Check if this order has already been booked.
         if (order != null && OrderStatus.BOOKED.name().equals(order.getStatus())) {
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
@@ -114,10 +109,7 @@ public class OrderActor extends BaseActor {
             logger.log(Level.WARNING, "OrderActor.createOrder() - Error - orderId " + getId() + " ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
-        } finally {
-            //System.out.println("OrderActor.createOrder() - "+getId()+" time spent here - " + (System.currentTimeMillis()-t)+" ms");
         }
-
     }
 
     private void messageOrderManager(String methodToCall) {
@@ -131,11 +123,8 @@ public class OrderActor extends BaseActor {
      * @return
      */
     @Remote
-    public JsonObject delivered() {
-        messageOrderManager("orderArrived");
+    public void delivered() {
         Kar.Actors.remove(this);
-        return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
-                .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
     }
 
     /**
@@ -145,9 +134,9 @@ public class OrderActor extends BaseActor {
      */
     @Remote
     public JsonObject departed() {
-        if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus())) {
-            saveOrderStatusChange(OrderStatus.INTRANSIT);
+        if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
             messageOrderManager("orderDeparted");
+            saveOrderStatusChange(OrderStatus.INTRANSIT);
         }
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();

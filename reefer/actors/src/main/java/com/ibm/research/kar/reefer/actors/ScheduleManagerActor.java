@@ -64,8 +64,11 @@ public class ScheduleManagerActor extends BaseActor {
         Instant lastVoyageDate;
         baseDate = currentDate = TimeUtils.getInstance().getCurrentDate();
         lastVoyageDate = TimeUtils.getInstance().getDateYearFrom(TimeUtils.getInstance().getCurrentDate());
-        Kar.Actors.State.set(this, Constants.SCHEDULE_BASE_DATE_KEY, Json.createValue(currentDate.toString()));
-        Kar.Actors.State.set(this, Constants.CURRENT_DATE_KEY, Json.createValue(currentDate.toString()));
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        job.add(Constants.SCHEDULE_BASE_DATE_KEY, Json.createValue(currentDate.toString()));
+        job.add(Constants.CURRENT_DATE_KEY, Json.createValue(currentDate.toString()));
+
+        Kar.Actors.State.set(this, job.build());
         return schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
     }
 
@@ -75,9 +78,11 @@ public class ScheduleManagerActor extends BaseActor {
 
         baseDate = Instant.parse(((JsonString) baseDateValue).getString());
         JsonValue date = state.get(Constants.CURRENT_DATE_KEY);
-        currentDate = TimeUtils.getInstance(Instant.parse(((JsonString) date).getString())).getCurrentDate();
+        Instant cd = Instant.parse(((JsonString) date).getString());
+        System.out.println("ScheduleManagerActor.warmStart() - current date from REDIS:"+date +" cd:"+cd);
+        currentDate = TimeUtils.getInstance(cd).getCurrentDate();
         lastVoyageDate = Instant.parse(((JsonString) state.get(Constants.SCHEDULE_END_DATE_KEY)).getString());
-        System.out.println("ScheduleManagerActor.activate() - Restored Current Date:" + currentDate + " baseDate:" + baseDate + " endDate:" + lastVoyageDate);
+        System.out.println("ScheduleManagerActor.warmStart() - Restored Current Date:" + currentDate + " baseDate:" + baseDate + " endDate:" + lastVoyageDate);
         return schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
 
     }

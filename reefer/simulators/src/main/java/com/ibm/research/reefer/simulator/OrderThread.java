@@ -28,6 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class OrderThread extends Thread {
   boolean running = true;
@@ -41,9 +42,12 @@ public class OrderThread extends Thread {
   int updatesDoneToday = 0;
   int updatesPerDay = 0;
   int orderGroupsPerDay;
+  int ordersExpectedToday;
   long dayEndTime;
   long totalOrderTime;
   boolean startup = true;
+  boolean woke_from_join = false;
+  private static final AtomicInteger ordersDoneToday = new AtomicInteger();
   private static final Logger logger = Logger.getLogger(OrderThread.class.getName());
   private Thread ordersubthread1 = null;
   private Thread ordersubthread2 = null;
@@ -65,6 +69,7 @@ public class OrderThread extends Thread {
     if (SimulatorService.reeferRestRunning.get()) {
       // Make sure currentDate is set
       if (null == SimulatorService.currentDate.get()) {
+        logger.warning("orderthread: - at startup, SimulatorService.currentDate == null");
 
         try {
           Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/currentDate",
@@ -73,29 +78,16 @@ public class OrderThread extends Thread {
           SimulatorService.currentDate.set(currentDate);
         } catch (Exception e) {
           logger.warning(
-                  "orderthread - unable to fetch current date from REST - cause:" + e.getMessage());
+                  "orderthread: unable to fetch current date from REST - cause:" + e.getMessage());
         }
-
-        // Response response = Kar.Services.post(Constants.REEFERSERVICE, "time/currentDate",
-        // JsonValue.NULL);
-        // currentDate = response.readEntity(JsonValue.class);
-        // SimulatorService.currentDate.set(currentDate);
       } else {
         currentDate = (JsonValue) SimulatorService.currentDate.get();
       }
     }
 
-    if (!oneshot) {
-      if (logger.isLoggable(Level.FINE)) {
-        logger.fine("orderthread: waiting for new day");
-      }
-      try {
-        Thread.sleep(1000 * SimulatorService.unitdelay.intValue());
-      } catch (InterruptedException e) {
-        // nada
-      }
-    }
-
+    // Order thread can be called as oneshot or stay free-running
+    // if free-running it is interrupted on each new day ...
+    //   ... interrupt subthreads if still around (this should not happpen)
     while (running) {
       try {
 
@@ -111,18 +103,19 @@ public class OrderThread extends Thread {
           // compute the total order capacity, "ordercap" to be made today for each voyage ...
           // ... and the ordersize to use for individual orders
           // set the loop count for max number of order groups to make for each voyage, "updatesPerDay"
-          if (ordersubthread1 != null) {
-            ordersubthread1.interrupt();
-          }
-          if (ordersubthread2 != null) {
-            ordersubthread2.interrupt();
-          }
           JsonValue date = (JsonValue) SimulatorService.currentDate.get();
           if (startup || oneshot || !currentDate.equals(date)) {
+            if (ordersubthread1 != null) {
+              ordersubthread1.interrupt();
+            }
+            if (ordersubthread2 != null) {
+              ordersubthread2.interrupt();
+            }
+
             dayEndTime = System.currentTimeMillis() + 1000 * SimulatorService.unitdelay.intValue();
-            if (updatesDoneToday < updatesPerDay) {
-              SimulatorService.os.addMissed(updatesPerDay - updatesDoneToday);
-              logger.warning("orderthread: " + updatesDoneToday + " of " + updatesPerDay
+            if (ordersDoneToday.get() < ordersExpectedToday) {
+              SimulatorService.os.addMissed(ordersExpectedToday - ordersDoneToday.get());
+              logger.warning("orderthread: " + ordersDoneToday.get() + " of " + ordersExpectedToday
                       + " completed yesterday");
             }
             if (logger.isLoggable(Level.FINE)) {
@@ -130,6 +123,7 @@ public class OrderThread extends Thread {
             }
             updatesDoneToday = 0;
             totalOrderTime = 0;
+            ordersDoneToday.set(0);
             startup = false;
             currentDate = date;
 
@@ -140,12 +134,12 @@ public class OrderThread extends Thread {
 
             // pick up any changes
             updatesPerDay = SimulatorService.orderupdates.intValue();
-            if (updatesPerDay < 1) {
+            if (updatesPerDay <= 1 || oneshot) {
               updatesPerDay = 1;
               orderGroupsPerDay = 1;
             }
-            // use two subthreads to generate orders in parallel?
             if (updatesPerDay > 1) {
+              // generate orders in parallel threads
               orderGroupsPerDay = 2 * updatesPerDay;
             }
 
@@ -164,17 +158,13 @@ public class OrderThread extends Thread {
               Response response = Kar.Services.post(Constants.REEFERSERVICE, "voyage/inrange",
                       message);
               futureVoyages = response.readEntity(JsonValue.class);
+              if (logger.isLoggable(Level.INFO)) {
+                logger.info("orderthread: received " + futureVoyages.asJsonArray().size()
+                            + " future voyages");
+              }
             } catch (Exception e) {
               logger.warning("orderthread: unable to fetch future voyages from REST - cause:"
                       + e.getMessage());
-            }
-
-            // Response response = Kar.Services.post(Constants.REEFERSERVICE, "voyage/inrange",
-            // message);
-            // futureVoyages = response.readEntity(JsonValue.class);
-            if (logger.isLoggable(Level.INFO)) {
-              logger.info("orderthread: received " + futureVoyages.asJsonArray().size()
-                      + " future voyages");
             }
 
             // ... create MAP of target voyages with computed freecap
@@ -220,51 +210,61 @@ public class OrderThread extends Thread {
               SimulatorService.voyageFreeCap.forEach(
                       (key, value) -> logger.fine("orderthread: " + key + " " + value.toString()));
             }
+            ordersExpectedToday = orderGroupsPerDay * SimulatorService.voyageFreeCap.keySet().size();
           }
 
-          // Update processing ...
+          // Create orders in one or two sub threads
           // Process a single order group in one thread
-          // Process multiple order groups in parallel threads
-          if (updatesPerDay > updatesDoneToday++) {
-            long snapshot = System.currentTimeMillis();
-            if (orderGroupsPerDay == 1) {
-              (ordersubthread1 = new OrderSubThread()).start();
-              ordersubthread1.join();
-            }
-            else {
-              (ordersubthread1 = new OrderSubThread()).start();
-              (ordersubthread2 = new OrderSubThread()).start();
-              ordersubthread1.join();
-              ordersubthread2.join();
+          // Order creation may complete before end of day and this code called again
+          if (ordersExpectedToday > ordersDoneToday.get()) {
+            try {
+              if (orderGroupsPerDay == 1) {
+                  (ordersubthread1 = new OrderSubThread(1, updatesPerDay, ordersDoneToday, oneshot)).start();
+                ordersubthread1.join();
+              }
+              else {
+                  (ordersubthread1 = new OrderSubThread(1, updatesPerDay, ordersDoneToday, oneshot)).start();
+                  (ordersubthread2 = new OrderSubThread(2, updatesPerDay, ordersDoneToday, oneshot)).start();
+                ordersubthread1.join();
+                ordersubthread2.join();
+              }
+            } catch (InterruptedException e) {
+              woke_from_join = true;
             }
 
-            totalOrderTime += System.currentTimeMillis() - snapshot;
+            // join may have been interrupted by a new day
+            // if so, interrupt unterminated sub threads
+            if ( woke_from_join ) {
+              int threadWaiting = 0;
+              if (! "TERMINATED".equals(ordersubthread1.getState().toString())) {
+                ordersubthread1.interrupt();
+                threadWaiting = 1;
+              }
+              if (ordersubthread2 != null &&
+                  ! "TERMINATED".equals(ordersubthread1.getState().toString())) {
+                ordersubthread2.interrupt();
+                threadWaiting += 2;
+              }
+              if (0 < (threadWaiting & 1)) {
+                ordersubthread1.join();
+              }
+              if (0 < (threadWaiting & 2)) {
+                ordersubthread2.join();
+              }
+            }
+            ordersubthread1 = null;
+            ordersubthread2 = null;
           }
         }
 
-        // sleep if not a oneshot order command
-        if (!oneshot) {
+        // sleep to get in synch with new day interrupt
+        // don't sleep if this was a oneshot order command or the thread was interrupted in join
+        // if running standalone, without rest service, sleep for a full day
+        if (!oneshot || !woke_from_join) {
           try {
-            long timeToSleep = 990 * SimulatorService.unitdelay.intValue();
-            // compute next sleep time
-            if (SimulatorService.reeferRestRunning.get()) {
-              long timeRemaining = dayEndTime - System.currentTimeMillis();
-              long orderTimeRemaining = totalOrderTime / updatesDoneToday
-                      * (updatesPerDay - updatesDoneToday);
-              if (timeRemaining < 1 && orderTimeRemaining > 0) {
-                timeToSleep = 10;
-              } else if (orderTimeRemaining > 0 && timeRemaining > 0) {
-                timeToSleep = (timeRemaining - orderTimeRemaining)
-                        / (1 + updatesPerDay - updatesDoneToday);
-                timeToSleep = (timeToSleep < 10) ? 10 : timeToSleep;
-              } else {
-                timeToSleep = 1000 * SimulatorService.unitdelay.intValue();
-              }
-              if (logger.isLoggable(Level.FINE)) {
-                logger.fine("orderthread: timeRemaining=" + timeRemaining + " orderTimeRemaining="
-                        + orderTimeRemaining + " totalOrderTime=" + totalOrderTime
-                        + " updatesDoneToday=" + updatesDoneToday + " timeToSleep=" + timeToSleep);
-              }
+            long timeToSleep = 10;
+            if (!SimulatorService.reeferRestRunning.get()) {
+              timeToSleep = 1000 * SimulatorService.unitdelay.intValue();
             }
             Thread.sleep(timeToSleep);
           } catch (InterruptedException e) {
@@ -272,6 +272,7 @@ public class OrderThread extends Thread {
           }
         }
 
+        woke_from_join = false;
         // check if auto mode should be turned off
         synchronized (SimulatorService.ordertarget) {
           if (0 == SimulatorService.ordertarget.intValue()
@@ -298,7 +299,8 @@ public class OrderThread extends Thread {
           }
         }
       } catch (Throwable e) {
-        logger.warning("orderthread:" + e);
+        logger.warning("orderthread: " + e);
+        e.printStackTrace();
       }
     }
   }

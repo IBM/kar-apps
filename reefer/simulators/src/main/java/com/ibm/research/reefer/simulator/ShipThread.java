@@ -133,9 +133,12 @@ public class ShipThread extends Thread {
                         logger.warning("shipthread: time advance call failed - cause:" + e.getMessage());
                     }
                     SimulatorService.currentDate.set(currentDate);
+
                     if (logger.isLoggable(Level.INFO)) {
                         logger.info("shipthread: New time ======> " + currentDate.toString());
                     }
+                    // tell other threads to wake up to stay synchronized with ship thread
+                    Kar.Services.post(Constants.SIMSERVICE,"simulator/newday", JsonValue.NULL);
 
                     JsonValue activeVoyages = null;
                     try {
@@ -149,9 +152,6 @@ public class ShipThread extends Thread {
                     } catch (Exception e) {
                         logger.warning("shipthread: Unable to fetch active voyages from REST - cause:" + e.getMessage());
                     }
-
-                    // tell other threads to wake up
-                    Kar.Services.post(Constants.SIMSERVICE,"simulator/newday", JsonValue.NULL);
 
                     // compute ship positions to send to all active voyages
                     Instant ed = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));

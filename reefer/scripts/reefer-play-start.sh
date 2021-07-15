@@ -102,7 +102,7 @@ echo Deploying ${IMAGE_PREFIX} images with podman play
 # set default envs and pick up any external overrides
 export ORDERSTATS_DELAY="${ORDERSTATS_DELAY:-60}"
 export ORDERSTATS_RESET="${ORDERSTATS_RESET:-1}"
-export ORDERSTATS_THRESHOLD="${ORDERSTATS_THRESHOLD:-0}"
+export ORDERSTATS_THRESHOLD="${ORDERSTATS_THRESHOLD:-500}"
 export ORDERSTATS_COUNTS="${ORDERSTATS_COUNTS:-0}"
 envsubst < reefer-app.yaml > /tmp/reefer-app.yaml
 podman play kube /tmp/reefer-app.yaml -q

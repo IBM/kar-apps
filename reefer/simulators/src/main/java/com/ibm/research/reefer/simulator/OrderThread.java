@@ -245,11 +245,16 @@ public class OrderThread extends Thread {
                 ordersubthread2.interrupt();
                 threadWaiting += 2;
               }
-              if (0 < (threadWaiting & 1)) {
-                ordersubthread1.join();
-              }
-              if (0 < (threadWaiting & 2)) {
-                ordersubthread2.join();
+              try {
+                if (0 < (threadWaiting & 1)) {
+                  ordersubthread1.join();
+                }
+                if (0 < (threadWaiting & 2)) {
+                  ordersubthread2.join();
+                }
+              } catch (InterruptedException e) {
+                // hmmm, not sure if this should happen
+                woke_from_join = true;
               }
             }
             ordersubthread1 = null;

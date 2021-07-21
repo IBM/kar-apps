@@ -85,7 +85,7 @@ public class OrderManagerActor extends BaseActor {
             if (!activeOrders.containsKey(order.getId())) {
                 JsonObjectBuilder jo = Json.createObjectBuilder();
                 activeOrders.put(order.getId(), order.getAsJsonObject());
-
+                bookedOrderList.add(order);
                 bookedTotalCount++;
                 Map<String, JsonValue> updateMap = new HashMap<>();
                 updateMap.put(order.getId(), order.getAsJsonObject());

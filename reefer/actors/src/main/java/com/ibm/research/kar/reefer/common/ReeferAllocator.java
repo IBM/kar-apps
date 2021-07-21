@@ -104,10 +104,13 @@ public class ReeferAllocator {
         // simple calculation for how many reefers are needed for the order. 
         int howManyReefersNeeded = Double.valueOf(Math.ceil(productQuantity/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
         try {
+            StringBuilder sb = new StringBuilder();
             while(howManyReefersNeeded-- > 0 ) {
                 int index = findInsertionIndexForReefer(reeferInventory);
-                ReeferDTO reefer = new ReeferDTO(index, ReeferState.State.ALLOCATED, orderId, voyageId);
-                reeferInventory[index] = reefer;
+                //ReeferDTO reefer = new ReeferDTO(index, ReeferState.State.ALLOCATED, orderId, voyageId);
+                //reeferInventory[index] = reefer;
+                ReeferDTO reefer = reeferInventory[index];
+                reefer.allocateToOrder(orderId, voyageId);
                 reefers.add(reefer);
                 //System.out.println("+++++++++++++++++++++ ReeferId:"+index+" Added to order:"+orderId);
             }
@@ -130,13 +133,14 @@ public class ReeferAllocator {
         // max number of lookup steps before we jump (randomly)
         int maxSteps = 10;
         // if lookup hits unassigned spot, we've found an insertion index for a new reefer
-        if ( reeferStateList[index] == null || reeferStateList[index].equals(State.UNALLOCATED) ) {
+        if ( reeferStateList[index].equals(State.UNALLOCATED) ) {
+        //if ( reeferStateList[index] == null || reeferStateList[index].equals(State.UNALLOCATED) ) {
             return index;
         } else {
             // the random index hit an assigned spot in the list. Do maxSteps to find an unassigned spot
             for( int i = index; i < reeferStateList.length; i++) {
-
-                if ( reeferStateList[index] == null ) {
+                if (  reeferStateList[index].equals(State.UNALLOCATED) ) {
+                //if ( reeferStateList[index] == null ) {
                     return i;
                 }
                 // after maxSteps lookups an insertion index has not been found in the availableReefers list. Choose
@@ -154,14 +158,18 @@ public class ReeferAllocator {
         // max number of lookup steps before we jump (randomly)
         int maxSteps = 10;
         // if lookup hits unassigned spot, we've found an insertion index for a new reefer
-        if ( reeferInventory[index] == null || reeferInventory[index].getState().equals(State.UNALLOCATED) ) {
+        if (  reeferInventory[index] != null && reeferInventory[index].getState().equals(State.UNALLOCATED) ) {
+       // if ( reeferInventory[index] == null || reeferInventory[index].getState().equals(State.UNALLOCATED) ) {
             return index;
+            //return reeferInventory[index].getId();
         } else {
             // the random index hit an assigned spot in the list. Do maxSteps to find an unassigned spot
             for( int i = index; i < reeferInventory.length; i++) {
-
-                if ( reeferInventory[index] == null ) {
-                    return i;
+                if ( reeferInventory[i] != null && reeferInventory[i].getState().equals(State.UNALLOCATED) ) {
+               // if ( reeferInventory[index] != null && reeferInventory[index].getState().equals(State.UNALLOCATED) ) {
+               // if ( reeferInventory[index] == null ) {
+                   return i;
+                   // return reeferInventory[index].getId();
                 }
                 // after maxSteps lookups an insertion index has not been found in the availableReefers list. Choose
                 // another random index and try again.

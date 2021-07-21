@@ -33,6 +33,7 @@ services:
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
       REDIS_PASSWORD: passw0rd
-      KAR_EXTRA_ARGS: -actors schedule-manager,reefer-provisioner,order-manager -actor_collector_interval 24h
+#      KAR_EXTRA_ARGS: -actors schedule-manager,reefer-provisioner,order-manager,depot-manager,anomaly-manager -actor_collector_interval 24h
+      KAR_EXTRA_ARGS: -actors schedule-manager,order-manager,depot-manager,anomaly-manager -actor_collector_interval 24h
     networks:
       - kar-bus

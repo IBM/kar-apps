@@ -16,6 +16,7 @@ import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Voyage;
 
 import javax.json.*;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -30,8 +31,8 @@ public class ScheduleManagerActor extends BaseActor {
     private Routes routes = new Routes();
     private ScheduleService schedule;
     private Instant baseDate;
-    private int reeferInventorySize;
-
+    private long reeferInventorySize;
+    private JsonNumber reefersInTransit = Json.createValue(0);
     private static final Logger logger = Logger.getLogger(OrderManagerActor.class.getName());
 
     @Activate
@@ -42,6 +43,12 @@ public class ScheduleManagerActor extends BaseActor {
             int fleetSize = getFleetSize(state);
             schedule = new ScheduleService(new ShippingScheduler(fleetSize));
             reeferInventorySize = FleetCapacity.totalSize(schedule.getRoutes());
+            if (state.containsKey(Constants.REEFERS_IN_TRANSIT_COUNT_KEY)) {
+                JsonValue metrics = state.get(Constants.REEFERS_IN_TRANSIT_COUNT_KEY);
+                if (metrics != null && metrics != JsonValue.NULL) {
+                    reefersInTransit = Json.createValue(Integer.valueOf(((JsonString) metrics).getString()).intValue());
+                }
+            }
 
             JsonValue baseDateValue = state.get(Constants.SCHEDULE_BASE_DATE_KEY);
             Instant lastScheduleDate;
@@ -54,9 +61,30 @@ public class ScheduleManagerActor extends BaseActor {
             Kar.Actors.State.set(this, Constants.SCHEDULE_END_DATE_KEY, Json.createValue(lastScheduleDate.toString()));
             System.out.println("ScheduleManagerActor.activate() ++++ Saved End Date:" + lastScheduleDate);
             System.out.println("ScheduleManagerActor.activate() - actor type:" + this.getType() + " generated routes - size:" + schedule.getRoutes().size());
+            Kar.Actors.Reminders.schedule(this, "publishSpoiltReeferMetrics", "VoyageManagerReminder", Instant.now().plus(2, ChronoUnit.SECONDS), Duration.ofSeconds(5));
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Remote
+    public void publishSpoiltReeferMetrics() {
+        int totalSpoiltReeferCount = 0;
+        List<Voyage> activeVoyages = schedule.getActiveSchedule();
+        for (Voyage voyage : activeVoyages) {
+            try {
+                ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, voyage.getId());
+                JsonValue voyageSpoiltMetrics = Kar.Actors.State.get(voyageActorRef, Constants.TOTAL_SPOILT_KEY);
+                if (voyageSpoiltMetrics != null && voyageSpoiltMetrics != JsonValue.NULL) {
+                    totalSpoiltReeferCount += ((JsonNumber) voyageSpoiltMetrics).intValue();
+                }
+            } catch (Exception e) {
+                // voyage may have already arrived and was removed
+                e.printStackTrace();
+            }
+        }
+        Kar.Actors.State.set(this, Constants.TOTAL_SPOILT_KEY, Json.createValue(totalSpoiltReeferCount));
     }
 
     private Instant coldStart() {
@@ -79,7 +107,7 @@ public class ScheduleManagerActor extends BaseActor {
         baseDate = Instant.parse(((JsonString) baseDateValue).getString());
         JsonValue date = state.get(Constants.CURRENT_DATE_KEY);
         Instant cd = Instant.parse(((JsonString) date).getString());
-        System.out.println("ScheduleManagerActor.warmStart() - current date from REDIS:"+date +" cd:"+cd);
+        System.out.println("ScheduleManagerActor.warmStart() - current date from REDIS:" + date + " cd:" + cd);
         currentDate = TimeUtils.getInstance(cd).getCurrentDate();
         lastVoyageDate = Instant.parse(((JsonString) state.get(Constants.SCHEDULE_END_DATE_KEY)).getString());
         System.out.println("ScheduleManagerActor.warmStart() - Restored Current Date:" + currentDate + " baseDate:" + baseDate + " endDate:" + lastVoyageDate);
@@ -114,16 +142,19 @@ public class ScheduleManagerActor extends BaseActor {
 
     private void restoreActiveVoyages() {
         List<Voyage> activeVoyages = schedule.getActiveSchedule();
+        int inTransit = 0;
         for (Voyage voyage : activeVoyages) {
             Optional<JsonObject> state = recoverVoyage(voyage.getId());
             if (state.isPresent()) {
                 Voyage recoveredVoyageState = VoyageJsonSerializer.deserialize(state.get());
                 voyage.setOrderCount(recoveredVoyageState.getOrderCount());
-                voyage.changePosition( Long.valueOf(recoveredVoyageState.getRoute().getVessel().getPosition()).intValue());
+                voyage.changePosition(Long.valueOf(recoveredVoyageState.getRoute().getVessel().getPosition()).intValue());
                 voyage.setReeferCount(recoveredVoyageState.getReeferCount());
                 voyage.setFreeCapacity(recoveredVoyageState.getRoute().getVessel().getFreeCapacity());
+                inTransit += recoveredVoyageState.getReeferCount();
             }
         }
+        reefersInTransit = Json.createValue(inTransit);
     }
 
     private Optional<JsonObject> recoverVoyage(String voyageId) {
@@ -168,8 +199,9 @@ public class ScheduleManagerActor extends BaseActor {
             JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(today.toString()))
                     .build();
             // Reefers on maintenance are freed automatically after a configurable number of days passes.
-            Kar.Actors.tell(Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId),
-                    "releaseReefersfromMaintenance", message);
+            ActorRef depotManagerActor = Kar.Actors.ref(ReeferAppConfig.DepotManagerActorName, ReeferAppConfig.DepotManagerId);
+            Kar.Actors.tell(depotManagerActor, "newDay", message);
+
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
         }
@@ -181,6 +213,7 @@ public class ScheduleManagerActor extends BaseActor {
     public JsonValue reeferInventorySize() {
         return Json.createValue(reeferInventorySize);
     }
+
     @Remote
     public void updateVoyage(JsonObject message) {
         try {
@@ -210,7 +243,7 @@ public class ScheduleManagerActor extends BaseActor {
     private JsonArray voyageListToJsonArray(List<Voyage> voyages) {
         JsonArrayBuilder jab = Json.createArrayBuilder();
         voyages.forEach(voyage -> {
-            if ( voyage.getProgress() == 0 && voyage.getOrderCount() == 0) {
+            if (voyage.getProgress() == 0 && voyage.getOrderCount() == 0) {
                 Optional<JsonObject> actualVoyageState = recoverVoyage(voyage.getId());
                 if (actualVoyageState.isPresent()) {
                     Voyage recoveredVoyageState = VoyageJsonSerializer.deserialize(actualVoyageState.get());
@@ -265,6 +298,10 @@ public class ScheduleManagerActor extends BaseActor {
             activeVoyage.setOrderCount(voyage.getOrderCount());
             activeVoyage.setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity());
             activeVoyage.setReeferCount(voyage.getReeferCount());
+
+            reefersInTransit = Json.createValue(reefersInTransit.intValue() + voyage.getReeferCount());
+            System.out.println("ScheduleManagerActor.voyageDeparted() >>>>>>>>>>>>>>>> reefersInTransit:::: " + reefersInTransit);
+            saveMetrics();
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
             e.printStackTrace();
@@ -280,10 +317,18 @@ public class ScheduleManagerActor extends BaseActor {
             }
             schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
             voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
+            reefersInTransit = Json.createValue(reefersInTransit.intValue() - voyage.getReeferCount());
+            System.out.println("ScheduleManagerActor.voyageArrived() >>>>>>>>>>>>>>>> reefersInTransit:::: " + reefersInTransit);
+            saveMetrics();
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
             e.printStackTrace();
         }
+    }
+
+    private void saveMetrics() {
+        String metrics = String.format("%d", reefersInTransit.intValue());
+        Kar.Actors.State.set(this, Constants.REEFERS_IN_TRANSIT_COUNT_KEY, reefersInTransit);
     }
 
     @Remote

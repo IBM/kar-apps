@@ -27,6 +27,7 @@ public class Constants {
    public static final String ACTIVE_VOYAGES_KEY="active-voyages";
    public static final String BOOKED_ORDERS_KEY="booked-orders";
    public static final String SPOILT_ORDERS_KEY="spoilt-orders";
+   public static final String SPOILT_REEFER_KEY="spoilt-reefer";
    public static final String REST_ORDERS_KEY="rest-order-map";
    public static final String VOYAGE_ID_KEY="voyageId";
    public static final String VOYAGE_ARRIVAL_DATE_KEY="voyage-arrival-date";
@@ -48,9 +49,15 @@ public class Constants {
    public static final String REEFERS_KEY="reefers";
    public static final String REEFERS_MAINTENANCE_DATE="maintenanceDate";
    public static final String REEFER_METRICS_KEY="reefer-metrics";
+   public static final String REEFERS_IN_TRANSIT_COUNT_KEY="reefer-in-transit";
+   public static final String SPOILT_REEFERS_KEY="spoilt-reefers";
 
+   public static final String ANOMALY_TARGET_KEY="anomaly-target";
+   public static final String ANOMALY_KEY="anomaly";
+   public static final String ANOMALY_TARGET_TYPE_KEY="anomaly-target_type";
    public static final String ORDER_ID_KEY="orderId";
    public static final String ORDERS_KEY="orders";
+   public static final String ORDER_REEFERS_KEY="order-reefers";
    public static final String ORDER_METRICS_KEY="order-metrics";
    public static final String ORDER_KEY="order";
    public static final String ORDER_DATE_KEY="date";
@@ -70,7 +77,12 @@ public class Constants {
    // each product unit has the same size.
    public static final int REEFER_CAPACITY=1000;
    public static final int REEFER_DAYS_ON_MAINTENANCE=2;
-
+   public static final String DEPOTS_KEY="depots";
+   public static final String DEPOT_KEY="depot";
+   public static final String DEPOT_SIZE_KEY="depot-size";
+   public static final String TARGETS_KEY="targets";
+   public static final String TARGET_KEY="target";
+   public static final String TARGET_TYPE_KEY="target-type";
    public static final String ON_MAINTENANCE_PROVISIONER_LIST="on-maintenance-list";
    public static final String DATE_KEY="date";
    public static final String STATUS_KEY="status";
@@ -81,4 +93,6 @@ public class Constants {
 
    public static final String SIMSERVICE="simservice";
    public static final String REEFERSERVICE="reeferservice";
+
+   public static final String REEFER_DEPOT_SUFFIX="ReeferDepot";
 }

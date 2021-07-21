@@ -51,6 +51,10 @@ public class ScheduleService {
         if (routes.isEmpty()) {
             try {
                 routes = scheduler.getRoutes();
+                routes.forEach(route -> {
+                    System.out.println("ScheduleService.getRoutes() - Origin:"+route.getOriginPort()+ " Capacity:"+route.getVessel().getMaxCapacity());
+                    System.out.println("ScheduleService.getRoutes() - Destination:"+route.getDestinationPort()+ " Capacity:"+route.getVessel().getMaxCapacity()+"\n--------");
+                });
             } catch (Exception e) {
                 logger.log(Level.WARNING, "", e);
             }
@@ -78,7 +82,7 @@ public class ScheduleService {
      * @param baseScheduleDate
      */
     public Instant generateShipSchedule(Instant baseScheduleDate, Instant currentDate, Instant lastVoyageDate) {
-        masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, currentDate); //TimeUtils.getInstance().getCurrentDate());
+        masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, currentDate);
          dumpVoyages(masterSchedule);
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
 

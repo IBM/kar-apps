@@ -28,11 +28,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
-import javax.json.Json;
-import javax.json.JsonNumber;
 import javax.json.JsonString;
 import javax.json.JsonValue;
-import java.util.Map;
 import java.util.logging.Logger;
 
 @RestController
@@ -48,7 +45,7 @@ public class ReeferController {
 
     @Autowired
     private GuiController gui;
-    ActorRef provisioner = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
+    ActorRef depotManager = Kar.Actors.ref(ReeferAppConfig.DepotManagerActorName, ReeferAppConfig.DepotManagerId);
 
     private static final Logger logger = Logger.getLogger(ReeferController.class.getName());
 
@@ -65,9 +62,10 @@ public class ReeferController {
     @GetMapping("/reefers/stats")
     public ReeferStats getReeferStats() {
 
-        JsonValue metrics = Kar.Actors.State.get(provisioner, Constants.REEFER_METRICS_KEY);
-        if ( metrics != null && metrics != JsonValue.NULL) {
-            String[] values = ((JsonString)metrics).getString().split(":");
+        JsonValue metrics = Kar.Actors.State.get(depotManager, Constants.REEFER_METRICS_KEY);
+        System.out.println("ReeferController.getReeferStats() - metrics: " + metrics);
+        if (metrics != null && metrics != JsonValue.NULL) {
+            String[] values = ((JsonString) metrics).getString().split(":");
 
             totalBooked = Integer.valueOf(values[0].trim());
             totalInTransit = Integer.valueOf(values[1].trim());
@@ -78,7 +76,7 @@ public class ReeferController {
         }
 
         //System.out.println("ReeferController.getReeferStats()  ********** Booked:" + totalBooked +
-          //      " -- InTransit:" + totalInTransit + " -- Spoilt:" + totalSpoilt + " -- onMaintenance:" + totalOnMaintenance);
+        //      " -- InTransit:" + totalInTransit + " -- Spoilt:" + totalSpoilt + " -- onMaintenance:" + totalOnMaintenance);
 
         return new ReeferStats(reeferInventorySize, totalInTransit, totalBooked, totalSpoilt, totalOnMaintenance);
     }
@@ -91,18 +89,17 @@ public class ReeferController {
     @Scheduled(fixedDelay = 1000)
     public void scheduleGuiUpdate() {
         try {
-            if ( 0 >= --counter ) {
+            if (0 >= --counter) {
                 ReeferStats newStats = getReeferStats();
-                if ( newStats.getTotalBooked() != oldStats.getTotalBooked() ||
-                     newStats.getTotalInTransit() != oldStats.getTotalInTransit() ||
-                     newStats.getTotalOnMaintenance() != oldStats.getTotalOnMaintenance() ||
-                     newStats.getTotalSpoilt() != oldStats.getTotalSpoilt() ) {
+                if (newStats.getTotalBooked() != oldStats.getTotalBooked() ||
+                        newStats.getTotalInTransit() != oldStats.getTotalInTransit() ||
+                        newStats.getTotalOnMaintenance() != oldStats.getTotalOnMaintenance() ||
+                        newStats.getTotalSpoilt() != oldStats.getTotalSpoilt()) {
                     gui.updateReeferStats(newStats);
                     oldStats = newStats;
-                    period = period/2 < 1 ? 1 : period/2;
-                }
-                else {
-                    period = 2*period > max_period ? max_period : 2*period;
+                    period = period / 2 < 1 ? 1 : period / 2;
+                } else {
+                    period = 2 * period > max_period ? max_period : 2 * period;
                 }
                 counter = period;
             }

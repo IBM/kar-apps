@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 
 public class FleetCapacity {
     private static final Logger logger = Logger.getLogger(FleetCapacity.class.getName());
-    public static int totalSize(List<Route> routes) {
+    public static long totalSize(List<Route> routes) {
         Set<String> fleet = new LinkedHashSet<>();
         // using each ship capacity compute the total fleet reefer inventory size
         long fleetMaxCapacity = 0;
@@ -38,7 +38,12 @@ public class FleetCapacity {
             logger.info("RestController.init() - Fleet Size:"+fleet.size()+" Max Fleet Capacity:"+fleetMaxCapacity);
         }
         // increase total by additional 30% to ensure we always have reefers available
-        return Long.valueOf(fleetMaxCapacity * 3).intValue();
+        return totalSize(Long.valueOf(fleetMaxCapacity).intValue());
+       // return Long.valueOf(totalSize(fleetMaxCapacity)).intValue();
+        //return Long.valueOf(fleetMaxCapacity * 3).intValue();
         //return Double.valueOf(fleet.size() * fleetMaxCapacity * 0.3).intValue();
+    }
+    public static long totalSize(long size) {
+        return Math.round(size * 1.5);
     }
 }

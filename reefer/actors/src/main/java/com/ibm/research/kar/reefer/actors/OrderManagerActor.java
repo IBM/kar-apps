@@ -109,16 +109,13 @@ public class OrderManagerActor extends BaseActor {
                     bookedOrderList.remove(order);
                     inTransitTotalCount++;
                     bookedTotalCount--;
-                    // update
-                    activeOrders.put(order.getId(), order.getAsJsonObject());
                     order.setStatus(Order.OrderStatus.INTRANSIT.name());
-
+                    activeOrders.put(order.getId(), order.getAsJsonObject());
                     Map<String, JsonValue> updateMap = new HashMap<>();
                     updateMap.put(order.getId(), order.getAsJsonObject());
                     updateStore(Collections.emptyMap(), updateMap);
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -129,35 +126,32 @@ public class OrderManagerActor extends BaseActor {
     @Remote
     public void ordersArrived(JsonValue message) {
         List<String> orders2Remove = new ArrayList<>();
-        JsonArray ja = message.asJsonArray();
-        ja.forEach(oId -> {
+        JsonArray orders = message.asJsonArray();
+        orders.forEach(oId -> {
             String orderId = ((JsonString) oId).getString();
             if (activeOrders.containsKey(orderId)) {
                 if (orderArrived(new Order(activeOrders.get(orderId)))) {
                     orders2Remove.add(orderId);
+                    activeOrders.remove(orderId);
                 }
             }
         });
-
-        Map<String, List<String>> deleteMap = new HashMap<>();
+        HashMap<String, List<String>> deleteMap = new HashMap<>();
         deleteMap.put(Constants.ORDERS_KEY, orders2Remove);
         updateStore(deleteMap, Collections.emptyMap());
     }
 
-    private boolean orderArrived(Order order) {
+    private boolean orderArrived(Order activeOrder) {
         try {
-            Order activeOrder = new Order(activeOrders.get(order.getId()));
             if (!Order.OrderStatus.DELIVERED.name().equals(activeOrder.getStatus())) {
-                inTransitOrderList.remove(order);
+                inTransitOrderList.remove(activeOrder);
                 inTransitTotalCount--;
-                activeOrders.remove(order);
                 if (activeOrder.isSpoilt()) {
                     spoiltTotalCount--;
                     spoiltOrderList.remove(activeOrder);
                 }
                 return true;
             }
-
             return false;
         } catch (Exception e) {
             e.printStackTrace();
@@ -175,8 +169,9 @@ public class OrderManagerActor extends BaseActor {
                 if (!activeOrder.isSpoilt()) {
                     spoiltOrderList.add(order);
                     spoiltTotalCount++;
-                    activeOrders.put(order.getId(), order.getAsJsonObject());
+                    order.setSpoilt(true);
 
+                    activeOrders.put(order.getId(), order.getAsJsonObject());
                     Map<String, JsonValue> updateMap = new HashMap<>();
                     updateMap.put(order.getId(), order.getAsJsonObject());
                     updateStore(Collections.emptyMap(), updateMap);

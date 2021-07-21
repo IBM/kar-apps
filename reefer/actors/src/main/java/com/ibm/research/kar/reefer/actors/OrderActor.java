@@ -99,6 +99,7 @@ public class OrderActor extends BaseActor {
             }
             // Check if voyage has been booked
             if (voyageBookingResult.containsKey(Constants.STATUS_KEY) && voyageBookingResult.getString(Constants.STATUS_KEY).equals(Constants.OK)) {
+                order.setDepot(voyageBookingResult.getString(Constants.DEPOT_KEY));
                 Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
                 messageOrderManager("orderBooked");
             } else {
@@ -150,17 +151,17 @@ public class OrderActor extends BaseActor {
      * @param message - json encoded message
      */
     @Remote
-    public void anomaly(JsonObject message) {
+    public void reeferAnomaly(JsonObject message) {
         int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
         if (logger.isLoggable(Level.FINE)) {
-            logger.fine("OrderActor.anomaly() - :" + getId() + "received spoilt reefer ID " + spoiltReeferId);
+            logger.fine("OrderActor.reeferAnomaly() - :" + getId() + "received spoilt reefer ID " + spoiltReeferId);
         }
         // handle anomaly after ship arrival.
         if (order == null || order.getStatus() == null ||
                 OrderStatus.DELIVERED.name().equals(order.getStatus())) {
             // Race condition
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("OrderActor.anomaly() - anomaly just arrived after order delivered");
+                logger.info("OrderActor.reeferAnomaly() - anomaly just arrived after order delivered");
             }
             // this actor should not be alive
             Kar.Actors.remove(this);
@@ -169,11 +170,11 @@ public class OrderActor extends BaseActor {
         switch (OrderStatus.valueOf(order.getStatus())) {
             case INTRANSIT:
                 // change state to Spoilt and inform provisioner
-                tagAsSpoilt(message);
+                tagAsSpoilt(spoiltReeferId);
                 break;
             case BOOKED:
                 // ship hasn't left the origin port, request replacement
-                requestReplacementReefer(message);
+                requestReplacementReefer(spoiltReeferId);
                 break;
             default:
         }
@@ -182,11 +183,10 @@ public class OrderActor extends BaseActor {
     /**
      * Calls provisioner to tag a given reefer as spoilt.
      *
-     * @param message
+     * @param spoiltReeferId
      */
-    private void tagAsSpoilt(JsonObject message) {
+    private void tagAsSpoilt(int spoiltReeferId) {
 
-        int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
         if (!order.isSpoilt()) {
             order.setSpoilt(true);
             JsonObject jo = order.getAsJsonObject();
@@ -202,28 +202,32 @@ public class OrderActor extends BaseActor {
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add(Constants.REEFER_ID_KEY, spoiltReeferId).add(Constants.ORDER_KEY, order.getAsJsonObject());
 
-        ActorRef provisioner = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
-        JsonObject reply = Kar.Actors.call(provisioner, "reeferSpoilt", job.build()).asJsonObject();
-        if (reply.getString(Constants.STATUS_KEY).equals(Constants.FAILED)) {
-            logger.warning("OrderActor.anomaly() - orderId " + getId() + " request to mark reeferId "
-                    + spoiltReeferId + " spoilt failed");
-        }
+        ActorRef voyageRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, order.getVoyageId());
+        Kar.Actors.tell(voyageRef, "reeferSpoilt", job.build());//.asJsonObject();
     }
 
     /**
      * Calls provisioner to request a replacement reefer. Reefer can be replaced if
      * an order is booked but not yet departed.
      *
-     * @param message
+     * @param spoiltReeferId
      */
-    private void requestReplacementReefer(JsonObject message) {
-        int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
+    private void requestReplacementReefer(int spoiltReeferId) {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(String.format("OrderActor.requestReplacementReefer() - orderId: %s requesting replacement for %s",
-                    getId(), message.getInt(Constants.REEFER_ID_KEY)));
+                    getId(), spoiltReeferId));
         }
-        ActorRef provisioner = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, ReeferAppConfig.ReeferProvisionerId);
-        JsonObject reply = Kar.Actors.call(provisioner, "reeferReplacement", message).asJsonObject();
+        System.out.println(String.format("OrderActor.requestReplacementReefer() ------------------------------ orderId: %s requesting replacement for %s",
+                getId(), spoiltReeferId));
+        ActorRef scheduleManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+        JsonValue currentDate = Kar.Actors.call(scheduleManager, "currentDate");
+
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        job.add(Constants.DATE_KEY, currentDate).
+                add(Constants.SPOILT_REEFER_KEY, spoiltReeferId);
+
+        ActorRef depot = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, order.getDepot());
+        JsonObject reply = Kar.Actors.call(depot, "reeferReplacement", job.build()).asJsonObject();
         if (reply.getString(Constants.STATUS_KEY).equals(Constants.FAILED)) {
             logger.warning("OrderActor.requestReplacementReefer() - orderId: " + getId()
                     + " request to replace reeferId " + spoiltReeferId + " failed");
@@ -236,6 +240,13 @@ public class OrderActor extends BaseActor {
                     "OrderActor.requestReplacementReefer() - orderId: %s state: %s spoilt reefer id: %s replacement reefer id: %s",
                     getId(), order.getStatus(), spoiltReeferId, replacementReeferId));
         }
+
+        JsonObjectBuilder voyageMessageBuilder = Json.createObjectBuilder();
+        job.add(Constants.REEFER_ID_KEY, String.valueOf(replacementReeferId)).
+                add(Constants.SPOILT_REEFER_KEY, String.valueOf(spoiltReeferId)).
+                add(Constants.ORDER_ID_KEY, order.getId());
+        ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, order.getVoyageId());
+        Kar.Actors.call(voyageActorRef, "replaceReefer", voyageMessageBuilder.build());
     }
 
     private void saveOrderStatusChange(OrderStatus state) {

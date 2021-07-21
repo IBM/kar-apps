@@ -27,12 +27,13 @@ import javax.json.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 @Actor
 public class AnomalyManagerActor extends BaseActor {
 
     private Map<String, JsonValue> reefersMap = null;
-
+    private TreeMap<Integer, String> shardMap = new TreeMap<>();
     @Activate
     public void activate() {
         Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
@@ -59,13 +60,15 @@ public class AnomalyManagerActor extends BaseActor {
                 Map<String, JsonValue> updateMap = addDepotReefers(depot.asJsonObject().getString(Constants.ANOMALY_TARGET_KEY), lower,
                         upper);
                 long t2 = System.currentTimeMillis();
-
+                shardMap.put(lower, depot.asJsonObject().getString(Constants.ANOMALY_TARGET_KEY));
                 Kar.Actors.State.Submap.set(this, Constants.REEFER_MAP_KEY, updateMap);
                 long t3 = System.currentTimeMillis();
                 reefersMap.putAll(updateMap);
                 updateMap.clear();
                 System.out.println("AnomalyManagerActor.depotReefers() - gen time:" + (t2 - t1) + " save time:" + (t3 - t2) + " map put time:" + (System.currentTimeMillis() - t3) + " reefersMapSize size:" + reefersMap.size() + " update map size:" + updateMap.size());
             }
+            // in unlikely case reeferId is out of range, return null for target
+            shardMap.put(totalCount, null);
             System.out.println("AnomalyManagerActor.depotReefers() - saved depot reefers");
         } catch (Exception e) {
             e.printStackTrace();
@@ -110,7 +113,7 @@ public class AnomalyManagerActor extends BaseActor {
             if (reefersMap.containsKey(reeferId)) {
                 JsonObject target = reefersMap.get(reeferId).asJsonObject();
                 System.out.println("AnomalyManagerActor.reeferAnomaly() - ANOMALY :::::::: ID:" + reeferId +
-                        " TARGET >>>>>>>> " + target.getString(Constants.TARGET_KEY) + " TARGET TYPE:" + target.getInt(Constants.TARGET_TYPE_KEY));
+                        " TARGET >>>>>>>> " + target.getString(Constants.TARGET_KEY) + " SHARD:" +shardMap.floorEntry(Integer.valueOf(reeferId))+" TARGET TYPE:" + target.getInt(Constants.TARGET_TYPE_KEY));
                 ActorRef targetActor;
                 switch (target.getInt(Constants.TARGET_TYPE_KEY)) {
                     case 1:

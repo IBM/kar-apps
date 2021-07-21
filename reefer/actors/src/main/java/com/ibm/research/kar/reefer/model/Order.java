@@ -55,6 +55,7 @@ public class Order {
     String status;
     String date;
     boolean spoilt;
+    String depot;
 
     public Order(OrderProperties orderProperties) {
         this(orderProperties.getCustomerId(),orderProperties.getProduct(),
@@ -78,6 +79,9 @@ public class Order {
         this.status = jo.getString(Constants.ORDER_STATUS_KEY);
         this.date = jo.getString(Constants.ORDER_DATE_KEY);
         this.spoilt = jo.getBoolean(Constants.ORDER_SPOILT_KEY);
+        if ( jo.containsKey(Constants.DEPOT_KEY)) {
+            this.depot = jo.getString(Constants.DEPOT_KEY);
+        }
     }
 
     public Order( String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
@@ -109,6 +113,12 @@ public class Order {
         return Objects.hash(id, voyageId);
     }
 
+    public String getDepot() {
+        return  depot;
+    }
+    public void setDepot(String depot) {
+        this.depot = depot;
+    }
     public String getDate() {
         return date;
     }
@@ -179,7 +189,9 @@ public class Order {
                 add(Constants.ORDER_STATUS_KEY, getStatus()).
                 add(Constants.ORDER_DATE_KEY, getDate()).
                 add(Constants.ORDER_SPOILT_KEY, isSpoilt());
-
+                if ( getDepot() != null) {
+                    orderBuilder.add(Constants.DEPOT_KEY, getDepot());
+                }
         return orderBuilder.build();
     }
     public JsonObject getOrderParams() {

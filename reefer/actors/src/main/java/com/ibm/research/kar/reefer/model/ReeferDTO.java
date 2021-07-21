@@ -42,6 +42,11 @@ public class ReeferDTO {
         this.orderId = orderId;
         this.voyageId = voyageId;
     }
+    public void allocateToOrder( String orderId, String voyageId ) {
+        state = State.ALLOCATED;
+        this.orderId = orderId;
+        this.voyageId = voyageId;
+    }
     public int getId() {
         return id;
     }

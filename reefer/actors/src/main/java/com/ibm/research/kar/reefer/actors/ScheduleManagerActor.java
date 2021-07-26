@@ -45,8 +45,9 @@ public class ScheduleManagerActor extends BaseActor {
             reeferInventorySize = FleetCapacity.totalSize(schedule.getRoutes());
             if (state.containsKey(Constants.REEFERS_IN_TRANSIT_COUNT_KEY)) {
                 JsonValue metrics = state.get(Constants.REEFERS_IN_TRANSIT_COUNT_KEY);
+                //System.out.println("ScheduleManagerActor.activate() - metrics:"+metrics);
                 if (metrics != null && metrics != JsonValue.NULL) {
-                    reefersInTransit = Json.createValue(Integer.valueOf(((JsonString) metrics).getString()).intValue());
+                    reefersInTransit = (JsonNumber)metrics;//Json.createValue(Integer.valueOf(((JsonString) metrics).getString()).intValue());
                 }
             }
 
@@ -60,8 +61,9 @@ public class ScheduleManagerActor extends BaseActor {
             }
             Kar.Actors.State.set(this, Constants.SCHEDULE_END_DATE_KEY, Json.createValue(lastScheduleDate.toString()));
             System.out.println("ScheduleManagerActor.activate() ++++ Saved End Date:" + lastScheduleDate);
+            Kar.Actors.State.set(this, Constants.REEFERS_IN_TRANSIT_COUNT_KEY, reefersInTransit);
             System.out.println("ScheduleManagerActor.activate() - actor type:" + this.getType() + " generated routes - size:" + schedule.getRoutes().size());
-            Kar.Actors.Reminders.schedule(this, "publishSpoiltReeferMetrics", "VoyageManagerReminder", Instant.now().plus(2, ChronoUnit.SECONDS), Duration.ofSeconds(5));
+            Kar.Actors.Reminders.schedule(this, "publishSpoiltReeferMetrics", "VoyageManagerReminder", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(5));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -155,6 +157,7 @@ public class ScheduleManagerActor extends BaseActor {
             }
         }
         reefersInTransit = Json.createValue(inTransit);
+        Kar.Actors.State.set(this, Constants.REEFERS_IN_TRANSIT_COUNT_KEY, reefersInTransit);
     }
 
     private Optional<JsonObject> recoverVoyage(String voyageId) {
@@ -300,7 +303,7 @@ public class ScheduleManagerActor extends BaseActor {
             activeVoyage.setReeferCount(voyage.getReeferCount());
 
             reefersInTransit = Json.createValue(reefersInTransit.intValue() + voyage.getReeferCount());
-            System.out.println("ScheduleManagerActor.voyageDeparted() >>>>>>>>>>>>>>>> reefersInTransit:::: " + reefersInTransit);
+         //   System.out.println("ScheduleManagerActor.voyageDeparted() >>>>>>>>>>>>>>>> reefersInTransit:::: " + reefersInTransit);
             saveMetrics();
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
@@ -318,7 +321,7 @@ public class ScheduleManagerActor extends BaseActor {
             schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
             voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
             reefersInTransit = Json.createValue(reefersInTransit.intValue() - voyage.getReeferCount());
-            System.out.println("ScheduleManagerActor.voyageArrived() >>>>>>>>>>>>>>>> reefersInTransit:::: " + reefersInTransit);
+         //   System.out.println("ScheduleManagerActor.voyageArrived() >>>>>>>>>>>>>>>> reefersInTransit:::: " + reefersInTransit);
             saveMetrics();
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);

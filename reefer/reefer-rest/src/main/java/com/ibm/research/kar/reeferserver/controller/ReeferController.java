@@ -63,7 +63,7 @@ public class ReeferController {
     public ReeferStats getReeferStats() {
 
         JsonValue metrics = Kar.Actors.State.get(depotManager, Constants.REEFER_METRICS_KEY);
-        System.out.println("ReeferController.getReeferStats() - metrics: " + metrics);
+        //System.out.println("ReeferController.getReeferStats() - metrics: " + metrics);
         if (metrics != null && metrics != JsonValue.NULL) {
             String[] values = ((JsonString) metrics).getString().split(":");
 

@@ -35,8 +35,10 @@ public class FleetCapacity {
             fleet.add(route.getVessel().getName());
         }
         if ( logger.isLoggable(Level.INFO)) {
-            logger.info("RestController.init() - Fleet Size:"+fleet.size()+" Max Fleet Capacity:"+fleetMaxCapacity);
+            logger.info("FleetCapacity.totalSize() - Fleet Size:"+fleet.size()+" Max Fleet Capacity:"+fleetMaxCapacity);
         }
+
+       // System.out.println("FleetCapacity.totalSize() -------------------------- Fleet Size:"+fleet.size()+" Max Fleet Capacity:"+fleetMaxCapacity+" Previously:::::"+(fleet.size() * fleetMaxCapacity * 0.3));
         // increase total by additional 30% to ensure we always have reefers available
         return totalSize(Long.valueOf(fleetMaxCapacity).intValue());
        // return Long.valueOf(totalSize(fleetMaxCapacity)).intValue();
@@ -44,6 +46,6 @@ public class FleetCapacity {
         //return Double.valueOf(fleet.size() * fleetMaxCapacity * 0.3).intValue();
     }
     public static long totalSize(long size) {
-        return Math.round(size * 1.5);
+        return Math.round(size * 2);
     }
 }

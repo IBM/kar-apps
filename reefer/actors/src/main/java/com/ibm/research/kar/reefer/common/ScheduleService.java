@@ -51,10 +51,13 @@ public class ScheduleService {
         if (routes.isEmpty()) {
             try {
                 routes = scheduler.getRoutes();
+                /*
                 routes.forEach(route -> {
                     System.out.println("ScheduleService.getRoutes() - Origin:"+route.getOriginPort()+ " Capacity:"+route.getVessel().getMaxCapacity());
                     System.out.println("ScheduleService.getRoutes() - Destination:"+route.getDestinationPort()+ " Capacity:"+route.getVessel().getMaxCapacity()+"\n--------");
                 });
+
+                 */
             } catch (Exception e) {
                 logger.log(Level.WARNING, "", e);
             }
@@ -145,6 +148,7 @@ public class ScheduleService {
         }
         // new active schedule (created from new schedule) must match previous active schedule
         validateSchedule(activeScheduleBefore, "extension", currentDate, baseDate);
+        dumpVoyages(masterSchedule);
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
     }
 

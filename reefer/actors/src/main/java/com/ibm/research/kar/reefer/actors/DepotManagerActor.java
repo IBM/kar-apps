@@ -30,10 +30,7 @@ import javax.json.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Logger;
 
 @Actor
@@ -46,7 +43,6 @@ public class DepotManagerActor extends BaseActor {
     public void activate() {
         // fetch actor state from Kar storage
         Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
-        System.out.println("DepotManager.activate() ID:" + getId() + " -------------------------");
 
         if (state.isEmpty()) {
             ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
@@ -65,45 +61,69 @@ public class DepotManagerActor extends BaseActor {
             }
             int inx = 0;
             JsonArrayBuilder jab = Json.createArrayBuilder();
+            Map<String, JsonValue> depotMap = new HashMap<>();
             for (Depot depot : depots) {
                 Shard shard = new Shard(inx, inx + depot.size - 1); // zero based index
                 inx += depot.size;
                 depot.setShard(shard);
-                System.out.print("DepotManager.activate() ............. depot:" + depot.getId() + " " + shard.toString());
                 JsonObjectBuilder job = Json.createObjectBuilder();
-                job.add(Constants.ANOMALY_TARGET_KEY, depot.getId()).
-                        add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType())).
-                        add("reefer-id-lower-bound", depot.getShard().getLowerBound()).
-                        add("reefer-id-upper-bound", depot.getShard().getUpperBound());
+                JsonObjectBuilder mapJob = Json.createObjectBuilder();
+                serializeDepot(depot, job);
                 jab.add(job);
+                serializeDepot(depot, mapJob);
+                depotMap.put(depot.getId(), mapJob.build());
+                //System.out.println("DepotManager.activate() - deserializing depot:"+depot.toString());
             }
+
+            Kar.Actors.State.Submap.set(this, Constants.DEPOTS_KEY, depotMap);
+            Kar.Actors.State.set(this, Constants.TOTAL_REEFER_COUNT_KEY, Json.createValue(totalInventorySize));
+
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.TOTAL_REEFER_COUNT_KEY, totalInventorySize).add(Constants.DEPOTS_KEY, jab);
             ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorName, ReeferAppConfig.AnomalyManagerId);
             Kar.Actors.tell(anomalyManagerActor, "depotReefers", job.build());
 
         } else {
-            Kar.Actors.State.set(this, "TEST", Json.createValue("TEST"));
-        }
-        System.out.println("DepotManager.activate() ID:" + getId() + " ------------------------- returning");
 
-        Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(2, ChronoUnit.SECONDS), Duration.ofSeconds(5));
+            try {
+                totalInventorySize = ((JsonNumber) state.get(Constants.TOTAL_REEFER_COUNT_KEY)).intValue();
+                Map<String, JsonValue> depotMap = state.get(Constants.DEPOTS_KEY).asJsonObject();
+                for (JsonValue jv : depotMap.values()) {
+                    depots.add(deserializeDepot(jv.asJsonObject()));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(5));
+    }
+
+    private void serializeDepot(Depot depot, JsonObjectBuilder job) {
+        job.add(Constants.ANOMALY_TARGET_KEY, depot.getId()).
+                add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType())).
+                add("reefer-id-lower-bound", depot.getShard().getLowerBound()).
+                add("reefer-id-upper-bound", depot.getShard().getUpperBound());
+    }
+
+    private Depot deserializeDepot(JsonObject jsonDepot) {
+        Depot depot = new Depot(jsonDepot.getString(Constants.ANOMALY_TARGET_KEY));
+        depot.setShard(new Shard(jsonDepot.getInt("reefer-id-lower-bound"), jsonDepot.getInt("reefer-id-upper-bound")));
+        return depot;
     }
 
     @Remote
     public void publishReeferMetrics() {
-        int booked = 0, currentInventory = 0, inTransitCount = 0, onMaintenance = 0, spoiltReefers = 0;
+        int booked = 0, inTransitCount = 0, onMaintenance = 0, spoiltReefers = 0;
         try {
             for (Depot depot : depots) {
                 JsonValue metrics = Kar.Actors.State.get(depot.depotActor, Constants.REEFER_METRICS_KEY);
-
                 if (metrics != null && metrics != JsonValue.NULL) {
                     String[] values = ((JsonString) metrics).getString().split(":");
-                    //String[] metrics = ((JsonString)depotMetrics).getString().split(":");
-                    booked += Integer.valueOf(values[0]).intValue();
-                    onMaintenance += Integer.valueOf(values[3]).intValue();
+                    if (values != null && values.length > 0) {
+                        booked += Integer.valueOf(values[0]).intValue();
+                        onMaintenance += Integer.valueOf(values[3]).intValue();
+                    }
                 }
-
             }
             ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
             JsonValue inTransitMetrics = Kar.Actors.State.get(scheduleActor, Constants.REEFERS_IN_TRANSIT_COUNT_KEY);
@@ -220,8 +240,10 @@ public class DepotManagerActor extends BaseActor {
         }
 
         public static String makeId(String port) {
-
-            return port.substring(0, port.indexOf(",")) + Constants.REEFER_DEPOT_SUFFIX;
+            if (port.indexOf(",") > -1) {
+                return port.substring(0, port.indexOf(",")) + Constants.REEFER_DEPOT_SUFFIX;
+            }
+            return port;
         }
 
         public long setInventorySize() {
@@ -240,6 +262,16 @@ public class DepotManagerActor extends BaseActor {
         @Override
         public int hashCode() {
             return Objects.hash(id);
+        }
+
+        @Override
+        public String toString() {
+            return "Depot{" +
+                    "id='" + id + '\'' +
+                    ", size=" + size +
+                    ", depotActor=" + depotActor +
+                    ", shard=" + shard +
+                    '}';
         }
     }
 

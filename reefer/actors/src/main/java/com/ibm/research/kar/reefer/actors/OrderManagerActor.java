@@ -66,7 +66,7 @@ public class OrderManagerActor extends BaseActor {
                 if (state.containsKey(Constants.ORDERS_KEY)) {
                     long t = System.currentTimeMillis();
                     activeOrders.putAll(state.get(Constants.ORDERS_KEY).asJsonObject());
-                    System.out.println("OrderManagerActor.activate() - time to restore active orders:" + (System.currentTimeMillis() - t) + " millis");
+                  //  System.out.println("OrderManagerActor.activate() - time to restore active orders:" + (System.currentTimeMillis() - t) + " millis");
                 }
                 System.out.println("OrderManagerActor.activate() - Totals - totalInTransit:" + inTransitTotalCount + " totalBooked: " + bookedTotalCount + " totalSpoilt:" + spoiltTotalCount);
 

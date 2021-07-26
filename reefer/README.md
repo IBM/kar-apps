@@ -182,6 +182,11 @@ Build java application:
 cd [kar-apps-install-dir]/reefer
 mvn clean install
 ```
+Build actors singleton Docker image:
+```
+KAR_IMAGE_PREFIX=localhost:5000/kar/ make reeferImages
+```
+
 Start the KAR runtime: `[kar-install-dir]/scripts/docker-compose-start.sh`
 
 Open four terminal windows, one for each reefer service:
@@ -196,9 +201,14 @@ kar run -app_port 9080 -app reefer -v info -service reeferservice mvn liberty:ru
 ```
 cd [kar-apps-install-dir]/reefer/actors
 source [kar-install-dir]/scripts/kar-env-local.sh
-kar run -app reefer -v info -actors order,reefer,voyage,reefer-provisioner,resthelper,order-manager,schedule-manager mvn liberty:run
+kar run -app reefer -v info -actors order,voyage,reefer-provisioner mvn liberty:run
 ```
-
+- Singleton Actors window
+```
+cd [kar-apps-install-dir]/reefer
+source [kar-install-dir]/scripts/kar-env-local.sh
+docker-compose -f scripts/reefer-actors.yaml -p reefer up
+```
 - Simulators window
 ```
 cd [kar-apps-install-dir]/reefer/simulators

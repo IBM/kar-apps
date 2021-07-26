@@ -32,6 +32,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Actor
 public class DepotManagerActor extends BaseActor {
@@ -111,6 +112,16 @@ public class DepotManagerActor extends BaseActor {
         return depot;
     }
 
+    @Remote
+    public JsonObject getDepotList() {
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        String depotsCommaSeparated = depots.stream()
+                .map(depot -> depot.getId())
+                .collect(Collectors.joining(","));
+        //
+        job.add(Constants.DEPOTS_KEY, depotsCommaSeparated);
+        return job.build();
+    }
     @Remote
     public void publishReeferMetrics() {
         int booked = 0, inTransitCount = 0, onMaintenance = 0, spoiltReefers = 0;

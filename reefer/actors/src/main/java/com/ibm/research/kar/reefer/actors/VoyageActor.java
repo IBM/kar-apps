@@ -394,11 +394,18 @@ public class VoyageActor extends BaseActor {
                 }
             }
             order.setStatus(orderStatus.name());
+
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.STATUS_KEY, booking.asJsonObject().getString(Constants.STATUS_KEY)).
                     add(Constants.REEFERS_KEY, booking.asJsonObject().getJsonNumber(Constants.REEFERS_KEY).intValue()).
-                    add(Constants.ORDER_REEFERS_KEY, booking.asJsonObject().getJsonArray(Constants.ORDER_REEFERS_KEY)).
                     add(Constants.ORDER_KEY, order.getAsJsonObject());
+            if ( booking.asJsonObject().getJsonArray(Constants.ORDER_REEFERS_KEY) != null ) {
+                JsonArray ja = booking.asJsonObject().getJsonArray(Constants.ORDER_REEFERS_KEY);
+               // System.out.println("VoyageActor.notifyVoyageOrder() - ID:"+getId()+ " order:"+orderId+" reefer count:"+ja.size());
+                job.add(Constants.ORDER_REEFERS_KEY, ja);
+            } else {
+                System.out.println("VoyageActor.notifyVoyageOrder() - ID:"+getId()+ " order:"+orderId+" does not have any reefers - booking result:"+booking);
+            }
             JsonObject jo = job.build();
             orders.put(order.getId(), jo);
             Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), jo);

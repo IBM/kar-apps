@@ -46,7 +46,7 @@ public class DepotManagerActor extends BaseActor {
         Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
 
         if (state.isEmpty()) {
-            ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+            ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
             JsonValue reply = Kar.Actors.call(scheduleActor, "routes");
             reply.asJsonArray().stream().forEach(jsonRoute -> {
                 Route route = RouteJsonSerializer.deserialize(jsonRoute.asJsonObject());
@@ -81,7 +81,7 @@ public class DepotManagerActor extends BaseActor {
 
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.TOTAL_REEFER_COUNT_KEY, totalInventorySize).add(Constants.DEPOTS_KEY, jab);
-            ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorName, ReeferAppConfig.AnomalyManagerId);
+            ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
             Kar.Actors.tell(anomalyManagerActor, "depotReefers", job.build());
 
         } else {
@@ -136,7 +136,7 @@ public class DepotManagerActor extends BaseActor {
                     }
                 }
             }
-            ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+            ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
             JsonValue inTransitMetrics = Kar.Actors.State.get(scheduleActor, Constants.REEFERS_IN_TRANSIT_COUNT_KEY);
             JsonValue spoiltReefersMetrics = Kar.Actors.State.get(scheduleActor, Constants.TOTAL_SPOILT_KEY);
             if (inTransitMetrics != null && inTransitMetrics != JsonValue.NULL) {
@@ -213,7 +213,7 @@ public class DepotManagerActor extends BaseActor {
                 }
             }
         });
-        Kar.Actors.State.set(Kar.Actors.ref(ReeferAppConfig.DepotManagerActorName, ReeferAppConfig.DepotManagerId),
+        Kar.Actors.State.set(Kar.Actors.ref(ReeferAppConfig.DepotManagerActorType, ReeferAppConfig.DepotManagerId),
                 Constants.REEFER_METRICS_KEY, Json.createValue(metrics.toString()));
     }
 
@@ -227,7 +227,7 @@ public class DepotManagerActor extends BaseActor {
         public Depot(String port) {
             id = makeId(port);
             //this.size = size;
-            depotActor = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, id);
+            depotActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, id);
         }
 
         public void setSize(long size) {

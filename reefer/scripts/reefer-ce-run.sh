@@ -135,7 +135,7 @@ if [ -n "$start_backend" ]; then
     ${kardir}/scripts/kar-ce-run.sh -app reefer -image quay.io/ibm/kar-app-reefer-monitor -name reefer-monitor -port 7082\
 	  -nowait -v info
     ${kardir}/scripts/kar-ce-run.sh -app reefer -image quay.io/ibm/kar-app-reefer-actors -name reefer-actors\
-	  -actors order,reefer,voyage,reefer-provisioner -port 8080 -nowait -v info
+	  -actors order,reefer,voyage -port 8080 -nowait -v info
     ${kardir}/scripts/kar-ce-run.sh -app reefer -image quay.io/ibm/kar-app-reefer-reefer-rest -name reefer-rest\
 	  -service reeferservice -port 9080 -externalize -nowait -v info
     echo "backend started. To check status: ibmcloud ce app list"

@@ -45,7 +45,7 @@ public class ReeferController {
 
     @Autowired
     private GuiController gui;
-    ActorRef depotManager = Kar.Actors.ref(ReeferAppConfig.DepotManagerActorName, ReeferAppConfig.DepotManagerId);
+    ActorRef depotManager = Kar.Actors.ref(ReeferAppConfig.DepotManagerActorType, ReeferAppConfig.DepotManagerId);
 
     private static final Logger logger = Logger.getLogger(ReeferController.class.getName());
 

@@ -16,7 +16,7 @@
 
 package com.ibm.research.kar.reefer.common;
 
-import com.ibm.research.kar.reefer.actors.ReeferActor.ReeferAllocationStatus;
+import com.ibm.research.kar.reefer.actors.ReeferActor;
 
 public interface ReeferState {
     //state = unallocated | allocated | spoilt | maintenance
@@ -35,8 +35,8 @@ public interface ReeferState {
     public void setVoyageId(String voyageId);
     public boolean alreadyAllocated();
     public boolean partiallyAllocatedToAnotherVoyage(String voyageId);
-    public ReeferAllocationStatus getAllocationStatus();
-    public void setAllocationStatus(ReeferAllocationStatus allocationStatus);
+    public ReeferActor.ReeferAllocationStatus getAllocationStatus();
+    public void setAllocationStatus(ReeferActor.ReeferAllocationStatus allocationStatus);
     public int getRemainingCapacity();
     public void setRemainingCapacity(int remainingCapacity);
     public int getMaxCapacity();

@@ -23,22 +23,17 @@ public class ReeferAppConfig {
     // simplification, each product has the same size
     public static final int ReeferMaxCapacityValue = 1000;
     public static final int ReeferInventorySize=1000000;
-    public static final String ReeferProvisionerId = "ReeferManager";
     public static final String OrderManagerId = "OrderManager";
     public static final String ScheduleManagerId = "ScheduleManager";
     public static final String DepotManagerId = "DepotManager";
-    public static final String DepotManagerActorName="depot-manager";
+    public static final String DepotManagerActorType ="depot-manager";
     public static final String AnomalyManagerId = "AnomalyManager";
-    public static final String AnomalyManagerActorName="anomaly-manager";
-    public static final String ReeferActorName="reefer";
-    public static final String ReeferProvisionerActorName="reefer-provisioner";
-    public static final String VoyageActorName="voyage";
-    public static final String OrderActorName="order";
-    public static final String OrderManagerActorName="order-manager";
-    public static final String ScheduleManagerActorName="schedule-manager";
-    public static final String ReeferDepotActorName="reefer-depot";
-    public static final String RestActorName="resthelper";
-    public static final String RestActorId="reeferservice";
+    public static final String AnomalyManagerActorType ="anomaly-manager";
+    public static final String DepotActorType ="reefer-depot";
+    public static final String VoyageActorType ="voyage";
+    public static final String OrderActorType ="order";
+    public static final String OrderManagerActorType ="order-manager";
+    public static final String ScheduleManagerActorType ="schedule-manager";
 
     // If the reefer capacity is greater or equal 60, it is considered full (ie. ALLOCATED)
     public static final int CapacityThresholdFloor = 60;

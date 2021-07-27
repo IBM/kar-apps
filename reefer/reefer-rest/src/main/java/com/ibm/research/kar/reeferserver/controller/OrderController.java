@@ -49,7 +49,7 @@ public class OrderController {
     @Autowired
     private GuiController gui;
 
-    private ActorRef orderMgrActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
+    private ActorRef orderMgrActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
 
     private static final Logger logger = Logger.getLogger(OrderController.class.getName());
 
@@ -95,7 +95,7 @@ public class OrderController {
     }
 
     private Voyage getVoyage(String voyageId) {
-        ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+        ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
         JsonValue reply = Kar.Actors.call(scheduleActor, "voyage", Json.createValue(voyageId));
         return VoyageJsonSerializer.deserialize(reply.asJsonObject());
     }
@@ -122,7 +122,7 @@ public class OrderController {
 
             Order order = new Order(orderProperties);
             long t2 = System.currentTimeMillis();
-            ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, order.getId());
+            ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorType, order.getId());
             JsonValue reply = Kar.Actors.call(orderActor, "createOrder", order.getAsJsonObject());
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("OrderController.bookOrder - Order Actor reply:" + reply);

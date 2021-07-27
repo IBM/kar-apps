@@ -17,19 +17,11 @@
 package com.ibm.research.kar.reefer.common;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import javax.json.JsonValue;
-
-import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
-import com.ibm.research.kar.reefer.actors.ReeferActor.ReeferAllocationStatus;
 import com.ibm.research.kar.reefer.common.ReeferState.State;
 import com.ibm.research.kar.reefer.common.error.ReeferInventoryExhaustedException;
-import com.ibm.research.kar.reefer.common.packingalgo.PackingAlgo;
-import com.ibm.research.kar.reefer.model.JsonOrder;
-import com.ibm.research.kar.reefer.model.Reefer;
 import com.ibm.research.kar.reefer.model.ReeferDTO;
 
 

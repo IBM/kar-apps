@@ -46,7 +46,7 @@ public class VoyageController {
     @Autowired
     private GuiController gui;
     private static final Logger logger = Logger.getLogger(VoyageController.class.getName());
-    private ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+    private ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
 
     /**
      * Returns voyages matching given originPort, destinationPort and departure date

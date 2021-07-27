@@ -297,7 +297,7 @@ spec:
     - name: KAFKA_VERSION
       value: 2.4.0
     - name: KAR_EXTRA_ARGS
-      value: -actors reefer-provisioner,schedule-manager,order-manager -actor_collector_interval 24h
+      value: -actors reefer-depot,depot-manager,anomaly-manager,schedule-manager,order-manager -actor_collector_interval 24h
     - name: KAR_SIDECAR_IN_CONTAINER
       value: "true"
     - name: REEFER_FLEET_SIZE

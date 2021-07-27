@@ -16,17 +16,17 @@
 
 package com.ibm.research.kar.reefer.common;
 
+import com.ibm.research.kar.reefer.actors.ReeferActor;
+
 import javax.json.JsonObject;
 import javax.json.JsonValue;
-
-import com.ibm.research.kar.reefer.actors.ReeferActor.ReeferAllocationStatus;
 
 public class SimpleReeferState implements ReeferState {
     private boolean alreadyAllocated;
     private String id;
     private int maxCapacity;
     private int remainingCapacity;
-    private ReeferAllocationStatus allocationStatus;
+    private ReeferActor.ReeferAllocationStatus allocationStatus;
     private String voyageId;
 
     SimpleReeferState(JsonValue state) {
@@ -35,21 +35,21 @@ public class SimpleReeferState implements ReeferState {
         maxCapacity = reeferState.getInt(ReeferState.MAX_CAPACITY_KEY);
         remainingCapacity = reeferState.getInt(ReeferState.REMAINING_CAPACITY_KEY);
         voyageId = reeferState.getString(ReeferState.VOYAGE_ID_KEY);
-        allocationStatus = ReeferAllocationStatus.valueOf(reeferState.getString(ReeferState.ALLOCATION_STATUS_KEY));
+        allocationStatus = ReeferActor.ReeferAllocationStatus.valueOf(reeferState.getString(ReeferState.ALLOCATION_STATUS_KEY));
     }
     SimpleReeferState(String reeferId, int maxCapacity, String voyageId) {
         this.id = reeferId;
         this.maxCapacity = this.remainingCapacity = maxCapacity;
         this.voyageId = voyageId;
-        allocationStatus = ReeferAllocationStatus.EMPTY;
+        allocationStatus = ReeferActor.ReeferAllocationStatus.EMPTY;
     }
     @Override
     public boolean alreadyAllocated() {
-        return getAllocationStatus().equals(ReeferAllocationStatus.ALLOCATED);
+        return getAllocationStatus().equals(ReeferActor.ReeferAllocationStatus.ALLOCATED);
     }
 
     @Override
-    public ReeferAllocationStatus getAllocationStatus() {
+    public ReeferActor.ReeferAllocationStatus getAllocationStatus() {
 
         return allocationStatus;
     }
@@ -78,7 +78,7 @@ public class SimpleReeferState implements ReeferState {
 
     @Override
     public boolean partiallyAllocatedToAnotherVoyage(String voyageId) {
-       return !getAllocationStatus().equals(ReeferAllocationStatus.EMPTY) && !getVoyageId().equals(voyageId);
+       return !getAllocationStatus().equals(ReeferActor.ReeferAllocationStatus.EMPTY) && !getVoyageId().equals(voyageId);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class SimpleReeferState implements ReeferState {
     }
 
     @Override
-    public void setAllocationStatus(ReeferAllocationStatus allocationStatus) {
+    public void setAllocationStatus(ReeferActor.ReeferAllocationStatus allocationStatus) {
         this.allocationStatus = allocationStatus;
 
     }

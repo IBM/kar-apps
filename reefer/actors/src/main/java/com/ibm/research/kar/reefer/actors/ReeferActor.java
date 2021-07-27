@@ -181,7 +181,7 @@ public class ReeferActor extends BaseActor {
      * @return
      */
     private JsonObject notifyOrderOfSpoilage(String orderId) {
-        ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, orderId);
+        ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorType, orderId);
         JsonObject params = Json.createObjectBuilder().add("reeferId", getId()).build();
         return Kar.Actors.call(orderActor, "anomaly", params).asJsonObject();
     }

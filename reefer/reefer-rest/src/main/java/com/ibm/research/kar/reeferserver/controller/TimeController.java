@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 @CrossOrigin("*")
 public class TimeController {
 
-    private ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+    private ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
     private static final Logger logger = Logger.getLogger(TimeController.class.getName());
 
     @PostMapping("/time/startDate")

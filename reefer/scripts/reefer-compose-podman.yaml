@@ -96,7 +96,7 @@ services:
       REDIS_HOST:     redis
       REDIS_PORT:     31379
       REDIS_PASSWORD: passw0rd
-      KAR_EXTRA_ARGS: -actors order,reefer,voyage,reefer-provisioner
+      KAR_EXTRA_ARGS: -actors order,voyage,depot
     depends_on:
       - "kafka"
       - "redis"

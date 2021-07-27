@@ -128,11 +128,11 @@ public class AnomalyManagerActor extends BaseActor {
                 ActorRef targetActor;
                 switch (target.getInt(Constants.TARGET_TYPE_KEY)) {
                     case 1:
-                        targetActor = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, target.getString(Constants.TARGET_KEY));
+                        targetActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, target.getString(Constants.TARGET_KEY));
                         Kar.Actors.tell(targetActor, "reeferAnomaly", message);
                         break;
                     case 2:
-                        targetActor = Kar.Actors.ref(ReeferAppConfig.OrderActorName, target.getString(Constants.TARGET_KEY));
+                        targetActor = Kar.Actors.ref(ReeferAppConfig.OrderActorType, target.getString(Constants.TARGET_KEY));
                         Kar.Actors.tell(targetActor, "reeferAnomaly", message);
                         break;
                 }

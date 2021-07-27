@@ -37,7 +37,7 @@ public class ShipScheduleController {
     @GetMapping("/routes")
     public List<Route> getRoutes() {
         try {
-            ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+            ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
             JsonValue reply = Kar.Actors.call(scheduleActor, "routes");
             JsonArray ja = reply.asJsonArray();
             List<Route> routes =

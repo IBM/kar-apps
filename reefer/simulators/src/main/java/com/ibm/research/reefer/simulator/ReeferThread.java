@@ -130,9 +130,7 @@ public class ReeferThread extends Thread {
                     for (int i = 0; i < anomaliesPerUpdate; i++) {
                         if (anomaliesDoneToday < reefersToBreak) {
                             int reeferid = r2b[anomaliesDoneToday++];
-                            // ActorRef reeferProvisionerActor = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName,
-                            //       ReeferAppConfig.ReeferProvisionerId);
-                            ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorName,
+                            ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType,
                                     ReeferAppConfig.AnomalyManagerId);
                             JsonObject params = Json.createObjectBuilder()
                                     .add(Constants.REEFER_ID_KEY, reeferid)

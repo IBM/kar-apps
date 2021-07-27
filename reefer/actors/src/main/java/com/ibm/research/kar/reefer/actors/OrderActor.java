@@ -114,7 +114,7 @@ public class OrderActor extends BaseActor {
     }
 
     private void messageOrderManager(String methodToCall) {
-        ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
+        ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
         Kar.Actors.tell(orderActor, methodToCall, order.getAsJsonObject());
     }
 
@@ -190,7 +190,7 @@ public class OrderActor extends BaseActor {
         if (!order.isSpoilt()) {
             order.setSpoilt(true);
             JsonObject jo = order.getAsJsonObject();
-            ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorName, ReeferAppConfig.OrderManagerId);
+            ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
             Kar.Actors.call(orderManagerActor, "orderSpoilt", jo);
             Kar.Actors.State.set(this, Constants.ORDER_KEY, jo);
         }
@@ -202,7 +202,7 @@ public class OrderActor extends BaseActor {
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add(Constants.REEFER_ID_KEY, spoiltReeferId).add(Constants.ORDER_KEY, order.getAsJsonObject());
 
-        ActorRef voyageRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, order.getVoyageId());
+        ActorRef voyageRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId());
         Kar.Actors.tell(voyageRef, "reeferSpoilt", job.build());//.asJsonObject();
     }
 
@@ -219,14 +219,14 @@ public class OrderActor extends BaseActor {
         }
         System.out.println(String.format("OrderActor.requestReplacementReefer() ------------------------------ orderId: %s requesting replacement for %s",
                 getId(), spoiltReeferId));
-        ActorRef scheduleManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorName, ReeferAppConfig.ScheduleManagerId);
+        ActorRef scheduleManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
         JsonValue currentDate = Kar.Actors.call(scheduleManager, "currentDate");
 
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add(Constants.DATE_KEY, currentDate).
                 add(Constants.SPOILT_REEFER_KEY, spoiltReeferId);
 
-        ActorRef depot = Kar.Actors.ref(ReeferAppConfig.ReeferProvisionerActorName, order.getDepot());
+        ActorRef depot = Kar.Actors.ref(ReeferAppConfig.DepotActorType, order.getDepot());
         JsonObject reply = Kar.Actors.call(depot, "reeferReplacement", job.build()).asJsonObject();
         if (reply.getString(Constants.STATUS_KEY).equals(Constants.FAILED)) {
             logger.warning("OrderActor.requestReplacementReefer() - orderId: " + getId()
@@ -245,11 +245,12 @@ public class OrderActor extends BaseActor {
         job.add(Constants.REEFER_ID_KEY, String.valueOf(replacementReeferId)).
                 add(Constants.SPOILT_REEFER_KEY, String.valueOf(spoiltReeferId)).
                 add(Constants.ORDER_ID_KEY, order.getId());
-        ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, order.getVoyageId());
+        ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId());
         Kar.Actors.call(voyageActorRef, "replaceReefer", voyageMessageBuilder.build());
     }
 
     private void saveOrderStatusChange(OrderStatus state) {
+
         order.setStatus(state.name());
         Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
     }
@@ -261,7 +262,7 @@ public class OrderActor extends BaseActor {
      * @return The voyage booking result
      */
     private JsonObject bookVoyage(Order order) {
-        ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, order.getVoyageId());
+        ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId());
         return Kar.Actors.call(voyageActor, "reserve", order.getAsJsonObject()).asJsonObject();
     }
 

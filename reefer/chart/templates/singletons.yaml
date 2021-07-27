@@ -31,7 +31,7 @@ spec:
         name: reefer-singletons
       annotations:
         kar.ibm.com/app: reefer
-        kar.ibm.com/actors: reefer-provisioner,order-manager,schedule-manager
+        kar.ibm.com/actors: reefer-depot,depot-manager,anomaly-manager,order-manager,schedule-manager
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.actors.port | quote }}
         kar.ibm.com/extraArgs: -actor_collector_interval,24h

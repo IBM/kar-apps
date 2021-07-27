@@ -76,7 +76,7 @@ public class ScheduleManagerActor extends BaseActor {
         List<Voyage> activeVoyages = schedule.getActiveSchedule();
         for (Voyage voyage : activeVoyages) {
             try {
-                ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, voyage.getId());
+                ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, voyage.getId());
                 JsonValue voyageSpoiltMetrics = Kar.Actors.State.get(voyageActorRef, Constants.TOTAL_SPOILT_KEY);
                 if (voyageSpoiltMetrics != null && voyageSpoiltMetrics != JsonValue.NULL) {
                     totalSpoiltReeferCount += ((JsonNumber) voyageSpoiltMetrics).intValue();
@@ -161,7 +161,7 @@ public class ScheduleManagerActor extends BaseActor {
     }
 
     private Optional<JsonObject> recoverVoyage(String voyageId) {
-        ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorName, voyageId);
+        ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, voyageId);
         JsonValue jv = Kar.Actors.State.get(voyageActorRef, Constants.VOYAGE_INFO_KEY);
         if (jv == null || jv == JsonValue.NULL) {
             return Optional.empty();
@@ -202,7 +202,7 @@ public class ScheduleManagerActor extends BaseActor {
             JsonObject message = Json.createObjectBuilder().add(Constants.DATE_KEY, Json.createValue(today.toString()))
                     .build();
             // Reefers on maintenance are freed automatically after a configurable number of days passes.
-            ActorRef depotManagerActor = Kar.Actors.ref(ReeferAppConfig.DepotManagerActorName, ReeferAppConfig.DepotManagerId);
+            ActorRef depotManagerActor = Kar.Actors.ref(ReeferAppConfig.DepotManagerActorType, ReeferAppConfig.DepotManagerId);
             Kar.Actors.tell(depotManagerActor, "newDay", message);
 
         } catch (Exception e) {

@@ -410,7 +410,7 @@ public class DepotActor extends BaseActor {
             }
             // allocate enough reefers to cary products in the order
             List<ReeferDTO> orderReefers = ReeferAllocator.allocateReefers(reeferMasterInventory, order.getProductQty(),
-                    order.getId(), order.getVoyageId());
+                    order.getId(), order.getVoyageId(), ((JsonNumber) currentInventorySize).intValue());
             // create order to reefers mapping for in-memory cache to reduce latency
             Set<String> rids = orderReefers.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
             currentInventorySize = Json.createValue(((JsonNumber) currentInventorySize).intValue() - rids.size());
@@ -431,13 +431,23 @@ public class DepotActor extends BaseActor {
 
         } catch (Throwable e) {
 
-            int actual = 0;
+            int actual = 0, bad = 0;
             for (int i = 0; i < reeferMasterInventory.length; i++) {
-                if (reeferMasterInventory[i] != null && reeferMasterInventory[i].getState().equals(ReeferState.State.UNALLOCATED)) {
-                    actual++;
+                if (reeferMasterInventory[i] != null ) {
+                    if (  reeferMasterInventory[i].getState().equals(ReeferState.State.UNALLOCATED) ) {
+                        actual++;
+                    } else if (  reeferMasterInventory[i].getState().equals(ReeferState.State.MAINTENANCE) ) {
+                        bad++;
+                    }
+
                 }
             }
-            logger.log(Level.WARNING, "DepotActor.bookReefers() FAILED !!!!!!!!!!!!!!! - Depot:" + getId() + " current Inventory:" + ((JsonNumber) currentInventorySize).intValue() + " - Actual Available Reefer Count:" + actual + " Order reefers:" + order.getProductQty() / 1000 + " Error ", e);
+            logger.log(Level.WARNING, "DepotActor.bookReefers() FAILED !!!!!!!!!!!!!!! - Depot:" + getId() +
+                    " current Inventory:" + ((JsonNumber) currentInventorySize).intValue() +
+                    " - Actual Available Reefer Count:" + actual +
+                    " - Currently onMaintenance:" + bad +
+                    " - Total available (avail + maintenance):"+(actual+bad) +
+                    " Order reefers:" + order.getProductQty() / 1000 + " Error ", e);
             return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                     .add(Constants.ORDER_ID_KEY, "").build();
         }
@@ -597,7 +607,7 @@ public class DepotActor extends BaseActor {
         ReeferDTO reefer = reeferMasterInventory[reeferId];
 
         List<ReeferDTO> replacementReeferList = ReeferAllocator.allocateReefers(reeferMasterInventory,
-                Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId());
+                Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId(), ((JsonNumber) currentInventorySize).intValue());
         if (replacementReeferList.isEmpty()) {
             logger.log(Level.WARNING, "DepotActor.reeferReplacement() - Unable to allocate replacement reefer for " + reeferId);
             throw new RuntimeException("Unable to allocate replacement reefer for " + reeferId);

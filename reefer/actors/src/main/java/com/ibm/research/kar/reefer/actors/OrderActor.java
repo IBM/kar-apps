@@ -114,8 +114,8 @@ public class OrderActor extends BaseActor {
     }
 
     private void messageOrderManager(String methodToCall) {
-        ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
-        Kar.Actors.tell(orderActor, methodToCall, order.getAsJsonObject());
+        ActorRef orderMgrActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
+        Kar.Actors.tell(orderMgrActor, methodToCall, order.getAsJsonObject());
     }
 
     /**

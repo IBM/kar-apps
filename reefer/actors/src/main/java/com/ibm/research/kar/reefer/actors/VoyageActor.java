@@ -228,8 +228,8 @@ public class VoyageActor extends BaseActor {
             if (reply.success()) {
                 //System.out.println("VoyageActor.reserve() - depot booking reply:"+booking);
                 save(reply, order, booking);
-                ActorRef orderActorManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-                Kar.Actors.tell(orderActorManager, "updateVoyage", VoyageJsonSerializer.serialize(voyage));
+                ActorRef scheduleManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
+                Kar.Actors.tell(scheduleManager, "updateVoyage", VoyageJsonSerializer.serialize(voyage));
                 return buildResponse(order, voyage.getRoute().getVessel().getFreeCapacity());
             }
             // return failure
@@ -276,6 +276,7 @@ public class VoyageActor extends BaseActor {
 
     @Remote
     public void replaceReefer(JsonObject message) {
+        System.out.println("VoyageActor.replaceReefer() - <<<<<<<<<<<<<<<<<<<<<<<<<<<< message:"+message);
         String reeferId = message.getString(Constants.REEFER_ID_KEY);
         String spoiltReeferId = message.getString(Constants.SPOILT_REEFER_KEY);
         String orderId = message.getString(Constants.ORDER_ID_KEY);

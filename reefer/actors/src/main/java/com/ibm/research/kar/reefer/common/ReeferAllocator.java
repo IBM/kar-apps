@@ -91,10 +91,20 @@ public class ReeferAllocator {
         return reefers;
     }
 
-    public static List<ReeferDTO> allocateReefers( ReeferDTO[] reeferInventory, int productQuantity, String orderId, String voyageId) {
+    public static List<ReeferDTO> allocateReefers( ReeferDTO[] reeferInventory, int productQuantity, String orderId, String voyageId, int availableReeferCount) {
         List<ReeferDTO>  reefers = new ArrayList<>();
         // simple calculation for how many reefers are needed for the order. 
         int howManyReefersNeeded = Double.valueOf(Math.ceil(productQuantity/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
+        if ( availableReeferCount <= 0 ) {
+            System.out.println("ReeferAllocator.allocateReefers - inventory completely depleted of reefers - returning empty list");
+            return reefers;
+        }
+        if ( howManyReefersNeeded > availableReeferCount ) {
+            System.out.println("ReeferAllocator.allocateReefers - not enough reefers in inventory to fill the order "+
+                    " - reducing needed reefers from " + howManyReefersNeeded + " to available:" + availableReeferCount);
+            howManyReefersNeeded = availableReeferCount;
+        }
+
         try {
             StringBuilder sb = new StringBuilder();
             while(howManyReefersNeeded-- > 0 ) {
@@ -107,8 +117,6 @@ public class ReeferAllocator {
                 //System.out.println("+++++++++++++++++++++ ReeferId:"+index+" Added to order:"+orderId);
             }
         } catch(ReeferInventoryExhaustedException e) {
-
-            System.out.println("+++++++++++++++++++++ Reefer Inventory Size:"+reeferInventory.length);
             e.printStackTrace();
         }
  

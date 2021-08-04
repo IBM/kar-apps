@@ -81,25 +81,11 @@ spec:
       privileged: false
       readOnlyRootFilesystem: false
       seLinuxOptions: {}
-######### expose ports for application and external kar cli
-    ports:
-    - containerPort: 9080
-      hostPort: 9080
-      protocol: TCP
-    - containerPort: 9088
-      hostPort: 9088
-      protocol: TCP
-    - containerPort: 31093
-      hostPort: 31093
-      protocol: TCP
-    - containerPort: 31379
-      hostPort: 31379
-      protocol: TCP
 ### Simulators
   - command:
     - /bin/bash
     - -c
-    - sleep 15 && /kar/bin/runner
+    - sleep 20 && /kar/bin/runner
     env:
     - name: PATH
       value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -159,7 +145,7 @@ spec:
   - command:
     - /bin/bash
     - -c
-    - sleep 15 && /kar/bin/runner
+    - sleep 20 && /kar/bin/runner
     env:
     - name: PATH
       value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -196,7 +182,7 @@ spec:
   - command:
     - /bin/sh
     - -c
-    - sleep 15 && /kar/bin/runner
+    - sleep 20 && /kar/bin/runner
     env:
     - name: MAIN
       value: monitor.js
@@ -241,7 +227,7 @@ spec:
   - command:
     - /bin/bash
     - -c
-    - sleep 15 && /kar/bin/runner
+    - sleep 20 && /kar/bin/runner
     env:
     - name: PATH
       value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -260,7 +246,7 @@ spec:
     - name: KAFKA_VERSION
       value: 2.4.0
     - name: KAR_EXTRA_ARGS
-      value: -actors order,reefer,voyage
+      value: -app_port 8080 -actors order,reefer,voyage
     - name: KAR_SIDECAR_IN_CONTAINER
       value: "true"
     - name: HOSTNAME
@@ -278,7 +264,7 @@ spec:
   - command:
     - /bin/bash
     - -c
-    - sleep 15 && /kar/bin/runner
+    - sleep 20 && /kar/bin/runner
     env:
     - name: PATH
       value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -297,11 +283,11 @@ spec:
     - name: KAFKA_VERSION
       value: 2.4.0
     - name: KAR_EXTRA_ARGS
-      value: -actors reefer-depot,depot-manager,anomaly-manager,schedule-manager,order-manager -actor_collector_interval 24h
+      value: -app_port 8082 -actors reefer-depot,depot-manager,anomaly-manager,schedule-manager,order-manager -actor_collector_interval 24h
     - name: KAR_SIDECAR_IN_CONTAINER
       value: "true"
     - name: REEFER_FLEET_SIZE
-      value: 25
+      value: 20
     - name: HOSTNAME
     image: $IMAGE_PREFIX/kar-app-reefer-actors:latest
     name: singletons
@@ -312,5 +298,20 @@ spec:
       privileged: false
       readOnlyRootFilesystem: false
       seLinuxOptions: {}
+######### expose ports for application and external kar cli
+    ports:
+    - containerPort: 9080
+      hostPort: 9080
+      protocol: TCP
+    - containerPort: 9088
+      hostPort: 9088
+      protocol: TCP
+    - containerPort: 31093
+      hostPort: 31093
+      protocol: TCP
+    - containerPort: 31379
+      hostPort: 31379
+      protocol: TCP
     workingDir: /
+  restartPolicy: Never
 

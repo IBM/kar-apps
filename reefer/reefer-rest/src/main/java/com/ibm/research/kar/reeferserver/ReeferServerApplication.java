@@ -28,7 +28,7 @@ import javax.annotation.PostConstruct;
 
 @EnableAutoConfiguration
 @EnableScheduling
-@ComponentScan("com.ibm.research.kar")
+@ComponentScan("com.ibm.research.kar.liberty")
 @EntityScan("com.ibm.research.kar.reefer.model.*")
 @SpringBootApplication
 public class ReeferServerApplication {

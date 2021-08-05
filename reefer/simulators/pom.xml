@@ -38,12 +38,12 @@
 		<!-- KAR SDK -->
 		<dependency>
 			<groupId>com.ibm.research.kar</groupId>
-			<artifactId>kar-rest-client</artifactId>
+			<artifactId>kar-runtime-core</artifactId>
 			<version>${version.kar-java-sdk}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.ibm.research.kar</groupId>
-			<artifactId>kar-actor-runtime</artifactId>
+			<artifactId>kar-runtime-liberty</artifactId>
 			<version>${version.kar-java-sdk}</version>
 		</dependency>
 		<dependency>

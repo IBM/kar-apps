@@ -94,6 +94,8 @@ public class OrderManagerActor extends BaseActor {
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
+        } finally {
+           // System.out.println("OrderManagerActor.orderBooked - ----------------------------- activeOrders map size: "+activeOrders.size());
         }
     }
 

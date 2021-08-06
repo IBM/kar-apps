@@ -95,14 +95,21 @@ public class ReeferAllocator {
         List<ReeferDTO>  reefers = new ArrayList<>();
         // simple calculation for how many reefers are needed for the order. 
         int howManyReefersNeeded = Double.valueOf(Math.ceil(productQuantity/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
+        /*
         if ( availableReeferCount <= 0 ) {
             System.out.println("ReeferAllocator.allocateReefers - inventory completely depleted of reefers - returning empty list");
             return reefers;
         }
+
+         */
+
+        // REJECT instead
         if ( howManyReefersNeeded > availableReeferCount ) {
             System.out.println("ReeferAllocator.allocateReefers - not enough reefers in inventory to fill the order "+
-                    " - reducing needed reefers from " + howManyReefersNeeded + " to available:" + availableReeferCount);
-            howManyReefersNeeded = availableReeferCount;
+                    " - rejecting request - available reefers:" + availableReeferCount);
+            //howManyReefersNeeded = availableReeferCount;
+            return reefers;
+
         }
 
         try {

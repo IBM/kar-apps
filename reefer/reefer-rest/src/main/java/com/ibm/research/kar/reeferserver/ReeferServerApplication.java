@@ -25,6 +25,11 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.annotation.PostConstruct;
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import java.util.stream.Collectors;
 
 @EnableAutoConfiguration
 @EnableScheduling
@@ -39,5 +44,4 @@ public class ReeferServerApplication {
     @PostConstruct
     public void init() {
     }
-
 }

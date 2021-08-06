@@ -27,25 +27,23 @@ import javax.json.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 @Actor
 public class AnomalyManagerActor extends BaseActor {
-    private Map<String, JsonValue> reefersMap = null;
-
+    private Map<String, ReeferLocation> reefersMap = null;
+    private Map<String, JsonValue> state = null;
     @Activate
     public void activate() {
         try {
-            //System.out.println("AnomalyManagerActor.activate() -------------------- ");
             long t1 = System.currentTimeMillis();
-            Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
-            System.out.println("AnomalyManagerActor.activate() -  fetched all state in" + (System.currentTimeMillis() - t1));
+            state = Kar.Actors.State.getAll(this);
+            System.out.println("AnomalyManagerActor.activate() -  fetched all state in " + (System.currentTimeMillis() - t1));
             if (!state.isEmpty()) {
-                if (state.containsKey(Constants.REEFER_MAP_KEY)) {
+                if (state.containsKey(Constants.REEFERS_KEY)) {
                     reefersMap = new LinkedHashMap<>();
-                    long t2 = System.currentTimeMillis();
-                    reefersMap.putAll(state.get(Constants.REEFER_MAP_KEY).asJsonObject());
-                    System.out.println("AnomalyManagerActor.activate() -  restored reefers map - size:" + reefersMap.size() + " in " + (System.currentTimeMillis() - t2));
+                    instantiateReeferTargetMap();
+                } else {
+                    System.out.println("AnomalyManagerActor.activate() - reefer-target state is not available");
                 }
             }
         } catch (Throwable t) {
@@ -54,43 +52,80 @@ public class AnomalyManagerActor extends BaseActor {
 
     }
 
+    private void instantiateReeferTargetMap() {
+        // ReeferLocation instances are restored from a stringified list where
+        // each entry is encoded as follows: <REEFERID:int>|<DEPOT NAME:string>|<TYPE:int>
+        // where TYPE[1,2] 1: Depot, 2: Order. Example:
+        // 0|NewYorkReeferDepot|1
+        String reeferTargets = ((JsonString)state.get(Constants.REEFERS_KEY)).getString();
+        if ( reeferTargets != null ) {
+            long t1 = System.currentTimeMillis();
+            String[] targets = reeferTargets.split(",");
+            for ( String target : targets ) {
+                String[] props = target.split("\\|");
+                reefersMap.put(props[0], new ReeferLocation(Integer.valueOf(props[0]), props[1], Integer.valueOf(props[2])));
+            }
+            System.out.println("AnomalyManagerActor.instantiateReeferTargetMap() - time to instantiate reeferMap from state took:"+(System.currentTimeMillis() - t1)+" size:"+reefersMap.size());
+        } else {
+            System.out.println("AnomalyManagerActor.instantiateReeferTargetMap() - reeferTargets not defined !!!!!!!!!!!!!!");
+        }
+
+    }
     @Remote
     public void depotReefers(JsonObject depotReefers) {
-        TreeMap<Integer, String> shardMap = new TreeMap<>();
-        // System.out.println("AnomalyManagerActor.depotReefers() - " + depotReefers);
+        System.out.println("AnomalyManagerActor.depotReefers() - " + depotReefers);
         long t = System.currentTimeMillis();
         try {
             JsonArray ja = depotReefers.getJsonArray(Constants.DEPOTS_KEY);
             int totalCount = depotReefers.getInt(Constants.TOTAL_REEFER_COUNT_KEY);
-            reefersMap = new LinkedHashMap<>(totalCount + 1);
+            StringBuilder sb = new StringBuilder();
+            reefersMap = new LinkedHashMap<>(totalCount );
             for (JsonValue depot : ja) {
                 long t1 = System.currentTimeMillis();
-                int lower = depot.asJsonObject().getInt("reefer-id-lower-bound");
-                int upper = depot.asJsonObject().getInt("reefer-id-upper-bound");
-                Map<String, JsonValue> updateMap =
-                        addDepotReefers(depot.asJsonObject().getString(Constants.ANOMALY_TARGET_KEY), lower, upper);
-                long t2 = System.currentTimeMillis();
-                shardMap.put(lower, depot.asJsonObject().getString(Constants.ANOMALY_TARGET_KEY));
-                Kar.Actors.State.Submap.set(this, Constants.REEFER_MAP_KEY, updateMap);
-                long t3 = System.currentTimeMillis();
-                reefersMap.putAll(updateMap);
-                System.out.println("AnomalyManagerActor.depotReefers() - depot:" + depot.asJsonObject().getString(Constants.ANOMALY_TARGET_KEY) +
-                        " gen time:" + (t2 - t1) + " save time:" + (t3 - t2) + " map put time:" + (System.currentTimeMillis() - t3) +
-                        " reefersMapSize size:" + reefersMap.size() + " update map size:" + updateMap.size() + " total time:" + (System.currentTimeMillis() - t1));
-                updateMap.clear();
+                for( JsonValue jsonShard : depot.asJsonObject().getJsonArray(Constants.SHARDS_KEY)) {
+                    int lower = jsonShard.asJsonObject().getInt("reefer-id-lower-bound");
+                    int upper = jsonShard.asJsonObject().getInt("reefer-id-upper-bound");
+                    sb.append(createReefers(depot.asJsonObject().getString(Constants.ANOMALY_TARGET_KEY), lower, upper));
+                }
             }
-            // in unlikely case reeferId is out of range, return null for target
-            shardMap.put(totalCount, null);
-            System.out.println("AnomalyManagerActor.depotReefers() - saved depot reefers - total time:" + (System.currentTimeMillis() - t));
+            long t2 = System.currentTimeMillis();
+            Kar.Actors.State.set(this, Constants.REEFERS_KEY, Json.createValue(sb.toString()));
+            System.out.println("AnomalyManagerActor.depotReefers() - saved depot reefers - total time:" + (System.currentTimeMillis() - t2) );
         } catch (Exception e) {
             e.printStackTrace();
         }
 
 
     }
+    private String createReefers(String depot, int lowerRange, int upperRange) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            long duration = 0, total = 0;
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            for (int reeferId = lowerRange; reeferId <= upperRange; reeferId++) {
+                long t2 = System.currentTimeMillis();
+                sb.append(String.valueOf(reeferId)).append("|").append(depot).append("|").append(1).append(",");
+                total += (System.currentTimeMillis() - t2);
+                reefersMap.put(String.valueOf(reeferId), new ReeferLocation(reeferId,depot, ReeferLocation.LocationType.DEPOT.getType()));
+            }
+          //  System.out.println("AnomalyManagerActor.addDepotReefers() ---------- depot:" + depot + " reefer lower range:" + lowerRange + " upper:" + upperRange + " reeferMap size:" + reefersMap.size() + " duration:" + duration + " map update took:" + total);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return sb.toString();
+    }
+    private String serializeReefers() {
+        StringBuilder sb = new StringBuilder();
 
+            for (String key : reefersMap.keySet()) {
+                ReeferLocation reeferLocation = reefersMap.get(key);
+                sb.append(reeferLocation.getId()).append("|").append(reeferLocation.getTarget()).append("|").append(reeferLocation.getTargetType()).append(",");
+            }
+            //     System.out.println("AnomalyManagerActor.addDepotReefers() ---------- depot:" + depot + " reefer lower range:" + lowerRange + " upper:" + upperRange + " reeferMap size:" + reefersMap.size() + " duration:" + duration + " map update took:" + total);
+
+        return sb.toString();
+    }
     private Map<String, JsonValue> addDepotReefers(String depot, int lowerRange, int upperRange) {
-        //    System.out.println("AnomalyManagerActor.addDepotReefers()");
         Map<String, JsonValue> updateMap = new HashMap<>(upperRange - lowerRange + 1);
         try {
             long duration = 0, total = 0;
@@ -117,24 +152,41 @@ public class AnomalyManagerActor extends BaseActor {
         return job.build();
     }
 
+
     @Remote
     public void reeferAnomaly(JsonObject message) {
         try {
             String reeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
             if (reefersMap.containsKey(reeferId)) {
-                JsonObject target = reefersMap.get(reeferId).asJsonObject();
-                //    System.out.println("AnomalyManagerActor.reeferAnomaly() - ANOMALY :::::::: ID:" + reeferId +
-                //            " TARGET >>>>>>>> " + target.getString(Constants.TARGET_KEY) + " SHARD:" +shardMap.floorEntry(Integer.valueOf(reeferId))+" TARGET TYPE:" + target.getInt(Constants.TARGET_TYPE_KEY));
+                ReeferLocation target = reefersMap.get(reeferId);
                 ActorRef targetActor;
-                switch (target.getInt(Constants.TARGET_TYPE_KEY)) {
-                    case 1:
-                        targetActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, target.getString(Constants.TARGET_KEY));
+                boolean departedFromDepot=false;
+                if ( message.containsKey(Constants.DEPOT_KEY)) {
+                    departedFromDepot = true;
+                    System.out.println("AnomalyManagerActor.reeferAnomaly() --------------------------- forwarding anomaly from depot:"+
+                                message.getString(Constants.DEPOT_KEY)+" to target:"+target.getTarget());
+                }
+                switch (target.getTargetType()) {
+                    case 1:  // Depot type
+                        if ( departedFromDepot && target.getTarget().equals(message.getString(Constants.DEPOT_KEY))) {
+                            // the anomaly was kicked back from depot
+                            break;
+                        }
+                        targetActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, target.getTarget());
                         Kar.Actors.tell(targetActor, "reeferAnomaly", message);
                         break;
-                    case 2:
-                        targetActor = Kar.Actors.ref(ReeferAppConfig.OrderActorType, target.getString(Constants.TARGET_KEY));
+                    case 2:  // Order type
+                        targetActor = Kar.Actors.ref(ReeferAppConfig.OrderActorType, target.getTarget());
                         Kar.Actors.tell(targetActor, "reeferAnomaly", message);
+                        if ( departedFromDepot ) {
+                            System.out.println("AnomalyManagerActor.reeferAnomaly() --------------------------- forwarded anomaly from depot:"+
+                                    message.getString(Constants.DEPOT_KEY)+" to order:"+target.getTarget());
+                        }
+
                         break;
+                    default:
+                        System.out.println("AnomalyManagerActor.reeferAnomaly() --------------------------- reeferId:"+ reeferId
+                               + " unknown target type:"+target.getTargetType());
                 }
             } else {
                 System.out.println("AnomalyManagerActor.reeferAnomaly() - !!!!!!!!!!! reeferId:" + reeferId + " Not Found in inventory");
@@ -147,21 +199,21 @@ public class AnomalyManagerActor extends BaseActor {
 
     @Remote
     public void voyageDeparted(JsonObject message) {
-        int count = update(message);
+        update(message);
         //  System.out.println("AnomalyManagerActor.voyageDeparted() - updated targets for " + count + " reefers");
     }
 
     @Remote
     public void voyageArrived(JsonObject message) {
-        int count = update(message);
+        update(message);
         // System.out.println("AnomalyManagerActor.voyageArrived() - updated targets for " + count + " reefers");
     }
 
-    private int update(JsonObject message) {
-        Map<String, JsonValue> updateMap = new HashMap<>();
+    private void update(JsonObject message) {
         try {
+            long t = System.currentTimeMillis();
             JsonArray ja = message.getJsonArray(Constants.TARGETS_KEY);
-            ja.forEach(target -> {
+            for (JsonValue target : ja ) {
                 String anomalyTarget = target.asJsonObject().getJsonString(Constants.ANOMALY_TARGET_KEY).getString();
                 int targetType = target.asJsonObject().getInt(Constants.ANOMALY_TARGET_TYPE_KEY);
                 String reeferIds = target.asJsonObject().getJsonString(Constants.REEFERS_KEY).getString();
@@ -169,21 +221,22 @@ public class AnomalyManagerActor extends BaseActor {
                 //      System.out.println("AnomalyManagerActor.update() - "+rids.length+" reefers to update - target:"+anomalyTarget);
                 JsonObjectBuilder job = Json.createObjectBuilder();
                 for (String reeferId : rids) {
-                    JsonObject targetObject = reeferTarget(String.valueOf(reeferId), anomalyTarget, targetType, job);
-                    updateMap.put(reeferId, targetObject);
                     if (reefersMap.containsKey(reeferId)) {
-                        reefersMap.put(reeferId, targetObject);
+                        ReeferLocation targetLocation = reefersMap.get(reeferId);
+                        targetLocation.setTarget(anomalyTarget);
+                        targetLocation.setTargetType(targetType);
                     }
                 }
-                //Kar.Actors.State.Submap.set(this, Constants.REEFER_MAP_KEY, updateMap);
-                // updateMap.clear();
-            });
-            Kar.Actors.State.Submap.set(this, Constants.REEFER_MAP_KEY, updateMap);
+            }
+            String serializedReeferTargets = serializeReefers();
+            Kar.Actors.State.set(this, Constants.REEFERS_KEY, Json.createValue(serializedReeferTargets));
+
+       //     System.out.println("AnomalyManagerActor.update() - redis save took "+(System.currentTimeMillis() - t) + " "+ reeferUpdatedCount +" reefers changed location" );
         } catch (Exception e) {
             System.out.println("AnomalyManagerActor.update() - Error:" + e.getMessage());
             e.printStackTrace();
         }
-        return updateMap.size();
+
     }
 
     @Remote

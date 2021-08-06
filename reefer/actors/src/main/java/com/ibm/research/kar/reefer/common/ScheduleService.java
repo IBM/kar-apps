@@ -39,7 +39,7 @@ public class ScheduleService {
     private ShippingScheduler scheduler;
 
     private Set<Voyage> masterSchedule = new TreeSet<>();
-    SortedSet<Voyage> schedule = null;
+    //SortedSet<Voyage> schedule = null;
     private List<Route> routes = new ArrayList<>();
     private static final Logger logger = Logger.getLogger(ScheduleService.class.getName());
 
@@ -237,6 +237,8 @@ public class ScheduleService {
      * and have not yet arrived or have arrived and are being unloaded
      */
     public List<Voyage> getActiveSchedule() {
+
+      //  System.out.println("ScheduleService.getActiveSchedule - :::::::::::::::::::::::: masterSchedule size:"+masterSchedule.size());
         return getActiveSchedule(TimeUtils.getInstance().getCurrentDate());
     }
 

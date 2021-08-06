@@ -23,6 +23,7 @@ import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.FleetCapacity;
+import com.ibm.research.kar.reefer.common.Shard;
 import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.model.Route;
 
@@ -47,12 +48,129 @@ public class DepotManagerActor extends BaseActor {
 
         if (state.isEmpty()) {
             ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
+            JsonValue routes = Kar.Actors.call(scheduleActor, "routes");
+            int inx = 0;
+            // Using a route, calculate each depot total size and sum up total inventory.
+            StringBuilder sb = new StringBuilder();
+            for( JsonValue jsonRoute : routes.asJsonArray() ) {
+                Route route = RouteJsonSerializer.deserialize(jsonRoute.asJsonObject());
+                sb.append("Ship:").append(route.getVessel().getId()).append(" origin:").
+                        append(route.getOriginPort()).append(" destination:").
+                        append(route.getDestinationPort()).append(" capacity:").append(route.getVessel().getMaxCapacity()).append("\n");
+
+               // int shardSize = assignShardToDepot(route.getOriginPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
+
+                // a Shard is a continuous range of reefer ids. Each depot may have 1 or more
+                // shards. If a depot "serves" say two voyages there will be two distinct shards
+                // each with a unique range of reefer ids.
+                inx += assignShardToDepot(route.getOriginPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
+                /*
+                // a depot can be in multiple voyages so either create new or fetch existing
+                Depot origin = getDepot(route.getOriginPort());
+                // multiply ship capacity by a factor to pad inventory
+                long paddedSize = FleetCapacity.totalSize(route.getVessel().getMaxCapacity());
+                // a Shard is a continuous range of reefer ids. Each depot may have 1 or more
+                // shards. If a depot "serves" say two voyages there will be two distinct shards
+                // each with a unique range of reefer ids.
+                Shard originShard = new Shard(inx, inx + (paddedSize-1));
+                origin.addShard(originShard);
+                  inx += paddedSize;
+                 */
+               // inx += shardSize;
+
+
+//                totalInventorySize += paddedSize;
+              //  totalInventorySize += shardSize;
+
+             //   System.out.println("DepotManager.activate() - Origin Depot:"+origin.getId()+" size:"+origin.getSize()+" ship:"+route.getVessel().getId()+
+            //            " shard low:"+originShard.getLowerBound()+" shard up:"+originShard.getUpperBound());
+                //shardSize = assignShardToDepot(route.getDestinationPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
+                inx += assignShardToDepot(route.getDestinationPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
+              //  inx += shardSize;
+/*
+                Depot destination = getDepot(route.getDestinationPort());
+                Shard destinationShard = new Shard(inx, inx + (paddedSize-1));
+                destination.addShard(destinationShard);
+                inx += paddedSize;
+
+ */
+               // totalInventorySize += paddedSize;
+              //  totalInventorySize += shardSize;
+          //      System.out.println("DepotManager.activate() - Destination Depot:"+destination.getId()+" size:"+destination.getSize()+" ship:"+route.getVessel().getId()+
+          //              " shard low:"+destinationShard.getLowerBound()+" shard up:"+destinationShard.getUpperBound());
+            }
+            totalInventorySize = inx;
+            System.out.println("DepotManager.activate() -Routes:\n"+sb.toString());
+            JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+            Map<String, JsonValue> depotMap = new HashMap<>();
+            JsonObjectBuilder mapJob = Json.createObjectBuilder();
+
+            // Create a map of serialized depots which we can save as actor state.
+            for (Depot depot : depots) {
+                // serialize depot to Json using given JsonObjectBuilder. The
+                // build() clears the state of the builder so we can reuse it.
+                depot.serialize(mapJob);
+                depotMap.put(depot.getId(), mapJob.build());
+
+                JsonObjectBuilder job = Json.createObjectBuilder();
+                depot.serialize( job);
+                arrayBuilder.add(job);
+            }
+
+            Kar.Actors.State.Submap.set(this, Constants.DEPOTS_KEY, depotMap);
+            Kar.Actors.State.set(this, Constants.TOTAL_REEFER_COUNT_KEY, Json.createValue(totalInventorySize));
+
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            job.add(Constants.TOTAL_REEFER_COUNT_KEY, totalInventorySize).add(Constants.DEPOTS_KEY, arrayBuilder);
+            ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
+            Kar.Actors.tell(anomalyManagerActor, "depotReefers", job.build());
+
+        } else {
+
+            try {
+                totalInventorySize = ((JsonNumber) state.get(Constants.TOTAL_REEFER_COUNT_KEY)).intValue();
+                Map<String, JsonValue> depotMap = state.get(Constants.DEPOTS_KEY).asJsonObject();
+                for (JsonValue jv : depotMap.values()) {
+                    depots.add(deserializeDepot(jv.asJsonObject()));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(5));
+    }
+
+    private int assignShardToDepot(String depotName, String shipName, int shipMaxCapacity, int beginRange) {
+        // a depot can be in multiple voyages so either create new or fetch existing
+        Depot depot = getDepot(depotName);
+        // multiply ship capacity by a factor to pad inventory
+        long paddedSize = FleetCapacity.totalSize(shipMaxCapacity);
+        // a Shard is a continuous range of reefer ids. Each depot may have 1 or more
+        // shards. If a depot "serves" say two voyages there will be two distinct shards
+        // each with a unique range of reefer ids.
+        Shard shard = new Shard(beginRange, beginRange + (paddedSize-1));
+        depot.addShard(shard);
+        System.out.println("DepotManager.assignShardToDepot() - Depot:"+depot.getId()+" size:"+depot.getSize()+" ship:"+shipName+
+                " shard low:"+shard.getLowerBound()+" shard up:"+shard.getUpperBound());
+
+        return Long.valueOf(paddedSize).intValue();
+    }
+
+/*
+    public void activate() {
+        // fetch actor state from Kar storage
+        Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
+
+        if (state.isEmpty()) {
+            ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
             JsonValue reply = Kar.Actors.call(scheduleActor, "routes");
             reply.asJsonArray().stream().forEach(jsonRoute -> {
                 Route route = RouteJsonSerializer.deserialize(jsonRoute.asJsonObject());
-                // the origin and destination must have same reefer inventory size to hash reefers consistently
+
                 Depot origin = getDepot(route.getOriginPort(), route.getVessel().getMaxCapacity());
                 Depot destination = getDepot(route.getDestinationPort(), route.getVessel().getMaxCapacity());
+
+
                 long maxSize = Math.max(origin.size + route.getVessel().getMaxCapacity(), destination.size + route.getVessel().getMaxCapacity());
                 origin.setSize(maxSize);
                 destination.setSize(maxSize);
@@ -99,16 +217,30 @@ public class DepotManagerActor extends BaseActor {
         Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(5));
     }
 
+
     private void serializeDepot(Depot depot, JsonObjectBuilder job) {
         job.add(Constants.ANOMALY_TARGET_KEY, depot.getId()).
-                add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType())).
-                add("reefer-id-lower-bound", depot.getShard().getLowerBound()).
-                add("reefer-id-upper-bound", depot.getShard().getUpperBound());
+                add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType()));
+                JsonObjectBuilder builder = Json.createObjectBuilder();
+                for( Shard shard : depot.getShards()) {
+                    JsonObjectBuilder shardBuilder = Json.createObjectBuilder();
+                    shardBuilder.add("reefer-id-lower-bound", shard.getLowerBound()).
+                            add("reefer-id-upper-bound", shard.getUpperBound());
+                    builder.add("shard", shardBuilder.build());
+                }
+                job.add("shards", builder.build());
     }
+ */
 
     private Depot deserializeDepot(JsonObject jsonDepot) {
         Depot depot = new Depot(jsonDepot.getString(Constants.ANOMALY_TARGET_KEY));
-        depot.setShard(new Shard(jsonDepot.getInt("reefer-id-lower-bound"), jsonDepot.getInt("reefer-id-upper-bound")));
+
+        JsonArray ja = jsonDepot.getJsonArray(Constants.SHARDS_KEY);
+        for ( JsonValue jsonShard : ja ) {
+            Shard shard = new Shard(jsonShard.asJsonObject().getInt("reefer-id-lower-bound"),
+                    jsonShard.asJsonObject().getInt("reefer-id-upper-bound") );
+            depot.addShard(shard);
+        }
         return depot;
     }
 
@@ -118,7 +250,6 @@ public class DepotManagerActor extends BaseActor {
         String depotsCommaSeparated = depots.stream()
                 .map(depot -> depot.getId())
                 .collect(Collectors.joining(","));
-        //
         job.add(Constants.DEPOTS_KEY, depotsCommaSeparated);
         return job.build();
     }
@@ -156,7 +287,7 @@ public class DepotManagerActor extends BaseActor {
         Kar.Actors.State.set(this, Constants.REEFER_METRICS_KEY, Json.createValue(metrics));
     }
 
-    private Depot getDepot(String port, int size) {
+    private Depot getDepot(String port) {
         Depot depot = new Depot(port);
         if (!depots.contains(depot)) {
             depots.add(depot);
@@ -179,9 +310,12 @@ public class DepotManagerActor extends BaseActor {
             for (Depot depot : depots) {
                 if (depot.getId().equals(depotId)) {
                     job.add(Constants.TOTAL_REEFER_COUNT_KEY, totalInventorySize).
-                            add(Constants.DEPOT_SIZE_KEY, depot.size).
-                            add("reefer-id-lower-bound", depot.getShard().getLowerBound()).
-                            add("reefer-id-upper-bound", depot.getShard().getUpperBound());
+                            add(Constants.DEPOT_SIZE_KEY, depot.size);
+                    JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+                    for( Shard shard : depot.getShards()) {
+                        arrayBuilder.add(shard.serialize());
+                    }
+                    job.add(Constants.SHARDS_KEY, arrayBuilder.build());
                     break;
                 }
             }
@@ -194,7 +328,7 @@ public class DepotManagerActor extends BaseActor {
 
     @Remote
     public void newDay(JsonObject jsonDate) {
-        // "broadcast" to all depot new date so that on-maintenance reefers are released
+        // "broadcast" to all depots a new date so that on-maintenance reefers are released
         for (Depot depot : depots) {
             // Reefers on maintenance are freed automatically after a configurable number of days passes.
             Kar.Actors.tell(depot.depotActor, "releaseReefersFromMaintenance", jsonDate);
@@ -221,8 +355,7 @@ public class DepotManagerActor extends BaseActor {
         private final String id;
         private long size;
         private final ActorRef depotActor;
-        private Shard shard;
-
+        private List<Shard> shards = new LinkedList<>();
 
         public Depot(String port) {
             id = makeId(port);
@@ -233,15 +366,20 @@ public class DepotManagerActor extends BaseActor {
         public void setSize(long size) {
             this.size = size;
         }
-
-        public Shard getShard() {
-            return shard;
+        public long getSize() {
+            return this.size;
+        }
+        public void incrementSize(long size) {
+            this.size += size;
+        }
+        public List<Shard> getShards() {
+            return shards;
         }
 
-        public void setShard(Shard shard) {
-            this.shard = shard;
+        public void addShard(Shard shard) {
+            this.shards.add(shard);
+            incrementSize(shard.getSize() );
         }
-
         public String getId() {
             return id;
         }
@@ -256,6 +394,17 @@ public class DepotManagerActor extends BaseActor {
             }
             return port;
         }
+        private void serialize(JsonObjectBuilder job) {
+            job.add(Constants.ANOMALY_TARGET_KEY, this.getId()).
+                    add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType()));
+            JsonObjectBuilder builder = Json.createObjectBuilder();
+            JsonArrayBuilder jab = Json.createArrayBuilder();
+            for( Shard shard : this.getShards()) {
+                jab.add(shard.serialize());
+            }
+            job.add(Constants.SHARDS_KEY, jab.build());
+        }
+
 
         public long setInventorySize() {
             this.size = FleetCapacity.totalSize(this.size);
@@ -281,33 +430,7 @@ public class DepotManagerActor extends BaseActor {
                     "id='" + id + '\'' +
                     ", size=" + size +
                     ", depotActor=" + depotActor +
-                    ", shard=" + shard +
-                    '}';
-        }
-    }
-
-    private class Shard {
-        private long lowerBound;
-        private long upperBound;
-
-        public Shard(long lowerBound, long upperBound) {
-            this.lowerBound = lowerBound;
-            this.upperBound = upperBound;
-        }
-
-        public long getLowerBound() {
-            return lowerBound;
-        }
-
-        public long getUpperBound() {
-            return upperBound;
-        }
-
-        @Override
-        public String toString() {
-            return "Shard{" +
-                    "lowerBound=" + lowerBound +
-                    ", upperBound=" + upperBound +
+                    ", shards=" + shards+
                     '}';
         }
     }

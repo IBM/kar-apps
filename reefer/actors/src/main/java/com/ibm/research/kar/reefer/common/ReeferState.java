@@ -20,7 +20,7 @@ import com.ibm.research.kar.reefer.actors.ReeferActor;
 
 public interface ReeferState {
     //state = unallocated | allocated | spoilt | maintenance
-    public static enum State {ALLOCATED, UNALLOCATED, INTRANSIT, SPOILT, MAINTENANCE};
+    public static enum State {ALLOCATED, UNALLOCATED, PENDING_ARRIVAL, INTRANSIT, SPOILT, MAINTENANCE};
 
     public static final String ALLOCATION_STATUS_KEY="allocationStatus";
     public static final String REMAINING_CAPACITY_KEY = "remainingCapacity";

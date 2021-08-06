@@ -79,6 +79,8 @@ public class Constants {
    public static final int REEFER_DAYS_ON_MAINTENANCE=2;
    public static final String DEPOTS_KEY="depots";
    public static final String DEPOT_KEY="depot";
+   public static final String SHARDS_KEY="shards";
+   public static final String SHARD_KEY="shard";
    public static final String DEPOT_SIZE_KEY="depot-size";
    public static final String TARGETS_KEY="targets";
    public static final String TARGET_KEY="target";
@@ -86,7 +88,7 @@ public class Constants {
    public static final String ON_MAINTENANCE_PROVISIONER_LIST="on-maintenance-list";
    public static final String DATE_KEY="date";
    public static final String STATUS_KEY="status";
-
+   public static final String IS_ORIGIN_KEY="is-origin";
    public static final String OK="OK";
    public static final String FAILED="Failed";
    public static final String ERROR="error";

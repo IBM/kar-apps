@@ -22,8 +22,8 @@
     <!--logging consoleLogLevel="WARN" traceSpecification="*=warn:com.ibm.research.kar.reefer.*=warn" maxFileSize="40" maxFiles="20"/-->
     <logging consoleLogLevel="WARNING" traceSpecification="*=warning:com.ibm.research.kar.reefer.*=warning" maxFileSize="40" maxFiles="20"/>
 
-    <springBootApplication id="reefer-server"
-                           location="thin-reefer-server-0.0.1-SNAPSHOT.jar"
+    <springBootApplication id="reefer-kar-rest-server"
+                           location="thin-reefer-kar-rest-server-1.0.2-SNAPSHOT.jar"
                            name="reefer-server" />
 
 </server>

@@ -33,7 +33,8 @@ services:
       KAFKA_VERSION:  2.4.0
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
-      REDIS_PASSWORD: passw0rd
+      REDIS_PASSWORD: act0rstate
+      REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: -app_port 9080 -service reeferservice
   simulators:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-simulators
@@ -47,7 +48,8 @@ services:
       KAFKA_VERSION:  2.4.0
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
-      REDIS_PASSWORD: passw0rd
+      REDIS_PASSWORD: act0rstate
+      REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: -app_port 7080 -service simservice -actors simhelper
   monitor:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-monitor
@@ -61,7 +63,8 @@ services:
       KAFKA_VERSION:  2.4.0
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
-      REDIS_PASSWORD: passw0rd
+      REDIS_PASSWORD: act0rstate
+      REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: -app_port 7082
       KAR_APP_PORT:   7082
       ORDERSTATS_DELAY: ${ORDERSTATS_DELAY:-60}
@@ -80,7 +83,8 @@ services:
       KAFKA_VERSION:  2.4.0
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
-      REDIS_PASSWORD: passw0rd
+      REDIS_PASSWORD: act0rstate
+      REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: -actors order,reefer,voyage
   singletons:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-actors
@@ -95,7 +99,8 @@ services:
       KAFKA_VERSION:  2.4.0
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
-      REDIS_PASSWORD: passw0rd
+      REDIS_PASSWORD: act0rstate
+      REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: -actors schedule-manager,reefer-provisioner,order-manager -actor_collector_interval 24h
   frontend:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-frontend

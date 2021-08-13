@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
  */
 @Actor
 public class DepotActor extends BaseActor {
+    private ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
     // global array to hold reefers
     private ReeferDTO[] reeferMasterInventory = null;
 
@@ -59,6 +60,7 @@ public class DepotActor extends BaseActor {
     private JsonValue totalReeferInventory = Json.createValue(0);
     private JsonValue depotSize;
     private JsonValue currentInventorySize;
+    private  Instant currentDate = null;
     private static final Logger logger = Logger.getLogger(DepotActor.class.getName());
 
     @Activate
@@ -76,10 +78,10 @@ public class DepotActor extends BaseActor {
                     String reeferMetrics = (((JsonString) state.get(Constants.REEFER_METRICS_KEY)).getString());
                     String[] values = reeferMetrics.split(":");
                     System.out.println("DepotActor.activate() " + getId() + "............. restored metrics:" + reeferMetrics);
-                    bookedTotalCount = Integer.valueOf(values[0].trim());
-                    inTransitTotalCount = Integer.valueOf(values[1].trim());
-                    spoiltTotalCount = Integer.valueOf(values[2].trim());
-                    onMaintenanceTotalCount = Integer.valueOf(values[3].trim());
+                    bookedTotalCount = Integer.parseInt(values[0].trim());
+                    inTransitTotalCount = Integer.parseInt(values[1].trim());
+                    spoiltTotalCount = Integer.parseInt(values[2].trim());
+                    onMaintenanceTotalCount = Integer.parseInt(values[3].trim());
                     totalReeferInventory = Json.createValue(Integer.parseInt(values[4].trim()));
                     currentInventorySize = Json.createValue(Integer.parseInt(values[5].trim()));
                     depotSize = Json.createValue(Integer.parseInt(values[6].trim()));
@@ -123,7 +125,7 @@ public class DepotActor extends BaseActor {
         }
         Kar.Actors.State.set(this, Constants.DEPOT_KEY, job.build());
     }
-    private void restoreReeferInventory(Map<String, JsonValue> state) throws Exception {
+    private void restoreReeferInventory(Map<String, JsonValue> state)  {
         long t = System.currentTimeMillis();
         JsonValue jv2 = state.get(Constants.REEFER_MAP_KEY);
         Map<String, JsonValue> reeferInventory = jv2.asJsonObject();
@@ -202,25 +204,22 @@ public class DepotActor extends BaseActor {
      */
     @Remote
     public void releaseReefersFromMaintenance(JsonObject message) {
-
-       // System.out.println("DepotActor.releaseReefersFromMaintenance - ############################"+getId()+" onMaintenanceMap.size:"+onMaintenanceMap.size()+" order2ReeferMap.size:"+order2ReeferMap.size());
         try {
             if (!onMaintenanceMap.isEmpty()) {
                 // get current date. Its a date that the simulator advances at regular intervals.
-                Instant today = Instant.parse(message.getString(Constants.DATE_KEY));
-                List<String> reefers2Remove = getReefersToRemoveFromMaintenance(today);
+                currentDate = Instant.parse(message.getString(Constants.DATE_KEY));
+                List<String> reefers2Remove = getReefersToRemoveFromMaintenance(currentDate);
+                List<ReeferDTO> updateList = new LinkedList<>();
                 for (String reeferId : reefers2Remove) {
                     onMaintenanceMap.remove(Integer.parseInt(reeferId));
                     onMaintenanceTotalCount--;
+                    reeferMasterInventory[Integer.parseInt(reeferId)].reset();
+                    updateList.add(reeferMasterInventory[Integer.parseInt(reeferId)]);
                 }
-
-                Map<String, List<String>> deleteMap = new HashMap<>();
-                deleteMap.put(Constants.REEFER_MAP_KEY, reefers2Remove);
-                updateStore(deleteMap, Collections.emptyMap()); //new HashMap<String, JsonValue>());
+                updateStore( Collections.emptyMap(), reeferMap(updateList));
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "DepotActor.releaseReefersfromMaintenance() - Error ", e);
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "DepotActor.releaseReefersfromMaintenance() - Error ", e);
             throw e;
         }
 
@@ -256,7 +255,7 @@ public class DepotActor extends BaseActor {
             String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
             // idempotence check - get a list of voyage reefers that are in ALLOCATED state.
             // If kar repeats this call as part of fault tolerance (at least once contract)
-            // the list may be empty depending what happened when the process died.
+            // the list may be empty depending on what happened when the process died.
             List<ReeferDTO> voyageReefers = voyageAllocatedReefers(voyageId);
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("DepotActor.voyageReefersDeparted() " + getId() + "- message:" + message + " update reefers in transit:" + voyageReefers.size());
@@ -283,12 +282,6 @@ public class DepotActor extends BaseActor {
                     }
                     reefers.add(reefer.getId());
                 }
-                Inventory inventory = getReeferInventoryCounts();
-                currentInventorySize = Json.createValue(inventory.getTotal());
-                bookedTotalCount = inventory.getBooked();
-
-                updateStore(deleteMap(voyageReefers), Collections.emptyMap());
-
                 JsonArrayBuilder jab = Json.createArrayBuilder();
                 StringBuilder builder = new StringBuilder();
                 for (Map.Entry<String, Set<Integer>> entry : orders.entrySet()) {
@@ -302,15 +295,22 @@ public class DepotActor extends BaseActor {
                             add(Constants.REEFERS_KEY, builder.toString());
                     jab.add(job);
                 }
-
-                System.out.println(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tDeparted:%7d \t%s", getId(),voyageReefers.size(),inventory.toString()) );
                 JsonObjectBuilder job = Json.createObjectBuilder();
                 job.add(Constants.TARGETS_KEY, jab.build());
                 ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
                 Kar.Actors.tell(anomalyManagerActor, "voyageDeparted", job.build());
+
+                Inventory inventory = getReeferInventoryCounts();
+                currentInventorySize = Json.createValue(inventory.getTotal());
+                bookedTotalCount = inventory.getBooked();
+
+                updateStore(deleteMap(voyageReefers), Collections.emptyMap());
+
+                System.out.println(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tDeparted:%7d \t%s", getId(),voyageReefers.size(),inventory.toString()) );
+
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"DepotActor.voyageReefersDeparted() - Error ", e);
             throw e;
         }
 
@@ -360,27 +360,7 @@ public class DepotActor extends BaseActor {
         }
         return new Inventory(total, rbooked, rfree, rbad);
     }
-/*
-    @Remote
-    public void pendingArrivalReefers(JsonObject message) {
 
-        String[] reeferIds = message.getString(Constants.ORDER_REEFERS_KEY).split(",");
-        List<ReeferDTO> updateList = new ArrayList<>(reeferIds.length);
-        for (String reeferId : reeferIds) {
-            int idx = Integer.valueOf(reeferId);
-            reeferMasterInventory[idx] = new ReeferDTO(Integer.valueOf(reeferId), ReeferState.State.UNALLOCATED);
-            updateList.add(reeferMasterInventory[idx]);
-        }
-        Inventory inventory = getReeferInventoryCounts();
-        currentInventorySize = Json.createValue(inventory.getTotal());
-        bookedTotalCount = inventory.getBooked();
-        updateStore(Collections.emptyMap(), reeferMap(updateList));
-        saveMetrics();
-       // System.out.println(String.format("DepotActor.pendingArrivalReefers  <<<< \t%25s \tArrived: %d \t%s ",
-      //          getId(), reeferIds.length, getReeferInventoryCounts().toString()));
-    }
-
- */
     @Remote
     public void voyageReefersArrived(JsonObject message) {
         try {
@@ -399,10 +379,10 @@ public class DepotActor extends BaseActor {
             JsonArrayBuilder jab = Json.createArrayBuilder();
 
             for (String reeferId : reeferIds) {
-                int idx = Integer.valueOf(reeferId);
+                int idx = Integer.parseInt(reeferId);
                 builder.append(Integer.valueOf(reeferId)).append(",");
                 if ( reeferMasterInventory[idx] == null ) { //|| reeferMasterInventory[idx].getState().equals(ReeferState.State.UNALLOCATED)) {
-                    reeferMasterInventory[idx] = new ReeferDTO(Integer.valueOf(reeferId), ReeferState.State.UNALLOCATED);
+                    reeferMasterInventory[idx] = new ReeferDTO(Integer.parseInt(reeferId), ReeferState.State.UNALLOCATED);
                     updateList.add(reeferMasterInventory[idx]);
                 }
 
@@ -425,6 +405,11 @@ public class DepotActor extends BaseActor {
                     add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType())).
                     add(Constants.REEFERS_KEY, builder.toString());
             jab.add(job);
+            JsonObjectBuilder anomalyMgrMsg = Json.createObjectBuilder();
+            anomalyMgrMsg.add(Constants.TARGETS_KEY, jab.build());
+            ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
+            Kar.Actors.tell(anomalyManagerActor, "voyageArrived", anomalyMgrMsg.build());
+
             Inventory inventory = getReeferInventoryCounts();
             currentInventorySize = Json.createValue(inventory.getTotal());
             bookedTotalCount = inventory.getBooked();
@@ -432,12 +417,8 @@ public class DepotActor extends BaseActor {
             saveMetrics();
             System.out.println(String.format("DepotActor.voyageReefersArrived()  <<<< \t%25s \tArrived:%8d \t%s ",
                     getId(), reeferIds.length, getReeferInventoryCounts().toString()));
-            JsonObjectBuilder anomalyMgrMsg = Json.createObjectBuilder();
-            anomalyMgrMsg.add(Constants.TARGETS_KEY, jab.build());
-            ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
-            Kar.Actors.tell(anomalyManagerActor, "voyageArrived", anomalyMgrMsg.build());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"DepotActor.voyageReefersArrived() - Error ", e);
             throw e;
         }
 
@@ -513,17 +494,17 @@ public class DepotActor extends BaseActor {
         } catch (Throwable e) {
 
             int actual = 0, bad = 0;
-            for (int i = 0; i < reeferMasterInventory.length; i++) {
-                if (reeferMasterInventory[i] != null ) {
-                    if (  reeferMasterInventory[i].getState().equals(ReeferState.State.UNALLOCATED) ) {
+            for (ReeferDTO reeferDTO : reeferMasterInventory) {
+                if (reeferDTO != null) {
+                    if (reeferDTO.getState().equals(ReeferState.State.UNALLOCATED)) {
                         actual++;
-                    } else if (  reeferMasterInventory[i].getState().equals(ReeferState.State.MAINTENANCE) ) {
+                    } else if (reeferDTO.getState().equals(ReeferState.State.MAINTENANCE)) {
                         bad++;
                     }
 
                 }
             }
-            logger.log(Level.WARNING, "DepotActor.bookReefers() FAILED !!!!!!!!!!!!!!! - Depot:" + getId() +
+            logger.log(Level.SEVERE, "DepotActor.bookReefers() FAILED !!!!!!!!!!!!!!! - Depot:" + getId() +
                     " current Inventory:" + ((JsonNumber) currentInventorySize).intValue() +
                     " - Actual Available Reefer Count:" + actual +
                     " - Currently onMaintenance:" + bad +
@@ -550,52 +531,6 @@ public class DepotActor extends BaseActor {
         }
         map.put(Constants.REEFER_MAP_KEY, reeferIdsToDelete);
         return map;
-    }
-
-    /**
-     * Release given reefers back to inventory
-     *
-     * @param message
-     * @return
-     */
-    @Remote
-    public void releaseVoyageReefers(JsonObject message) {
-
-        try {
-            String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
-            JsonArray orders = message.getJsonArray(Constants.VOYAGE_ORDERS_KEY);
-            String arrivalDate = message.getString(Constants.VOYAGE_ARRIVAL_DATE_KEY);
-            Map<String, JsonValue> arrivedOnMaintenanceMap = new HashMap<>();
-            // get a list of reefers associated with a given voyage. Exclude reefers
-            // which arrived in spoilt state. Those will be placed on maintenance
-            // and need to remain in inventory.
-            List<String> reefers2Remove = new LinkedList<>();
-            if (orders != null) {
-                reefers2Remove = getArrivedReefers(orders, arrivedOnMaintenanceMap, arrivalDate);
-            }
-
-
-            if (!reefers2Remove.isEmpty()) {
-                List<String> orderList = orders.stream().filter(Objects::nonNull).map(jv -> ((JsonString) jv).getString()).collect(Collectors.toList());
-                for (String orderId : orderList) {
-                    if (order2ReeferMap.containsKey(orderId.trim())) {
-                        order2ReeferMap.remove(orderId.trim());
-                    }
-                }
-                order2ReeferMap.keySet().removeAll(orderList);
-            }
-            Map<String, List<String>> subMapRemove = new HashMap<>();
-            subMapRemove.put(Constants.REEFER_MAP_KEY, reefers2Remove);
-            updateStore(subMapRemove, arrivedOnMaintenanceMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
-
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("DepotActor.releaseVoyageReefers() - released reefers " + " total booked: "
-                    + bookedTotalCount + " totalInTransit:" + inTransitTotalCount);
-        }
     }
 
     /**
@@ -663,7 +598,16 @@ public class DepotActor extends BaseActor {
            // System.out.println("DepotActor.reeferAnomaly() - reeferId:" + reeferId
             //        + " assigned to order: " + reeferMasterInventory[reeferId].getOrderId()+" - will replace <<<<<<<<<<<<<<<<<<");
         } else {
-            setReeferOnMaintenance(reeferMasterInventory[reeferId], message.getString(Constants.DATE_KEY));
+            Instant today;
+            if ( message.containsKey(Constants.DATE_KEY)) {
+                today = Instant.parse(message.getString(Constants.DATE_KEY));
+            } else if ( currentDate == null ) {
+                JsonValue reply = Kar.Actors.call(scheduleActor, "currentDate");
+                today = Instant.parse(((JsonString) reply).getString());
+            } else {
+                today = currentDate;
+            }
+            setReeferOnMaintenance(reeferMasterInventory[reeferId], today.toString()); //message.getString(Constants.DATE_KEY));
             Map<String, JsonValue> updateMap = new HashMap<>();
             updateMap.put(String.valueOf(reeferId), reeferToJsonObject(reeferMasterInventory[reeferId]));
             updateStore(Collections.emptyMap(), updateMap);
@@ -751,25 +695,10 @@ public class DepotActor extends BaseActor {
             updateMap.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
             updateStore(Collections.emptyMap(), updateMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"DepotActor.reeferSpoilt() - Error ", e);
         }
 
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).build();
-    }
-
-    /**
-     * Returns a list of reefers associated with a given order
-     *
-     * @param orderId
-     * @return
-     */
-    private List<String> orderReeferList(String orderId) {
-        return Arrays.stream(reeferMasterInventory).
-                filter(Objects::nonNull).
-                map(ReeferDTO::getOrderId).
-                filter(id -> !(id.trim().isEmpty())).
-                filter(id -> id.equals(orderId)).
-                collect(Collectors.toList());
     }
 
     /**
@@ -787,13 +716,6 @@ public class DepotActor extends BaseActor {
                         distinct().
                         collect(Collectors.toList());
         return Json.createArrayBuilder(voyageIdList).build();
-    }
-
-    private List<ReeferDTO> voyageReefers(String voyageId) {
-        return Arrays.stream(reeferMasterInventory).
-                filter(Objects::nonNull).
-                filter(reefer -> voyageId.equals(reefer.getVoyageId())).
-                collect(Collectors.toList());
     }
 
     private ReeferDTO jsonObjectToReeferDTO(JsonObject reefer) {
@@ -821,13 +743,6 @@ public class DepotActor extends BaseActor {
         return reeferObjectBuilder.build();
     }
 
-    /**
-     * @param inventorySize
-     */
-    private void initMasterInventory(int inventorySize) {
-        reeferMasterInventory = new ReeferDTO[inventorySize];
-    }
-
     private void initMasterInventory(InventoryConfig config) {
         try {
             reeferMasterInventory = new ReeferDTO[config.getGlobalInventorySize()];
@@ -851,35 +766,10 @@ public class DepotActor extends BaseActor {
             updateStore(Collections.emptyMap(), map);
             //       System.out.println("DepotActor.initMasterInventory::::::" + getId() + " initializing inventory ::: lower:" + config.lowerBound + " upper:" + config.upperBound + " redis save time:" + (System.currentTimeMillis() - t));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"DepotActor.reeferSpoilt() - Error ", e);
         }
 
     }
-/*
-    private void initMasterInventory(InventoryConfig config) {
-        try {
-            reeferMasterInventory = new ReeferDTO[config.getGlobalInventorySize()];
-            JsonObjectBuilder job = Json.createObjectBuilder();
-            Map<String, JsonValue> map = new HashMap<>(config.getUpperBound() - config.getLowerBound() + 1);
-            JsonObjectBuilder reeferObjectBuilder = Json.createObjectBuilder();
-            for (int id = config.getLowerBound(); id <= config.getUpperBound(); id++) {
-                reeferMasterInventory[id] = new ReeferDTO(id, ReeferState.State.UNALLOCATED);
-                // JsonObjectBuilder is expensive object to create. Reuse single instance to improve
-                // performance. In the <code>reeferToJsonObject()</code> the instance is used to
-                // create a JsonObject and when its build() is called it internally clears its state
-                // and thus allows for reuse.
-                map.put(String.valueOf(id), reeferToJsonObject(reeferMasterInventory[id], reeferObjectBuilder));
-            }
-            long t = System.currentTimeMillis();
-            updateStore(Collections.emptyMap(), map);
-            //       System.out.println("DepotActor.initMasterInventory::::::" + getId() + " initializing inventory ::: lower:" + config.lowerBound + " upper:" + config.upperBound + " redis save time:" + (System.currentTimeMillis() - t));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
- */
 
     /**
      * Calls DepotManagerActor to fetch total number of reefers
@@ -1033,15 +923,11 @@ public class DepotActor extends BaseActor {
     private class InventoryConfig {
         private int totalSize;
         private int depotSize;
-      //  private int lowerBound;
-      //  private int upperBound;
         private List<Shard> shards = new LinkedList<>();
 
-        public InventoryConfig(int depotSize, int totalSize) { //}, int lowerBound, int upperBound) {
+        public InventoryConfig(int depotSize, int totalSize) {
             this.depotSize = depotSize;
             this.totalSize = totalSize;
-           // this.lowerBound = lowerBound;
-         //   this.upperBound = upperBound;
         }
 
         public int getDepotSize() {
@@ -1058,15 +944,6 @@ public class DepotActor extends BaseActor {
         public List<Shard> getShards() {
             return shards;
         }
-        /*
-       public int getLowerBound() {
-            return lowerBound;
-        }
 
-        public int getUpperBound() {
-            return upperBound;
-        }
-
-         */
     }
 }

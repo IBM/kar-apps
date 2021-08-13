@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 @Actor
 public class DepotManagerActor extends BaseActor {
-    private static final Logger logger = Logger.getLogger(OrderManagerActor.class.getName());
+    private static final Logger logger = Logger.getLogger(DepotManagerActor.class.getName());
     private List<Depot> depots = new LinkedList<>();
     private long totalInventorySize = 0;
 
@@ -57,47 +57,14 @@ public class DepotManagerActor extends BaseActor {
                 sb.append("Ship:").append(route.getVessel().getId()).append(" origin:").
                         append(route.getOriginPort()).append(" destination:").
                         append(route.getDestinationPort()).append(" capacity:").append(route.getVessel().getMaxCapacity()).append("\n");
-
-               // int shardSize = assignShardToDepot(route.getOriginPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
-
                 // a Shard is a continuous range of reefer ids. Each depot may have 1 or more
                 // shards. If a depot "serves" say two voyages there will be two distinct shards
                 // each with a unique range of reefer ids.
                 inx += assignShardToDepot(route.getOriginPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
-                /*
-                // a depot can be in multiple voyages so either create new or fetch existing
-                Depot origin = getDepot(route.getOriginPort());
-                // multiply ship capacity by a factor to pad inventory
-                long paddedSize = FleetCapacity.totalSize(route.getVessel().getMaxCapacity());
-                // a Shard is a continuous range of reefer ids. Each depot may have 1 or more
-                // shards. If a depot "serves" say two voyages there will be two distinct shards
-                // each with a unique range of reefer ids.
-                Shard originShard = new Shard(inx, inx + (paddedSize-1));
-                origin.addShard(originShard);
-                  inx += paddedSize;
-                 */
-               // inx += shardSize;
-
-
-//                totalInventorySize += paddedSize;
-              //  totalInventorySize += shardSize;
-
-             //   System.out.println("DepotManager.activate() - Origin Depot:"+origin.getId()+" size:"+origin.getSize()+" ship:"+route.getVessel().getId()+
+              //   System.out.println("DepotManager.activate() - Origin Depot:"+origin.getId()+" size:"+origin.getSize()+" ship:"+route.getVessel().getId()+
             //            " shard low:"+originShard.getLowerBound()+" shard up:"+originShard.getUpperBound());
-                //shardSize = assignShardToDepot(route.getDestinationPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
-                inx += assignShardToDepot(route.getDestinationPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
-              //  inx += shardSize;
-/*
-                Depot destination = getDepot(route.getDestinationPort());
-                Shard destinationShard = new Shard(inx, inx + (paddedSize-1));
-                destination.addShard(destinationShard);
-                inx += paddedSize;
 
- */
-               // totalInventorySize += paddedSize;
-              //  totalInventorySize += shardSize;
-          //      System.out.println("DepotManager.activate() - Destination Depot:"+destination.getId()+" size:"+destination.getSize()+" ship:"+route.getVessel().getId()+
-          //              " shard low:"+destinationShard.getLowerBound()+" shard up:"+destinationShard.getUpperBound());
+                inx += assignShardToDepot(route.getDestinationPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
             }
             totalInventorySize = inx;
             System.out.println("DepotManager.activate() -Routes:\n"+sb.toString());
@@ -156,82 +123,6 @@ public class DepotManagerActor extends BaseActor {
         return Long.valueOf(paddedSize).intValue();
     }
 
-/*
-    public void activate() {
-        // fetch actor state from Kar storage
-        Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
-
-        if (state.isEmpty()) {
-            ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-            JsonValue reply = Kar.Actors.call(scheduleActor, "routes");
-            reply.asJsonArray().stream().forEach(jsonRoute -> {
-                Route route = RouteJsonSerializer.deserialize(jsonRoute.asJsonObject());
-
-                Depot origin = getDepot(route.getOriginPort(), route.getVessel().getMaxCapacity());
-                Depot destination = getDepot(route.getDestinationPort(), route.getVessel().getMaxCapacity());
-
-
-                long maxSize = Math.max(origin.size + route.getVessel().getMaxCapacity(), destination.size + route.getVessel().getMaxCapacity());
-                origin.setSize(maxSize);
-                destination.setSize(maxSize);
-            });
-            for (Depot depot : depots) {
-                totalInventorySize += depot.setInventorySize();
-            }
-            int inx = 0;
-            JsonArrayBuilder jab = Json.createArrayBuilder();
-            Map<String, JsonValue> depotMap = new HashMap<>();
-            for (Depot depot : depots) {
-                Shard shard = new Shard(inx, inx + depot.size - 1); // zero based index
-                inx += depot.size;
-                depot.setShard(shard);
-                JsonObjectBuilder job = Json.createObjectBuilder();
-                JsonObjectBuilder mapJob = Json.createObjectBuilder();
-                serializeDepot(depot, job);
-                jab.add(job);
-                serializeDepot(depot, mapJob);
-                depotMap.put(depot.getId(), mapJob.build());
-                //System.out.println("DepotManager.activate() - deserializing depot:"+depot.toString());
-            }
-
-            Kar.Actors.State.Submap.set(this, Constants.DEPOTS_KEY, depotMap);
-            Kar.Actors.State.set(this, Constants.TOTAL_REEFER_COUNT_KEY, Json.createValue(totalInventorySize));
-
-            JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.TOTAL_REEFER_COUNT_KEY, totalInventorySize).add(Constants.DEPOTS_KEY, jab);
-            ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
-            Kar.Actors.tell(anomalyManagerActor, "depotReefers", job.build());
-
-        } else {
-
-            try {
-                totalInventorySize = ((JsonNumber) state.get(Constants.TOTAL_REEFER_COUNT_KEY)).intValue();
-                Map<String, JsonValue> depotMap = state.get(Constants.DEPOTS_KEY).asJsonObject();
-                for (JsonValue jv : depotMap.values()) {
-                    depots.add(deserializeDepot(jv.asJsonObject()));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(5));
-    }
-
-
-    private void serializeDepot(Depot depot, JsonObjectBuilder job) {
-        job.add(Constants.ANOMALY_TARGET_KEY, depot.getId()).
-                add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType()));
-                JsonObjectBuilder builder = Json.createObjectBuilder();
-                for( Shard shard : depot.getShards()) {
-                    JsonObjectBuilder shardBuilder = Json.createObjectBuilder();
-                    shardBuilder.add("reefer-id-lower-bound", shard.getLowerBound()).
-                            add("reefer-id-upper-bound", shard.getUpperBound());
-                    builder.add("shard", shardBuilder.build());
-                }
-                job.add("shards", builder.build());
-    }
- */
-
     private Depot deserializeDepot(JsonObject jsonDepot) {
         Depot depot = new Depot(jsonDepot.getString(Constants.ANOMALY_TARGET_KEY));
 
@@ -248,7 +139,7 @@ public class DepotManagerActor extends BaseActor {
     public JsonObject getDepotList() {
         JsonObjectBuilder job = Json.createObjectBuilder();
         String depotsCommaSeparated = depots.stream()
-                .map(depot -> depot.getId())
+                .map(Depot::getId)
                 .collect(Collectors.joining(","));
         job.add(Constants.DEPOTS_KEY, depotsCommaSeparated);
         return job.build();
@@ -262,7 +153,7 @@ public class DepotManagerActor extends BaseActor {
                 if (metrics != null && metrics != JsonValue.NULL) {
                     String[] values = ((JsonString) metrics).getString().split(":");
                     if (values != null && values.length > 0) {
-                        booked += Integer.valueOf(values[0]).intValue();
+                        booked += Integer.parseInt(values[0]);
                         onMaintenance += Integer.valueOf(values[3]).intValue();
                     }
                 }
@@ -397,18 +288,11 @@ public class DepotManagerActor extends BaseActor {
         private void serialize(JsonObjectBuilder job) {
             job.add(Constants.ANOMALY_TARGET_KEY, this.getId()).
                     add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType()));
-            JsonObjectBuilder builder = Json.createObjectBuilder();
             JsonArrayBuilder jab = Json.createArrayBuilder();
             for( Shard shard : this.getShards()) {
                 jab.add(shard.serialize());
             }
             job.add(Constants.SHARDS_KEY, jab.build());
-        }
-
-
-        public long setInventorySize() {
-            this.size = FleetCapacity.totalSize(this.size);
-            return this.size;
         }
 
         @Override
@@ -444,77 +328,27 @@ public class DepotManagerActor extends BaseActor {
 
         public void update(String metrics) {
             String[] values = metrics.split(":");
-            booked += Integer.valueOf(values[0].trim());
-            inTransit += Integer.valueOf(values[1].trim());
-            spoilt += Integer.valueOf(values[2].trim());
-            maintenance += Integer.valueOf(values[3].trim());
-            total += Integer.valueOf(values[4].trim());
-        }
-
-        public int incrementTotal(int delta) {
-            this.total += delta;
-            return this.total;
-        }
-
-        public int decrementTotal(int delta) {
-            this.total -= delta;
-            return this.total;
+            booked += Integer.parseInt(values[0].trim());
+            inTransit += Integer.parseInt(values[1].trim());
+            spoilt += Integer.parseInt(values[2].trim());
+            maintenance += Integer.parseInt(values[3].trim());
+            total += Integer.parseInt(values[4].trim());
         }
 
         public int getTotal() {
             return this.total;
         }
 
-        public int incrementBooked(int delta) {
-            this.booked += delta;
-            return this.booked;
-        }
-
-        public int decrementBooked(int delta) {
-            this.booked -= delta;
-            return this.booked;
-        }
-
         public int getBooked() {
             return this.booked;
-        }
-
-        public int incrementSpoilt(int delta) {
-            this.spoilt += delta;
-            return this.spoilt;
-        }
-
-        public int decrementSpoilt(int delta) {
-            this.spoilt -= delta;
-            return this.spoilt;
         }
 
         public int getSpoilt() {
             return this.spoilt;
         }
 
-        public int incrementMaintenance(int delta) {
-            this.maintenance += delta;
-            return this.maintenance;
-        }
-
-        public int decrementMaintenance(int delta) {
-            this.maintenance -= delta;
-            return this.maintenance;
-        }
-
         public int getOnMaintenance() {
             return this.maintenance;
-        }
-
-        public int incrementInTransit(int delta) {
-            this.inTransit += delta;
-            return this.inTransit;
-        }
-
-        public int decrementInTransit(int delta) {
-            this.inTransit -= delta;
-            return this.inTransit;
         }
 
         public int getInTransit() {

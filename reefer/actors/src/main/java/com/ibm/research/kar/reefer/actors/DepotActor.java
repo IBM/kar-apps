@@ -368,20 +368,15 @@ public class DepotActor extends BaseActor {
             String arrivalDate = message.getString(Constants.VOYAGE_ARRIVAL_DATE_KEY);
             // get arrived reefer ids
             String[] reeferIds = message.getString(Constants.REEFERS_KEY).split(",");
-            // get spoilt reefer ids
             String[] spoiltReeferIds = message.getString(Constants.SPOILT_REEFERS_KEY).split(",");
-            Inventory tmp = getReeferInventoryCounts();
-         //   System.out.println("DepotActor.voyageReefersArrived() " + getId() + " <<<<<<<<<<<<<  arrived before any changes - current total:"+
-        //            tmp.getTotal()+" booked:"+tmp.getBooked()+" arrived:"+reeferIds.length+" of which "+spoiltReeferIds.length+" are spoilt");
             List<ReeferDTO> updateList = new ArrayList<>(reeferIds.length);
-            //int collisionCount = 0;
             StringBuilder builder = new StringBuilder();
             JsonArrayBuilder jab = Json.createArrayBuilder();
 
             for (String reeferId : reeferIds) {
                 int idx = Integer.parseInt(reeferId);
                 builder.append(Integer.valueOf(reeferId)).append(",");
-                if ( reeferMasterInventory[idx] == null ) { //|| reeferMasterInventory[idx].getState().equals(ReeferState.State.UNALLOCATED)) {
+                if ( reeferMasterInventory[idx] == null ) {
                     reeferMasterInventory[idx] = new ReeferDTO(Integer.parseInt(reeferId), ReeferState.State.UNALLOCATED);
                     updateList.add(reeferMasterInventory[idx]);
                 }
@@ -413,11 +408,12 @@ public class DepotActor extends BaseActor {
             Inventory inventory = getReeferInventoryCounts();
             currentInventorySize = Json.createValue(inventory.getTotal());
             bookedTotalCount = inventory.getBooked();
+            onMaintenanceTotalCount = inventory.getOnMaintenance();
             updateStore(Collections.emptyMap(), reeferMap(updateList));
-            saveMetrics();
             System.out.println(String.format("DepotActor.voyageReefersArrived()  <<<< \t%25s \tArrived:%8d \t%s ",
                     getId(), reeferIds.length, getReeferInventoryCounts().toString()));
         } catch (Exception e) {
+            e.printStackTrace();
             logger.log(Level.SEVERE,"DepotActor.voyageReefersArrived() - Error ", e);
             throw e;
         }
@@ -438,11 +434,10 @@ public class DepotActor extends BaseActor {
             order = new Order(message);
             // idempotence check if this method is being called more than once for the same order
             if (order2ReeferMap.containsKey(order.getId())) {
-                Set<String> ids = order2ReeferMap.get(order.getId());
-                if (!ids.isEmpty()) {
-                    return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).add(Constants.REEFERS_KEY, Json.createValue(ids.size()))
-                            .add(JsonOrder.OrderKey, order.getAsJsonObject()).build();
-                }
+                Set<String> rids = order2ReeferMap.get(order.getId());
+                if (!rids.isEmpty()) {
+                     return createReply(rids, order.getAsJsonObject());
+                 }
             }
             int currentAvailableReeferCount = getUnallocatedReeferCount();
             List<ReeferDTO> orderReefers = null;
@@ -457,9 +452,6 @@ public class DepotActor extends BaseActor {
                         .add("cause", er.getMessage())
                         .add(Constants.ORDER_ID_KEY, order.getId()).build();
             }
-
-       //     System.out.println("DepotActor.bookReefers - "+getId()+
-       //             " voyage:"+order.getVoyageId() + " booked:"+orderReefers.size() +" reefers");
             if ( orderReefers.isEmpty() ) {
                 System.out.println("DepotActor.bookReefers - "+getId()+
                         " voyage:"+order.getVoyageId() +
@@ -483,14 +475,7 @@ public class DepotActor extends BaseActor {
                 logger.fine("DepotActor.bookReefers())- Order:" + order.getId() + " reefer count:"
                         + orderReefers.size());
             }
-            String stringifiedIds = orderReefers.stream().map(ReeferDTO::getId).
-                    map(String::valueOf).collect(Collectors.joining(","));
-            return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
-                    add(Constants.DEPOT_KEY, getId()).
-                    add(Constants.REEFERS_KEY, Json.createValue(orderReefers.size())).
-                    add(Constants.ORDER_REEFERS_KEY, Json.createValue(stringifiedIds)).//Json.createArrayBuilder(rids).build()).
-                    add(JsonOrder.OrderKey, order.getAsJsonObject()).build();
-
+            return createReply(rids, order.getAsJsonObject());
         } catch (Throwable e) {
 
             int actual = 0, bad = 0;
@@ -515,6 +500,13 @@ public class DepotActor extends BaseActor {
         }
     }
 
+    private JsonObject createReply(Set<String> reeferIds, JsonObject order) {
+        return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
+                add(Constants.DEPOT_KEY, getId()).
+                add(Constants.REEFERS_KEY, Json.createValue(reeferIds.size())).
+                add(Constants.ORDER_REEFERS_KEY, Json.createValue(String.join(",", reeferIds))).
+                add(JsonOrder.OrderKey, order).build();
+    }
     private Map<String, JsonValue> reeferMap(List<ReeferDTO> orderReefers) {
         Map<String, JsonValue> map = new HashMap<>(orderReefers.size());
         for (ReeferDTO reefer : orderReefers) {

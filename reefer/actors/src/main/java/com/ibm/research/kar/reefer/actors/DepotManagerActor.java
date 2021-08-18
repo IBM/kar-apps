@@ -159,10 +159,11 @@ public class DepotManagerActor extends BaseActor {
                 }
             }
             ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-            JsonValue inTransitMetrics = Kar.Actors.State.get(scheduleActor, Constants.REEFERS_IN_TRANSIT_COUNT_KEY);
+            JsonValue reefersInTransit = Kar.Actors.call(scheduleActor,"reefersInTransit");
+
             JsonValue spoiltReefersMetrics = Kar.Actors.State.get(scheduleActor, Constants.TOTAL_SPOILT_KEY);
-            if (inTransitMetrics != null && inTransitMetrics != JsonValue.NULL) {
-                inTransitCount += ((JsonNumber) inTransitMetrics).intValue();
+            if (reefersInTransit != null && reefersInTransit != JsonValue.NULL) {
+                inTransitCount += ((JsonNumber) reefersInTransit).intValue();
             }
             if (spoiltReefersMetrics != null && spoiltReefersMetrics != JsonValue.NULL) {
                 spoiltReefers += ((JsonNumber) spoiltReefersMetrics).intValue();

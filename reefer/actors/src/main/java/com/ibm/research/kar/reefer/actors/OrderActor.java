@@ -163,7 +163,7 @@ public class OrderActor extends BaseActor {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("OrderActor.reeferAnomaly() - anomaly just arrived after order delivered");
             }
-            // forward the anomaly back to the Anomaly Manager. The anomaly should be sent to the order actor.
+            // forward anomaly back to the Anomaly Manager. It should be sent to the depot actor.
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.REEFER_ID_KEY, spoiltReeferId).add(Constants.ORDER_ID_KEY, getId());
             ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);

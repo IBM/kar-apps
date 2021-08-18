@@ -69,6 +69,7 @@ public class VoyageActor extends BaseActor {
                 JsonObject params = Json.createObjectBuilder().
                         add(Constants.VOYAGE_ID_KEY, getId()).add(Constants.VOYAGE_ID_KEY, getId()).
                         build();
+                // fetch voyage details
                 ActorRef scheduleManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
                 JsonValue jv = Kar.Actors.call(scheduleManager, "voyage", Json.createValue(getId()));
                 voyageInfo = jv.asJsonObject();
@@ -86,6 +87,9 @@ public class VoyageActor extends BaseActor {
                 if (state.containsKey(Constants.VOYAGE_ORDERS_KEY)) {
                     orders.putAll(state.get(Constants.VOYAGE_ORDERS_KEY).asJsonObject());
                     System.out.println("VoyageActor.activate() - voyage:" + getId() + " restored orders - size:" + orders.size());
+                    for(Map.Entry e : orders.entrySet() ) {
+
+                    }
                 }
                 if (state.containsKey(Constants.SPOILT_REEFERS_KEY)) {
                     spoiltReefersMap.putAll(state.get(Constants.SPOILT_REEFERS_KEY).asJsonObject());
@@ -226,6 +230,14 @@ public class VoyageActor extends BaseActor {
             // convenience wrapper for DepotActor json reply
             DepotReply reply = new DepotReply(booking);
             if (reply.success()) {
+
+                if ( !booking.asJsonObject().containsKey(Constants.ORDER_REEFERS_KEY)) {
+                    System.out.println("VoyageActor.reserve() - ID:"+getId()+ " orderId:"+order.getId()+ " !!!!!!!!!!!!!!!! booking has no reefers:"+booking);
+                } else if ( booking.asJsonObject().getString(Constants.ORDER_REEFERS_KEY) != null) {
+               //     String[] reefers = booking.asJsonObject().getString(Constants.ORDER_REEFERS_KEY).split(",");
+                 //   System.out.println("VoyageActor.reserve() - ID:"+getId()+ " orderId:"+order.getId()+ " - booked:"+reefers.length+" reefers");
+                }
+
                 save(reply, order, booking);
                 ActorRef scheduleManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
                 Kar.Actors.tell(scheduleManager, "updateVoyage", VoyageJsonSerializer.serialize(voyage));
@@ -387,6 +399,7 @@ public class VoyageActor extends BaseActor {
 
     private void notifyVoyageOrder(String orderId, Order.OrderStatus orderStatus, String methodName) {
         JsonValue booking = orders.get(orderId);
+       // System.out.println("VoyageActor.notifyVoyageOrder() - ID:"+getId()+ " order:"+orderId+" booking:"+booking);
         Order order = new Order(booking.asJsonObject().getJsonObject(Constants.ORDER_KEY));
         if (!orderStatus.name().equals(order.getStatus())) {
             try {
@@ -407,6 +420,7 @@ public class VoyageActor extends BaseActor {
             job.add(Constants.STATUS_KEY, booking.asJsonObject().getString(Constants.STATUS_KEY)).
                     add(Constants.REEFERS_KEY, booking.asJsonObject().getJsonNumber(Constants.REEFERS_KEY).intValue()).
                     add(Constants.ORDER_KEY, order.getAsJsonObject());
+
             /*
             if ( booking.asJsonObject().getJsonArray(Constants.ORDER_REEFERS_KEY) != null ) {
                 JsonArray ja = booking.asJsonObject().getJsonArray(Constants.ORDER_REEFERS_KEY);
@@ -419,14 +433,19 @@ public class VoyageActor extends BaseActor {
 
              */
             try {
-                if ( booking.asJsonObject().getString(Constants.ORDER_REEFERS_KEY) != null) {
+                if ( booking.asJsonObject() == null ) {
+                    System.out.println("VoyageActor.notifyVoyageOrder() - ID:"+getId()+" ** "+methodName+" ** "+ " booking object is not valid:"+booking);
+                } else if ( !booking.asJsonObject().containsKey(Constants.ORDER_REEFERS_KEY)) {
+                    System.out.println("VoyageActor.notifyVoyageOrder() - ID:"+getId()+" ** "+methodName+" ** "+ " booking has no reefers:"+booking);
+                } else if ( booking.asJsonObject().getString(Constants.ORDER_REEFERS_KEY) != null) {
                     job.add(Constants.ORDER_REEFERS_KEY, booking.asJsonObject().get(Constants.ORDER_REEFERS_KEY));
-                } else {
-                    System.out.println("VoyageActor.notifyVoyageOrder() - ID:"+getId()+ " order:"+orderId+" does not have any reefers - booking result:"+booking);
+                }
+                else {
+                    System.out.println("VoyageActor.notifyVoyageOrder() - ID:"+getId()+ " order:"+orderId+" ** "+methodName+" ** "+ " does not have any reefers - booking result:"+booking);
                 }
             } catch( Exception e) {
                 e.printStackTrace();
-                System.out.println("VoyageActor.notifyVoyageOrder() - ID:"+getId()+ " order:"+orderId+" booking:"+booking);
+                System.out.println("VoyageActor.notifyVoyageOrder() - ID:"+getId()+ " order:"+orderId+" ** "+methodName+" ** "+ " booking:"+booking);
             }
 
             JsonObject jo = job.build();

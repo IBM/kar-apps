@@ -310,7 +310,15 @@ public class ScheduleManagerActor extends BaseActor {
             e.printStackTrace();
         }
     }
-
+    @Remote
+    public JsonValue reefersInTransit() {
+        List<Voyage> activeVoyages = schedule.getActiveSchedule();
+        int inTransit=0;
+        for (Voyage voyage : activeVoyages) {
+           inTransit += voyage.getReeferCount();
+        }
+        return Json.createValue(inTransit);
+    }
     @Remote
     public void voyageArrived(JsonObject message) {
         try {
@@ -320,7 +328,12 @@ public class ScheduleManagerActor extends BaseActor {
             }
             schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
             voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
-            reefersInTransit = Json.createValue(reefersInTransit.intValue() - voyage.getReeferCount());
+            if ( (reefersInTransit.intValue() - voyage.getReeferCount()) >= 0) {
+                reefersInTransit = Json.createValue(reefersInTransit.intValue() - voyage.getReeferCount());
+            } else {
+                reefersInTransit = Json.createValue(0);
+            }
+
          //   System.out.println("ScheduleManagerActor.voyageArrived() >>>>>>>>>>>>>>>> reefersInTransit:::: " + reefersInTransit);
             saveMetrics();
         } catch (Exception e) {

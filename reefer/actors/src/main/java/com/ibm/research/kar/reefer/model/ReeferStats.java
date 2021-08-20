@@ -69,5 +69,14 @@ public class ReeferStats {
         this.totalOnMaintenance = totalOnMaintenance;
     }
 
-
+    @Override
+    public String toString() {
+        return "ReeferStats{" +
+                "total=" + total +
+                ", totalInTransit=" + totalInTransit +
+                ", totalBooked=" + totalBooked +
+                ", totalSpoilt=" + totalSpoilt +
+                ", totalOnMaintenance=" + totalOnMaintenance +
+                '}';
+    }
 }

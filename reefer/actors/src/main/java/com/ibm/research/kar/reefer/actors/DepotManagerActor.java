@@ -104,7 +104,7 @@ public class DepotManagerActor extends BaseActor {
                 e.printStackTrace();
             }
         }
-        Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(5));
+        Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(1));
     }
 
     private int assignShardToDepot(String depotName, String shipName, int shipMaxCapacity, int beginRange) {

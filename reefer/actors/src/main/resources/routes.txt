@@ -1,666 +1,666 @@
-Tanger Med, MA:Savannah, US:24
-Seattle-Tacoma, US:Ningbo-Zhoushan, CN:24
-Vancouver, CA:Manila, PH:15
-Felixstowe, UK:Manila, PH:26
-Taiwan, CN:Vancouver, CA:17
-Tanger Med, MA:Long Beach, US:18
-Dubai, UAE:Bremen,DE:17
-Jakarta, ID:Nehru Port, IN:12
-Vancouver, CA:Los Angeles, US:15
-Busan, KR:Hamburg, DE:18
-Mundra, IN:Vancouver, CA:23
-Salalah, OM:Keihin Ports, JP:18
-Seattle-Tacoma, US:Santos, BR:15
-Bremen,DE:Nehru Port, IN:25
-Busan, KR:Nehru Port, IN:13
-Shanghai, CN:Hanshin Port, JP:12
-Jakarta, ID:Jeddah, SA:12
-Jeddah, SA:Tanjung Pelepas, MY:24
-Mundra, IN:Jakarta, ID:15
-Algeciras, ES:Manila, PH:15
-Savannah, US:Jeddah, SA:20
-Rotterdam, NL:Nehru Port, IN:20
-Los Angeles, US:Nehru Port, IN:15
-Rotterdam, NL:Jeddah, SA:13
-Mundra, IN:Shenzhen, CN:19
-Singapore, SI:Vancouver, CA:25
-Barcelona, ES:Nehru Port, IN:26
-Shanghai, CN:Tokyo, JP:15
-Tanjung Pelepas, MY:Salalah, OM:14
-Tanger Med, MA:Nehru Port, IN:15
-Seattle-Tacoma, US:Busan, KR:23
-Dubai, UAE:Port Klang, MY:26
-Barcelona, ES:Manila, PH:21
-Seattle-Tacoma, US:Piraeus, GR:22
-New York-New Jersey, US:Ningbo-Zhoushan, CN:20
-Singapore, SI:Shenzhen, CN:25
-Los Angeles, US:Keihin Ports, JP:17
-Laem Chabang, TH:Felixstowe, UK:18
-Shanghai, CN:Salalah, OM:14
-Savannah, US:Hong Kong, CN:23
-Shanghai, CN:Keihin Ports, JP:17
-Rotterdam, NL:Shenzhen, CN:22
-Tanger Med, MA:Barcelona, ES:20
-Rotterdam, NL:Savannah, US:20
-Busan, KR:Singapore, SI:23
-Hong Kong, CN:Keihin Ports, JP:21
-Hamburg, DE:Keihin Ports, JP:21
-New York-New Jersey, US:Tokyo, JP:16
-Piraeus, GR:Santos, BR:25
-Mundra, IN:Santos, BR:24
-Barcelona, ES:Long Beach, US:24
-Bremen,DE:Los Angeles, US:21
-Shenzhen, CN:Hanshin Port, JP:16
-Algeciras, ES:Santos, BR:12
-Savannah, US:Tokyo, JP:20
-Singapore, SI:Los Angeles, US:14
-Algeciras, ES:Los Angeles, US:14
-Hong Kong, CN:Colon, PA:17
-Barcelona, ES:Keihin Ports, JP:23
-Mundra, IN:Laem Chabang, TH:17
-Ningbo-Zhoushan, CN:Salalah, OM:24
-Algeciras, ES:Ningbo-Zhoushan, CN:26
-Taiwan, CN:Ningbo-Zhoushan, CN:24
-Taiwan, CN:Savannah, US:24
-Mundra, IN:Rotterdam, NL:24
-Colon, PA:Keihin Ports, JP:15
-Colon, PA:Felixstowe, UK:26
-Mundra, IN:Manila, PH:22
-Dubai, UAE:Colon, PA:20
-Rotterdam, NL:Barcelona, ES:17
-Hamburg, DE:Salalah, OM:24
-Piraeus, GR:Salalah, OM:21
-Hamburg, DE:Vancouver, CA:22
-Mundra, IN:Long Beach, US:17
-Bremen,DE:Piraeus, GR:16
-Port Klang, MY:Los Angeles, US:20
-Taiwan, CN:Jeddah, SA:17
-Shanghai, CN:Colon, PA:18
-Taiwan, CN:Los Angeles, US:22
-Jakarta, ID:Los Angeles, US:20
-Busan, KR:Jeddah, SA:22
-Seattle-Tacoma, US:Tokyo, JP:16
-Bremen,DE:Ningbo-Zhoushan, CN:19
-Dubai, UAE:Long Beach, US:19
-Jakarta, ID:Tokyo, JP:21
-Shanghai, CN:Barcelona, ES:24
-Savannah, US:Tanjung Pelepas, MY:17
-Rotterdam, NL:Jakarta, ID:25
-Tanger Med, MA:Antwerp, BE:25
-Dubai, UAE:Shenzhen, CN:24
-Mundra, IN:Keihin Ports, JP:13
-Nehru Port, IN:Keihin Ports, JP:24
-Seattle-Tacoma, US:Salalah, OM:20
-Piraeus, GR:Barcelona, ES:15
-Barcelona, ES:Tanjung Pelepas, MY:20
-Piraeus, GR:Colon, PA:21
-Mundra, IN:Algeciras, ES:18
-Rotterdam, NL:Santos, BR:18
-Antwerp, BE:Manila, PH:21
-Hong Kong, CN:Tanjung Pelepas, MY:26
-Shenzhen, CN:Manila, PH:20
-Ningbo-Zhoushan, CN:Tokyo, JP:17
-Jakarta, ID:Ningbo-Zhoushan, CN:26
-Bremen,DE:Tokyo, JP:19
-Hamburg, DE:Manila, PH:17
-Antwerp, BE:Nehru Port, IN:14
-Shanghai, CN:Dubai, UAE:23
-Felixstowe, UK:Tanjung Pelepas, MY:19
-Hanshin Port, JP:Salalah, OM:12
-Tanger Med, MA:Hong Kong, CN:22
-Shenzhen, CN:Long Beach, US:25
-Colon, PA:Tokyo, JP:13
-Singapore, SI:Manila, PH:22
-Jakarta, ID:Shenzhen, CN:19
-Los Angeles, US:Tanjung Pelepas, MY:19
-Busan, KR:Algeciras, ES:25
-Seattle-Tacoma, US:New York-New Jersey, US:26
-Antwerp, BE:Barcelona, ES:26
-Santos, BR:Manila, PH:17
-Piraeus, GR:Felixstowe, UK:14
-Bremen,DE:Antwerp, BE:16
-Colon, PA:Algeciras, ES:22
-Barcelona, ES:Jeddah, SA:18
-Savannah, US:Jakarta, ID:24
-Hong Kong, CN:Tokyo, JP:19
-Bremen,DE:Salalah, OM:13
-Los Angeles, US:Manila, PH:19
-Shenzhen, CN:Jeddah, SA:15
-Bremen,DE:Hamburg, DE:21
-Port Klang, MY:Algeciras, ES:18
-Dubai, UAE:Tokyo, JP:14
-Savannah, US:Keihin Ports, JP:17
-Busan, KR:Port Klang, MY:16
-Jakarta, ID:Algeciras, ES:22
-Jeddah, SA:Keihin Ports, JP:16
-Algeciras, ES:Nehru Port, IN:16
-Long Beach, US:Jeddah, SA:25
-Colon, PA:Nehru Port, IN:16
-New York-New Jersey, US:Port Klang, MY:19
-New York-New Jersey, US:Colon, PA:24
-Busan, KR:Los Angeles, US:22
-New York-New Jersey, US:Hanshin Port, JP:12
-Piraeus, GR:Tokyo, JP:16
-Taiwan, CN:Colon, PA:15
-Laem Chabang, TH:Colon, PA:22
-Dubai, UAE:Piraeus, GR:15
-New York-New Jersey, US:Barcelona, ES:25
-Antwerp, BE:Vancouver, CA:19
-Laem Chabang, TH:Santos, BR:15
-Dubai, UAE:Singapore, SI:24
-Singapore, SI:Santos, BR:26
-Jakarta, ID:Manila, PH:23
-Shanghai, CN:Bremen,DE:24
-Bremen,DE:Tanjung Pelepas, MY:16
-Mundra, IN:Ningbo-Zhoushan, CN:13
-Colon, PA:Vancouver, CA:26
-Hong Kong, CN:Barcelona, ES:20
-Piraeus, GR:Tanjung Pelepas, MY:26
-Santos, BR:Felixstowe, UK:15
-Mundra, IN:Hanshin Port, JP:17
-Vancouver, CA:Ningbo-Zhoushan, CN:13
-Los Angeles, US:Jeddah, SA:19
-Savannah, US:Long Beach, US:23
-Hanshin Port, JP:Manila, PH:16
-Port Klang, MY:Tokyo, JP:26
-Shanghai, CN:Tanjung Pelepas, MY:24
-Bremen,DE:Felixstowe, UK:20
-Taiwan, CN:Jakarta, ID:19
-Mundra, IN:Tanger Med, MA:23
-Shanghai, CN:Antwerp, BE:15
-Hong Kong, CN:Santos, BR:19
-Colon, PA:Shenzhen, CN:24
-Jakarta, ID:Santos, BR:13
-Tanger Med, MA:Taiwan, CN:25
-Nehru Port, IN:Long Beach, US:16
-Seattle-Tacoma, US:Singapore, SI:19
-Shenzhen, CN:Felixstowe, UK:21
-Jakarta, ID:Long Beach, US:20
-Singapore, SI:Keihin Ports, JP:20
-Busan, KR:Ningbo-Zhoushan, CN:14
-Long Beach, US:Keihin Ports, JP:26
-Jeddah, SA:Santos, BR:12
-Dubai, UAE:Vancouver, CA:13
-Seattle-Tacoma, US:Hamburg, DE:20
-Bremen,DE:New York-New Jersey, US:23
-Taiwan, CN:Algeciras, ES:16
-Nehru Port, IN:Tanjung Pelepas, MY:13
-Dubai, UAE:Barcelona, ES:22
-Antwerp, BE:Santos, BR:20
-Laem Chabang, TH:Manila, PH:15
-Antwerp, BE:Tokyo, JP:18
-Rotterdam, NL:Los Angeles, US:21
-Hamburg, DE:Taiwan, CN:18
-Hamburg, DE:Tanjung Pelepas, MY:18
-Seattle-Tacoma, US:Felixstowe, UK:19
-Tanger Med, MA:Jakarta, ID:12
-Long Beach, US:Felixstowe, UK:23
-Tanger Med, MA:Piraeus, GR:21
-Jakarta, ID:Barcelona, ES:21
-Shenzhen, CN:Nehru Port, IN:18
-Antwerp, BE:Felixstowe, UK:22
-Rotterdam, NL:Ningbo-Zhoushan, CN:19
-Shanghai, CN:Algeciras, ES:14
-Barcelona, ES:Salalah, OM:21
-Port Klang, MY:Barcelona, ES:12
-Shenzhen, CN:Santos, BR:25
-Jakarta, ID:Vancouver, CA:20
-Bremen,DE:Keihin Ports, JP:22
-Dubai, UAE:Manila, PH:12
-Busan, KR:Tanjung Pelepas, MY:23
-Long Beach, US:Manila, PH:23
-Los Angeles, US:Hanshin Port, JP:15
-Savannah, US:Manila, PH:14
-Singapore, SI:Savannah, US:25
-Tanger Med, MA:Tokyo, JP:12
-Rotterdam, NL:Colon, PA:22
-New York-New Jersey, US:Nehru Port, IN:25
-New York-New Jersey, US:Salalah, OM:23
-Piraeus, GR:Singapore, SI:13
-Singapore, SI:Tokyo, JP:23
-Hamburg, DE:Singapore, SI:17
-Laem Chabang, TH:Hanshin Port, JP:18
-Shanghai, CN:Santos, BR:24
-Port Klang, MY:Antwerp, BE:24
-Antwerp, BE:Tanjung Pelepas, MY:25
-Hong Kong, CN:Jakarta, ID:21
-Antwerp, BE:Los Angeles, US:13
-Taiwan, CN:Antwerp, BE:23
-Hanshin Port, JP:Tokyo, JP:14
-Busan, KR:Santos, BR:13
-Seattle-Tacoma, US:Bremen,DE:16
-New York-New Jersey, US:Taiwan, CN:17
-Busan, KR:Piraeus, GR:21
-Hong Kong, CN:Port Klang, MY:21
-Seattle-Tacoma, US:Dubai, UAE:14
-Barcelona, ES:Algeciras, ES:19
-Piraeus, GR:Port Klang, MY:21
-Seattle-Tacoma, US:Tanjung Pelepas, MY:25
-Rotterdam, NL:Tanjung Pelepas, MY:19
-Savannah, US:Vancouver, CA:15
-Shanghai, CN:Nehru Port, IN:14
-Rotterdam, NL:Long Beach, US:23
-Rotterdam, NL:Piraeus, GR:13
-Colon, PA:Barcelona, ES:16
-Ningbo-Zhoushan, CN:Tanjung Pelepas, MY:14
-Rotterdam, NL:Hong Kong, CN:21
-Tanger Med, MA:Bremen,DE:21
-Tanger Med, MA:Tanjung Pelepas, MY:15
-New York-New Jersey, US:Savannah, US:14
-Algeciras, ES:Jeddah, SA:19
-Hamburg, DE:Hanshin Port, JP:13
-Dubai, UAE:Rotterdam, NL:21
-Shanghai, CN:Tanger Med, MA:19
-Laem Chabang, TH:Bremen,DE:15
-Shenzhen, CN:Tanjung Pelepas, MY:22
-Long Beach, US:Tokyo, JP:23
-Tanger Med, MA:Colon, PA:14
-Busan, KR:Keihin Ports, JP:23
-New York-New Jersey, US:Los Angeles, US:14
-Shanghai, CN:Busan, KR:13
-Nehru Port, IN:Tokyo, JP:20
-Manila, PH:Keihin Ports, JP:21
-Rotterdam, NL:Hanshin Port, JP:21
-Hong Kong, CN:Hanshin Port, JP:24
-Rotterdam, NL:Vancouver, CA:20
-Jakarta, ID:Antwerp, BE:14
-Taiwan, CN:Felixstowe, UK:15
-Rotterdam, NL:Salalah, OM:24
-Shanghai, CN:Piraeus, GR:19
-Savannah, US:Nehru Port, IN:21
-Colon, PA:Hanshin Port, JP:26
-Seattle-Tacoma, US:Keihin Ports, JP:18
-New York-New Jersey, US:Long Beach, US:23
-New York-New Jersey, US:Algeciras, ES:13
-Colon, PA:Jakarta, ID:26
-Laem Chabang, TH:Vancouver, CA:20
-Mundra, IN:Hamburg, DE:16
-Seattle-Tacoma, US:Savannah, US:16
-Rotterdam, NL:Antwerp, BE:26
-Santos, BR:Keihin Ports, JP:18
-Port Klang, MY:Long Beach, US:19
-Laem Chabang, TH:Hamburg, DE:26
-Rotterdam, NL:Algeciras, ES:12
-Busan, KR:Manila, PH:14
-Ningbo-Zhoushan, CN:Felixstowe, UK:21
-Felixstowe, UK:Salalah, OM:13
-Laem Chabang, TH:Salalah, OM:21
-New York-New Jersey, US:Singapore, SI:26
-Vancouver, CA:Tokyo, JP:18
-Laem Chabang, TH:Savannah, US:24
-Piraeus, GR:Long Beach, US:13
-Seattle-Tacoma, US:Colon, PA:12
-Savannah, US:Barcelona, ES:13
-Los Angeles, US:Felixstowe, UK:18
-Hanshin Port, JP:Keihin Ports, JP:20
-Piraeus, GR:Antwerp, BE:19
-Tokyo, JP:Salalah, OM:12
-Mundra, IN:Singapore, SI:18
-Laem Chabang, TH:Singapore, SI:12
-Piraeus, GR:Manila, PH:22
-Laem Chabang, TH:Long Beach, US:13
-Busan, KR:Vancouver, CA:21
-Santos, BR:Salalah, OM:20
-Singapore, SI:Port Klang, MY:24
-Shanghai, CN:New York-New Jersey, US:16
-Piraeus, GR:Jakarta, ID:16
-Hamburg, DE:Piraeus, GR:25
-Busan, KR:Colon, PA:13
-Busan, KR:Hong Kong, CN:23
-Seattle-Tacoma, US:Taiwan, CN:17
-Port Klang, MY:Hanshin Port, JP:24
-Hong Kong, CN:Los Angeles, US:15
-Hong Kong, CN:Ningbo-Zhoushan, CN:22
-Hamburg, DE:Santos, BR:14
-Laem Chabang, TH:Keihin Ports, JP:17
-Algeciras, ES:Tokyo, JP:24
-Colon, PA:Jeddah, SA:12
-Jakarta, ID:Felixstowe, UK:19
-Colon, PA:Tanjung Pelepas, MY:15
-Tanger Med, MA:Hanshin Port, JP:13
-Busan, KR:Bremen,DE:25
-Algeciras, ES:Salalah, OM:15
-Santos, BR:Tanjung Pelepas, MY:26
-Ningbo-Zhoushan, CN:Los Angeles, US:18
-Shanghai, CN:Jakarta, ID:26
-Antwerp, BE:Hanshin Port, JP:16
-Jakarta, ID:Hanshin Port, JP:20
-Colon, PA:Los Angeles, US:26
-Seattle-Tacoma, US:Algeciras, ES:20
-Seattle-Tacoma, US:Hong Kong, CN:21
-Dubai, UAE:Keihin Ports, JP:12
-Seattle-Tacoma, US:Barcelona, ES:18
-New York-New Jersey, US:Tanjung Pelepas, MY:26
-Taiwan, CN:Shenzhen, CN:21
-Singapore, SI:Antwerp, BE:26
-Hong Kong, CN:Manila, PH:17
-Piraeus, GR:Jeddah, SA:22
-New York-New Jersey, US:Santos, BR:16
-Los Angeles, US:Santos, BR:25
-Dubai, UAE:Savannah, US:14
-New York-New Jersey, US:Shenzhen, CN:15
-Algeciras, ES:Keihin Ports, JP:26
-Tanjung Pelepas, MY:Keihin Ports, JP:20
-Hamburg, DE:New York-New Jersey, US:22
-Ningbo-Zhoushan, CN:Long Beach, US:13
-Savannah, US:Algeciras, ES:12
-Bremen,DE:Shenzhen, CN:14
-New York-New Jersey, US:Vancouver, CA:23
-Tanger Med, MA:Singapore, SI:13
-Mundra, IN:Dubai, UAE:17
-Bremen,DE:Barcelona, ES:22
-Port Klang, MY:Salalah, OM:17
-Piraeus, GR:Hanshin Port, JP:12
-Singapore, SI:Nehru Port, IN:17
-Hamburg, DE:Algeciras, ES:13
-Savannah, US:Colon, PA:15
-Seattle-Tacoma, US:Hanshin Port, JP:26
-Singapore, SI:Salalah, OM:16
-Hamburg, DE:Barcelona, ES:24
-Tanger Med, MA:New York-New Jersey, US:15
-Shenzhen, CN:Los Angeles, US:14
-Shanghai, CN:Manila, PH:12
-Antwerp, BE:Jeddah, SA:16
-Laem Chabang, TH:Tanjung Pelepas, MY:15
-New York-New Jersey, US:Antwerp, BE:22
-Laem Chabang, TH:Algeciras, ES:21
-Mundra, IN:Piraeus, GR:12
-Hamburg, DE:Nehru Port, IN:17
-Shanghai, CN:Hong Kong, CN:23
-Hong Kong, CN:Vancouver, CA:13
-Dubai, UAE:Hanshin Port, JP:12
-Taiwan, CN:Hanshin Port, JP:23
-Tanger Med, MA:Jeddah, SA:24
-Busan, KR:Long Beach, US:25
-Bremen,DE:Hanshin Port, JP:24
-Vancouver, CA:Keihin Ports, JP:23
-Seattle-Tacoma, US:Jeddah, SA:13
-Shanghai, CN:Singapore, SI:26
-Port Klang, MY:Shenzhen, CN:21
-Tanger Med, MA:Algeciras, ES:15
-Savannah, US:Santos, BR:21
-Savannah, US:Felixstowe, UK:17
-Dubai, UAE:Jeddah, SA:21
-Shanghai, CN:Jeddah, SA:26
-Colon, PA:Ningbo-Zhoushan, CN:17
-Busan, KR:New York-New Jersey, US:13
-Mundra, IN:Nehru Port, IN:25
-Barcelona, ES:Vancouver, CA:12
-Manila, PH:Salalah, OM:16
-Laem Chabang, TH:Jakarta, ID:18
-Rotterdam, NL:Keihin Ports, JP:18
-Shanghai, CN:Los Angeles, US:24
-Shanghai, CN:Savannah, US:20
-Rotterdam, NL:Felixstowe, UK:15
-Shanghai, CN:Port Klang, MY:19
-Singapore, SI:Hong Kong, CN:13
-Laem Chabang, TH:Barcelona, ES:19
-Dubai, UAE:Algeciras, ES:17
-Seattle-Tacoma, US:Shanghai, CN:18
-Tanger Med, MA:Vancouver, CA:21
-New York-New Jersey, US:Manila, PH:15
-Seattle-Tacoma, US:Tanger Med, MA:19
-Laem Chabang, TH:Piraeus, GR:21
-Port Klang, MY:Jeddah, SA:16
-Bremen,DE:Taiwan, CN:21
-Piraeus, GR:Hong Kong, CN:22
-Algeciras, ES:Felixstowe, UK:20
-Taiwan, CN:Port Klang, MY:26
-Colon, PA:Antwerp, BE:13
-Barcelona, ES:Hanshin Port, JP:14
-Shenzhen, CN:Algeciras, ES:25
-Seattle-Tacoma, US:Jakarta, ID:24
-Jakarta, ID:Tanjung Pelepas, MY:19
-Dubai, UAE:New York-New Jersey, US:26
-Hamburg, DE:Antwerp, BE:22
-Seattle-Tacoma, US:Shenzhen, CN:18
-Rotterdam, NL:New York-New Jersey, US:17
-Laem Chabang, TH:Jeddah, SA:17
-Tanger Med, MA:Manila, PH:16
-Vancouver, CA:Felixstowe, UK:18
-New York-New Jersey, US:Keihin Ports, JP:15
-Tanger Med, MA:Ningbo-Zhoushan, CN:12
-New York-New Jersey, US:Felixstowe, UK:24
-Busan, KR:Taiwan, CN:16
-Hong Kong, CN:Antwerp, BE:16
-Seattle-Tacoma, US:Manila, PH:16
-Felixstowe, UK:Tokyo, JP:16
-Bremen,DE:Port Klang, MY:21
-Hanshin Port, JP:Tanjung Pelepas, MY:14
-Taiwan, CN:Barcelona, ES:14
-Mundra, IN:Antwerp, BE:19
-Shenzhen, CN:Ningbo-Zhoushan, CN:15
-Vancouver, CA:Salalah, OM:19
-Piraeus, GR:Keihin Ports, JP:17
-Long Beach, US:Tanjung Pelepas, MY:18
-Dubai, UAE:Felixstowe, UK:16
-Laem Chabang, TH:Busan, KR:22
-Seattle-Tacoma, US:Antwerp, BE:19
-Taiwan, CN:Santos, BR:26
-Mundra, IN:Tokyo, JP:23
-Shanghai, CN:Felixstowe, UK:23
-Savannah, US:Hanshin Port, JP:12
-Singapore, SI:Taiwan, CN:14
-Felixstowe, UK:Keihin Ports, JP:19
-Antwerp, BE:Shenzhen, CN:15
-Bremen,DE:Jeddah, SA:24
-Hong Kong, CN:Salalah, OM:16
-Los Angeles, US:Long Beach, US:18
-Port Klang, MY:Felixstowe, UK:13
-Los Angeles, US:Salalah, OM:14
-Antwerp, BE:Ningbo-Zhoushan, CN:19
-Manila, PH:Tanjung Pelepas, MY:16
-Tanjung Pelepas, MY:Tokyo, JP:23
-Hamburg, DE:Long Beach, US:17
-Port Klang, MY:Keihin Ports, JP:21
-Port Klang, MY:Nehru Port, IN:23
-Savannah, US:Port Klang, MY:19
-Ningbo-Zhoushan, CN:Hanshin Port, JP:21
-Bremen,DE:Long Beach, US:22
-Dubai, UAE:Taiwan, CN:12
-Nehru Port, IN:Manila, PH:22
-Hamburg, DE:Hong Kong, CN:17
-Hong Kong, CN:Jeddah, SA:24
-Bremen,DE:Manila, PH:22
-Hong Kong, CN:Algeciras, ES:18
-Antwerp, BE:Long Beach, US:12
-Antwerp, BE:Salalah, OM:22
-Vancouver, CA:Santos, BR:14
-Dubai, UAE:Hong Kong, CN:18
-Mundra, IN:Bremen,DE:21
-Singapore, SI:Algeciras, ES:14
-Seattle-Tacoma, US:Los Angeles, US:12
-Busan, KR:Felixstowe, UK:17
-Colon, PA:Long Beach, US:24
-Hamburg, DE:Jakarta, ID:20
-Hamburg, DE:Port Klang, MY:16
-Piraeus, GR:Los Angeles, US:13
-Mundra, IN:Seattle-Tacoma, US:21
-Bremen,DE:Singapore, SI:16
-Hanshin Port, JP:Long Beach, US:25
-Laem Chabang, TH:Ningbo-Zhoushan, CN:16
-Tanger Med, MA:Dubai, UAE:26
-Hamburg, DE:Los Angeles, US:19
-Shenzhen, CN:Keihin Ports, JP:19
-Seattle-Tacoma, US:Long Beach, US:26
-Singapore, SI:Long Beach, US:25
-Rotterdam, NL:Hamburg, DE:23
-Bremen,DE:Jakarta, ID:24
-Savannah, US:Ningbo-Zhoushan, CN:25
-Mundra, IN:Los Angeles, US:14
-Port Klang, MY:Ningbo-Zhoushan, CN:20
-Ningbo-Zhoushan, CN:Santos, BR:17
-Busan, KR:Barcelona, ES:22
-Laem Chabang, TH:Nehru Port, IN:16
-Laem Chabang, TH:Tokyo, JP:22
-Manila, PH:Tokyo, JP:21
-Bremen,DE:Vancouver, CA:25
-New York-New Jersey, US:Hong Kong, CN:19
-Long Beach, US:Santos, BR:20
-Rotterdam, NL:Singapore, SI:14
-Hamburg, DE:Ningbo-Zhoushan, CN:24
-Mundra, IN:Salalah, OM:18
-Singapore, SI:Barcelona, ES:12
-Hamburg, DE:Shenzhen, CN:22
-Los Angeles, US:Tokyo, JP:13
-Taiwan, CN:Tanjung Pelepas, MY:14
-Port Klang, MY:Tanjung Pelepas, MY:25
-Shenzhen, CN:Vancouver, CA:13
-Hong Kong, CN:Shenzhen, CN:26
-Hamburg, DE:Jeddah, SA:23
-Laem Chabang, TH:Shenzhen, CN:16
-Savannah, US:Salalah, OM:25
-Singapore, SI:Felixstowe, UK:24
-Algeciras, ES:Hanshin Port, JP:23
-Dubai, UAE:Santos, BR:19
-Port Klang, MY:Jakarta, ID:24
-Algeciras, ES:Long Beach, US:14
-Seattle-Tacoma, US:Laem Chabang, TH:22
-Tanger Med, MA:Keihin Ports, JP:14
-Hanshin Port, JP:Santos, BR:18
-Rotterdam, NL:Manila, PH:13
-Nehru Port, IN:Salalah, OM:24
-Shanghai, CN:Hamburg, DE:13
-Dubai, UAE:Hamburg, DE:19
-Colon, PA:Salalah, OM:26
-Mundra, IN:Shanghai, CN:26
-Taiwan, CN:Tokyo, JP:18
-Barcelona, ES:Ningbo-Zhoushan, CN:13
-New York-New Jersey, US:Jeddah, SA:26
-Shanghai, CN:Shenzhen, CN:26
-New York-New Jersey, US:Jakarta, ID:16
-Singapore, SI:Colon, PA:14
-Port Klang, MY:Vancouver, CA:16
-Laem Chabang, TH:Port Klang, MY:22
-Laem Chabang, TH:Antwerp, BE:23
-Nehru Port, IN:Felixstowe, UK:14
-Shenzhen, CN:Salalah, OM:13
-Hong Kong, CN:Long Beach, US:20
-Shanghai, CN:Vancouver, CA:17
-Antwerp, BE:Keihin Ports, JP:19
-Port Klang, MY:Colon, PA:25
-Mundra, IN:Hong Kong, CN:21
-Dubai, UAE:Ningbo-Zhoushan, CN:17
-Seattle-Tacoma, US:Port Klang, MY:16
-Bremen,DE:Hong Kong, CN:25
-Nehru Port, IN:Hanshin Port, JP:18
-Nehru Port, IN:Santos, BR:16
-Shanghai, CN:Laem Chabang, TH:25
-Jeddah, SA:Tokyo, JP:15
-Laem Chabang, TH:Hong Kong, CN:13
-Bremen,DE:Santos, BR:22
-Dubai, UAE:Jakarta, ID:24
-Port Klang, MY:Santos, BR:26
-Tanger Med, MA:Hamburg, DE:19
-Bremen,DE:Savannah, US:22
-Bremen,DE:Rotterdam, NL:23
-Mundra, IN:Busan, KR:24
-Laem Chabang, TH:New York-New Jersey, US:19
-Barcelona, ES:Tokyo, JP:22
-Vancouver, CA:Hanshin Port, JP:19
-Piraeus, GR:Nehru Port, IN:20
-Busan, KR:Tokyo, JP:16
-Tanger Med, MA:Shenzhen, CN:24
-Piraeus, GR:New York-New Jersey, US:26
-Piraeus, GR:Taiwan, CN:17
-Tanger Med, MA:Salalah, OM:19
-Tanger Med, MA:Port Klang, MY:20
-Laem Chabang, TH:Los Angeles, US:19
-Savannah, US:Antwerp, BE:18
-Taiwan, CN:Nehru Port, IN:22
-Dubai, UAE:Los Angeles, US:20
-Piraeus, GR:Vancouver, CA:12
-Jeddah, SA:Felixstowe, UK:17
-Piraeus, GR:Algeciras, ES:20
-Dubai, UAE:Nehru Port, IN:19
-Hamburg, DE:Colon, PA:16
-Busan, KR:Hanshin Port, JP:18
-Busan, KR:Tanger Med, MA:26
-Hanshin Port, JP:Jeddah, SA:17
-Dubai, UAE:Tanjung Pelepas, MY:14
-Busan, KR:Salalah, OM:17
-Hamburg, DE:Savannah, US:13
-Taiwan, CN:Manila, PH:17
-Mundra, IN:Port Klang, MY:12
-Barcelona, ES:Felixstowe, UK:12
-Taiwan, CN:Keihin Ports, JP:17
-Laem Chabang, TH:Tanger Med, MA:18
-Singapore, SI:Hanshin Port, JP:17
-Mundra, IN:Tanjung Pelepas, MY:25
-Ningbo-Zhoushan, CN:Manila, PH:23
-Mundra, IN:Colon, PA:19
-Jakarta, ID:Keihin Ports, JP:24
-Jeddah, SA:Manila, PH:18
-Hong Kong, CN:Felixstowe, UK:15
-Tanger Med, MA:Los Angeles, US:12
-Piraeus, GR:Ningbo-Zhoushan, CN:20
-Mundra, IN:New York-New Jersey, US:12
-Laem Chabang, TH:Rotterdam, NL:25
-Rotterdam, NL:Tokyo, JP:12
-Seattle-Tacoma, US:Nehru Port, IN:16
-Port Klang, MY:Manila, PH:25
-Mundra, IN:Savannah, US:19
-Vancouver, CA:Long Beach, US:25
-Mundra, IN:Felixstowe, UK:25
-Jakarta, ID:Salalah, OM:24
-Shanghai, CN:Ningbo-Zhoushan, CN:20
-Hong Kong, CN:Nehru Port, IN:16
-Shanghai, CN:Long Beach, US:12
-Laem Chabang, TH:Dubai, UAE:15
-Shenzhen, CN:Tokyo, JP:26
-Hanshin Port, JP:Felixstowe, UK:14
-Taiwan, CN:Long Beach, US:21
-Barcelona, ES:Santos, BR:23
-Laem Chabang, TH:Taiwan, CN:22
-Singapore, SI:Ningbo-Zhoushan, CN:26
-Shenzhen, CN:Barcelona, ES:22
-Tanger Med, MA:Rotterdam, NL:24
-Vancouver, CA:Nehru Port, IN:19
-Tokyo, JP:Keihin Ports, JP:23
-Seattle-Tacoma, US:Rotterdam, NL:23
-Rotterdam, NL:Port Klang, MY:14
-Dubai, UAE:Salalah, OM:25
-Busan, KR:Dubai, UAE:20
-Busan, KR:Savannah, US:19
-Santos, BR:Tokyo, JP:17
-Colon, PA:Manila, PH:16
-Singapore, SI:Tanjung Pelepas, MY:13
-Algeciras, ES:Tanjung Pelepas, MY:26
-Shanghai, CN:Taiwan, CN:14
-Vancouver, CA:Jeddah, SA:26
-Singapore, SI:Jeddah, SA:17
-Piraeus, GR:Savannah, US:22
-Ningbo-Zhoushan, CN:Jeddah, SA:16
-Vancouver, CA:Tanjung Pelepas, MY:24
-Savannah, US:Los Angeles, US:20
-Antwerp, BE:Algeciras, ES:19
-Seattle-Tacoma, US:Vancouver, CA:14
-Ningbo-Zhoushan, CN:Nehru Port, IN:20
-Busan, KR:Antwerp, BE:14
-Rotterdam, NL:Taiwan, CN:21
-Tanger Med, MA:Felixstowe, UK:15
-Barcelona, ES:Los Angeles, US:22
-Ningbo-Zhoushan, CN:Keihin Ports, JP:15
-Taiwan, CN:Salalah, OM:15
-Hamburg, DE:Tokyo, JP:18
-Dubai, UAE:Antwerp, BE:19
-Taiwan, CN:Hong Kong, CN:24
-Busan, KR:Jakarta, ID:15
-Tanger Med, MA:Santos, BR:24
-Busan, KR:Rotterdam, NL:25
-Bremen,DE:Algeciras, ES:25
-Singapore, SI:Jakarta, ID:22
-Mundra, IN:Taiwan, CN:20
-Long Beach, US:Salalah, OM:15
-Busan, KR:Shenzhen, CN:25
-Shanghai, CN:Rotterdam, NL:12
-Mundra, IN:Jeddah, SA:15
-Nehru Port, IN:Jeddah, SA:26
-Piraeus, GR:Shenzhen, CN:14
-Bremen,DE:Colon, PA:14
-Colon, PA:Santos, BR:18
-Vancouver, CA:Algeciras, ES:16
-Jeddah, SA:Salalah, OM:14
-Savannah, US:Shenzhen, CN:21
-Mundra, IN:Barcelona, ES:22
-Hamburg, DE:Felixstowe, UK:21
+Tanger-Med-MA:Savannah-US:24
+Seattle-Tacoma-US:Ningbo-Zhoushan-CN:24
+Vancouver-CA:Manila-PH:15
+Felixstowe-UK:Manila-PH:26
+Taiwan-CN:Vancouver-CA:17
+Tanger-Med-MA:Long-Beach-US:18
+Dubai-UAE:BremenDE:17
+Jakarta-ID:Nehru-Port-IN:12
+Vancouver-CA:Los-Angeles-US:15
+Busan-KR:Hamburg-DE:18
+Mundra-IN:Vancouver-CA:23
+Salalah-OM:Keihin-Ports-JP:18
+Seattle-Tacoma-US:Santos-BR:15
+BremenDE:Nehru-Port-IN:25
+Busan-KR:Nehru-Port-IN:13
+Shanghai-CN:Hanshin-Port-JP:12
+Jakarta-ID:Jeddah-SA:12
+Jeddah-SA:Tanjung-Pelepas-MY:24
+Mundra-IN:Jakarta-ID:15
+Algeciras-ES:Manila-PH:15
+Savannah-US:Jeddah-SA:20
+Rotterdam-NL:Nehru-Port-IN:20
+Los-Angeles-US:Nehru-Port-IN:15
+Rotterdam-NL:Jeddah-SA:13
+Mundra-IN:Shenzhen-CN:19
+Singapore-SI:Vancouver-CA:25
+Barcelona-ES:Nehru-Port-IN:26
+Shanghai-CN:Tokyo-JP:15
+Tanjung-Pelepas-MY:Salalah-OM:14
+Tanger-Med-MA:Nehru-Port-IN:15
+Seattle-Tacoma-US:Busan-KR:23
+Dubai-UAE:Port-Klang-MY:26
+Barcelona-ES:Manila-PH:21
+Seattle-Tacoma-US:Piraeus-GR:22
+New-York-New-Jersey-US:Ningbo-Zhoushan-CN:20
+Singapore-SI:Shenzhen-CN:25
+Los-Angeles-US:Keihin-Ports-JP:17
+Laem-Chabang-TH:Felixstowe-UK:18
+Shanghai-CN:Salalah-OM:14
+Savannah-US:Hong-Kong-CN:23
+Shanghai-CN:Keihin-Ports-JP:17
+Rotterdam-NL:Shenzhen-CN:22
+Tanger-Med-MA:Barcelona-ES:20
+Rotterdam-NL:Savannah-US:20
+Busan-KR:Singapore-SI:23
+Hong-Kong-CN:Keihin-Ports-JP:21
+Hamburg-DE:Keihin-Ports-JP:21
+New-York-New-Jersey-US:Tokyo-JP:16
+Piraeus-GR:Santos-BR:25
+Mundra-IN:Santos-BR:24
+Barcelona-ES:Long-Beach-US:24
+BremenDE:Los-Angeles-US:21
+Shenzhen-CN:Hanshin-Port-JP:16
+Algeciras-ES:Santos-BR:12
+Savannah-US:Tokyo-JP:20
+Singapore-SI:Los-Angeles-US:14
+Algeciras-ES:Los-Angeles-US:14
+Hong-Kong-CN:Colon-PA:17
+Barcelona-ES:Keihin-Ports-JP:23
+Mundra-IN:Laem-Chabang-TH:17
+Ningbo-Zhoushan-CN:Salalah-OM:24
+Algeciras-ES:Ningbo-Zhoushan-CN:26
+Taiwan-CN:Ningbo-Zhoushan-CN:24
+Taiwan-CN:Savannah-US:24
+Mundra-IN:Rotterdam-NL:24
+Colon-PA:Keihin-Ports-JP:15
+Colon-PA:Felixstowe-UK:26
+Mundra-IN:Manila-PH:22
+Dubai-UAE:Colon-PA:20
+Rotterdam-NL:Barcelona-ES:17
+Hamburg-DE:Salalah-OM:24
+Piraeus-GR:Salalah-OM:21
+Hamburg-DE:Vancouver-CA:22
+Mundra-IN:Long-Beach-US:17
+BremenDE:Piraeus-GR:16
+Port-Klang-MY:Los-Angeles-US:20
+Taiwan-CN:Jeddah-SA:17
+Shanghai-CN:Colon-PA:18
+Taiwan-CN:Los-Angeles-US:22
+Jakarta-ID:Los-Angeles-US:20
+Busan-KR:Jeddah-SA:22
+Seattle-Tacoma-US:Tokyo-JP:16
+BremenDE:Ningbo-Zhoushan-CN:19
+Dubai-UAE:Long-Beach-US:19
+Jakarta-ID:Tokyo-JP:21
+Shanghai-CN:Barcelona-ES:24
+Savannah-US:Tanjung-Pelepas-MY:17
+Rotterdam-NL:Jakarta-ID:25
+Tanger-Med-MA:Antwerp-BE:25
+Dubai-UAE:Shenzhen-CN:24
+Mundra-IN:Keihin-Ports-JP:13
+Nehru-Port-IN:Keihin-Ports-JP:24
+Seattle-Tacoma-US:Salalah-OM:20
+Piraeus-GR:Barcelona-ES:15
+Barcelona-ES:Tanjung-Pelepas-MY:20
+Piraeus-GR:Colon-PA:21
+Mundra-IN:Algeciras-ES:18
+Rotterdam-NL:Santos-BR:18
+Antwerp-BE:Manila-PH:21
+Hong-Kong-CN:Tanjung-Pelepas-MY:26
+Shenzhen-CN:Manila-PH:20
+Ningbo-Zhoushan-CN:Tokyo-JP:17
+Jakarta-ID:Ningbo-Zhoushan-CN:26
+BremenDE:Tokyo-JP:19
+Hamburg-DE:Manila-PH:17
+Antwerp-BE:Nehru-Port-IN:14
+Shanghai-CN:Dubai-UAE:23
+Felixstowe-UK:Tanjung-Pelepas-MY:19
+Hanshin-Port-JP:Salalah-OM:12
+Tanger-Med-MA:Hong-Kong-CN:22
+Shenzhen-CN:Long-Beach-US:25
+Colon-PA:Tokyo-JP:13
+Singapore-SI:Manila-PH:22
+Jakarta-ID:Shenzhen-CN:19
+Los-Angeles-US:Tanjung-Pelepas-MY:19
+Busan-KR:Algeciras-ES:25
+Seattle-Tacoma-US:New-York-New-Jersey-US:26
+Antwerp-BE:Barcelona-ES:26
+Santos-BR:Manila-PH:17
+Piraeus-GR:Felixstowe-UK:14
+BremenDE:Antwerp-BE:16
+Colon-PA:Algeciras-ES:22
+Barcelona-ES:Jeddah-SA:18
+Savannah-US:Jakarta-ID:24
+Hong-Kong-CN:Tokyo-JP:19
+BremenDE:Salalah-OM:13
+Los-Angeles-US:Manila-PH:19
+Shenzhen-CN:Jeddah-SA:15
+BremenDE:Hamburg-DE:21
+Port-Klang-MY:Algeciras-ES:18
+Dubai-UAE:Tokyo-JP:14
+Savannah-US:Keihin-Ports-JP:17
+Busan-KR:Port-Klang-MY:16
+Jakarta-ID:Algeciras-ES:22
+Jeddah-SA:Keihin-Ports-JP:16
+Algeciras-ES:Nehru-Port-IN:16
+Long-Beach-US:Jeddah-SA:25
+Colon-PA:Nehru-Port-IN:16
+New-York-New-Jersey-US:Port-Klang-MY:19
+New-York-New-Jersey-US:Colon-PA:24
+Busan-KR:Los-Angeles-US:22
+New-York-New-Jersey-US:Hanshin-Port-JP:12
+Piraeus-GR:Tokyo-JP:16
+Taiwan-CN:Colon-PA:15
+Laem-Chabang-TH:Colon-PA:22
+Dubai-UAE:Piraeus-GR:15
+New-York-New-Jersey-US:Barcelona-ES:25
+Antwerp-BE:Vancouver-CA:19
+Laem-Chabang-TH:Santos-BR:15
+Dubai-UAE:Singapore-SI:24
+Singapore-SI:Santos-BR:26
+Jakarta-ID:Manila-PH:23
+Shanghai-CN:BremenDE:24
+BremenDE:Tanjung-Pelepas-MY:16
+Mundra-IN:Ningbo-Zhoushan-CN:13
+Colon-PA:Vancouver-CA:26
+Hong-Kong-CN:Barcelona-ES:20
+Piraeus-GR:Tanjung-Pelepas-MY:26
+Santos-BR:Felixstowe-UK:15
+Mundra-IN:Hanshin-Port-JP:17
+Vancouver-CA:Ningbo-Zhoushan-CN:13
+Los-Angeles-US:Jeddah-SA:19
+Savannah-US:Long-Beach-US:23
+Hanshin-Port-JP:Manila-PH:16
+Port-Klang-MY:Tokyo-JP:26
+Shanghai-CN:Tanjung-Pelepas-MY:24
+BremenDE:Felixstowe-UK:20
+Taiwan-CN:Jakarta-ID:19
+Mundra-IN:Tanger-Med-MA:23
+Shanghai-CN:Antwerp-BE:15
+Hong-Kong-CN:Santos-BR:19
+Colon-PA:Shenzhen-CN:24
+Jakarta-ID:Santos-BR:13
+Tanger-Med-MA:Taiwan-CN:25
+Nehru-Port-IN:Long-Beach-US:16
+Seattle-Tacoma-US:Singapore-SI:19
+Shenzhen-CN:Felixstowe-UK:21
+Jakarta-ID:Long-Beach-US:20
+Singapore-SI:Keihin-Ports-JP:20
+Busan-KR:Ningbo-Zhoushan-CN:14
+Long-Beach-US:Keihin-Ports-JP:26
+Jeddah-SA:Santos-BR:12
+Dubai-UAE:Vancouver-CA:13
+Seattle-Tacoma-US:Hamburg-DE:20
+BremenDE:New-York-New-Jersey-US:23
+Taiwan-CN:Algeciras-ES:16
+Nehru-Port-IN:Tanjung-Pelepas-MY:13
+Dubai-UAE:Barcelona-ES:22
+Antwerp-BE:Santos-BR:20
+Laem-Chabang-TH:Manila-PH:15
+Antwerp-BE:Tokyo-JP:18
+Rotterdam-NL:Los-Angeles-US:21
+Hamburg-DE:Taiwan-CN:18
+Hamburg-DE:Tanjung-Pelepas-MY:18
+Seattle-Tacoma-US:Felixstowe-UK:19
+Tanger-Med-MA:Jakarta-ID:12
+Long-Beach-US:Felixstowe-UK:23
+Tanger-Med-MA:Piraeus-GR:21
+Jakarta-ID:Barcelona-ES:21
+Shenzhen-CN:Nehru-Port-IN:18
+Antwerp-BE:Felixstowe-UK:22
+Rotterdam-NL:Ningbo-Zhoushan-CN:19
+Shanghai-CN:Algeciras-ES:14
+Barcelona-ES:Salalah-OM:21
+Port-Klang-MY:Barcelona-ES:12
+Shenzhen-CN:Santos-BR:25
+Jakarta-ID:Vancouver-CA:20
+BremenDE:Keihin-Ports-JP:22
+Dubai-UAE:Manila-PH:12
+Busan-KR:Tanjung-Pelepas-MY:23
+Long-Beach-US:Manila-PH:23
+Los-Angeles-US:Hanshin-Port-JP:15
+Savannah-US:Manila-PH:14
+Singapore-SI:Savannah-US:25
+Tanger-Med-MA:Tokyo-JP:12
+Rotterdam-NL:Colon-PA:22
+New-York-New-Jersey-US:Nehru-Port-IN:25
+New-York-New-Jersey-US:Salalah-OM:23
+Piraeus-GR:Singapore-SI:13
+Singapore-SI:Tokyo-JP:23
+Hamburg-DE:Singapore-SI:17
+Laem-Chabang-TH:Hanshin-Port-JP:18
+Shanghai-CN:Santos-BR:24
+Port-Klang-MY:Antwerp-BE:24
+Antwerp-BE:Tanjung-Pelepas-MY:25
+Hong-Kong-CN:Jakarta-ID:21
+Antwerp-BE:Los-Angeles-US:13
+Taiwan-CN:Antwerp-BE:23
+Hanshin-Port-JP:Tokyo-JP:14
+Busan-KR:Santos-BR:13
+Seattle-Tacoma-US:BremenDE:16
+New-York-New-Jersey-US:Taiwan-CN:17
+Busan-KR:Piraeus-GR:21
+Hong-Kong-CN:Port-Klang-MY:21
+Seattle-Tacoma-US:Dubai-UAE:14
+Barcelona-ES:Algeciras-ES:19
+Piraeus-GR:Port-Klang-MY:21
+Seattle-Tacoma-US:Tanjung-Pelepas-MY:25
+Rotterdam-NL:Tanjung-Pelepas-MY:19
+Savannah-US:Vancouver-CA:15
+Shanghai-CN:Nehru-Port-IN:14
+Rotterdam-NL:Long-Beach-US:23
+Rotterdam-NL:Piraeus-GR:13
+Colon-PA:Barcelona-ES:16
+Ningbo-Zhoushan-CN:Tanjung-Pelepas-MY:14
+Rotterdam-NL:Hong-Kong-CN:21
+Tanger-Med-MA:BremenDE:21
+Tanger-Med-MA:Tanjung-Pelepas-MY:15
+New-York-New-Jersey-US:Savannah-US:14
+Algeciras-ES:Jeddah-SA:19
+Hamburg-DE:Hanshin-Port-JP:13
+Dubai-UAE:Rotterdam-NL:21
+Shanghai-CN:Tanger-Med-MA:19
+Laem-Chabang-TH:BremenDE:15
+Shenzhen-CN:Tanjung-Pelepas-MY:22
+Long-Beach-US:Tokyo-JP:23
+Tanger-Med-MA:Colon-PA:14
+Busan-KR:Keihin-Ports-JP:23
+New-York-New-Jersey-US:Los-Angeles-US:14
+Shanghai-CN:Busan-KR:13
+Nehru-Port-IN:Tokyo-JP:20
+Manila-PH:Keihin-Ports-JP:21
+Rotterdam-NL:Hanshin-Port-JP:21
+Hong-Kong-CN:Hanshin-Port-JP:24
+Rotterdam-NL:Vancouver-CA:20
+Jakarta-ID:Antwerp-BE:14
+Taiwan-CN:Felixstowe-UK:15
+Rotterdam-NL:Salalah-OM:24
+Shanghai-CN:Piraeus-GR:19
+Savannah-US:Nehru-Port-IN:21
+Colon-PA:Hanshin-Port-JP:26
+Seattle-Tacoma-US:Keihin-Ports-JP:18
+New-York-New-Jersey-US:Long-Beach-US:23
+New-York-New-Jersey-US:Algeciras-ES:13
+Colon-PA:Jakarta-ID:26
+Laem-Chabang-TH:Vancouver-CA:20
+Mundra-IN:Hamburg-DE:16
+Seattle-Tacoma-US:Savannah-US:16
+Rotterdam-NL:Antwerp-BE:26
+Santos-BR:Keihin-Ports-JP:18
+Port-Klang-MY:Long-Beach-US:19
+Laem-Chabang-TH:Hamburg-DE:26
+Rotterdam-NL:Algeciras-ES:12
+Busan-KR:Manila-PH:14
+Ningbo-Zhoushan-CN:Felixstowe-UK:21
+Felixstowe-UK:Salalah-OM:13
+Laem-Chabang-TH:Salalah-OM:21
+New-York-New-Jersey-US:Singapore-SI:26
+Vancouver-CA:Tokyo-JP:18
+Laem-Chabang-TH:Savannah-US:24
+Piraeus-GR:Long-Beach-US:13
+Seattle-Tacoma-US:Colon-PA:12
+Savannah-US:Barcelona-ES:13
+Los-Angeles-US:Felixstowe-UK:18
+Hanshin-Port-JP:Keihin-Ports-JP:20
+Piraeus-GR:Antwerp-BE:19
+Tokyo-JP:Salalah-OM:12
+Mundra-IN:Singapore-SI:18
+Laem-Chabang-TH:Singapore-SI:12
+Piraeus-GR:Manila-PH:22
+Laem-Chabang-TH:Long-Beach-US:13
+Busan-KR:Vancouver-CA:21
+Santos-BR:Salalah-OM:20
+Singapore-SI:Port-Klang-MY:24
+Shanghai-CN:New-York-New-Jersey-US:16
+Piraeus-GR:Jakarta-ID:16
+Hamburg-DE:Piraeus-GR:25
+Busan-KR:Colon-PA:13
+Busan-KR:Hong-Kong-CN:23
+Seattle-Tacoma-US:Taiwan-CN:17
+Port-Klang-MY:Hanshin-Port-JP:24
+Hong-Kong-CN:Los-Angeles-US:15
+Hong-Kong-CN:Ningbo-Zhoushan-CN:22
+Hamburg-DE:Santos-BR:14
+Laem-Chabang-TH:Keihin-Ports-JP:17
+Algeciras-ES:Tokyo-JP:24
+Colon-PA:Jeddah-SA:12
+Jakarta-ID:Felixstowe-UK:19
+Colon-PA:Tanjung-Pelepas-MY:15
+Tanger-Med-MA:Hanshin-Port-JP:13
+Busan-KR:BremenDE:25
+Algeciras-ES:Salalah-OM:15
+Santos-BR:Tanjung-Pelepas-MY:26
+Ningbo-Zhoushan-CN:Los-Angeles-US:18
+Shanghai-CN:Jakarta-ID:26
+Antwerp-BE:Hanshin-Port-JP:16
+Jakarta-ID:Hanshin-Port-JP:20
+Colon-PA:Los-Angeles-US:26
+Seattle-Tacoma-US:Algeciras-ES:20
+Seattle-Tacoma-US:Hong-Kong-CN:21
+Dubai-UAE:Keihin-Ports-JP:12
+Seattle-Tacoma-US:Barcelona-ES:18
+New-York-New-Jersey-US:Tanjung-Pelepas-MY:26
+Taiwan-CN:Shenzhen-CN:21
+Singapore-SI:Antwerp-BE:26
+Hong-Kong-CN:Manila-PH:17
+Piraeus-GR:Jeddah-SA:22
+New-York-New-Jersey-US:Santos-BR:16
+Los-Angeles-US:Santos-BR:25
+Dubai-UAE:Savannah-US:14
+New-York-New-Jersey-US:Shenzhen-CN:15
+Algeciras-ES:Keihin-Ports-JP:26
+Tanjung-Pelepas-MY:Keihin-Ports-JP:20
+Hamburg-DE:New-York-New-Jersey-US:22
+Ningbo-Zhoushan-CN:Long-Beach-US:13
+Savannah-US:Algeciras-ES:12
+BremenDE:Shenzhen-CN:14
+New-York-New-Jersey-US:Vancouver-CA:23
+Tanger-Med-MA:Singapore-SI:13
+Mundra-IN:Dubai-UAE:17
+BremenDE:Barcelona-ES:22
+Port-Klang-MY:Salalah-OM:17
+Piraeus-GR:Hanshin-Port-JP:12
+Singapore-SI:Nehru-Port-IN:17
+Hamburg-DE:Algeciras-ES:13
+Savannah-US:Colon-PA:15
+Seattle-Tacoma-US:Hanshin-Port-JP:26
+Singapore-SI:Salalah-OM:16
+Hamburg-DE:Barcelona-ES:24
+Tanger-Med-MA:New-York-New-Jersey-US:15
+Shenzhen-CN:Los-Angeles-US:14
+Shanghai-CN:Manila-PH:12
+Antwerp-BE:Jeddah-SA:16
+Laem-Chabang-TH:Tanjung-Pelepas-MY:15
+New-York-New-Jersey-US:Antwerp-BE:22
+Laem-Chabang-TH:Algeciras-ES:21
+Mundra-IN:Piraeus-GR:12
+Hamburg-DE:Nehru-Port-IN:17
+Shanghai-CN:Hong-Kong-CN:23
+Hong-Kong-CN:Vancouver-CA:13
+Dubai-UAE:Hanshin-Port-JP:12
+Taiwan-CN:Hanshin-Port-JP:23
+Tanger-Med-MA:Jeddah-SA:24
+Busan-KR:Long-Beach-US:25
+BremenDE:Hanshin-Port-JP:24
+Vancouver-CA:Keihin-Ports-JP:23
+Seattle-Tacoma-US:Jeddah-SA:13
+Shanghai-CN:Singapore-SI:26
+Port-Klang-MY:Shenzhen-CN:21
+Tanger-Med-MA:Algeciras-ES:15
+Savannah-US:Santos-BR:21
+Savannah-US:Felixstowe-UK:17
+Dubai-UAE:Jeddah-SA:21
+Shanghai-CN:Jeddah-SA:26
+Colon-PA:Ningbo-Zhoushan-CN:17
+Busan-KR:New-York-New-Jersey-US:13
+Mundra-IN:Nehru-Port-IN:25
+Barcelona-ES:Vancouver-CA:12
+Manila-PH:Salalah-OM:16
+Laem-Chabang-TH:Jakarta-ID:18
+Rotterdam-NL:Keihin-Ports-JP:18
+Shanghai-CN:Los-Angeles-US:24
+Shanghai-CN:Savannah-US:20
+Rotterdam-NL:Felixstowe-UK:15
+Shanghai-CN:Port-Klang-MY:19
+Singapore-SI:Hong-Kong-CN:13
+Laem-Chabang-TH:Barcelona-ES:19
+Dubai-UAE:Algeciras-ES:17
+Seattle-Tacoma-US:Shanghai-CN:18
+Tanger-Med-MA:Vancouver-CA:21
+New-York-New-Jersey-US:Manila-PH:15
+Seattle-Tacoma-US:Tanger-Med-MA:19
+Laem-Chabang-TH:Piraeus-GR:21
+Port-Klang-MY:Jeddah-SA:16
+BremenDE:Taiwan-CN:21
+Piraeus-GR:Hong-Kong-CN:22
+Algeciras-ES:Felixstowe-UK:20
+Taiwan-CN:Port-Klang-MY:26
+Colon-PA:Antwerp-BE:13
+Barcelona-ES:Hanshin-Port-JP:14
+Shenzhen-CN:Algeciras-ES:25
+Seattle-Tacoma-US:Jakarta-ID:24
+Jakarta-ID:Tanjung-Pelepas-MY:19
+Dubai-UAE:New-York-New-Jersey-US:26
+Hamburg-DE:Antwerp-BE:22
+Seattle-Tacoma-US:Shenzhen-CN:18
+Rotterdam-NL:New-York-New-Jersey-US:17
+Laem-Chabang-TH:Jeddah-SA:17
+Tanger-Med-MA:Manila-PH:16
+Vancouver-CA:Felixstowe-UK:18
+New-York-New-Jersey-US:Keihin-Ports-JP:15
+Tanger-Med-MA:Ningbo-Zhoushan-CN:12
+New-York-New-Jersey-US:Felixstowe-UK:24
+Busan-KR:Taiwan-CN:16
+Hong-Kong-CN:Antwerp-BE:16
+Seattle-Tacoma-US:Manila-PH:16
+Felixstowe-UK:Tokyo-JP:16
+BremenDE:Port-Klang-MY:21
+Hanshin-Port-JP:Tanjung-Pelepas-MY:14
+Taiwan-CN:Barcelona-ES:14
+Mundra-IN:Antwerp-BE:19
+Shenzhen-CN:Ningbo-Zhoushan-CN:15
+Vancouver-CA:Salalah-OM:19
+Piraeus-GR:Keihin-Ports-JP:17
+Long-Beach-US:Tanjung-Pelepas-MY:18
+Dubai-UAE:Felixstowe-UK:16
+Laem-Chabang-TH:Busan-KR:22
+Seattle-Tacoma-US:Antwerp-BE:19
+Taiwan-CN:Santos-BR:26
+Mundra-IN:Tokyo-JP:23
+Shanghai-CN:Felixstowe-UK:23
+Savannah-US:Hanshin-Port-JP:12
+Singapore-SI:Taiwan-CN:14
+Felixstowe-UK:Keihin-Ports-JP:19
+Antwerp-BE:Shenzhen-CN:15
+BremenDE:Jeddah-SA:24
+Hong-Kong-CN:Salalah-OM:16
+Los-Angeles-US:Long-Beach-US:18
+Port-Klang-MY:Felixstowe-UK:13
+Los-Angeles-US:Salalah-OM:14
+Antwerp-BE:Ningbo-Zhoushan-CN:19
+Manila-PH:Tanjung-Pelepas-MY:16
+Tanjung-Pelepas-MY:Tokyo-JP:23
+Hamburg-DE:Long-Beach-US:17
+Port-Klang-MY:Keihin-Ports-JP:21
+Port-Klang-MY:Nehru-Port-IN:23
+Savannah-US:Port-Klang-MY:19
+Ningbo-Zhoushan-CN:Hanshin-Port-JP:21
+BremenDE:Long-Beach-US:22
+Dubai-UAE:Taiwan-CN:12
+Nehru-Port-IN:Manila-PH:22
+Hamburg-DE:Hong-Kong-CN:17
+Hong-Kong-CN:Jeddah-SA:24
+BremenDE:Manila-PH:22
+Hong-Kong-CN:Algeciras-ES:18
+Antwerp-BE:Long-Beach-US:12
+Antwerp-BE:Salalah-OM:22
+Vancouver-CA:Santos-BR:14
+Dubai-UAE:Hong-Kong-CN:18
+Mundra-IN:BremenDE:21
+Singapore-SI:Algeciras-ES:14
+Seattle-Tacoma-US:Los-Angeles-US:12
+Busan-KR:Felixstowe-UK:17
+Colon-PA:Long-Beach-US:24
+Hamburg-DE:Jakarta-ID:20
+Hamburg-DE:Port-Klang-MY:16
+Piraeus-GR:Los-Angeles-US:13
+Mundra-IN:Seattle-Tacoma-US:21
+BremenDE:Singapore-SI:16
+Hanshin-Port-JP:Long-Beach-US:25
+Laem-Chabang-TH:Ningbo-Zhoushan-CN:16
+Tanger-Med-MA:Dubai-UAE:26
+Hamburg-DE:Los-Angeles-US:19
+Shenzhen-CN:Keihin-Ports-JP:19
+Seattle-Tacoma-US:Long-Beach-US:26
+Singapore-SI:Long-Beach-US:25
+Rotterdam-NL:Hamburg-DE:23
+BremenDE:Jakarta-ID:24
+Savannah-US:Ningbo-Zhoushan-CN:25
+Mundra-IN:Los-Angeles-US:14
+Port-Klang-MY:Ningbo-Zhoushan-CN:20
+Ningbo-Zhoushan-CN:Santos-BR:17
+Busan-KR:Barcelona-ES:22
+Laem-Chabang-TH:Nehru-Port-IN:16
+Laem-Chabang-TH:Tokyo-JP:22
+Manila-PH:Tokyo-JP:21
+BremenDE:Vancouver-CA:25
+New-York-New-Jersey-US:Hong-Kong-CN:19
+Long-Beach-US:Santos-BR:20
+Rotterdam-NL:Singapore-SI:14
+Hamburg-DE:Ningbo-Zhoushan-CN:24
+Mundra-IN:Salalah-OM:18
+Singapore-SI:Barcelona-ES:12
+Hamburg-DE:Shenzhen-CN:22
+Los-Angeles-US:Tokyo-JP:13
+Taiwan-CN:Tanjung-Pelepas-MY:14
+Port-Klang-MY:Tanjung-Pelepas-MY:25
+Shenzhen-CN:Vancouver-CA:13
+Hong-Kong-CN:Shenzhen-CN:26
+Hamburg-DE:Jeddah-SA:23
+Laem-Chabang-TH:Shenzhen-CN:16
+Savannah-US:Salalah-OM:25
+Singapore-SI:Felixstowe-UK:24
+Algeciras-ES:Hanshin-Port-JP:23
+Dubai-UAE:Santos-BR:19
+Port-Klang-MY:Jakarta-ID:24
+Algeciras-ES:Long-Beach-US:14
+Seattle-Tacoma-US:Laem-Chabang-TH:22
+Tanger-Med-MA:Keihin-Ports-JP:14
+Hanshin-Port-JP:Santos-BR:18
+Rotterdam-NL:Manila-PH:13
+Nehru-Port-IN:Salalah-OM:24
+Shanghai-CN:Hamburg-DE:13
+Dubai-UAE:Hamburg-DE:19
+Colon-PA:Salalah-OM:26
+Mundra-IN:Shanghai-CN:26
+Taiwan-CN:Tokyo-JP:18
+Barcelona-ES:Ningbo-Zhoushan-CN:13
+New-York-New-Jersey-US:Jeddah-SA:26
+Shanghai-CN:Shenzhen-CN:26
+New-York-New-Jersey-US:Jakarta-ID:16
+Singapore-SI:Colon-PA:14
+Port-Klang-MY:Vancouver-CA:16
+Laem-Chabang-TH:Port-Klang-MY:22
+Laem-Chabang-TH:Antwerp-BE:23
+Nehru-Port-IN:Felixstowe-UK:14
+Shenzhen-CN:Salalah-OM:13
+Hong-Kong-CN:Long-Beach-US:20
+Shanghai-CN:Vancouver-CA:17
+Antwerp-BE:Keihin-Ports-JP:19
+Port-Klang-MY:Colon-PA:25
+Mundra-IN:Hong-Kong-CN:21
+Dubai-UAE:Ningbo-Zhoushan-CN:17
+Seattle-Tacoma-US:Port-Klang-MY:16
+BremenDE:Hong-Kong-CN:25
+Nehru-Port-IN:Hanshin-Port-JP:18
+Nehru-Port-IN:Santos-BR:16
+Shanghai-CN:Laem-Chabang-TH:25
+Jeddah-SA:Tokyo-JP:15
+Laem-Chabang-TH:Hong-Kong-CN:13
+BremenDE:Santos-BR:22
+Dubai-UAE:Jakarta-ID:24
+Port-Klang-MY:Santos-BR:26
+Tanger-Med-MA:Hamburg-DE:19
+BremenDE:Savannah-US:22
+BremenDE:Rotterdam-NL:23
+Mundra-IN:Busan-KR:24
+Laem-Chabang-TH:New-York-New-Jersey-US:19
+Barcelona-ES:Tokyo-JP:22
+Vancouver-CA:Hanshin-Port-JP:19
+Piraeus-GR:Nehru-Port-IN:20
+Busan-KR:Tokyo-JP:16
+Tanger-Med-MA:Shenzhen-CN:24
+Piraeus-GR:New-York-New-Jersey-US:26
+Piraeus-GR:Taiwan-CN:17
+Tanger-Med-MA:Salalah-OM:19
+Tanger-Med-MA:Port-Klang-MY:20
+Laem-Chabang-TH:Los-Angeles-US:19
+Savannah-US:Antwerp-BE:18
+Taiwan-CN:Nehru-Port-IN:22
+Dubai-UAE:Los-Angeles-US:20
+Piraeus-GR:Vancouver-CA:12
+Jeddah-SA:Felixstowe-UK:17
+Piraeus-GR:Algeciras-ES:20
+Dubai-UAE:Nehru-Port-IN:19
+Hamburg-DE:Colon-PA:16
+Busan-KR:Hanshin-Port-JP:18
+Busan-KR:Tanger-Med-MA:26
+Hanshin-Port-JP:Jeddah-SA:17
+Dubai-UAE:Tanjung-Pelepas-MY:14
+Busan-KR:Salalah-OM:17
+Hamburg-DE:Savannah-US:13
+Taiwan-CN:Manila-PH:17
+Mundra-IN:Port-Klang-MY:12
+Barcelona-ES:Felixstowe-UK:12
+Taiwan-CN:Keihin-Ports-JP:17
+Laem-Chabang-TH:Tanger-Med-MA:18
+Singapore-SI:Hanshin-Port-JP:17
+Mundra-IN:Tanjung-Pelepas-MY:25
+Ningbo-Zhoushan-CN:Manila-PH:23
+Mundra-IN:Colon-PA:19
+Jakarta-ID:Keihin-Ports-JP:24
+Jeddah-SA:Manila-PH:18
+Hong-Kong-CN:Felixstowe-UK:15
+Tanger-Med-MA:Los-Angeles-US:12
+Piraeus-GR:Ningbo-Zhoushan-CN:20
+Mundra-IN:New-York-New-Jersey-US:12
+Laem-Chabang-TH:Rotterdam-NL:25
+Rotterdam-NL:Tokyo-JP:12
+Seattle-Tacoma-US:Nehru-Port-IN:16
+Port-Klang-MY:Manila-PH:25
+Mundra-IN:Savannah-US:19
+Vancouver-CA:Long-Beach-US:25
+Mundra-IN:Felixstowe-UK:25
+Jakarta-ID:Salalah-OM:24
+Shanghai-CN:Ningbo-Zhoushan-CN:20
+Hong-Kong-CN:Nehru-Port-IN:16
+Shanghai-CN:Long-Beach-US:12
+Laem-Chabang-TH:Dubai-UAE:15
+Shenzhen-CN:Tokyo-JP:26
+Hanshin-Port-JP:Felixstowe-UK:14
+Taiwan-CN:Long-Beach-US:21
+Barcelona-ES:Santos-BR:23
+Laem-Chabang-TH:Taiwan-CN:22
+Singapore-SI:Ningbo-Zhoushan-CN:26
+Shenzhen-CN:Barcelona-ES:22
+Tanger-Med-MA:Rotterdam-NL:24
+Vancouver-CA:Nehru-Port-IN:19
+Tokyo-JP:Keihin-Ports-JP:23
+Seattle-Tacoma-US:Rotterdam-NL:23
+Rotterdam-NL:Port-Klang-MY:14
+Dubai-UAE:Salalah-OM:25
+Busan-KR:Dubai-UAE:20
+Busan-KR:Savannah-US:19
+Santos-BR:Tokyo-JP:17
+Colon-PA:Manila-PH:16
+Singapore-SI:Tanjung-Pelepas-MY:13
+Algeciras-ES:Tanjung-Pelepas-MY:26
+Shanghai-CN:Taiwan-CN:14
+Vancouver-CA:Jeddah-SA:26
+Singapore-SI:Jeddah-SA:17
+Piraeus-GR:Savannah-US:22
+Ningbo-Zhoushan-CN:Jeddah-SA:16
+Vancouver-CA:Tanjung-Pelepas-MY:24
+Savannah-US:Los-Angeles-US:20
+Antwerp-BE:Algeciras-ES:19
+Seattle-Tacoma-US:Vancouver-CA:14
+Ningbo-Zhoushan-CN:Nehru-Port-IN:20
+Busan-KR:Antwerp-BE:14
+Rotterdam-NL:Taiwan-CN:21
+Tanger-Med-MA:Felixstowe-UK:15
+Barcelona-ES:Los-Angeles-US:22
+Ningbo-Zhoushan-CN:Keihin-Ports-JP:15
+Taiwan-CN:Salalah-OM:15
+Hamburg-DE:Tokyo-JP:18
+Dubai-UAE:Antwerp-BE:19
+Taiwan-CN:Hong-Kong-CN:24
+Busan-KR:Jakarta-ID:15
+Tanger-Med-MA:Santos-BR:24
+Busan-KR:Rotterdam-NL:25
+BremenDE:Algeciras-ES:25
+Singapore-SI:Jakarta-ID:22
+Mundra-IN:Taiwan-CN:20
+Long-Beach-US:Salalah-OM:15
+Busan-KR:Shenzhen-CN:25
+Shanghai-CN:Rotterdam-NL:12
+Mundra-IN:Jeddah-SA:15
+Nehru-Port-IN:Jeddah-SA:26
+Piraeus-GR:Shenzhen-CN:14
+BremenDE:Colon-PA:14
+Colon-PA:Santos-BR:18
+Vancouver-CA:Algeciras-ES:16
+Jeddah-SA:Salalah-OM:14
+Savannah-US:Shenzhen-CN:21
+Mundra-IN:Barcelona-ES:22
+Hamburg-DE:Felixstowe-UK:21

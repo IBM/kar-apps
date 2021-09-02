@@ -26,6 +26,7 @@ import com.ibm.research.kar.reefer.common.FleetCapacity;
 import com.ibm.research.kar.reefer.common.Shard;
 import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.model.Route;
+import redis.clients.jedis.Jedis;
 
 import javax.json.*;
 import java.time.Duration;
@@ -40,11 +41,13 @@ public class DepotManagerActor extends BaseActor {
     private static final Logger logger = Logger.getLogger(DepotManagerActor.class.getName());
     private List<Depot> depots = new LinkedList<>();
     private long totalInventorySize = 0;
-
+   // private Jedis jedis=null;
     @Activate
     public void activate() {
         // fetch actor state from Kar storage
         Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
+     //   jedis = new Jedis(System.getenv("REDIS_HOST"), Integer.parseInt(System.getenv("REDIS_PORT")), 5000, 5000);
+    //    jedis.auth(System.getenv("REDIS_PASSWORD"));
 
         if (state.isEmpty()) {
             ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
@@ -61,9 +64,6 @@ public class DepotManagerActor extends BaseActor {
                 // shards. If a depot "serves" say two voyages there will be two distinct shards
                 // each with a unique range of reefer ids.
                 inx += assignShardToDepot(route.getOriginPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
-              //   System.out.println("DepotManager.activate() - Origin Depot:"+origin.getId()+" size:"+origin.getSize()+" ship:"+route.getVessel().getId()+
-            //            " shard low:"+originShard.getLowerBound()+" shard up:"+originShard.getUpperBound());
-
                 inx += assignShardToDepot(route.getDestinationPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
             }
             totalInventorySize = inx;
@@ -104,7 +104,7 @@ public class DepotManagerActor extends BaseActor {
                 e.printStackTrace();
             }
         }
-        Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(1));
+        Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofMillis(1000));
     }
 
     private int assignShardToDepot(String depotName, String shipName, int shipMaxCapacity, int beginRange) {
@@ -149,6 +149,9 @@ public class DepotManagerActor extends BaseActor {
         int booked = 0, inTransitCount = 0, onMaintenance = 0, spoiltReefers = 0;
         try {
             for (Depot depot : depots) {
+               // ActorRef depotActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, depot.getId());
+               // JsonValue metrics = Kar.Actors.call(depotActor,"getMetrics");
+
                 JsonValue metrics = Kar.Actors.State.get(depot.depotActor, Constants.REEFER_METRICS_KEY);
                 if (metrics != null && metrics != JsonValue.NULL) {
                     String[] values = ((JsonString) metrics).getString().split(":");

@@ -208,7 +208,7 @@ public class OrderActor extends BaseActor {
         job.add(Constants.REEFER_ID_KEY, spoiltReeferId).add(Constants.ORDER_KEY, order.getAsJsonObject());
 
         ActorRef voyageRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId());
-        Kar.Actors.tell(voyageRef, "reeferSpoilt", job.build());//.asJsonObject();
+        Kar.Actors.tell(voyageRef, "reeferSpoilt", job.build());
     }
 
     /**

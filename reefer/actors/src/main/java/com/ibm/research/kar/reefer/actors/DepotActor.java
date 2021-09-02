@@ -22,13 +22,12 @@ import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
-import com.ibm.research.kar.reefer.common.Constants;
-import com.ibm.research.kar.reefer.common.ReeferAllocator;
-import com.ibm.research.kar.reefer.common.ReeferState;
-import com.ibm.research.kar.reefer.common.Shard;
+import com.ibm.research.kar.reefer.common.*;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.ReeferDTO;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisClientConfig;
 
 import javax.json.*;
 import java.time.Instant;
@@ -56,7 +55,8 @@ public class DepotActor extends BaseActor {
     private Map<Integer, Integer> onMaintenanceMap = new ConcurrentHashMap<>();
     // contains Order-Reefers mapping needed to reduce latency of calls
     private Map<String, Set<String>> order2ReeferMap = new HashMap<>();
-
+ //   private Jedis jedis=null;
+    //Redis redis = null;
     private JsonValue totalReeferInventory = Json.createValue(0);
     private JsonValue depotSize;
     private JsonValue currentInventorySize;
@@ -71,7 +71,9 @@ public class DepotActor extends BaseActor {
             // fetch actor state from Kar storage
             Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
             t2 = System.currentTimeMillis();
-
+         //   redis = new Redis();
+//            jedis = new Jedis(System.getenv("REDIS_HOST"), Integer.parseInt(System.getenv("REDIS_PORT")), 5000, 5000);
+//           jedis.auth(System.getenv("REDIS_PASSWORD"));
             if (!state.isEmpty()) {
 
                 if (state.containsKey(Constants.REEFER_METRICS_KEY)) {
@@ -817,9 +819,13 @@ public class DepotActor extends BaseActor {
 
     }
 
-
     private void updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap) {
         String metrics = getMetricsString();
+
+
+  //      jedis.hset("depot-metrics", getId(), metrics);
+   //     jedis.close();
+
         Map<String, JsonValue> actorStateMap = new HashMap<>();
         actorStateMap.put(Constants.REEFER_METRICS_KEY, Json.createValue(metrics));
 
@@ -876,6 +882,11 @@ public class DepotActor extends BaseActor {
     private void saveMetrics() {
         String metrics = getMetricsString();
         Kar.Actors.State.set(this, Constants.REEFER_METRICS_KEY, Json.createValue(metrics));
+    }
+
+    @Remote
+    public JsonValue getMetrics() {
+        return Json.createValue(getMetricsString());
     }
 
     private String getMetricsString() {

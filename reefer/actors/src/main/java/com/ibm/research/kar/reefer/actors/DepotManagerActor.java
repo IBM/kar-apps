@@ -146,13 +146,11 @@ public class DepotManagerActor extends BaseActor {
     public void publishReeferMetrics() {
         int booked = 0, inTransitCount = 0, onMaintenance = 0, spoiltReefers = 0;
         try {
-            for (Depot depot : depots) {
-               // ActorRef depotActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, depot.getId());
-               // JsonValue metrics = Kar.Actors.call(depotActor,"getMetrics");
 
-                JsonValue metrics = Kar.Actors.State.get(depot.depotActor, Constants.REEFER_METRICS_KEY);
-                if (metrics != null && metrics != JsonValue.NULL) {
-                    String[] values = ((JsonString) metrics).getString().split(":");
+            Map<String, JsonValue> depotMetrics = Kar.Actors.State.Submap.getAll(this, Constants.REEFER_METRICS_MAP_KEY);
+            for(Map.Entry<String, JsonValue> metrics : depotMetrics.entrySet()) {
+                if ( metrics.getValue() != null) {
+                    String[] values = ((JsonString)metrics.getValue()).getString().split(":");
                     if (values != null && values.length > 0) {
                         booked += Integer.parseInt(values[0]);
                         onMaintenance += Integer.valueOf(values[3]).intValue();

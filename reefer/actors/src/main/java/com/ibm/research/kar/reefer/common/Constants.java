@@ -49,6 +49,7 @@ public class Constants {
    public static final String REEFERS_KEY="reefers";
    public static final String REEFERS_MAINTENANCE_DATE="maintenanceDate";
    public static final String REEFER_METRICS_KEY="reefer-metrics";
+   public static final String REEFER_METRICS_MAP_KEY="reefer-metrics-map";
    public static final String REEFERS_IN_TRANSIT_COUNT_KEY="reefer-in-transit";
    public static final String SPOILT_REEFERS_KEY="spoilt-reefers";
 

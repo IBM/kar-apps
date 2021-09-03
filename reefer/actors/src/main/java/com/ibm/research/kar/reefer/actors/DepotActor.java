@@ -816,9 +816,9 @@ public class DepotActor extends BaseActor {
     private void updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap) {
         String metrics = getMetricsString();
 
-
-  //      jedis.hset("depot-metrics", getId(), metrics);
-   //     jedis.close();
+        // Save this depot reefer metrics in DepotManager Map
+        ActorRef depotManagerActor = Kar.Actors.ref(ReeferAppConfig.DepotManagerActorType, ReeferAppConfig.DepotManagerId);
+        Kar.Actors.State.Submap.set(depotManagerActor, Constants.REEFER_METRICS_MAP_KEY, getId(), Json.createValue(metrics));
 
         Map<String, JsonValue> actorStateMap = new HashMap<>();
         actorStateMap.put(Constants.REEFER_METRICS_KEY, Json.createValue(metrics));

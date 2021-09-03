@@ -84,6 +84,7 @@ public class Constants {
    public static final String DEPOT_SIZE_KEY="depot-size";
    public static final String TARGETS_KEY="targets";
    public static final String TARGET_KEY="target";
+   public static final String TARGET_MAP_KEY="target-enum-map";
    public static final String TARGET_TYPE_KEY="target-type";
    public static final String ON_MAINTENANCE_PROVISIONER_LIST="on-maintenance-list";
    public static final String DATE_KEY="date";

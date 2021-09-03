@@ -31,28 +31,44 @@ import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.common.Constants;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class OrderSubThread extends Thread {
   boolean running = true;
-  boolean oneshot = false;
   int threadloops = 0;
   int ordertarget;
   JsonValue currentDate;
   JsonValue futureVoyages;
   Instant today;
 
-  int updatesDoneToday = 0;
-  int updatesPerDay = 0;
+  int tnum;
+  int updatesPerDay;
+  AtomicInteger ordersDoneToday;
+  boolean oneshot;
+
+  int threadOrdersDone = 0;
+  long totalOrderTime = 0;
   long dayEndTime;
-  long totalOrderTime;
+  int expectedOrders;
   boolean startup = true;
   private static final Logger logger = Logger.getLogger(OrderSubThread.class.getName());
 
+    OrderSubThread(int tnum, int updatesPerDay, AtomicInteger ordersDoneToday, boolean oneshot) {
+    this.tnum = tnum;
+    this.updatesPerDay = updatesPerDay;
+    this.ordersDoneToday = ordersDoneToday;
+  }
+
   public void run() {
     // order group processing:
-    //  create one order for every voyage below threshold
-    //  process voyages in random order
+    //  attempt to create <updatesPerDay> orders for every voyage below order target
+    //  process voyages in a random order
+    //  spread orders evenly across the simulated day
+    //  randomize sleep times between orders to try to be out-of-sync with other OrderSubthreads
     try {
+      // day end time is 98% of unit delay
+      dayEndTime = System.currentTimeMillis() + 980 * SimulatorService.unitdelay.intValue();
       List<String> keyList;
       synchronized (SimulatorService.voyageFreeCap) {
         keyList = new ArrayList<String>(SimulatorService.voyageFreeCap.keySet());
@@ -64,7 +80,9 @@ public class OrderSubThread extends Thread {
       List<Integer> intlist = Arrays.asList(indirects);
       Collections.shuffle(intlist);
       intlist.toArray(indirects);
-  
+
+    expectedOrders = keyList.size() * updatesPerDay;
+    for (int u = 0; u < updatesPerDay; u++) {
       for (int i = 0; i < keyList.size(); i++) {
         String voyage = keyList.get(indirects[i]);
         FutureVoyage entry = (FutureVoyage) SimulatorService.voyageFreeCap.get(voyage);
@@ -74,38 +92,67 @@ public class OrderSubThread extends Thread {
         }
         if (entry.getOrderSize() > 0) {
           if (logger.isLoggable(Level.FINE)) {
-            logger.fine("ordersubthread: create order size=" + entry.getOrderSize() + " for " + voyage);
+            logger.fine(String.format("ordersubthread%d: create order size=%d for %s", tnum ,entry.getOrderSize(), voyage));
           }
           JsonObject order = Json.createObjectBuilder().add("voyageId", voyage)
                   .add("customerId", "simulator").add("product", "pseudoBanana")
                   .add("productQty", entry.getOrderSize()).build();
           long ordersnap = System.nanoTime();
           JsonValue rsp = null;
-  
+
           try {
             Response response = Kar.Services.post(Constants.REEFERSERVICE, "orders", order);
             rsp = response.readEntity(JsonValue.class);
+            ordersDoneToday.incrementAndGet();
+            threadOrdersDone++;
           } catch (Exception e) {
-            logger.warning("ordersubthread: error posting order " + e.toString());
+            logger.warning(String.format("ordersubthread%d: error posting order %s", tnum, e.toString()));
+            ordersDoneToday.incrementAndGet();
+            threadOrdersDone++;
           }
           if (null == rsp || !Constants.OK.equals(rsp.asJsonObject().getString("bookingStatus"))
                   || null == rsp.asJsonObject().getString("voyageId")) {
             SimulatorService.os.addFailed();
-            logger.warning("ordersubthread: bad response when submitting order: " + order.toString()
-                    + "\nresponse:" + rsp);
+            logger.warning(String.format("ordersubthread%d: bad response when submitting order: %s\n%s",
+                                         tnum, order.toString(), rsp));
           } else {
             int otime = (int) ((System.nanoTime() - ordersnap) / 1000000);
+            totalOrderTime += otime;
             if (SimulatorService.os.addSuccessful(otime)) {
               // orderstats indicates an outlier
               String orderid = rsp.asJsonObject().getString("orderId");
-              logger.warning("ordersubthread: order latency outlier voyage=" + voyage + " order="
-                      + orderid + " ===> " + otime);
+              logger.warning(String.format("ordersubthread%d: order latency outlier voyage=%s order=%s ===> %d",
+                                           tnum, voyage, orderid, otime));
             }
           }
         }
+        // compute next sleep time
+        if (!oneshot && threadOrdersDone > 0 && expectedOrders > threadOrdersDone) {
+          long timeToSleep = 10;
+          long timeRemaining = dayEndTime - System.currentTimeMillis();
+          long orderTimeRemaining = (totalOrderTime / threadOrdersDone)
+                  * (expectedOrders - threadOrdersDone);
+          long triggerRandom = 20;  // 20 millis
+          if (orderTimeRemaining > 0 && timeRemaining > 0) {
+            timeToSleep = (timeRemaining - orderTimeRemaining)
+                    / (expectedOrders - threadOrdersDone);
+            if (timeToSleep > triggerRandom) {
+              timeToSleep = ThreadLocalRandom.current().nextLong(timeToSleep/2, (timeToSleep*3)/2);
+            }
+            timeToSleep = (timeToSleep < 1) ? 1 : timeToSleep;
+          }
+          if (logger.isLoggable(Level.FINE)) {
+            logger.fine(String.format("ordersubthread%d: timeRemaining=%d orderTimeRemaining=%d totalOrderTime=%d threadOrdersDone=%d timeToSleep=%d",
+                                      tnum, timeRemaining, orderTimeRemaining, totalOrderTime, threadOrdersDone, timeToSleep));
+          }
+          Thread.sleep(timeToSleep);
+        }
       }
+     }
     } catch (Throwable e) {
-      logger.warning("ordersubthread:" + e);
+      // expected
+      // logger.warning("ordersubthread: " + e);
+      // e.printStackTrace();
     }
   }
 }

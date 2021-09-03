@@ -98,7 +98,9 @@ spec:
     - name: KAR_SIDECAR_IN_CONTAINER
       value: "true"
     - name: REDIS_PASSWORD
-      value: passw0rd
+      value: act0rstate
+    - name: REDIS_USER
+      value: karmesh
     - name: REDIS_HOST
       value: localhost
     - name: KAR_EXTRA_ARGS

@@ -46,7 +46,8 @@ services:
       KAFKA_VERSION:  2.4.0
       REDIS_HOST:     redis
       REDIS_PORT:     31379
-      REDIS_PASSWORD: passw0rd
+      REDIS_PASSWORD: act0rstate
+      REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: -app_port 9080 -service reeferservice
     depends_on:
       - "kafka"
@@ -61,7 +62,8 @@ services:
       KAFKA_VERSION:  2.4.0
       REDIS_HOST:     redis
       REDIS_PORT:     31379
-      REDIS_PASSWORD: passw0rd
+      REDIS_PASSWORD: act0rstate
+      REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: -app_port 7080 -service simservice -actors simhelper
     depends_on:
       - "kafka"
@@ -76,7 +78,8 @@ services:
       KAFKA_VERSION:  2.4.0
       REDIS_HOST:     redis
       REDIS_PORT:     31379
-      REDIS_PASSWORD: passw0rd
+      REDIS_PASSWORD: act0rstate
+      REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: -app_port 7082
       KAR_APP_PORT:   7082
       ORDERSTATS_DELAY: ${ORDERSTATS_DELAY:-60}
@@ -95,8 +98,9 @@ services:
       KAFKA_VERSION:  2.4.0
       REDIS_HOST:     redis
       REDIS_PORT:     31379
-      REDIS_PASSWORD: passw0rd
-      KAR_EXTRA_ARGS: -actors order,voyage,depot
+      REDIS_PASSWORD: act0rstate
+      REDIS_USER:     karmesh
+      KAR_EXTRA_ARGS: -actors schedule-manager,reefer-depot, depot-manager, anomaly-manager,order-manager
     depends_on:
       - "kafka"
       - "redis"

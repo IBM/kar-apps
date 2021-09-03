@@ -34,6 +34,6 @@ services:
       REDIS_PORT:     6379
       REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
-      KAR_EXTRA_ARGS: -actors sschedule-manager,order-manager,depot-manager,reefer-depot,anomaly-manager -actor_collector_interval 24h
+      KAR_EXTRA_ARGS: -actors schedule-manager,order-manager,depot-manager,reefer-depot,anomaly-manager -actor_collector_interval 24h
     networks:
       - kar-bus

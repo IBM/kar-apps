@@ -810,7 +810,6 @@ public class DepotActor extends BaseActor {
 
         onMaintenanceMap.put(reefer.getId(), reefer.getId());
         onMaintenanceTotalCount++;
-
     }
 
     private void updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap) {

@@ -26,7 +26,7 @@ import com.ibm.research.kar.reefer.common.FleetCapacity;
 import com.ibm.research.kar.reefer.common.Shard;
 import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.model.Route;
-import redis.clients.jedis.Jedis;
+
 
 import javax.json.*;
 import java.time.Duration;
@@ -41,13 +41,11 @@ public class DepotManagerActor extends BaseActor {
     private static final Logger logger = Logger.getLogger(DepotManagerActor.class.getName());
     private List<Depot> depots = new LinkedList<>();
     private long totalInventorySize = 0;
-   // private Jedis jedis=null;
+
     @Activate
     public void activate() {
         // fetch actor state from Kar storage
         Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
-     //   jedis = new Jedis(System.getenv("REDIS_HOST"), Integer.parseInt(System.getenv("REDIS_PORT")), 5000, 5000);
-    //    jedis.auth(System.getenv("REDIS_PASSWORD"));
 
         if (state.isEmpty()) {
             ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);

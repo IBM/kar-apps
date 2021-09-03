@@ -26,8 +26,6 @@ import com.ibm.research.kar.reefer.common.*;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.ReeferDTO;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisClientConfig;
 
 import javax.json.*;
 import java.time.Instant;
@@ -55,8 +53,6 @@ public class DepotActor extends BaseActor {
     private Map<Integer, Integer> onMaintenanceMap = new ConcurrentHashMap<>();
     // contains Order-Reefers mapping needed to reduce latency of calls
     private Map<String, Set<String>> order2ReeferMap = new HashMap<>();
- //   private Jedis jedis=null;
-    //Redis redis = null;
     private JsonValue totalReeferInventory = Json.createValue(0);
     private JsonValue depotSize;
     private JsonValue currentInventorySize;
@@ -71,9 +67,7 @@ public class DepotActor extends BaseActor {
             // fetch actor state from Kar storage
             Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
             t2 = System.currentTimeMillis();
-         //   redis = new Redis();
-//            jedis = new Jedis(System.getenv("REDIS_HOST"), Integer.parseInt(System.getenv("REDIS_PORT")), 5000, 5000);
-//           jedis.auth(System.getenv("REDIS_PASSWORD"));
+
             if (!state.isEmpty()) {
 
                 if (state.containsKey(Constants.REEFER_METRICS_KEY)) {

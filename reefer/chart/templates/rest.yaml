@@ -54,6 +54,17 @@ spec:
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.rest.port | quote }}
     spec:
+{{- if .Values.global.affinity }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kar-type
+                operator: In
+                values:
+                - worker
+{{- end }}
       imagePullSecrets:
          - name: {{ .Values.kar.imagePullSecret }}
       containers:

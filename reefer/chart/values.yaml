@@ -25,6 +25,9 @@ ingress:
   subdomain: localhost:31080
   secret: none
 
+global:
+  affinity: false
+
 reefer:
   frontend:
     imageName: kar-app-reefer-frontend
@@ -62,4 +65,4 @@ reefer:
     imageName: kar-app-reefer-actors
     port: 8080
     replicas: 2
-
+    fleetsize: 20

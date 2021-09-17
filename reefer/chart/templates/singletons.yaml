@@ -36,6 +36,17 @@ spec:
         kar.ibm.com/appPort: {{ .Values.reefer.actors.port | quote }}
         kar.ibm.com/extraArgs: -actor_collector_interval,24h
     spec:
+{{- if .Values.global.affinity }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kar-type
+                operator: In
+                values:
+                - worker
+{{- end }}
       imagePullSecrets:
          - name: {{ .Values.kar.imagePullSecret }}
       containers:
@@ -44,3 +55,6 @@ spec:
         ports:
         - name: app
           containerPort: {{ .Values.reefer.singletons.port }}
+        env:
+        - name: REEFER_FLEET_SIZE
+          value: {{ .Values.reefer.singletons.fleetsize | quote }}

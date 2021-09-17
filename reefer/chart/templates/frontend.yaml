@@ -49,6 +49,17 @@ spec:
       labels:
         name: reefer-frontend
     spec:
+{{- if .Values.global.affinity }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kar-type
+                operator: In
+                values:
+                - system
+{{- end }}
       imagePullSecrets:
          - name: {{ .Values.kar.imagePullSecret }}
       containers:

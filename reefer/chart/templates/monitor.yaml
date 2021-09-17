@@ -34,6 +34,17 @@ spec:
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.monitor.port | quote }}
     spec:
+{{- if .Values.global.affinity }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kar-type
+                operator: In
+                values:
+                - system
+{{- end }}
       imagePullSecrets:
          - name: {{ .Values.kar.imagePullSecret }}
       volumes:

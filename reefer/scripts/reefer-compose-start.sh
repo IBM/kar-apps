@@ -38,10 +38,10 @@ else
 fi
 
 engine=docker
-if systemctl is-active docker | grep -q 'inactive'; then
-    engine=podman
-    echo Docker not active, trying podman
-fi
+#if systemctl is-active docker | grep -q 'inactive'; then
+#    engine=podman
+#    echo Docker not active, trying podman
+#fi
 
 echo Deploying ${IMAGE_PREFIX} images with ${engine}-compose ...
 

@@ -23,14 +23,15 @@ metadata:
 spec:
   containers:
 ### Zookeeper
-  - command:
-    - /bin/sh
-    - -c
-    - /usr/sbin/sshd && bash /usr/bin/start-zk.sh
+  - args:
+    - zkServer.sh
+    - start-foreground
+    command:
+    - /docker-entrypoint.sh
     env:
     - name: HOSTNAME
       value: zookeeper
-    image: wurstmeister/zookeeper:3.4.6
+    image: zookeeper:3.6
     name: zookeeper
     resources: {}
     securityContext:
@@ -55,7 +56,7 @@ spec:
       value: /opt/kafka
     - name: HOSTNAME
       value: kafka
-    image: wurstmeister/kafka:2.13-2.6.0
+    image: wurstmeister/kafka:2.13-2.7.0
     name: kafka
     resources: {}
     securityContext:
@@ -65,14 +66,16 @@ spec:
       readOnlyRootFilesystem: false
       seLinuxOptions: {}
 ### Redis
-  - command:
+  - args:
     - /bin/sh
     - -c
-    - /usr/local/bin/docker-entrypoint.sh --requirepass passw0rd --port 31379
+    - /usr/local/bin/docker-entrypoint.sh --user karmesh allcommands allkeys on \>act0rstate --port 31379
+    command:
+    - docker-entrypoint.sh
     env:
     - name: HOSTNAME
       value: redis
-    image: redis:5.0
+    image: redis:6.2
     name: redis
     resources: {}
     securityContext:
@@ -154,7 +157,9 @@ spec:
     - name: JAVA_HOME
       value: /opt/java/openjdk
     - name: REDIS_PASSWORD
-      value: passw0rd
+      value: act0rstate
+    - name: REDIS_USER
+      value: karmesh
     - name: KAFKA_VERSION
       value: 2.4.0
     - name: KAR_SIDECAR_IN_CONTAINER
@@ -191,7 +196,9 @@ spec:
     - name: KAFKA_BROKERS
       value: localhost:31093
     - name: REDIS_PASSWORD
-      value: passw0rd
+      value: act0rstate
+    - name: REDIS_USER
+      value: karmesh
     - name: REDIS_HOST
       value: localhost
     - name: KAR_APP_PORT
@@ -244,11 +251,13 @@ spec:
     - name: KAFKA_BROKERS
       value: localhost:31093
     - name: REDIS_PASSWORD
-      value: passw0rd
+      value: act0rstate
+    - name: REDIS_USER
+      value: karmesh
     - name: KAFKA_VERSION
       value: 2.4.0
     - name: KAR_EXTRA_ARGS
-      value: -app_port 8080 -actors order,reefer,voyage
+      value: -app_port 8081 -actors order,voyage
     - name: KAR_SIDECAR_IN_CONTAINER
       value: "true"
     - name: HOSTNAME
@@ -281,7 +290,9 @@ spec:
     - name: KAFKA_BROKERS
       value: localhost:31093
     - name: REDIS_PASSWORD
-      value: passw0rd
+      value: act0rstate
+    - name: REDIS_USER
+      value: karmesh
     - name: KAFKA_VERSION
       value: 2.4.0
     - name: KAR_EXTRA_ARGS
@@ -314,6 +325,5 @@ spec:
     - containerPort: 31379
       hostPort: 31379
       protocol: TCP
-    workingDir: /
   restartPolicy: Never
 

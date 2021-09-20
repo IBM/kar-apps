@@ -85,7 +85,7 @@ services:
       REDIS_PORT:     6379
       REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
-      KAR_EXTRA_ARGS: -actors order,reefer,voyage
+      KAR_EXTRA_ARGS: -actors order,voyage
   singletons:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-actors
     command: ["/bin/bash","-c","/kar/bin/runner"]

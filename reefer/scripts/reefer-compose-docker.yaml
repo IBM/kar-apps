@@ -101,7 +101,7 @@ services:
       REDIS_PORT:     6379
       REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
-      KAR_EXTRA_ARGS: -actors schedule-manager,reefer-depot, depot-manager, anomaly-manager,order-manager -actor_collector_interval 24h
+      KAR_EXTRA_ARGS: -actors schedule-manager,reefer-depot,depot-manager,anomaly-manager,order-manager -actor_collector_interval 24h
   frontend:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-frontend
     command: ["/bin/bash","-c","/kar/bin/fe-start.sh"]

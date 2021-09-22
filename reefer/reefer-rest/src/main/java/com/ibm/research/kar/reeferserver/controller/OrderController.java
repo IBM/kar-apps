@@ -188,30 +188,16 @@ public class OrderController {
      */
     @GetMapping("/orders/stats")
     public OrderStats getOrderStats() {
-
-        Map<String, JsonValue> state = Kar.Actors.State.getAll(orderMgrActor);
+        JsonValue orderMgrMetrics = Kar.Actors.State.get(orderMgrActor,Constants.ORDER_METRICS_KEY );
         int bookedTotalCount = 0;
         int inTransitTotalCount = 0;
         int spoiltTotalCount = 0;
-
-        if (!state.isEmpty()) {
-            if (state.containsKey(Constants.TOTAL_BOOKED_KEY)) {
-                bookedTotalCount = ((JsonNumber) state.get(Constants.TOTAL_BOOKED_KEY)).intValue();
-            }
-            if (state.containsKey(Constants.TOTAL_INTRANSIT_KEY)) {
-                inTransitTotalCount = ((JsonNumber) state.get(Constants.TOTAL_INTRANSIT_KEY)).intValue();
-            }
-            if (state.containsKey(Constants.TOTAL_SPOILT_KEY)) {
-                spoiltTotalCount = ((JsonNumber) state.get(Constants.TOTAL_SPOILT_KEY)).intValue();
-            }
-            if (state.containsKey(Constants.ORDER_METRICS_KEY)) {
-                String metrics = ((JsonString) state.get(Constants.ORDER_METRICS_KEY)).getString();
-                String[] values = metrics.split(":");
-
-                bookedTotalCount = Integer.valueOf(values[0].trim());
-                inTransitTotalCount = Integer.valueOf(values[1].trim());
-                spoiltTotalCount = Integer.valueOf(values[2].trim());
-            }
+        if (orderMgrMetrics != null && orderMgrMetrics != JsonValue.NULL) {
+            String orderMetrics = ((JsonString) orderMgrMetrics).getString();
+            String[] values = orderMetrics.split(":");
+            bookedTotalCount = Integer.valueOf(values[0].trim());
+            inTransitTotalCount = Integer.valueOf(values[1].trim());
+            spoiltTotalCount = Integer.valueOf(values[2].trim());
         }
         //   System.out.println("OrderController.getOrderStats()  ********** Booked:" + bookedTotalCount + " -- InTransit:" + inTransitTotalCount + " -- Spoilt:" + spoiltTotalCount);
         return new OrderStats(inTransitTotalCount, bookedTotalCount, spoiltTotalCount);

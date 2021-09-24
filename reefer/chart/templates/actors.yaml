@@ -31,7 +31,7 @@ spec:
         name: reefer-actors
       annotations:
         kar.ibm.com/app: reefer
-        kar.ibm.com/actors: order,reefer,voyage
+        kar.ibm.com/actors: order,voyage
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.actors.port | quote }}
     spec:

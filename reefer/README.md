@@ -176,6 +176,7 @@ Additional prereqs:
 - maven version 3.6.2+  
 - JDK 11+
 - nodejs
+- ulimit for nofiles at least 16384 for the Rest, Actors and Simulators windows below
 
 Build java application:  
 ```
@@ -201,14 +202,9 @@ kar run -app_port 9080 -app reefer -v info -service reeferservice mvn liberty:ru
 ```
 cd [kar-apps-install-dir]/reefer/actors
 source [kar-install-dir]/scripts/kar-env-local.sh
-kar run -app reefer -v info -actors order,voyage mvn liberty:run
+kar run -app reefer -v info -actors order,voyage,reefer-depot,depot-manager,anomaly-manager,order-manager,schedule-manager -actor_collector_interval 10m mvn liberty:run
 ```
-- Singleton Actors window
-```
-cd [kar-apps-install-dir]/reefer
-source [kar-install-dir]/scripts/kar-env-local.sh
-docker-compose -f scripts/reefer-actors.yaml -p reefer up
-```
+
 - Simulators window
 ```
 cd [kar-apps-install-dir]/reefer/simulators

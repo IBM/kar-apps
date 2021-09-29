@@ -112,7 +112,7 @@ public class ReeferThread extends Thread {
                             }
                         }
                         r2b = new int[reefersToBreak];
-                        Random rand = new Random();
+                        Random rand = new Random(System.nanoTime());
                         for (int i = 0; i < reefersToBreak; i++) {
                             // ignore possibility that same reefer receives multiple anomalies
                             r2b[i] = rand.nextInt(inventorySize);

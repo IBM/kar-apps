@@ -177,6 +177,36 @@ public class AnomalyManagerActor extends BaseActor {
    }
 
    @Remote
+   public void reeferAnomalyForward(JsonObject message) {
+      try {
+         String reeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
+         if (reefersMap.containsKey(reeferId)) {
+            ReeferLocation target = reefersMap.get(reeferId);
+            ActorRef targetActor;
+
+            switch (target.getTargetType()) {
+               case 1:  // Depot type
+                  targetActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, target.getTarget());
+                  Kar.Actors.tell(targetActor, "reeferAnomaly", message);
+                  break;
+               case 2:  // Order type
+                  // this is bad as an order has just sent this and we don't want a loop
+                  System.out.println("AnomalyManagerActor.reeferAnomalyForward() - !!!!!!!!!!! not sending reeferId:" + reeferId + " back to an order actor");
+                  break;
+               default:
+                  System.out.println("AnomalyManagerActor.reeferAnomalyForward() --------------------------- reeferId:" + reeferId
+                          + " unknown target type:" + target.getTargetType());
+            }
+         } else {
+            System.out.println("AnomalyManagerActor.reeferAnomalyForward() - !!!!!!!!!!! reeferId:" + reeferId + " Not Found in inventory");
+         }
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+
+   }
+
+   @Remote
    public void voyageDeparted(JsonObject message) {
       update(message);
       //  System.out.println("AnomalyManagerActor.voyageDeparted() - updated targets for " + count + " reefers");

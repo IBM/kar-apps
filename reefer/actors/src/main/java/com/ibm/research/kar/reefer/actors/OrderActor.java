@@ -157,17 +157,16 @@ public class OrderActor extends BaseActor {
             logger.fine("OrderActor.reeferAnomaly() - :" + getId() + "received spoilt reefer ID " + spoiltReeferId);
         }
         // handle anomaly after ship arrival.
-        if (order == null || order.getStatus() == null ||
-                OrderStatus.DELIVERED.name().equals(order.getStatus())) {
+        if (order == null || order.getStatus() == null) {
             // Race condition
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("OrderActor.reeferAnomaly() - anomaly just arrived after order delivered");
+                logger.info("OrderActor.reeferAnomaly() - anomaly just arrived after order removed");
             }
             // forward anomaly back to the Anomaly Manager. It should be sent to the depot actor.
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.REEFER_ID_KEY, spoiltReeferId).add(Constants.ORDER_ID_KEY, getId());
             ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
-            Kar.Actors.tell(anomalyManagerActor, "reeferAnomaly", job.build());
+            Kar.Actors.tell(anomalyManagerActor, "reeferAnomalyForward", job.build());
             // this actor should not be alive
             Kar.Actors.remove(this);
             return;

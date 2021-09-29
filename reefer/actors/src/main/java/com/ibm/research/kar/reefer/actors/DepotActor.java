@@ -302,7 +302,7 @@ public class DepotActor extends BaseActor {
 
                 updateStore(deleteMap(voyageReefers), Collections.emptyMap());
 
-                System.out.println(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tDeparted:%7d \t%s", getId(),voyageReefers.size(),inventory.toString()) );
+                System.out.println(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tVoyage:%20s \tDeparted:%7d \t%s", getId(),voyageId,voyageReefers.size(),inventory.toString()) );
 
             }
         } catch (Exception e) {
@@ -358,13 +358,32 @@ public class DepotActor extends BaseActor {
     }
 
     @Remote
+    public void voyageSpoiltReefersArrived(JsonObject message) {
+        String[] spoiltReeferIds = message.getString(Constants.SPOILT_REEFERS_KEY).split(",");
+        String arrivalDate = message.getString(Constants.VOYAGE_ARRIVAL_DATE_KEY);
+        // now, all arrived spoilt reefer go on maintenance
+        for( String reeferId : spoiltReeferIds) {
+            if ( reeferId != null && reeferId.trim().length() == 0) {
+                continue;
+            }
+            int idx = Integer.valueOf(reeferId);
+            if ( reeferMasterInventory[idx] != null && !reeferMasterInventory[idx].getState().equals(ReeferState.State.ALLOCATED)) {
+                reeferMasterInventory[idx] = new ReeferDTO(Integer.valueOf(reeferId), ReeferState.State.SPOILT);
+                Map<String, JsonValue> arrivedOnMaintenanceMap = new HashMap<>();
+                unreserveReefer(reeferMasterInventory[idx], arrivedOnMaintenanceMap, arrivalDate);
+            }
+
+        }
+
+    }
+    @Remote
     public void voyageReefersArrived(JsonObject message) {
         try {
             String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
             String arrivalDate = message.getString(Constants.VOYAGE_ARRIVAL_DATE_KEY);
             // get arrived reefer ids
             String[] reeferIds = message.getString(Constants.REEFERS_KEY).split(",");
-            String[] spoiltReeferIds = message.getString(Constants.SPOILT_REEFERS_KEY).split(",");
+          //  String[] spoiltReeferIds = message.getString(Constants.SPOILT_REEFERS_KEY).split(",");
             List<ReeferDTO> updateList = new ArrayList<>(reeferIds.length);
             StringBuilder builder = new StringBuilder();
             JsonArrayBuilder jab = Json.createArrayBuilder();
@@ -378,6 +397,7 @@ public class DepotActor extends BaseActor {
                 }
 
             }
+            /*
             // now, all arrived spoilt reefer go on maintenance
             for( String reeferId : spoiltReeferIds) {
                 if ( reeferId != null && reeferId.trim().length() == 0) {
@@ -391,6 +411,8 @@ public class DepotActor extends BaseActor {
                 }
 
             }
+
+             */
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.ANOMALY_TARGET_KEY, getId()).
                     add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType())).
@@ -406,8 +428,8 @@ public class DepotActor extends BaseActor {
             bookedTotalCount = inventory.getBooked();
             onMaintenanceTotalCount = inventory.getOnMaintenance();
             updateStore(Collections.emptyMap(), reeferMap(updateList));
-            System.out.println(String.format("DepotActor.voyageReefersArrived()  <<<< \t%25s \tArrived:%8d \t%s ",
-                    getId(), reeferIds.length, getReeferInventoryCounts().toString()));
+            System.out.println(String.format("DepotActor.voyageReefersArrived()  <<<< \t%25s \tVoyage:%20s \tArrived:%8d \t%s ",
+                    getId(), voyageId, reeferIds.length, getReeferInventoryCounts().toString()));
         } catch (Exception e) {
             e.printStackTrace();
             logger.log(Level.SEVERE,"DepotActor.voyageReefersArrived() - Error ", e);

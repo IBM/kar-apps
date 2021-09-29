@@ -345,16 +345,16 @@ public class VoyageActor extends BaseActor {
          // notify each order actor that the ship arrived
 
          orders.keySet().forEach(orderId -> {
-            notifyVoyageOrder(orderId, Order.OrderStatus.DELIVERED, "delivered");
+       //     notifyVoyageOrder(orderId, Order.OrderStatus.DELIVERED, "delivered");
             voyageOrderIdsBuilder.add(orderId);
             JsonValue order = orders.get(orderId);
-            String stringIfiedReeferIds = order.asJsonObject().getString(Constants.ORDER_REEFERS_KEY);
-            if (stringIfiedReeferIds == null) {
+            String stringifiedReeferIds = order.asJsonObject().getString(Constants.ORDER_REEFERS_KEY);
+            if (stringifiedReeferIds == null) {
                System.out.println("VoyageActor.processArrivedVoyage - " + getId() + " !!!!!!!!!!!!!!!!!!!!!!  REEFERS MISSING FROM ORDER:" + orderId + " booking status:" + order);
-            } else if (stringIfiedReeferIds.trim().length() == 0) {
+            } else if (stringifiedReeferIds.trim().length() == 0) {
                System.out.println("VoyageActor.processArrivedVoyage - " + getId() + " !!!!!!!!!!!!!!!!!!!!!!  REEFERS NOT BOOKED TO ORDER:" + orderId + " booking status:" + order);
             } else {
-               reeferIds.append(stringIfiedReeferIds).append(",");
+               reeferIds.append(stringifiedReeferIds).append(",");
             }
          });
 
@@ -363,9 +363,7 @@ public class VoyageActor extends BaseActor {
             spoiltReeferIds.append(spoiltReefer).append(",");
          });
          JsonArray voyageOrderIds = voyageOrderIdsBuilder.build();
-         messageSchedulerActor("voyageArrived", voyage);
-         ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
-         Kar.Actors.call(orderManagerActor, "ordersArrived", voyageOrderIds);
+
          if (!voyageOrderIds.isEmpty()) {
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.VOYAGE_ID_KEY, getId()).
@@ -375,6 +373,33 @@ public class VoyageActor extends BaseActor {
             Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())),
                     "voyageReefersArrived", job.build());
          }
+
+         messageSchedulerActor("voyageArrived", voyage);
+         ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
+         Kar.Actors.call(orderManagerActor, "ordersArrived", voyageOrderIds);
+         /*
+         if (!voyageOrderIds.isEmpty()) {
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            job.add(Constants.VOYAGE_ID_KEY, getId()).
+                    add(Constants.VOYAGE_ARRIVAL_DATE_KEY, voyage.getArrivalDate()).
+                    add(Constants.REEFERS_KEY, reeferIds.toString()).
+                    add(Constants.SPOILT_REEFERS_KEY, spoiltReeferIds.toString());
+            Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())),
+                    "voyageReefersArrived", job.build());
+         }
+
+          */
+         orders.keySet().forEach(orderId -> {
+            notifyVoyageOrder(orderId, Order.OrderStatus.DELIVERED, "delivered");
+         });
+
+         JsonObjectBuilder job = Json.createObjectBuilder();
+         job.add(Constants.VOYAGE_ID_KEY, getId()).
+                 add(Constants.VOYAGE_ARRIVAL_DATE_KEY, voyage.getArrivalDate()).
+                 add(Constants.SPOILT_REEFERS_KEY, spoiltReeferIds.toString());
+         Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())),
+                 "voyageSpoiltReefersArrived", job.build());
+
       } catch (Exception e) {
          e.printStackTrace();
          logger.log(Level.WARNING, "VoyageActor.processArrivedVoyage() - Error while notifying order of arrival- voyageId " + getId() + " ", e);

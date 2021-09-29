@@ -42,13 +42,10 @@ public class AnomalyManagerActor extends BaseActor {
          System.out.println("AnomalyManagerActor.activate() -  fetched all state in " + (System.currentTimeMillis() - t1));
          if (!state.isEmpty()) {
             if (state.containsKey(Constants.REEFERS_KEY)) {
-               reefersMap = new LinkedHashMap<>();
                instantiateReeferTargetMap();
-            } else if (state.containsKey(Constants.TARGET_MAP_KEY)) {
-               JsonValue jv = state.get(Constants.TARGET_MAP_KEY);
-               Map<String, JsonValue> targetEnumMap = jv.asJsonObject();
-            } else {
-               System.out.println("AnomalyManagerActor.activate() - reefer-target state is not available");
+            }
+            if (state.containsKey(Constants.TARGET_MAP_KEY)) {
+               targetEnumMap = state.get(Constants.TARGET_MAP_KEY).asJsonObject();
             }
          }
       } catch (Throwable t) {
@@ -58,6 +55,7 @@ public class AnomalyManagerActor extends BaseActor {
    }
 
    private void instantiateReeferTargetMap() {
+      reefersMap = new LinkedHashMap<>();
       // ReeferLocation instances are restored from a stringified list where
       // each entry is encoded as follows: <REEFERID:int>|<DEPOT NAME:string>|<TYPE:int>
       // where TYPE[1,2] 1: Depot, 2: Order. Example:

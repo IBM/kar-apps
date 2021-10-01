@@ -286,8 +286,8 @@ public class DepotActor extends BaseActor {
                     for (Integer reeferId : entry.getValue()) {
                         builder.append(reeferId).append(",");
                     }
-                    job.add(Constants.ANOMALY_TARGET_KEY, entry.getKey()).
-                            add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.ORDER.getType())).
+                    job.add(Constants.ANOMALY_TARGET_KEY, voyageId). //entry.getKey()).
+                            add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType())).
                             add(Constants.REEFERS_KEY, builder.toString());
                     jab.add(job);
                 }
@@ -356,7 +356,7 @@ public class DepotActor extends BaseActor {
         }
         return new Inventory(total, rbooked, rfree, rbad);
     }
-
+/*
     @Remote
     public void voyageSpoiltReefersArrived(JsonObject message) {
         String[] spoiltReeferIds = message.getString(Constants.SPOILT_REEFERS_KEY).split(",");
@@ -376,14 +376,16 @@ public class DepotActor extends BaseActor {
         }
 
     }
+
+ */
     @Remote
     public void voyageReefersArrived(JsonObject message) {
         try {
-            String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
             String arrivalDate = message.getString(Constants.VOYAGE_ARRIVAL_DATE_KEY);
+            String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
             // get arrived reefer ids
             String[] reeferIds = message.getString(Constants.REEFERS_KEY).split(",");
-          //  String[] spoiltReeferIds = message.getString(Constants.SPOILT_REEFERS_KEY).split(",");
+            String[] spoiltReeferIds = message.getString(Constants.SPOILT_REEFERS_KEY).split(",");
             List<ReeferDTO> updateList = new ArrayList<>(reeferIds.length);
             StringBuilder builder = new StringBuilder();
             JsonArrayBuilder jab = Json.createArrayBuilder();
@@ -397,7 +399,6 @@ public class DepotActor extends BaseActor {
                 }
 
             }
-            /*
             // now, all arrived spoilt reefer go on maintenance
             for( String reeferId : spoiltReeferIds) {
                 if ( reeferId != null && reeferId.trim().length() == 0) {
@@ -411,8 +412,6 @@ public class DepotActor extends BaseActor {
                 }
 
             }
-
-             */
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.ANOMALY_TARGET_KEY, getId()).
                     add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType())).
@@ -589,17 +588,20 @@ public class DepotActor extends BaseActor {
 
             // forward the anomaly back to the Anomaly Manager. The anomaly should be sent to the order actor.
             JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.REEFER_ID_KEY, reeferId).add(Constants.DEPOT_KEY, getId());
+            job.add(Constants.REEFER_ID_KEY, reeferId).add(Constants.DEPOT_KEY, getId()).add(Constants.TARGET_KEY, Constants.VOYAGE_TARGET_TYPE);
             ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
             Kar.Actors.tell(anomalyManagerActor, "reeferAnomaly", job.build());
 
 
         } else if (reeferMasterInventory[reeferId].alreadyBad()) {
+            /*
             // either on maintenance already or spoilt
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("DepotActor.reeferAnomaly() - " + reeferId + " already bad");
             }
             System.out.println("DepotActor.reeferAnomaly() - " + getId() + reeferId + " already bad");
+
+             */
         } else if (reeferMasterInventory[reeferId].assignedToOrder()) {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("DepotActor.reeferAnomaly() - reeferId:" + reeferId

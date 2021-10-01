@@ -33,10 +33,7 @@ import com.ibm.research.kar.reefer.model.VoyageStatus;
 import javax.json.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,6 +44,9 @@ public class VoyageActor extends BaseActor {
    private JsonValue voyageStatus;
    private Map<String, JsonValue> orders = new HashMap<>();
    private Map<String, JsonValue> spoiltReefersMap = new HashMap<>();
+   private Map<String, String> reefer2OrderMap = new HashMap<>();
+   private Map<String, JsonValue> spoiltOrders = new HashMap<>();
+
    private static final Logger logger = Logger.getLogger(VoyageActor.class.getName());
 
    /**
@@ -90,12 +90,25 @@ public class VoyageActor extends BaseActor {
             }
             if (state.containsKey(Constants.VOYAGE_ORDERS_KEY)) {
                orders.putAll(state.get(Constants.VOYAGE_ORDERS_KEY).asJsonObject());
+               // build reefer to order map so that we can efficiently retrieve order id
+               // when processing refer anomaly
+               for(Map.Entry<String, JsonValue> entry: orders.entrySet()) {
+                  DepotReply reeferBookingRecord = new DepotReply(entry.getValue());
+                  for( String reeferId : reeferBookingRecord.getReefers()) {
+                     reefer2OrderMap.put(reeferId, reeferBookingRecord.getOrderId());
+                  }
+               }
                System.out.println("VoyageActor.activate() - voyage:" + getId() + " restored orders - size:" + orders.size());
             }
             if (state.containsKey(Constants.SPOILT_REEFERS_KEY)) {
                spoiltReefersMap.putAll(state.get(Constants.SPOILT_REEFERS_KEY).asJsonObject());
                System.out.println("VoyageActor.activate() - voyage:" + getId() + " restored spoilt reefers - size:" + spoiltReefersMap.size());
             }
+            if (state.containsKey(Constants.SPOILT_ORDERS_KEY)) {
+               spoiltOrders.putAll(state.get(Constants.SPOILT_ORDERS_KEY).asJsonObject());
+               System.out.println("VoyageActor.activate() - voyage:" + getId() + " restored spoilt orders - size:" + spoiltOrders.size());
+            }
+
          }
          voyage = VoyageJsonSerializer.deserialize(voyageInfo);
       } catch (Exception e) {
@@ -169,29 +182,43 @@ public class VoyageActor extends BaseActor {
    }
 
    @Remote
-   public void reeferSpoilt(JsonObject message) {
-      if ( voyageInfo == null ) {
-
+   public void reeferAnomaly(JsonObject message) {
+      String spoiltReeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
+      if ( voyageInfo == null ) {   // voyage arrived?
          Kar.Actors.remove(this);
-         if ( message.containsKey(Constants.ORDER_KEY)) {
-            Order order = new Order(message.getJsonObject(Constants.ORDER_KEY));
-            // forward anomaly back to the Anomaly Manager. It should be sent to the depot actor since the order already arrived
-            JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.REEFER_ID_KEY, message.getJsonNumber(Constants.REEFER_ID_KEY)).add(Constants.ORDER_ID_KEY, order.getId());
-            ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
-            Kar.Actors.tell(anomalyManagerActor, "reeferAnomaly", job.build());
-//            System.out.println("VoyageActor.reeferSpoilt() - id:"+getId()+" voyage already arrived - forwarded spoilt reefer "+ message.getJsonNumber(Constants.REEFER_ID_KEY)+" to AnomalyManager ::::::::::::::::::::::::::::::");
-         }
+         JsonObjectBuilder job = Json.createObjectBuilder();
+         // switch anomaly mgr target from voyage to depot
+         job.add(Constants.REEFER_ID_KEY, message.getJsonNumber(Constants.REEFER_ID_KEY)).
+                add(Constants.TARGET_KEY, Constants.DEPOT_TARGET_TYPE);
+         System.out.println("VoyageActor.reeferAnomaly :::::::::::::::::::::: Voyage "+getId()+" already arrived - forwarding reefer "+spoiltReeferId+" anomaly to AnomalyManager");
+         ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
+         Kar.Actors.tell(anomalyManagerActor, "reeferAnomaly", job.build());
          return;
       }
-      int spoiltReeferId = message.getInt(Constants.REEFER_ID_KEY);
-      spoiltReefersMap.put(String.valueOf(spoiltReeferId), Json.createValue(spoiltReeferId));
+      boolean newSpoiltOrder = false;
+      if ( !spoiltReefersMap.containsKey(spoiltReeferId)) {
+         spoiltReefersMap.put(spoiltReeferId, Json.createValue(spoiltReeferId));
+         String orderId = reefer2OrderMap.get(spoiltReeferId);
+         if ( !spoiltOrders.containsKey(orderId) ) {
+            newSpoiltOrder = true;
+            spoiltOrders.put(orderId, Json.createValue(orderId));
+            //JsonObject jo = orders.get(orderId).asJsonObject().getJsonObject(JsonOrder.OrderKey);
+            Order order = new Order(orders.get(orderId).asJsonObject().getJsonObject(JsonOrder.OrderKey));
+            order.setSpoilt(true);
+            //JsonObject jo = order.getAsJsonObject();
+            ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
+            //Kar.Actors.call(orderManagerActor, "orderSpoilt", Json.createObjectBuilder().add(Constants.ORDER_ID_KEY, orderId).build());
+            Kar.Actors.call(orderManagerActor, "orderSpoilt", order.getAsJsonObject());
+         }
 
-      Map<String, JsonValue> actorStateMap = new HashMap<>();
-      actorStateMap.put(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltReefersMap.size()));
-      Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
-      subMapUpdates.put(Constants.SPOILT_REEFERS_KEY, spoiltReefersMap);
-      Kar.Actors.State.update(this, Collections.emptyList(), Collections.emptyMap(), actorStateMap, subMapUpdates);
+         Map<String, JsonValue> actorStateMap = new HashMap<>();
+         actorStateMap.put(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltReefersMap.size()));
+         Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
+         subMapUpdates.put(Constants.SPOILT_REEFERS_KEY, spoiltReefersMap);
+         if ( newSpoiltOrder ) subMapUpdates.put(Constants.SPOILT_ORDERS_KEY, spoiltOrders);
+         Kar.Actors.State.update(this, Collections.emptyList(), Collections.emptyMap(), actorStateMap, subMapUpdates);
+      }
+
    }
 
    /**
@@ -242,7 +269,10 @@ public class VoyageActor extends BaseActor {
          // convenience wrapper for DepotActor json reply
          DepotReply reply = new DepotReply(booking);
          if (reply.success()) {
-
+            Set<String> orderReefers = reply.getReefers();
+            for( String rid : orderReefers ) {
+               reefer2OrderMap.put(rid, order.getId());
+            }
             if (!booking.asJsonObject().containsKey(Constants.ORDER_REEFERS_KEY)) {
                System.out.println("VoyageActor.reserve() - ID:" + getId() + " orderId:" + order.getId() + " !!!!!!!!!!!!!!!! booking has no reefers:" + booking);
             }
@@ -345,7 +375,6 @@ public class VoyageActor extends BaseActor {
          // notify each order actor that the ship arrived
 
          orders.keySet().forEach(orderId -> {
-       //     notifyVoyageOrder(orderId, Order.OrderStatus.DELIVERED, "delivered");
             voyageOrderIdsBuilder.add(orderId);
             JsonValue order = orders.get(orderId);
             String stringifiedReeferIds = order.asJsonObject().getString(Constants.ORDER_REEFERS_KEY);
@@ -377,28 +406,10 @@ public class VoyageActor extends BaseActor {
          messageSchedulerActor("voyageArrived", voyage);
          ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
          Kar.Actors.call(orderManagerActor, "ordersArrived", voyageOrderIds);
-         /*
-         if (!voyageOrderIds.isEmpty()) {
-            JsonObjectBuilder job = Json.createObjectBuilder();
-            job.add(Constants.VOYAGE_ID_KEY, getId()).
-                    add(Constants.VOYAGE_ARRIVAL_DATE_KEY, voyage.getArrivalDate()).
-                    add(Constants.REEFERS_KEY, reeferIds.toString()).
-                    add(Constants.SPOILT_REEFERS_KEY, spoiltReeferIds.toString());
-            Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())),
-                    "voyageReefersArrived", job.build());
-         }
 
-          */
          orders.keySet().forEach(orderId -> {
             notifyVoyageOrder(orderId, Order.OrderStatus.DELIVERED, "delivered");
          });
-
-         JsonObjectBuilder job = Json.createObjectBuilder();
-         job.add(Constants.VOYAGE_ID_KEY, getId()).
-                 add(Constants.VOYAGE_ARRIVAL_DATE_KEY, voyage.getArrivalDate()).
-                 add(Constants.SPOILT_REEFERS_KEY, spoiltReeferIds.toString());
-         Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())),
-                 "voyageSpoiltReefersArrived", job.build());
 
       } catch (Exception e) {
          e.printStackTrace();
@@ -523,7 +534,7 @@ public class VoyageActor extends BaseActor {
 
       protected boolean success() {
          return jv != null &&
-                 jv.asJsonObject() != null && jv.asJsonObject() != null &&
+                 jv.asJsonObject() != null  &&
                  jv.asJsonObject().containsKey(Constants.STATUS_KEY) &&
                  jv.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK);
       }
@@ -534,7 +545,21 @@ public class VoyageActor extends BaseActor {
          }
          return ((JsonNumber) reeferCount).intValue();
       }
-
-
+      protected String getOrderId() {
+         if ( jv.asJsonObject() != null ) {
+            return jv.asJsonObject().getString(Constants.ORDER_ID_KEY);
+         }
+         throw new IllegalStateException("Missing Order ID");
+      }
+      protected Set<String> getReefers() {
+         Set<String> orderReefers = new HashSet<>();
+         if ( jv.asJsonObject() != null && jv.asJsonObject().containsKey(Constants.ORDER_REEFERS_KEY)) {
+            String[] reefers = jv.asJsonObject().getString(Constants.ORDER_REEFERS_KEY).split(",");
+            for( String rid : reefers ) {
+               orderReefers.add(rid);
+            }
+         }
+         return orderReefers;
+      }
    }
 }

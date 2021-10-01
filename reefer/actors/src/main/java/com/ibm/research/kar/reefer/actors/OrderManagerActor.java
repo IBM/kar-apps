@@ -165,8 +165,8 @@ public class OrderManagerActor extends BaseActor {
     public void orderSpoilt(JsonObject message) {
         try {
             Order order = new Order(message);
-            if (activeOrders.containsKey(order.getId())) {
-                Order activeOrder = new Order(activeOrders.get(order.getId()));
+            if (activeOrders.containsKey( order.getId())) {
+                Order activeOrder = new Order(activeOrders.get( order.getId()));
                 // idempotence check to prevent double counting
                 if (!activeOrder.isSpoilt()) {
                     spoiltOrderList.add(order);
@@ -179,6 +179,8 @@ public class OrderManagerActor extends BaseActor {
                     updateStore(Collections.emptyMap(), updateMap);
                 }
             }
+
+
 
         } catch (Exception e) {
             e.printStackTrace();

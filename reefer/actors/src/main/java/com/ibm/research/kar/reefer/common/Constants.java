@@ -37,7 +37,8 @@ public class Constants {
    public static final String VOYAGE_STATUS_KEY="voyage-status";
    public static final String VOYAGE_DAYSATSEA_KEY="daysAtSea";
    public static final String VOYAGE_FREE_CAPACITY_KEY="free-capacity";
-
+   public static final int DEPOT_TARGET_TYPE=1;
+   public static final int VOYAGE_TARGET_TYPE=2;
    public static final String REEFER_PROVISIONER_STATE_KEY="provisionerState";
    public static final String REEFER_FLEET_SIZE_KEY="REEFER_FLEET_SIZE";
 
@@ -55,6 +56,7 @@ public class Constants {
 
    public static final String ANOMALY_TARGET_KEY="anomaly-target";
    public static final String ANOMALY_KEY="anomaly";
+   public static final String ANOMALY_ORIGIN_KEY="anomaly-origin";
    public static final String ANOMALY_TARGET_TYPE_KEY="anomaly-target_type";
    public static final String ORDER_ID_KEY="orderId";
    public static final String ORDERS_KEY="orders";

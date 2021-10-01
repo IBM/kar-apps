@@ -58,7 +58,7 @@ public class AnomalyManagerActor extends BaseActor {
       reefersMap = new LinkedHashMap<>();
       // ReeferLocation instances are restored from a stringified list where
       // each entry is encoded as follows: <REEFERID:int>|<DEPOT NAME:string>|<TYPE:int>
-      // where TYPE[1,2] 1: Depot, 2: Order. Example:
+      // where TYPE[1,2] 1: Depot, 2: VOYAGE. Example:
       // 0|NewYorkReeferDepot|1
       String reeferTargets = ((JsonString) state.get(Constants.REEFERS_KEY)).getString();
       if (reeferTargets != null) {
@@ -117,7 +117,7 @@ public class AnomalyManagerActor extends BaseActor {
          long total = 0;
          for (int reeferId = lowerRange; reeferId <= upperRange; reeferId++) {
             long t2 = System.currentTimeMillis();
-            sb.append(reeferId).append("|").append(depotId).append("|").append(1).append(",");
+            sb.append(reeferId).append("|").append(depotId).append("|").append(Constants.DEPOT_TARGET_TYPE).append(",");
             total += (System.currentTimeMillis() - t2);
             reefersMap.put(String.valueOf(reeferId), new ReeferLocation(reeferId, depot, ReeferLocation.LocationType.DEPOT.getType()));
          }
@@ -152,15 +152,15 @@ public class AnomalyManagerActor extends BaseActor {
          String reeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
          if (reefersMap.containsKey(reeferId)) {
             ReeferLocation target = reefersMap.get(reeferId);
+            int targetType = message.containsKey(Constants.TARGET_KEY) ? message.getInt(Constants.TARGET_KEY) : target.getTargetType();
             ActorRef targetActor;
-
-            switch (target.getTargetType()) {
-               case 1:  // Depot type
+            switch (targetType) {
+               case Constants.DEPOT_TARGET_TYPE:
                   targetActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, target.getTarget());
                   Kar.Actors.tell(targetActor, "reeferAnomaly", message);
                   break;
-               case 2:  // Order type
-                  targetActor = Kar.Actors.ref(ReeferAppConfig.OrderActorType, target.getTarget());
+               case Constants.VOYAGE_TARGET_TYPE:
+                  targetActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, target.getTarget());
                   Kar.Actors.tell(targetActor, "reeferAnomaly", message);
                   break;
                default:
@@ -250,8 +250,8 @@ public class AnomalyManagerActor extends BaseActor {
 
    public static class ReeferLocation {
       public enum LocationType {
-         DEPOT(1),
-         ORDER(2);
+         DEPOT(Constants.DEPOT_TARGET_TYPE),
+         VOYAGE(Constants.VOYAGE_TARGET_TYPE);
          public final int type;
 
          LocationType(int type) {

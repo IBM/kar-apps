@@ -68,7 +68,7 @@ public class AnomalyManagerActor extends BaseActor {
          for (String target : targets) {
             String[] props = target.split("\\|");
 
-            System.out.println("AnomalyManagerActor.instantiateReeferTargetMap() - reeferTargets:"+reeferTargets+" props[0]="+props[0]+" depot:"+props[1]);
+           // System.out.println("AnomalyManagerActor.instantiateReeferTargetMap() - reeferTargets:"+reeferTargets+" props[0]="+props[0]+" depot:"+props[1]);
 
             ReeferLocation rl = new ReeferLocation(Integer.parseInt(props[0]),props[1], Integer.parseInt(props[2]));
             reefersMap.put(props[0], rl);
@@ -81,14 +81,7 @@ public class AnomalyManagerActor extends BaseActor {
       }
 
    }
-   private String resolveDepotNameBy(int enumValue) {
-      for(Map.Entry<String, JsonValue> entry : targetEnumMap.entrySet()) {
-         if (enumValue == ((JsonNumber) entry.getValue()).intValue()) {
-            return entry.getKey();
-         }
-      }
-      throw new IllegalStateException("AnomalyManagerActor.resolveDepotNameBy() - depot with enum value of "+enumValue+" not found in targetEnumMap");
-   }
+
    @Remote
    public void depotReefers(JsonObject depotReefers) {
       System.out.println("AnomalyManagerActor.depotReefers() - " + depotReefers);
@@ -170,7 +163,7 @@ public class AnomalyManagerActor extends BaseActor {
             ActorRef targetActor;
             switch (targetType) {
                case Constants.DEPOT_TARGET_TYPE:
-                  
+
                   targetActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, target.getTarget());
                   Kar.Actors.tell(targetActor, "reeferAnomaly", message);
                   break;

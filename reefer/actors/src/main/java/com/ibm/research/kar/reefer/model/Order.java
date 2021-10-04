@@ -63,10 +63,13 @@ public class Order {
             OrderStatus.PENDING.getLabel(),new ArrayList<>());
         orderProperties.setOrderId(getId());
     }
+    /*
     public Order(OrderDTO dto) {
         this(dto.getId(), dto.getCustomerId(), dto.getProduct(), 
         dto.getProductQty(), dto.getVoyageId(), dto.getStatus(), new ArrayList<String>());
     }
+
+     */
     public Order(JsonValue jo ) {
         this(jo.asJsonObject());
     }
@@ -83,12 +86,22 @@ public class Order {
             this.depot = jo.getString(Constants.DEPOT_KEY);
         }
     }
-
+/*
     public Order( String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
-        this(String.valueOf(Instant.now().toEpochMilli()), customerId, product, productQty, voyageId, status,reeferIds);
+//        this(String.valueOf(Instant.now().toEpochMilli()), customerId, product, productQty, voyageId, status,reeferIds);
+        //this(UUID.randomUUID().toString(), customerId, product, productQty, voyageId, status,reeferIds);
+        //this(String.valueOf(System.nanoTime()), customerId, product, productQty, voyageId, status, reeferIds);
+        this(newId(), customerId, product, productQty, voyageId, status, reeferIds);
     }
-    public Order( String id, String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
-        this.id = id;
+
+ */
+   //public Order( String id, String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
+    public Order(  String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
+        // use class level locking to prevent duplicate id generation. REST is multithreaded and is possible for two
+        // threads to call the c'tor at the same time and generates same id for two different orders
+        synchronized( Order.class) {
+            this.id = UUID.randomUUID().toString();
+        }
         this.customerId = customerId;
         this.product = product;
         this.productQty = productQty;
@@ -98,6 +111,12 @@ public class Order {
         // date one day at a time and we need millis resolution
         this.date = Instant.now().toString();
         this.spoilt = false;
+    }
+
+    public String newId() {
+        synchronized(Order.class) {
+            return String.valueOf(System.nanoTime());
+        }
     }
 
     @Override

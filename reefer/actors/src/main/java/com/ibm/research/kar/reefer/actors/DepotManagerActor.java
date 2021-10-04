@@ -198,8 +198,13 @@ public class DepotManagerActor extends BaseActor {
         JsonObjectBuilder job = Json.createObjectBuilder();
         try {
             String depotId = ((JsonString) depotName).getString();
+            boolean found = false;
+            System.out.println("DepotManager.depotInventory() - depotId:"+depotId+" depots.size()="+depots.size());
+            StringBuilder sb = new StringBuilder();
             for (Depot depot : depots) {
+                sb.append(depot).append("\n");
                 if (depot.getId().equals(depotId)) {
+                    found = true;
                     job.add(Constants.TOTAL_REEFER_COUNT_KEY, totalInventorySize).
                             add(Constants.DEPOT_SIZE_KEY, depot.size);
                     JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
@@ -209,6 +214,9 @@ public class DepotManagerActor extends BaseActor {
                     job.add(Constants.SHARDS_KEY, arrayBuilder.build());
                     break;
                 }
+            }
+            if (!found ) {
+                System.out.println("DepotManager.depotInventory() - depot:"+depotId+" NOT found in depots - known depots:"+sb.toString());
             }
         } catch (Exception e) {
             e.printStackTrace();

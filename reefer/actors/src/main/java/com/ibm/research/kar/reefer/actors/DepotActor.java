@@ -518,6 +518,7 @@ public class DepotActor extends BaseActor {
     }
 
     private JsonObject createReply(Set<String> reeferIds, JsonObject order) {
+       // System.out.println("DepotActor.createReply - Depot:"+getId()+" Order:"+order+" Reefers:\n"+String.join(",", reeferIds));
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                 add(Constants.DEPOT_KEY, getId()).
                 add(Constants.REEFERS_KEY, Json.createValue(reeferIds.size())).
@@ -604,11 +605,21 @@ public class DepotActor extends BaseActor {
              */
         } else if (reeferMasterInventory[reeferId].assignedToOrder()) {
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("DepotActor.reeferAnomaly() - reeferId:" + reeferId
+                logger.info("DepotActor.reeferAnomaly() - " + getId() + " reeferId:" + reeferId
                         + " assigned to order: " + reeferMasterInventory[reeferId].getOrderId());
             }
-           // System.out.println("DepotActor.reeferAnomaly() - reeferId:" + reeferId
-            //        + " assigned to order: " + reeferMasterInventory[reeferId].getOrderId()+" - will replace <<<<<<<<<<<<<<<<<<");
+            /*
+            System.out.println("DepotActor.reeferAnomaly() - " + getId() + " reeferId:" + reeferId
+                    + " assigned to order: " + reeferMasterInventory[reeferId].getOrderId()+
+                    " voyage:"+reeferMasterInventory[reeferId].getVoyageId() +
+                    " - will replace <<<<<<<<<<<<<<<<<<");
+
+             */
+            JsonObject orderReplaceMessage = Json.createObjectBuilder()
+                    .add(Constants.REEFER_ID_KEY,reeferId).build();
+
+            ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorType,  reeferMasterInventory[reeferId].getOrderId());
+            Kar.Actors.tell(orderActor, "replaceReefer", orderReplaceMessage);
         } else {
             Instant today;
             if ( message.containsKey(Constants.DATE_KEY)) {
@@ -634,52 +645,60 @@ public class DepotActor extends BaseActor {
     }
 
     /**
-     * Handle Order request for reefer replacement
+     * Handle request for reefer replacement
      *
      * @param message
      */
     @Remote
-    public JsonObject reeferReplacement(JsonObject message) {
-        int reeferId = message.getInt(Constants.SPOILT_REEFER_KEY);
-        if (reeferMasterInventory[reeferId] == null) {
-            logger.log(Level.WARNING, "DepotActor.reeferReplacement() - Reefer " + reeferId + " not allocated - request to replace it is invalid");
-            throw new IllegalStateException("Reefer " + reeferId + " not allocated - request to replace it is invalid");
-        }
-        if (reeferMasterInventory[reeferId].getState().equals(ReeferState.State.MAINTENANCE)) {
-            logger.log(Level.WARNING, "DepotActor.reeferReplacement() - reefer " + reeferId + " is already on-maintenance - invalid state");
-            return Json.createObjectBuilder()
-                    .add(Constants.STATUS_KEY, Constants.FAILED).build();
-        }
-        ReeferDTO reefer = reeferMasterInventory[reeferId];
+    public JsonObject reeferReplace(JsonObject message) {
+ //   public JsonObject reeferReplacement(JsonObject message) {
+       try {
+           int reeferId =message.getInt(Constants.REEFER_ID_KEY);
+          // int reeferId = message.getInt(Constants.SPOILT_REEFER_KEY);
+         //  System.out.println("DepotActor.reeferReplacement() - depot:"+getId()+" replacing reefer " + reeferId);
+           if (reeferMasterInventory[reeferId] == null) {
+               logger.log(Level.WARNING, "DepotActor.reeferReplace() - depot:"+getId()+" Reefer " + reeferId + " no longer in the inventory - request to replace it is invalid");
+               return Json.createObjectBuilder()
+                       .add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR, "Depot "+getId()+" - request to replace reefer is invalid - reefer "+reeferId+" no longer in the inventory").build();
+           }
+           ReeferDTO reefer = reeferMasterInventory[reeferId];
 
-        List<ReeferDTO> replacementReeferList = ReeferAllocator.allocateReefers(reeferMasterInventory,
-                Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId(), getUnallocatedReeferCount()); //(JsonNumber) currentInventorySize).intValue());
-        if (replacementReeferList.isEmpty()) {
-            logger.log(Level.WARNING, "DepotActor.reeferReplacement() - Unable to allocate replacement reefer for " + reeferId);
-            throw new RuntimeException("Unable to allocate replacement reefer for " + reeferId);
-        }
+           List<ReeferDTO> replacementReeferList = ReeferAllocator.allocateReefers(reeferMasterInventory,
+                   Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId(), getUnallocatedReeferCount()); //(JsonNumber) currentInventorySize).intValue());
+           if (replacementReeferList.isEmpty()) {
+               logger.log(Level.WARNING, "DepotActor.reeferReplace() - depot:"+getId()+"Unable to allocate replacement reefer for " + reeferId);
+               return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR,"Unable to allocate replacement reefer for " + reeferId).build();
+           }
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("DepotActor.replaceSpoiltReefer() - replacing reeferId:"
-                    + reefer.getId() + " with:" + replacementReeferList.get(0).getId());
-        }
-        if (order2ReeferMap.containsKey(reefer.getOrderId())) {
-            Set<String> reeferIds = order2ReeferMap.get(reefer.getOrderId());
-            // remove spoilt
-            reeferIds.remove(String.valueOf(reeferId));
-            // add replacement
-            reeferIds.add(String.valueOf(replacementReeferList.get(0).getId()));
-        }
-        reefer.removeFromVoyage();
-        setReeferOnMaintenance(reefer, message.getString(Constants.DATE_KEY));
+           if (logger.isLoggable(Level.FINE)) {
+               logger.fine("DepotActor.replaceSpoiltReefer() - replacing reeferId:"
+                       + reefer.getId() + " with:" + replacementReeferList.get(0).getId());
+           }
+           if (order2ReeferMap.containsKey(reefer.getOrderId())) {
+               Set<String> reeferIds = order2ReeferMap.get(reefer.getOrderId());
+               // remove spoilt
+               reeferIds.remove(String.valueOf(reeferId));
+               // add replacement
+               reeferIds.add(String.valueOf(replacementReeferList.get(0).getId()));
+           }
+           reefer.removeFromVoyage();
+           JsonValue currentDate = Kar.Actors.call(scheduleActor, "currentDate");
+           //today = Instant.parse(((JsonString) reply).getString());
+           setReeferOnMaintenance(reefer, ((JsonString) currentDate).getString()); //message.getString(Constants.DATE_KEY));
 
-        Map<String, JsonValue> updateMap = new HashMap<>();
-        updateMap.put(String.valueOf(reeferId), reeferToJsonObject(replacementReeferList.get(0)));
-        updateStore(Collections.emptyMap(), updateMap);
-        System.out.println("DepotActor.reeferReplacement() - reefer " + reeferId + " replaced with:" + replacementReeferList.get(0).getId());
-        return Json.createObjectBuilder()
-                .add(Constants.REEFER_REPLACEMENT_ID_KEY, replacementReeferList.get(0).getId())
-                .add(Constants.STATUS_KEY, Constants.OK).build();
+           Map<String, JsonValue> updateMap = new HashMap<>();
+           updateMap.put(String.valueOf(reeferId), reeferToJsonObject(replacementReeferList.get(0)));
+           updateStore(Collections.emptyMap(), updateMap);
+           //System.out.println("DepotActor.reeferReplace() - depot:"+getId()+" reefer " + reeferId + " replaced with:" + replacementReeferList.get(0).getId());
+           return Json.createObjectBuilder()
+                   .add(Constants.REEFER_REPLACEMENT_ID_KEY, replacementReeferList.get(0).getId())
+                   .add(Constants.STATUS_KEY, Constants.OK).build();
+       } catch( Exception e) {
+           e.printStackTrace();
+           return Json.createObjectBuilder()
+                   .add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR,e.getMessage()).build();
+       }
+
     }
 
 
@@ -793,7 +812,7 @@ public class DepotActor extends BaseActor {
         try {
             ActorRef depotManagerActor = Kar.Actors.ref(ReeferAppConfig.DepotManagerActorType, ReeferAppConfig.DepotManagerId);
             JsonValue reply = Kar.Actors.call(depotManagerActor, "depotInventory", Json.createValue(getId()));
-          //  System.out.println("DepotActor.getReeferInventory() ID:" + getId() + "- Depot Configuration:" + reply);
+            System.out.println("DepotActor.getReeferInventory() ID:" + getId() + "- Depot Configuration:" + reply);
             totalReeferInventory = reply.asJsonObject().getJsonNumber(Constants.TOTAL_REEFER_COUNT_KEY);
             depotSize = reply.asJsonObject().getJsonNumber(Constants.DEPOT_SIZE_KEY);
             currentInventorySize = depotSize;

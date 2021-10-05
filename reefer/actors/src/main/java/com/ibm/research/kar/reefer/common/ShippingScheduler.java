@@ -18,6 +18,7 @@ package com.ibm.research.kar.reefer.common;
 
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Route;
+import com.ibm.research.kar.reefer.model.Vessel;
 import com.ibm.research.kar.reefer.model.Voyage;
 
 import java.time.Instant;
@@ -48,7 +49,9 @@ public class ShippingScheduler {
 
         return routeList;
     }
-
+    public List<Vessel> getVessels() throws Exception {
+        return routes.loadVessels();
+    }
     /**
      * Generate route/ship schedule for a given range of dates. Each ship sails from origin port
      * to a destination port, stays at the destination port for a number of days (unload/reload) and sails back to the

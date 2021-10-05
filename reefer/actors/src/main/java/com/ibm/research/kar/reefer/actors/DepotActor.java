@@ -267,6 +267,7 @@ public class DepotActor extends BaseActor {
                 inTransitTotalCount += voyageReefers.size();
 
                 Map<String, Set<Integer>> orders = new HashMap<>();
+                StringBuilder builder = new StringBuilder();
                 for (ReeferDTO reefer : voyageReefers) {
                     reeferMasterInventory[reefer.getId()] = null;
                     Set<Integer> reefers;
@@ -277,22 +278,13 @@ public class DepotActor extends BaseActor {
                         orders.put(reefer.getOrderId(), reefers);
                     }
                     reefers.add(reefer.getId());
-                }
-                JsonArrayBuilder jab = Json.createArrayBuilder();
-                StringBuilder builder = new StringBuilder();
-                for (Map.Entry<String, Set<Integer>> entry : orders.entrySet()) {
-                    builder.setLength(0);
-                    JsonObjectBuilder job = Json.createObjectBuilder();
-                    for (Integer reeferId : entry.getValue()) {
-                        builder.append(reeferId).append(",");
-                    }
-                    job.add(Constants.ANOMALY_TARGET_KEY, voyageId). //entry.getKey()).
-                            add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType())).
-                            add(Constants.REEFERS_KEY, builder.toString());
-                    jab.add(job);
+                    builder.append(reefer.getId()).append(",");
                 }
                 JsonObjectBuilder job = Json.createObjectBuilder();
-                job.add(Constants.TARGETS_KEY, jab.build());
+                job.add(Constants.ANOMALY_TARGET_KEY, voyageId).
+                        add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType())).
+                        add(Constants.REEFERS_KEY, builder.toString());
+
                 ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
                 Kar.Actors.tell(anomalyManagerActor, "voyageDeparted", job.build());
 
@@ -356,28 +348,7 @@ public class DepotActor extends BaseActor {
         }
         return new Inventory(total, rbooked, rfree, rbad);
     }
-/*
-    @Remote
-    public void voyageSpoiltReefersArrived(JsonObject message) {
-        String[] spoiltReeferIds = message.getString(Constants.SPOILT_REEFERS_KEY).split(",");
-        String arrivalDate = message.getString(Constants.VOYAGE_ARRIVAL_DATE_KEY);
-        // now, all arrived spoilt reefer go on maintenance
-        for( String reeferId : spoiltReeferIds) {
-            if ( reeferId != null && reeferId.trim().length() == 0) {
-                continue;
-            }
-            int idx = Integer.valueOf(reeferId);
-            if ( reeferMasterInventory[idx] != null && !reeferMasterInventory[idx].getState().equals(ReeferState.State.ALLOCATED)) {
-                reeferMasterInventory[idx] = new ReeferDTO(Integer.valueOf(reeferId), ReeferState.State.SPOILT);
-                Map<String, JsonValue> arrivedOnMaintenanceMap = new HashMap<>();
-                unreserveReefer(reeferMasterInventory[idx], arrivedOnMaintenanceMap, arrivalDate);
-            }
 
-        }
-
-    }
-
- */
     @Remote
     public void voyageReefersArrived(JsonObject message) {
         try {
@@ -388,7 +359,6 @@ public class DepotActor extends BaseActor {
             String[] spoiltReeferIds = message.getString(Constants.SPOILT_REEFERS_KEY).split(",");
             List<ReeferDTO> updateList = new ArrayList<>(reeferIds.length);
             StringBuilder builder = new StringBuilder();
-            JsonArrayBuilder jab = Json.createArrayBuilder();
 
             for (String reeferId : reeferIds) {
                 int idx = Integer.parseInt(reeferId);
@@ -416,11 +386,8 @@ public class DepotActor extends BaseActor {
             job.add(Constants.ANOMALY_TARGET_KEY, getId()).
                     add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType())).
                     add(Constants.REEFERS_KEY, builder.toString());
-            jab.add(job);
-            JsonObjectBuilder anomalyMgrMsg = Json.createObjectBuilder();
-            anomalyMgrMsg.add(Constants.TARGETS_KEY, jab.build());
             ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
-            Kar.Actors.tell(anomalyManagerActor, "voyageArrived", anomalyMgrMsg.build());
+            Kar.Actors.tell(anomalyManagerActor, "voyageArrived", job.build());
 
             Inventory inventory = getReeferInventoryCounts();
             currentInventorySize = Json.createValue(inventory.getTotal());
@@ -651,11 +618,9 @@ public class DepotActor extends BaseActor {
      */
     @Remote
     public JsonObject reeferReplace(JsonObject message) {
- //   public JsonObject reeferReplacement(JsonObject message) {
        try {
            int reeferId =message.getInt(Constants.REEFER_ID_KEY);
-          // int reeferId = message.getInt(Constants.SPOILT_REEFER_KEY);
-         //  System.out.println("DepotActor.reeferReplacement() - depot:"+getId()+" replacing reefer " + reeferId);
+
            if (reeferMasterInventory[reeferId] == null) {
                logger.log(Level.WARNING, "DepotActor.reeferReplace() - depot:"+getId()+" Reefer " + reeferId + " no longer in the inventory - request to replace it is invalid");
                return Json.createObjectBuilder()
@@ -683,13 +648,11 @@ public class DepotActor extends BaseActor {
            }
            reefer.removeFromVoyage();
            JsonValue currentDate = Kar.Actors.call(scheduleActor, "currentDate");
-           //today = Instant.parse(((JsonString) reply).getString());
-           setReeferOnMaintenance(reefer, ((JsonString) currentDate).getString()); //message.getString(Constants.DATE_KEY));
+           setReeferOnMaintenance(reefer, ((JsonString) currentDate).getString());
 
            Map<String, JsonValue> updateMap = new HashMap<>();
            updateMap.put(String.valueOf(reeferId), reeferToJsonObject(replacementReeferList.get(0)));
            updateStore(Collections.emptyMap(), updateMap);
-           //System.out.println("DepotActor.reeferReplace() - depot:"+getId()+" reefer " + reeferId + " replaced with:" + replacementReeferList.get(0).getId());
            return Json.createObjectBuilder()
                    .add(Constants.REEFER_REPLACEMENT_ID_KEY, replacementReeferList.get(0).getId())
                    .add(Constants.STATUS_KEY, Constants.OK).build();

@@ -335,8 +335,7 @@ public class VoyageActor extends BaseActor {
 
    @Remote
    public void replaceReefer(JsonObject message) {
-  //    System.out.println("VoyageActor.replaceReefer() - voyage:"+getId()+"<<<<<<<<<<<<<<<<<<<<<<<<<<<< message:" + message+
-  //            " requesting replacement from depot:"+DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort()));
+
       try {
          String spoiltReeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
          if (VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
@@ -347,12 +346,9 @@ public class VoyageActor extends BaseActor {
             return;
          }
 
-        // JsonObject depotReplaceMessage = Json.createObjectBuilder()
-        //         .add(Constants.REEFER_ID_KEY,spoiltReeferId).add(Constants.DATE_KEY,).build();
-
          ActorRef depotActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort()));
          JsonValue reply = Kar.Actors.call(depotActor, "reeferReplace",message);
-      //   System.out.println("VoyageActor.replaceReefer() - voyage:"+getId()+" reply:"+reply);
+
          if ( !reply.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
             System.out.println("VoyageActor.replaceReefer() - voyage:"+getId()+" - Error:"+reply.asJsonObject().getString(Constants.ERROR)+" - processing as reefer anomaly");
             reeferAnomaly(message);
@@ -360,17 +356,14 @@ public class VoyageActor extends BaseActor {
          }
          int newReeferId = reply.asJsonObject().getInt(Constants.REEFER_REPLACEMENT_ID_KEY);
 
-         //String spoiltReeferId = message.getString(Constants.SPOILT_REEFER_KEY);
-         String orderId = reefer2OrderMap.get(spoiltReeferId);//message.getString(Constants.ORDER_ID_KEY);
+         String orderId = reefer2OrderMap.get(spoiltReeferId);
          if (orders.containsKey(orderId)) {
             JsonValue order = orders.get(orderId);
             reefer2OrderMap.remove(spoiltReeferId);
             reefer2OrderMap.put(String.valueOf(newReeferId), orderId);
 
-          //  System.out.println("VoyageActor.replaceReefer() - voyage:"+getId()+" Order Before Change:\n"+order);
-            // JsonArray voyageReefers = order.asJsonObject().getJsonArray(Constants.ORDER_REEFERS_KEY);
+
             String reefers[] = order.asJsonObject().getString(Constants.ORDER_REEFERS_KEY).split(",");
-            //JsonArrayBuilder newReeferListBuilder = Json.createArrayBuilder();
             Set<String> reeferIds = new LinkedHashSet<>();
 
             for( String reeferId : reefers) {
@@ -381,38 +374,11 @@ public class VoyageActor extends BaseActor {
                   reeferIds.add(reeferId);
                }
             }
-         /*
-         voyageReefers.forEach(reefer -> {
-            if (reefer.equals(spoiltReeferId)) {
-               // replace spoilt reefer
-               newReeferListBuilder.add(reeferId);
-            } else {
-               newReeferListBuilder.add(reefer);
-            }
-         });
-
-          */
-
-
-            //  JsonArray reefers = newReeferListBuilder.build();
-
-
             JsonObject updatedBooking = Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                     add(Constants.DEPOT_KEY,  DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
                     add(Constants.REEFERS_KEY, Json.createValue(reeferIds.size())).
                     add(Constants.ORDER_REEFERS_KEY, Json.createValue(String.join(",", reeferIds))).
                     add(JsonOrder.OrderKey, order.asJsonObject().getJsonObject(Constants.ORDER_KEY)).build();
-
-
-
-        //    System.out.println("VoyageActor.replaceReefer() - voyage:"+getId()+" Order After Change:\n"+updatedBooking);
-         /*
-         JsonObject updatedBooking = Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
-                 add(Constants.REEFERS_KEY, Json.createValue(reefers.size())).
-                 add(Constants.ORDER_REEFERS_KEY, reefers).
-                 add(JsonOrder.OrderKey, order.asJsonObject()).build();
-
-          */
             orders.put(orderId, updatedBooking);
 
 
@@ -422,7 +388,6 @@ public class VoyageActor extends BaseActor {
             subMapUpdates.put(Constants.VOYAGE_ORDERS_KEY, orderSubMapUpdates);
 
             Kar.Actors.State.update(this, Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), subMapUpdates);
-         //   System.out.println("VoyageActor.replaceReefer() - voyage:"+getId()+" ############### spoilt reefer:"+spoiltReeferId+" replaced with "+newReeferId);
          }
       } catch( Exception e) {
          e.printStackTrace();
@@ -491,10 +456,6 @@ public class VoyageActor extends BaseActor {
     */
    private void processDepartedVoyage(final Voyage voyage) {
       try {
-
-
-         //System.out.println("VoyageActor.processDepartedVoyage - "+getId()+" >>>>>>>>> DEPARTED with "+voyage.getReeferCount()+" reefers aboard");
-
          ActorRef depotActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType,
                  DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort()));
          JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).
@@ -514,11 +475,8 @@ public class VoyageActor extends BaseActor {
    private void notifyVoyageOrder(String orderId, Order.OrderStatus orderStatus, String methodName) {
       JsonValue value = orders.get(orderId);
       JsonObject booking = value.asJsonObject();
-     // JsonObject jorder = booking.asJsonObject().getJsonObject(Constants.ORDER_KEY);
       JsonObject jorder = booking.getJsonObject(Constants.ORDER_KEY);
-    // System.out.println("VoyageActor.notifyVoyageOrder() - ID:"+getId()+ " order:"+orderId+" booking:"+booking+" :::::::::::::\nOrder:"+jorder);
       Order order = new Order(booking.asJsonObject().getJsonObject(Constants.ORDER_KEY));
-      //Order order = new Order(booking.asJsonObject(Constants.ORDER_KEY));
       if (!orderStatus.name().equals(order.getStatus())) {
          try {
             messageOrderActor(methodName, orderId);

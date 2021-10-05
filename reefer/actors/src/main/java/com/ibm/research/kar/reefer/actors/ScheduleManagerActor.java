@@ -13,6 +13,7 @@ import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Route;
+import com.ibm.research.kar.reefer.model.Vessel;
 import com.ibm.research.kar.reefer.model.Voyage;
 
 import javax.json.*;
@@ -69,7 +70,16 @@ public class ScheduleManagerActor extends BaseActor {
             e.printStackTrace();
         }
     }
-
+    @Remote
+    public JsonValue getVessels() throws Exception {
+        JsonArrayBuilder jab = Json.createArrayBuilder();
+        List<Vessel> vessels = schedule.getVessels();
+        for (Vessel vessel : vessels ) {
+            jab.add(vessel.getName());
+        }
+        JsonArray ja = jab.build();
+        return ja;
+    }
     @Remote
     public void publishSpoiltReeferMetrics() {
         int totalSpoiltReeferCount = 0;

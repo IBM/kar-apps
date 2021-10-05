@@ -59,7 +59,9 @@ public class Voyage implements Comparable<Voyage>{
         this.arrivalDate = arrivalDate;
         this.displayArrivalDate = arrivalDate.substring(0,10);
         this.sailDate = sailDateObject.toString().substring(0,10);
-        this.id = String.format("%s-%s",route.getVessel().getName(),this.sailDateObject.toString()).replaceAll("/","-");
+//        this.id = String.format("%s-%s",route.getVessel().getName(),this.sailDateObject.toString()).replaceAll("/","-");
+        this.id = String.format("%s:%s",route.getVessel().getName(),this.sailDate.toString()).replaceAll("/","-");
+
     }
     public Voyage(String id, Route route, Instant sailDateObject, String arrivalDate) {
         this.route = route;

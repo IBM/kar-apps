@@ -19,6 +19,7 @@ package com.ibm.research.kar.reefer.common;
 import com.ibm.research.kar.reefer.common.error.VoyageNotFoundException;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Route;
+import com.ibm.research.kar.reefer.model.Vessel;
 import com.ibm.research.kar.reefer.model.Voyage;
 
 import javax.json.JsonArray;
@@ -65,16 +66,15 @@ public class ScheduleService {
         return routes;
 
     }
-
+    public List<Vessel> getVessels() throws Exception {
+        return scheduler.getVessels();
+    }
     public Voyage getVoyage(final String voyageId) throws VoyageNotFoundException {
-
         Optional<Voyage> voyage =
                 masterSchedule.stream().filter(v -> v.getId().equals(voyageId)).findFirst();
         if (voyage.isPresent()) {
             return voyage.get();
         }
-
-
         throw new VoyageNotFoundException("ScheduleService.getVoyage() - voyage:" + voyageId + " not found in MasterSchedule");
     }
 
@@ -86,7 +86,7 @@ public class ScheduleService {
      */
     public Instant generateShipSchedule(Instant baseScheduleDate, Instant currentDate, Instant lastVoyageDate) {
         masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, currentDate);
-         dumpVoyages(masterSchedule);
+        // dumpVoyages(masterSchedule);
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
 
     }
@@ -148,7 +148,7 @@ public class ScheduleService {
         }
         // new active schedule (created from new schedule) must match previous active schedule
         validateSchedule(activeScheduleBefore, "extension", currentDate, baseDate);
-        dumpVoyages(masterSchedule);
+       // dumpVoyages(masterSchedule);
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
     }
 

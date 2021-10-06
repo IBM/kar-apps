@@ -34,7 +34,11 @@ spec:
         kar.ibm.com/actors: reefer-depot,depot-manager,anomaly-manager,order-manager,schedule-manager
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.actors.port | quote }}
+{{- if .Values.global.karargs }}
+        kar.ibm.com/extraArgs: -actor_collector_interval,24h,{{ .Values.global.karargs }}
+{{- else }}
         kar.ibm.com/extraArgs: -actor_collector_interval,24h
+{{- end }}
     spec:
 {{- if .Values.global.affinity }}
       affinity:

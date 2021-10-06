@@ -35,6 +35,9 @@ spec:
         kar.ibm.com/actors: simhelper
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.simulator.port | quote }}
+{{- if .Values.global.karargs }}
+        kar.ibm.com/extraArgs: {{ .Values.global.karargs }}
+{{- end }}
     spec:
 {{- if .Values.global.affinity }}
       affinity:

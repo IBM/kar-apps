@@ -27,6 +27,7 @@ ingress:
 
 global:
   affinity: false
+  karargs: ""
 
 reefer:
   frontend:

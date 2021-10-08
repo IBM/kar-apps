@@ -265,25 +265,12 @@ public class DepotActor extends BaseActor {
                     bookedTotalCount = 0;
                 }
                 inTransitTotalCount += voyageReefers.size();
-
-               // Map<String, Set<Integer>> orders = new HashMap<>();
                 StringBuilder builder = new StringBuilder();
                 for (ReeferDTO reefer : voyageReefers) {
                     reeferMasterInventory[reefer.getId()] = null;
                     if ( order2ReeferMap.containsKey(reefer.getOrderId())) {
                         order2ReeferMap.remove(reefer.getOrderId());
                     }
-                    /*
-                    Set<Integer> reefers;
-                    if (orders.containsKey(reefer.getOrderId())) {
-                        reefers = orders.get(reefer.getOrderId());
-                    } else {
-                        reefers = new HashSet<>();
-                        orders.put(reefer.getOrderId(), reefers);
-                    }
-                    reefers.add(reefer.getId());
-
-                     */
                     builder.append(reefer.getId()).append(",");
                 }
                 JsonObjectBuilder job = Json.createObjectBuilder();
@@ -576,7 +563,7 @@ public class DepotActor extends BaseActor {
             System.out.println("DepotActor.reeferAnomaly() - " + getId() + " >>>>>>>>>>>> REEFER:" + reeferId +
                     " Not in inventory - departed already - sending back to Anomaly Manager");
 
-            // forward the anomaly back to the Anomaly Manager. The anomaly should be sent to the order actor.
+            // forward the anomaly back to the Anomaly Manager. The anomaly should be sent to the voyage actor.
             JsonObjectBuilder job = Json.createObjectBuilder();
             job.add(Constants.REEFER_ID_KEY, reeferId).add(Constants.DEPOT_KEY, getId()).add(Constants.TARGET_KEY, Constants.VOYAGE_TARGET_TYPE);
             ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
@@ -619,7 +606,7 @@ public class DepotActor extends BaseActor {
             } else {
                 today = currentDate;
             }
-            setReeferOnMaintenance(reeferMasterInventory[reeferId], today.toString()); //message.getString(Constants.DATE_KEY));
+            setReeferOnMaintenance(reeferMasterInventory[reeferId], today.toString());
             Map<String, JsonValue> updateMap = new HashMap<>();
             updateMap.put(String.valueOf(reeferId), reeferToJsonObject(reeferMasterInventory[reeferId]));
             updateStore(Collections.emptyMap(), updateMap);
@@ -651,7 +638,7 @@ public class DepotActor extends BaseActor {
            ReeferDTO reefer = reeferMasterInventory[reeferId];
 
            List<ReeferDTO> replacementReeferList = ReeferAllocator.allocateReefers(reeferMasterInventory,
-                   Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId(), getUnallocatedReeferCount()); //(JsonNumber) currentInventorySize).intValue());
+                   Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId(), getUnallocatedReeferCount());
            if (replacementReeferList.isEmpty()) {
                logger.log(Level.WARNING, "DepotActor.reeferReplace() - depot:"+getId()+"Unable to allocate replacement reefer for " + reeferId);
                return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR,"Unable to allocate replacement reefer for " + reeferId).build();
@@ -673,7 +660,7 @@ public class DepotActor extends BaseActor {
            setReeferOnMaintenance(reefer, ((JsonString) currentDate).getString());
 
            Map<String, JsonValue> updateMap = new HashMap<>();
-           updateMap.put(String.valueOf(reeferId), reeferToJsonObject(replacementReeferList.get(0)));
+           updateMap.put(String.valueOf(replacementReeferList.get(0).getId()), reeferToJsonObject(replacementReeferList.get(0)));
            updateStore(Collections.emptyMap(), updateMap);
            return Json.createObjectBuilder()
                    .add(Constants.REEFER_REPLACEMENT_ID_KEY, replacementReeferList.get(0).getId())

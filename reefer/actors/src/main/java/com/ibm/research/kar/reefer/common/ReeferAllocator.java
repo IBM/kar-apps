@@ -95,23 +95,12 @@ public class ReeferAllocator {
         List<ReeferDTO>  reefers = new ArrayList<>();
         // simple calculation for how many reefers are needed for the order. 
         int howManyReefersNeeded = Double.valueOf(Math.ceil(productQuantity/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
-        /*
-        if ( availableReeferCount <= 0 ) {
-            System.out.println("ReeferAllocator.allocateReefers - inventory completely depleted of reefers - returning empty list");
-            return reefers;
-        }
 
-         */
-
-        // REJECT instead
         if ( howManyReefersNeeded > availableReeferCount ) {
             System.out.println("ReeferAllocator.allocateReefers - not enough reefers in inventory to fill the order "+
                     " - rejecting request - available reefers:" + availableReeferCount);
-            //howManyReefersNeeded = availableReeferCount;
             return reefers;
-
         }
-
         try {
             StringBuilder sb = new StringBuilder();
             while(howManyReefersNeeded-- > 0 ) {
@@ -141,13 +130,11 @@ public class ReeferAllocator {
         int maxSteps = 10;
         // if lookup hits unassigned spot, we've found an insertion index for a new reefer
         if ( reeferStateList[index].equals(State.UNALLOCATED) ) {
-        //if ( reeferStateList[index] == null || reeferStateList[index].equals(State.UNALLOCATED) ) {
             return index;
         } else {
             // the random index hit an assigned spot in the list. Do maxSteps to find an unassigned spot
             for( int i = index; i < reeferStateList.length; i++) {
                 if (  reeferStateList[index].equals(State.UNALLOCATED) ) {
-                //if ( reeferStateList[index] == null ) {
                     return i;
                 }
                 // after maxSteps lookups an insertion index has not been found in the availableReefers list. Choose
@@ -158,7 +145,6 @@ public class ReeferAllocator {
             }
             return findInsertionIndexForReefer(reeferStateList);
         }
-      // throw new ReeferInventoryExhaustedException();  
     }
     private static int findInsertionIndexForReefer(ReeferDTO[] reeferInventory) throws ReeferInventoryExhaustedException{
         int index = randomIndex(reeferInventory.length);
@@ -166,17 +152,12 @@ public class ReeferAllocator {
         int maxSteps = 10;
         // if lookup hits unassigned spot, we've found an insertion index for a new reefer
         if (  reeferInventory[index] != null && reeferInventory[index].getState().equals(State.UNALLOCATED) ) {
-       // if ( reeferInventory[index] == null || reeferInventory[index].getState().equals(State.UNALLOCATED) ) {
             return index;
-            //return reeferInventory[index].getId();
         } else {
             // the random index hit an assigned spot in the list. Do maxSteps to find an unassigned spot
             for( int i = index; i < reeferInventory.length; i++) {
                 if ( reeferInventory[i] != null && reeferInventory[i].getState().equals(State.UNALLOCATED) ) {
-               // if ( reeferInventory[index] != null && reeferInventory[index].getState().equals(State.UNALLOCATED) ) {
-               // if ( reeferInventory[index] == null ) {
                    return i;
-                   // return reeferInventory[index].getId();
                 }
                 // after maxSteps lookups an insertion index has not been found in the availableReefers list. Choose
                 // another random index and try again.
@@ -186,45 +167,5 @@ public class ReeferAllocator {
             }
             return findInsertionIndexForReefer(reeferInventory);
         }
-        // throw new ReeferInventoryExhaustedException();
     }
-    /*
-    This method is temporary until Reefer support is added
-   
-    public static List<ReeferState> allocateReefers( PackingAlgo packingStrategy, List<JsonValue> availableReefers, int productQuantity, String voyageId) {
-        int remainingProductQuantity = productQuantity;
-        List<ReeferState>  reefers = new ArrayList<>();
-        System.out.println("ReeferAllocator.allocate() - Reefer Count:"+availableReefers.size());
-        
-        for( JsonValue reefer : availableReefers ) {
-            try {
-                ReeferState reeferState = new SimpleReeferState(reefer);
-                // skip Allocated reefers and those partially allocated to another voyage
-                if ( reeferState.alreadyAllocated() ||
-                     reeferState.partiallyAllocatedToAnotherVoyage(voyageId)) {
-                    System.out.println("ReeferAllocator.allocate() - Reefer:"+
-                    reeferState.getId()+
-                    " not avaialable. Allocated:"
-                    +reeferState.alreadyAllocated()
-                    +" Allocated to another voyage:"+reeferState.partiallyAllocatedToAnotherVoyage(voyageId)
-                    +"- Skipping");
-                    continue;
-                }
-                remainingProductQuantity = packingStrategy.pack(reeferState, remainingProductQuantity, voyageId);
-
-                reefers.add(reeferState);
-                // we are done if all products packed into reefers
-                if ( remainingProductQuantity == 0 ) {
-                    break;
-                }
-            } catch( Exception e) {
-                e.printStackTrace();
-                // this should result in rejected order due to reefer allocation problem
-                return Collections.emptyList();
-
-            }
-        }
-        return reefers;
-    }
-     */
 }

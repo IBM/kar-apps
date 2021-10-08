@@ -40,7 +40,6 @@ public class ScheduleService {
     private ShippingScheduler scheduler;
 
     private Set<Voyage> masterSchedule = new TreeSet<>();
-    //SortedSet<Voyage> schedule = null;
     private List<Route> routes = new ArrayList<>();
     private static final Logger logger = Logger.getLogger(ScheduleService.class.getName());
 
@@ -52,13 +51,6 @@ public class ScheduleService {
         if (routes.isEmpty()) {
             try {
                 routes = scheduler.getRoutes();
-                /*
-                routes.forEach(route -> {
-                    System.out.println("ScheduleService.getRoutes() - Origin:"+route.getOriginPort()+ " Capacity:"+route.getVessel().getMaxCapacity());
-                    System.out.println("ScheduleService.getRoutes() - Destination:"+route.getDestinationPort()+ " Capacity:"+route.getVessel().getMaxCapacity()+"\n--------");
-                });
-
-                 */
             } catch (Exception e) {
                 logger.log(Level.WARNING, "", e);
             }

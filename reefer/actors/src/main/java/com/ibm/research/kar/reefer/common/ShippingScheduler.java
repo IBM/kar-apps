@@ -33,7 +33,6 @@ import java.util.logging.Logger;
 public class ShippingScheduler {
     private static List<Route> routeList = new ArrayList<Route>();
     private static final Logger logger = Logger.getLogger(ShippingScheduler.class.getName());
-    private static Set<Voyage> sortedShipSchedule = new TreeSet<>();
     private Routes routes;
 
     public ShippingScheduler(int fleetSize ) throws Exception {

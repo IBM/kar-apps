@@ -35,7 +35,7 @@ services:
       REDIS_PORT:     6379
       REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
-      KAR_EXTRA_ARGS: -app_port 9080 -service reeferservice
+      KAR_EXTRA_ARGS: ${KAR_EXTRA_ARGS} -app_port 9080 -service reeferservice
   simulators:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-simulators
     command: ["/bin/bash","-c","/kar/bin/runner"]
@@ -50,7 +50,7 @@ services:
       REDIS_PORT:     6379
       REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
-      KAR_EXTRA_ARGS: -app_port 7080 -service simservice -actors simhelper
+      KAR_EXTRA_ARGS: ${KAR_EXTRA_ARGS} -app_port 7080 -service simservice -actors simhelper
   monitor:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-monitor
     command: ["/bin/sh","-c","/kar/bin/runner"]
@@ -65,7 +65,7 @@ services:
       REDIS_PORT:     6379
       REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
-      KAR_EXTRA_ARGS: -app_port 7082
+      KAR_EXTRA_ARGS: ${KAR_EXTRA_ARGS} -app_port 7082
       KAR_APP_PORT:   7082
       ORDERSTATS_DELAY: ${ORDERSTATS_DELAY:-60}
       ORDERSTATS_RESET: ${ORDERSTATS_RESET:-1}
@@ -85,7 +85,7 @@ services:
       REDIS_PORT:     6379
       REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
-      KAR_EXTRA_ARGS: -actors order,voyage
+      KAR_EXTRA_ARGS: ${KAR_EXTRA_ARGS} -actors order,voyage
   singletons:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-actors
     command: ["/bin/bash","-c","/kar/bin/runner"]
@@ -101,7 +101,7 @@ services:
       REDIS_PORT:     6379
       REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
-      KAR_EXTRA_ARGS: -actors schedule-manager,reefer-depot,depot-manager,anomaly-manager,order-manager -actor_collector_interval 24h
+      KAR_EXTRA_ARGS: ${KAR_EXTRA_ARGS} -actors schedule-manager,reefer-depot,depot-manager,anomaly-manager,order-manager -actor_collector_interval 24h
   frontend:
     image: ${IMAGE_PREFIX:-localhost:5000/kar}/kar-app-reefer-frontend
     command: ["/bin/bash","-c","/kar/bin/fe-start.sh"]

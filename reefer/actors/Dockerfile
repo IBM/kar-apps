@@ -34,7 +34,7 @@ RUN mvn -q package
 FROM $JAVA_RUNTIME
 COPY --from=builder --chown=default:root /kar/app/target/reefer-kar-actor-server.war /opt/ol/wlp/usr/servers/defaultServer/apps
 COPY --from=builder --chown=default:root /kar/app/src/main/liberty/config/server.xml /opt/ol/wlp/usr/servers/defaultServer
-
+COPY --from=builder --chown=default:root /kar/app/src/main/liberty/config/jvm.options /opt/ol/wlp/usr/servers/defaultServer
 
 #
 # Steps below based on: https://github.com/OpenLiberty/ci.docker#building-an-application-image

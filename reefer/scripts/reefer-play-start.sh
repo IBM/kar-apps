@@ -104,6 +104,7 @@ export ORDERSTATS_DELAY="${ORDERSTATS_DELAY:-60}"
 export ORDERSTATS_RESET="${ORDERSTATS_RESET:-1}"
 export ORDERSTATS_THRESHOLD="${ORDERSTATS_THRESHOLD:-500}"
 export ORDERSTATS_COUNTS="${ORDERSTATS_COUNTS:-0}"
+export CONTAINER_RESTART="${CONTAINER_RESTART:-Never}"
 envsubst < reefer-app.yaml > /tmp/reefer-app.yaml
 podman play kube /tmp/reefer-app.yaml -q
 if [ $? -ne 0 ]

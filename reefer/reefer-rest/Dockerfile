@@ -35,7 +35,10 @@ FROM $JAVA_RUNTIME
 COPY  --from=builder --chown=default:root /kar/app/target/liberty/wlp /opt/ol/wlp
 
 #
-# Run Open Liberty configure script.
-# Doing this now reduces startup time of the final image
+# Steps below based on: https://github.com/OpenLiberty/ci.docker#building-an-application-image
 #
-RUN /opt/ol/helpers/build/configure.sh default
+
+RUN features.sh
+
+RUN configure.sh
+

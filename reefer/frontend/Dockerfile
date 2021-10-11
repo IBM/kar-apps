@@ -40,7 +40,10 @@ COPY --from=builder --chown=default:root /kar/app/frontend/src/main/liberty/conf
 COPY frontend/fe-start.sh /kar/bin/fe-start.sh
 
 #
-# Run Open Liberty configure script.
-# Doing this now reduces startup time of the final image
+# Steps below based on: https://github.com/OpenLiberty/ci.docker#building-an-application-image
 #
-RUN /opt/ol/helpers/build/configure.sh default
+
+RUN features.sh
+
+RUN configure.sh
+

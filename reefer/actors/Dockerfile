@@ -43,9 +43,3 @@ COPY --from=builder --chown=default:root /kar/app/src/main/liberty/config/server
 RUN features.sh
 
 RUN configure.sh
-
-#
-# Run Open Liberty configure script.
-# Doing this now reduces startup time of the final image
-#
-#RUN /opt/ol/helpers/build/configure.sh default

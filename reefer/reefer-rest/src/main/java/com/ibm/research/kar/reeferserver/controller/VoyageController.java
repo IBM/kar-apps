@@ -20,6 +20,7 @@ import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.common.error.VoyageNotFoundException;
 import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
@@ -45,7 +46,7 @@ import java.util.stream.Collectors;
 public class VoyageController {
     @Autowired
     private GuiController gui;
-    private static final Logger logger = Logger.getLogger(VoyageController.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(VoyageController.class.getName());
     private ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
 
     /**
@@ -133,7 +134,7 @@ public class VoyageController {
                     map(VoyageJsonSerializer::deserialize).
                     collect(Collectors.toList());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, e.getMessage(), e);
             throw e;
         }
 
@@ -146,7 +147,7 @@ public class VoyageController {
             JsonValue reply = Kar.Actors.call(scheduleActor, "voyageState");
             return VoyageJsonSerializer.deserialize(reply.asJsonObject());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, e.getMessage(), e);
             throw e;
         }
     }
@@ -157,7 +158,7 @@ public class VoyageController {
             JsonValue reply = Kar.Actors.call(scheduleActor, "voyage", Json.createValue(id));
             return VoyageJsonSerializer.deserialize(reply.asJsonObject());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, e.getMessage(), e);
             throw e;
         }
     }
@@ -177,7 +178,7 @@ public class VoyageController {
                     ja.stream().map(jv -> jv.asJsonObject()).map(RouteJsonSerializer::deserialize).collect(Collectors.toList());
             return routes;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, e.getMessage(), e);
             throw e;
         }
 

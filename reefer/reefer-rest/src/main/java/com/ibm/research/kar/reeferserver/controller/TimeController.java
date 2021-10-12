@@ -20,6 +20,7 @@ import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,7 +37,7 @@ import java.util.logging.Logger;
 public class TimeController {
 
     private ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-    private static final Logger logger = Logger.getLogger(TimeController.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(TimeController.class.getName());
 
     @PostMapping("/time/startDate")
     public Instant getStartDate() {

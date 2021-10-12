@@ -22,10 +22,12 @@ import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.FixedSizeQueue;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.model.Order;
 
 import javax.json.*;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Actor
@@ -45,7 +47,7 @@ public class OrderManagerActor extends BaseActor {
     private int spoiltTotalCount = 0;
 
     private String orderMetrics = "";
-    private static final Logger logger = Logger.getLogger(OrderManagerActor.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderManagerActor.class.getName());
 
     @Activate
     public void activate() {
@@ -66,13 +68,12 @@ public class OrderManagerActor extends BaseActor {
                 if (state.containsKey(Constants.ORDERS_KEY)) {
                     long t = System.currentTimeMillis();
                     activeOrders.putAll(state.get(Constants.ORDERS_KEY).asJsonObject());
-                  //  System.out.println("OrderManagerActor.activate() - time to restore active orders:" + (System.currentTimeMillis() - t) + " millis");
                 }
-                System.out.println("OrderManagerActor.activate() - Totals - totalInTransit:" + inTransitTotalCount + " totalBooked: " + bookedTotalCount + " totalSpoilt:" + spoiltTotalCount);
+                logger.info("OrderManagerActor.activate() - Totals - totalInTransit:" + inTransitTotalCount + " totalBooked: " + bookedTotalCount + " totalSpoilt:" + spoiltTotalCount);
 
             }
         } catch (Throwable e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"OrderManagerActor.activate()", e);
             throw new RuntimeException(e);
         }
     }
@@ -92,10 +93,8 @@ public class OrderManagerActor extends BaseActor {
                 updateStore(Collections.emptyMap(), updateMap);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"OrderManagerActor.orderBooked()", e);
             throw e;
-        } finally {
-           // System.out.println("OrderManagerActor.orderBooked - ----------------------------- activeOrders map size: "+activeOrders.size());
         }
     }
 
@@ -119,7 +118,7 @@ public class OrderManagerActor extends BaseActor {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"OrderManagerActor.orderDeparted()", e);
             throw e;
         }
     }
@@ -156,7 +155,7 @@ public class OrderManagerActor extends BaseActor {
             }
             return false;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"OrderManagerActor.orderArrived()", e);
             throw e;
         }
     }
@@ -179,11 +178,8 @@ public class OrderManagerActor extends BaseActor {
                     updateStore(Collections.emptyMap(), updateMap);
                 }
             }
-
-
-
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"OrderManagerActor.orderSpoilt()", e);
             throw e;
         }
 

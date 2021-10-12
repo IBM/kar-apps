@@ -41,7 +41,7 @@ public class ScheduleService {
 
     private Set<Voyage> masterSchedule = new TreeSet<>();
     private List<Route> routes = new ArrayList<>();
-    private static final Logger logger = Logger.getLogger(ScheduleService.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(ScheduleService.class.getName());
 
     public ScheduleService(ShippingScheduler scheduler) {
         this.scheduler = scheduler;
@@ -84,10 +84,8 @@ public class ScheduleService {
     }
 
     public Instant lastVoyageDepartureDate() {
-
         Voyage lastVoyage = ((TreeSet<Voyage>) masterSchedule).last();
         return lastVoyage.getSailDateObject();
-
     }
 
     /**
@@ -165,10 +163,13 @@ public class ScheduleService {
             dumpVoyages(originalActiveSchedule);
             System.out.println("After " + lbl + " Active List:");
             dumpVoyages(activeScheduleNow);
-            System.out.println("ScheduleService.validateSchedule() - current date:" +
-                    currentDate +
-                    " schedule base date:" +
-                    scheduleBaseDate);
+            if ( logger.isLoggable(Level.FINE)) {
+                logger.fine("ScheduleService.validateSchedule() - current date:" +
+                        currentDate +
+                        " schedule base date:" +
+                        scheduleBaseDate);
+            }
+
         }
     }
 

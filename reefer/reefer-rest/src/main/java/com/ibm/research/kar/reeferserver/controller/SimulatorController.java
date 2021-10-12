@@ -26,6 +26,7 @@ import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.DelayTarget;
 import com.ibm.research.kar.reefer.model.OrderSimControls;
@@ -46,7 +47,7 @@ public class SimulatorController {
   @Autowired
   private SimulatorService simulatorService;
 
-  private static final Logger logger = Logger.getLogger(SimulatorController.class.getName());
+  private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(SimulatorController.class.getName());
 
   @PostMapping("/simulator/delay")
   public Instant shipSimulatorDelay(@RequestBody String delay) {

@@ -23,6 +23,7 @@ import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 
@@ -37,7 +38,7 @@ import java.util.logging.Logger;
 public class OrderActor extends BaseActor {
    // wrapper containing order state
    private Order order = null;
-   private static final Logger logger = Logger.getLogger(OrderActor.class.getName());
+   private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderActor.class.getName());
 
    @Activate
    public void activate() {
@@ -52,7 +53,7 @@ public class OrderActor extends BaseActor {
             }
          }
       } catch (Exception e) {
-         e.printStackTrace();
+         logger.log(Level.SEVERE,"OrderActor.activate()", e);
       }
 
 
@@ -67,7 +68,7 @@ public class OrderActor extends BaseActor {
          }
          return order.getAsJsonObject();
       } catch (Exception e) {
-         e.printStackTrace();
+         logger.log(Level.SEVERE,"OrderActor.state()", e);
          throw e;
       }
 
@@ -96,7 +97,6 @@ public class OrderActor extends BaseActor {
          if (logger.isLoggable(Level.FINE)) {
             logger.fine(String.format("OrderActor.createOrder() - orderId: %s VoyageActor reply: %s", getId(), voyageBookingResult));
          }
-         //System.out.println("OrderActor.createOrder() - orderId: "+getId()+" VoyageActor reply:"+order.getVoyageId());
          // Check if voyage has been booked
          if (voyageBookingResult.containsKey(Constants.STATUS_KEY) && voyageBookingResult.getString(Constants.STATUS_KEY).equals(Constants.OK)) {
             order.setDepot(voyageBookingResult.getString(Constants.DEPOT_KEY));

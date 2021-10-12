@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.actors.VoyageActor;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Ship;
 import com.ibm.research.kar.reefer.model.Vessel;
@@ -38,7 +39,7 @@ import java.util.regex.Pattern;
 
 public class Routes {
 
-    private static final Logger logger = Logger.getLogger(Routes.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(Routes.class.getName());
 
     public List<Route> generate(int fleetSize) throws Exception {
          List<Vessel> vessels = loadVessels();
@@ -47,12 +48,12 @@ public class Routes {
 
         try {
             if (fleetSize > vessels.size() ) {
-                System.out.println("Routes.generate() - the max fleet size is capped at "+vessels.size()+
+                logger.info("Routes.generate() - the max fleet size is capped at "+vessels.size()+
                         " - the REEFER_FLEET_SIZE env var is set to "+fleetSize+" - using default fleet size of 10");
                 fleetSize = 10;
             }
 
-            System.out.println("Routes.generate() - starting with fleet size of:"+fleetSize);
+            logger.info("Routes.generate() - starting with fleet size of:"+fleetSize);
             for( Route r : routes ) {
                 Vessel vessel = vessels.get(shipIndex++);
                 int capacity = Integer.parseInt(vessel.getCapacity().replace(",","").trim());
@@ -75,15 +76,13 @@ public class Routes {
         };
         InputStream is = getClass().getClassLoader().getResourceAsStream("ships.json");
         ships = mapper.readValue(is, typeReference);
-        System.out.println("Routes.loadVessels() - Found " + ships.size() + " Ships");
+        logger.info("Routes.loadVessels() - Found " + ships.size() + " Ships");
         return ships;
     }
 
     public List<Route> loadRoutes() throws IOException {
         List<Route> routes = new ArrayList<>();
-        Set<String> cities = new HashSet<>();
         Pattern pattern = Pattern.compile(":");
-        ClassLoader classLoader = getClass().getClassLoader();
         InputStream is = getClass().getClassLoader().getResourceAsStream("routes.txt");
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                 is, StandardCharsets.UTF_8));) {

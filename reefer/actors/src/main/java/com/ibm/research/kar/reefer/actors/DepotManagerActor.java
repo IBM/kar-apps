@@ -23,6 +23,7 @@ import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.FleetCapacity;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.common.Shard;
 import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.model.Route;
@@ -33,12 +34,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Actor
 public class DepotManagerActor extends BaseActor {
-    private static final Logger logger = Logger.getLogger(DepotManagerActor.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(DepotManagerActor.class.getName());
     private List<Depot> depots = new LinkedList<>();
     private long totalInventorySize = 0;
 
@@ -65,7 +67,7 @@ public class DepotManagerActor extends BaseActor {
                 inx += assignShardToDepot(route.getDestinationPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
             }
             totalInventorySize = inx;
-            System.out.println("DepotManager.activate() -Routes:\n"+sb.toString());
+            logger.info("DepotManager.activate() -Routes:\n"+sb.toString());
             JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
             Map<String, JsonValue> depotMap = new HashMap<>();
             JsonObjectBuilder mapJob = Json.createObjectBuilder();
@@ -99,7 +101,7 @@ public class DepotManagerActor extends BaseActor {
                     depots.add(deserializeDepot(jv.asJsonObject()));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.log(Level.SEVERE,"DepotManager.activate()", e);
             }
         }
         Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofMillis(1000));
@@ -115,7 +117,7 @@ public class DepotManagerActor extends BaseActor {
         // each with a unique range of reefer ids.
         Shard shard = new Shard(beginRange, beginRange + (paddedSize-1));
         depot.addShard(shard);
-        System.out.println("DepotManager.assignShardToDepot() - Depot:"+depot.getId()+" size:"+depot.getSize()+" ship:"+shipName+
+        logger.info("DepotManager.assignShardToDepot() - Depot:"+depot.getId()+" size:"+depot.getSize()+" ship:"+shipName+
                 " shard low:"+shard.getLowerBound()+" shard up:"+shard.getUpperBound());
 
         return Long.valueOf(paddedSize).intValue();
@@ -169,7 +171,7 @@ public class DepotManagerActor extends BaseActor {
             }
             saveMetrics(booked, inTransitCount, spoiltReefers, onMaintenance);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"DepotManager.publishReeferMetrics()", e);
         }
     }
 
@@ -199,7 +201,7 @@ public class DepotManagerActor extends BaseActor {
         try {
             String depotId = ((JsonString) depotName).getString();
             boolean found = false;
-            System.out.println("DepotManager.depotInventory() - depotId:"+depotId+" depots.size()="+depots.size());
+            logger.info("DepotManager.depotInventory() - depotId:"+depotId+" depots.size()="+depots.size());
             StringBuilder sb = new StringBuilder();
             for (Depot depot : depots) {
                 sb.append(depot).append("\n");
@@ -216,10 +218,10 @@ public class DepotManagerActor extends BaseActor {
                 }
             }
             if (!found ) {
-                System.out.println("DepotManager.depotInventory() - depot:"+depotId+" NOT found in depots - known depots:"+sb.toString());
+                logger.warning("DepotManager.depotInventory() - depot:" + depotId + " NOT found in depots - known depots:" + sb.toString());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"DepotManager.depotInventory()", e);
         }
 
         return job.build();

@@ -20,6 +20,7 @@ import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.OrderProperties;
@@ -51,7 +52,7 @@ public class OrderController {
 
     private ActorRef orderMgrActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
 
-    private static final Logger logger = Logger.getLogger(OrderController.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderController.class.getName());
 
     private int max_period = 10;
     private int period = 1;
@@ -199,7 +200,6 @@ public class OrderController {
             inTransitTotalCount = Integer.valueOf(values[1].trim());
             spoiltTotalCount = Integer.valueOf(values[2].trim());
         }
-        //   System.out.println("OrderController.getOrderStats()  ********** Booked:" + bookedTotalCount + " -- InTransit:" + inTransitTotalCount + " -- Spoilt:" + spoiltTotalCount);
         return new OrderStats(inTransitTotalCount, bookedTotalCount, spoiltTotalCount);
     }
 

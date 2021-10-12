@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 
 public class ShippingScheduler {
     private static List<Route> routeList = new ArrayList<Route>();
-    private static final Logger logger = Logger.getLogger(ShippingScheduler.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(ShippingScheduler.class.getName());
     private Routes routes;
 
     public ShippingScheduler(int fleetSize ) throws Exception {

@@ -34,7 +34,7 @@ public class ScheduleManagerActor extends BaseActor {
     private Instant baseDate;
     private long reeferInventorySize;
     private JsonNumber reefersInTransit = Json.createValue(0);
-    private static final Logger logger = Logger.getLogger(OrderManagerActor.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(ScheduleManagerActor.class.getName());
 
     @Activate
     public void activate() {
@@ -46,9 +46,8 @@ public class ScheduleManagerActor extends BaseActor {
             reeferInventorySize = FleetCapacity.totalSize(schedule.getRoutes());
             if (state.containsKey(Constants.REEFERS_IN_TRANSIT_COUNT_KEY)) {
                 JsonValue metrics = state.get(Constants.REEFERS_IN_TRANSIT_COUNT_KEY);
-                //System.out.println("ScheduleManagerActor.activate() - metrics:"+metrics);
                 if (metrics != null && metrics != JsonValue.NULL) {
-                    reefersInTransit = (JsonNumber)metrics;//Json.createValue(Integer.valueOf(((JsonString) metrics).getString()).intValue());
+                    reefersInTransit = (JsonNumber)metrics;
                 }
             }
 
@@ -61,10 +60,11 @@ public class ScheduleManagerActor extends BaseActor {
                 restoreActiveVoyages();
             }
             Kar.Actors.State.set(this, Constants.SCHEDULE_END_DATE_KEY, Json.createValue(lastScheduleDate.toString()));
-            System.out.println("ScheduleManagerActor.activate() ++++ Saved End Date:" + lastScheduleDate);
+            logger.info("ScheduleManagerActor.activate() ++++ Saved End Date:" + lastScheduleDate);
             Kar.Actors.State.set(this, Constants.REEFERS_IN_TRANSIT_COUNT_KEY, reefersInTransit);
-            System.out.println("ScheduleManagerActor.activate() - actor type:" + this.getType() + " generated routes - size:" + schedule.getRoutes().size());
-            Kar.Actors.Reminders.schedule(this, "publishSpoiltReeferMetrics", "VoyageManagerReminder", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(5));
+            logger.info("ScheduleManagerActor.activate() - actor type:" + this.getType() + " generated routes - size:" + schedule.getRoutes().size());
+            Kar.Actors.Reminders.schedule(this, "publishSpoiltReeferMetrics", "VoyageManagerReminder",
+                    Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(5));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -93,7 +93,7 @@ public class ScheduleManagerActor extends BaseActor {
                 }
             } catch (Exception e) {
                 // voyage may have already arrived and was removed
-                e.printStackTrace();
+                logger.log(Level.WARNING, "ScheduleManagerActor.publishSpoiltReeferMetrics()", e);
             }
         }
         Kar.Actors.State.set(this, Constants.TOTAL_SPOILT_KEY, Json.createValue(totalSpoiltReeferCount));
@@ -119,10 +119,10 @@ public class ScheduleManagerActor extends BaseActor {
         baseDate = Instant.parse(((JsonString) baseDateValue).getString());
         JsonValue date = state.get(Constants.CURRENT_DATE_KEY);
         Instant cd = Instant.parse(((JsonString) date).getString());
-        System.out.println("ScheduleManagerActor.warmStart() - current date from REDIS:" + date + " cd:" + cd);
+        logger.info("ScheduleManagerActor.warmStart() - current date from REDIS:" + date + " cd:" + cd);
         currentDate = TimeUtils.getInstance(cd).getCurrentDate();
         lastVoyageDate = Instant.parse(((JsonString) state.get(Constants.SCHEDULE_END_DATE_KEY)).getString());
-        System.out.println("ScheduleManagerActor.warmStart() - Restored Current Date:" + currentDate + " baseDate:" + baseDate + " endDate:" + lastVoyageDate);
+        logger.info("ScheduleManagerActor.warmStart() - Restored Current Date:" + currentDate + " baseDate:" + baseDate + " endDate:" + lastVoyageDate);
         return schedule.generateShipSchedule(baseDate, currentDate, lastVoyageDate);
 
     }
@@ -142,12 +142,12 @@ public class ScheduleManagerActor extends BaseActor {
         JsonValue jv = state.get(Constants.REEFER_FLEET_SIZE_KEY);
         if (jv != null && jv != JsonValue.NULL) {
             if (fleetSize != ((JsonNumber) jv).intValue()) {
-                System.out.println("ScheduleManagerActor.activate() - Warm start - using previously saved fleet size of " + ((JsonNumber) jv).intValue());
+                logger.info("ScheduleManagerActor.activate() - Warm start - using previously saved fleet size of " + ((JsonNumber) jv).intValue());
                 fleetSize = ((JsonNumber) jv).intValue();
             }
         } else {
             Kar.Actors.State.set(this, Constants.REEFER_FLEET_SIZE_KEY, Json.createValue(fleetSize));
-            System.out.println("ScheduleManagerActor.activate() ++++++++++++ saved fleet size:" + fleetSize);
+            logger.info("ScheduleManagerActor.activate() ++++++++++++ saved fleet size:" + fleetSize);
         }
         return fleetSize;
     }
@@ -216,7 +216,7 @@ public class ScheduleManagerActor extends BaseActor {
             Kar.Actors.tell(depotManagerActor, "newDay", message);
 
         } catch (Exception e) {
-            logger.log(Level.WARNING, "", e);
+            logger.log(Level.WARNING, "ScheduleManagerActor.advanceDate()", e);
         }
         JsonObjectBuilder reply = Json.createObjectBuilder();
         return reply.add(Constants.STATUS_KEY, Constants.OK).add(Constants.CURRENT_DATE_KEY, today.toString()).build();
@@ -236,7 +236,7 @@ public class ScheduleManagerActor extends BaseActor {
             scheduledVoyage.setOrderCount(voyage.getOrderCount());
             scheduledVoyage.setReeferCount((voyage.getReeferCount()));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING,"ScheduleManagerActor.updateVoyage()",e);
         }
     }
 

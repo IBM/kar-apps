@@ -19,6 +19,7 @@ package com.ibm.research.kar.reeferserver.controller;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.common.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.model.Route;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -28,12 +29,13 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.json.JsonArray;
 import javax.json.JsonValue;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin("*")
 public class ShipScheduleController {
-
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(ShipScheduleController.class.getName());
     @GetMapping("/routes")
     public List<Route> getRoutes() {
         try {

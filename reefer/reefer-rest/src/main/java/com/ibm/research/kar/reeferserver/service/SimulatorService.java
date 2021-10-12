@@ -25,9 +25,11 @@ import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.exceptions.ActorMethodNotFoundException;
 import com.ibm.research.kar.reefer.actors.VoyageActor;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.model.OrderSimControls;
 import com.ibm.research.kar.reefer.model.ReeferSimControls;
 
+import com.ibm.research.kar.reeferserver.controller.OrderController;
 import org.springframework.stereotype.Service;
 
 import java.util.logging.Level;
@@ -35,7 +37,7 @@ import java.util.logging.Logger;
 
 @Service
 public class SimulatorService {
-    private static final Logger logger = Logger.getLogger(SimulatorService.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(SimulatorService.class.getName());
 
     public int getDelay()  {
         Response response = Kar.Services.get(Constants.SIMSERVICE,"simulator/getunitdelay");

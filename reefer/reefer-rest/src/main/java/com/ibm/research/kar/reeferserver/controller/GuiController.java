@@ -16,6 +16,8 @@
 
 package com.ibm.research.kar.reeferserver.controller;
 
+import com.ibm.research.kar.reefer.actors.OrderActor;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.ReeferStats;
 import com.ibm.research.kar.reeferserver.model.ShippingSchedule;
@@ -39,7 +41,7 @@ public class GuiController {
     @Autowired
     private SimpMessagingTemplate template;
 
-    private static final Logger logger = Logger.getLogger(GuiController.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(GuiController.class.getName());
 
     public void sendActiveVoyageUpdate(ShippingSchedule schedule) { //List<Voyage> voyages, String currentDate) {
         long start = System.currentTimeMillis();

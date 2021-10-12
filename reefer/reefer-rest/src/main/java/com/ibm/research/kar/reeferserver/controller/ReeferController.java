@@ -20,6 +20,7 @@ import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.model.ReeferStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.PostConstruct;
 import javax.json.JsonString;
 import javax.json.JsonValue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @RestController
@@ -47,7 +49,7 @@ public class ReeferController {
     private GuiController gui;
     ActorRef depotManager = Kar.Actors.ref(ReeferAppConfig.DepotManagerActorType, ReeferAppConfig.DepotManagerId);
 
-    private static final Logger logger = Logger.getLogger(ReeferController.class.getName());
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(ReeferController.class.getName());
 
     private int max_period = 10;
     private int period = 1;
@@ -99,7 +101,7 @@ public class ReeferController {
                 counter = period;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "ReeferController.scheduleGuiUpdate()",e);
         }
 
     }

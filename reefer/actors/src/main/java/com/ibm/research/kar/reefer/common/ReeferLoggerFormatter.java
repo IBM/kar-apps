@@ -14,26 +14,25 @@ package com.ibm.research.kar.reefer.common;/*
  * limitations under the License.
  */
 
+import java.io.OutputStream;
 import java.util.Date;
 import java.util.Map;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
+import java.util.logging.*;
 
 public class ReeferLoggerFormatter {
 
    private static Map<String, String> env = System.getenv();
    public static Logger getFormattedLogger(String clzName) {
       Logger logger = Logger.getLogger(clzName);
-      boolean addTimestamp=false;
+
       if (env.containsKey("LOG_TIMESTAMP") && env.get("LOG_TIMESTAMP") != null ) {
          Object o = env.get("LOG_TIMESTAMP");
          if ( Boolean.parseBoolean(env.get("LOG_TIMESTAMP")) ) {
             logger.setUseParentHandlers(false);
-            ConsoleHandler handler = new ConsoleHandler();
-            handler.setFormatter(new SimpleFormatter() {
-               private static final String format = "[%1$tF %1$tT.%1$tL] [%2$-7s] %3$s %n";
+
+            SimpleFormatter sf = new SimpleFormatter() {
+               private static final String format = "[%1$tF %1$tT] [%2$-7s] %3$s %n";
+
                @Override
                public synchronized String format(LogRecord lr) {
                   return String.format(format,
@@ -42,10 +41,18 @@ public class ReeferLoggerFormatter {
                           lr.getMessage()
                   );
                }
-            });
-            logger.addHandler(handler);
+            };
+            StdOutConsoleHandler sh = new StdOutConsoleHandler();
+            sh.setFormatter(sf);
+            logger.addHandler(sh);
          }
       }
-      return Logger.getLogger(clzName);
+      return logger;
+   }
+   public static class StdOutConsoleHandler extends ConsoleHandler {
+      @Override
+      protected void setOutputStream(OutputStream out) throws SecurityException {
+         super.setOutputStream(System.out);
+      }
    }
 }

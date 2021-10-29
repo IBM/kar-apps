@@ -21,7 +21,11 @@ metadata:
   labels:
     name: reefer-singletons
 spec:
+{{- if .Values.global.affinity }}
   replicas: {{ .Values.reefer.singletons.replicas }}
+{{- else }}
+  replicas: 1
+{{- end }}
   selector:
     matchLabels:
       name: reefer-singletons

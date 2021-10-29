@@ -17,7 +17,7 @@
 kar:
   verbose: info
   imagePullSecret: kar.ibm.com.image-pull
-  imagePrefix: localhost:5000/kar
+  imagePrefix: registry:5000/kar
 
 ingress:
   pathBased: false

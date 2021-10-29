@@ -43,7 +43,7 @@ engine=docker
 #    echo Docker not active, trying podman
 #fi
 
-echo Deploying ${IMAGE_PREFIX} images with ${engine}-compose ...
+echo Deploying ${IMAGE_PREFIX} images with KAR_EXTRA_ARGS=${KAR_EXTRA_ARGS} ${engine}-compose ...
 
 ${engine}-compose -f reefer-compose-${engine}.yaml -p reefer up -d
 if [ $? -ne 0 ]

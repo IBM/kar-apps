@@ -77,3 +77,5 @@ spec:
         env:
         - name: REEFER_FLEET_SIZE
           value: {{ .Values.reefer.singletons.fleetsize | quote }}
+        - name: LOG_TIMESTAMP
+          value: "true"

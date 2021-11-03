@@ -91,3 +91,6 @@ spec:
         ports:
         - name: app
           containerPort: {{ .Values.reefer.rest.port }}
+        env:
+        - name: LOG_TIMESTAMP
+          value: "true"

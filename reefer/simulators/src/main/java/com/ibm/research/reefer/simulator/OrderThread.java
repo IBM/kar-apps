@@ -18,6 +18,7 @@ package com.ibm.research.reefer.simulator;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -48,7 +49,7 @@ public class OrderThread extends Thread {
   boolean startup = true;
   boolean woke_from_join = false;
   private static final AtomicInteger ordersDoneToday = new AtomicInteger();
-  private static final Logger logger = Logger.getLogger(OrderThread.class.getName());
+  private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderThread.class.getName());
   private Thread ordersubthread1 = null;
   private Thread ordersubthread2 = null;
 

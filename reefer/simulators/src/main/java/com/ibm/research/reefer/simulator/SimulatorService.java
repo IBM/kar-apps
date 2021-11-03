@@ -32,6 +32,8 @@ import javax.json.JsonValue;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
+import com.ibm.research.kar.reefer.common.ScheduleService;
 
 
 /**
@@ -61,8 +63,7 @@ public class SimulatorService {
   private Thread shipthread;
   private Thread orderthread;
   private Thread reeferthread;
-  private static final Logger logger = Logger.getLogger(SimulatorService.class.getName());
-
+  private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(SimulatorService.class.getName());
   // keep statistics on simulator orders
   public static OrderStats os = new OrderStats(0);
 

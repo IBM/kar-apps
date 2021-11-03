@@ -31,6 +31,8 @@ import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -52,8 +54,7 @@ public class OrderSubThread extends Thread {
   long dayEndTime;
   int expectedOrders;
   boolean startup = true;
-  private static final Logger logger = Logger.getLogger(OrderSubThread.class.getName());
-
+  private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderSubThread.class.getName());
     OrderSubThread(int tnum, int updatesPerDay, AtomicInteger ordersDoneToday, boolean oneshot) {
     this.tnum = tnum;
     this.updatesPerDay = updatesPerDay;

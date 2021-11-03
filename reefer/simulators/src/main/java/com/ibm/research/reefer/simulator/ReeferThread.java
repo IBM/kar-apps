@@ -22,6 +22,7 @@ import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 
 import javax.json.Json;
 import javax.json.JsonNumber;
@@ -46,8 +47,7 @@ public class ReeferThread extends Thread {
     int updatesPerDay = 1;
     int anomaliesPerUpdate;
     int anomaliesDoneToday;
-    private static final Logger logger = Logger.getLogger(ReeferThread.class.getName());
-
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(ReeferThread.class.getName());
     public void run() {
 
             if (0 == SimulatorService.unitdelay.intValue()

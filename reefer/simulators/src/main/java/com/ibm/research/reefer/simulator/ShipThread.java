@@ -18,6 +18,7 @@ package com.ibm.research.reefer.simulator;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.common.Constants;
+import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -60,8 +61,7 @@ public class ShipThread extends Thread {
     int sleeptime;
     JsonValue currentDate;
     long last_snapshot;
-    private static final Logger logger = Logger.getLogger(ShipThread.class.getName());
-
+    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(ShipThread.class.getName());
     private class V2update{
       String id;
       int event;

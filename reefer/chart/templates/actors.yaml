@@ -53,16 +53,14 @@ spec:
                 values:
                 - worker
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: name
-                  operator: In
-                  values:
-                  - reefer-actors
-              topologyKey: "kubernetes.io/hostname"
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: name
+                operator: In
+                values:
+                - reefer-actors
+            topologyKey: "kubernetes.io/hostname"
 {{- end }}
       imagePullSecrets:
          - name: {{ .Values.kar.imagePullSecret }}

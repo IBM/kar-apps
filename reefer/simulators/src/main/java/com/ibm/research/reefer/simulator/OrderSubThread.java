@@ -114,7 +114,7 @@ public class OrderSubThread extends Thread {
           if (null == rsp || !Constants.OK.equals(rsp.asJsonObject().getString("bookingStatus"))
                   || null == rsp.asJsonObject().getString("voyageId")) {
             SimulatorService.os.addFailed();
-            logger.warning(String.format("ordersubthread%d: bad response when submitting order: %s\n%s",
+            logger.severe(String.format("ordersubthread%d: bad response when submitting order: %s: %s",
                                          tnum, order.toString(), rsp));
           } else {
             int otime = (int) ((System.nanoTime() - ordersnap) / 1000000);

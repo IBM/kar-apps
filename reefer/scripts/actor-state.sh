@@ -17,9 +17,10 @@
 #
 
 cd $(dirname "$0")
+cd "../simulators"
 
 if [ ! -d "node_modules" ]; then
-    echo "to use this command, need to run \"npm install yargs redis\" in directory $(pwd)"
+    echo "to use this command, need to run \"npm install --prod\" in directory $(pwd)"
     exit
 fi
 

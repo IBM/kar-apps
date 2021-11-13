@@ -37,17 +37,23 @@ function rndnode() {
 }
 
 function rndsleep() {
-  sleep = 29 * Math.random();
-  return 1 + Math.trunc(sleep);
+  sleep = 20 * Math.random();
+  return 10 + Math.trunc(sleep);
 }
 
+// support testing from simulators console file
+// no waiting as simulated output will continue at constant rate
 async function doit() {
-  var sleep = rndsleep();
-  console.log('  '+action+' '+node+' in '+sleep);
-  await new Promise(resolve => setTimeout(resolve, (sleep * 1000)));
+  if (!process.env.FEEDFILE) {
+    var sleep = rndsleep();
+    console.log('  '+action+' '+node+' in '+sleep);
+    await new Promise(resolve => setTimeout(resolve, (sleep * 1000)));
+  }
   var timestamp = new Date().toLocaleString('en-US', { hour12: false });
   console.log(timestamp+' k3d node '+action+' '+node);
-  var doitx = spawnSync('/usr/local/bin/k3d',['node',action,node]);
+  if (!process.env.FEEDFILE) {
+    var doitx = spawnSync('/usr/local/bin/k3d',['node',action,node]);
+  }
   if ( action == "stop" ) {
     action = "start";
   } else {
@@ -61,7 +67,7 @@ async function main () {
 
   const parser = __dirname+'/k3d-fault-parser.js';
   const program = path.resolve(parser);
-  const parameters = [5000];
+  const parameters = [3500];
   const options = {
     //stdio: [ 'pipe', 'pipe', 'pipe', 'ipc' ]
     stdio: [ 0, 1, 2, 'ipc' ]
@@ -74,7 +80,13 @@ async function main () {
   doit();
 
   // process alerts from child
+  const grepsevere = new RegExp("^.*SEVERE", "m");
   child.on('message', message => {
+    var match = grepsevere.exec(message);
+    if (match) {
+      console.log('special child message:', message);
+      return;
+    }
     if ( enable ) {
       console.log('child message:', message);
       if ( action == "stop" ) {

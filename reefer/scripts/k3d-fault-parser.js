@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+// docker testing:  var child = require('child_process').spawn('/usr/bin/docker',['logs', '-f', 'reefer_simulators_1']);
+
 async function main() {
   const args = process.argv.slice(2);
+  var writeStream;
 
   var thresh = 5000;
   if ( args[0] != null ) {
@@ -23,37 +26,57 @@ async function main() {
   }
   const timestamp = new Date().toLocaleString('en-US', { hour12: false });
   [date,time] = timestamp.split(" ");
-  console.log("Using duration threshold="+thresh+" and ignoring dates earlier than "+date+time);
-  fs = require('fs');
-  let writeStream = fs.createWriteStream('k3d-fault-run-'+date.replace(/\//g,'-')+time);
- 
-//  var child = require('child_process').spawn('node',['feedfile.js', '/home/eddie/temp/testing/reefer_simulators.console']);
-//  var child = require('child_process').spawn('/usr/bin/docker',['logs', '-f', 'reefer_simulators_1']);
-  var grepsim = new RegExp("^.*simulators.*$", "m");
-  const { execSync } = require('child_process');
-  const stdout = execSync("/usr/bin/kubectl get po");
-  // console.log(stdout.toString());
-  var match = grepsim.exec(stdout.toString());
-  if (!match) {
-    console.log("can't see a simulator pod running");
-    process.exit();
-  }
-  var pods = match[0].split(" ");
-  console.log("scanning output from "+pods[0]);  
+
+  var child;
+  if (process.env.FEEDFILE) {
+    // test from file
+    console.log('Parsing from file: '+process.env.FEEDFILE);
+    let path = require('path');
+    const parser = __dirname+'/feedfile.js';
+    const program = path.resolve(parser);
+    child = require('child_process').spawn('/usr/bin/node',[program, process.env.FEEDFILE, 500]);
+    child.stderr.on('data', (data) => {
+      console.error(data.toString());
+    });
+  } else {
+    // parsing live simulators output; save all lines to local file
+    console.log("Using duration threshold="+thresh+" and ignoring dates earlier than "+date+time);
+    fs = require('fs');
+    writeStream = fs.createWriteStream('k3d-fault-run-'+date.replace(/\//g,'-')+time);
+
+    // get handle to live pod
+    var grepsim = new RegExp("^.*simulators.*$", "m");
+    const { execSync } = require('child_process');
+    const stdout = execSync("/usr/bin/kubectl get po");
+    var match = grepsim.exec(stdout.toString());
+    if (!match) {
+      console.log("can't see a simulator pod running");
+      process.exit();
+    }
+    var pods = match[0].split(" ");
+    console.log("parsing output from "+pods[0]);  
 	
-  var child = require('child_process').spawn('/usr/bin/kubectl',['logs', '-f', pods[0], '-c', 'app']);
+    child = require('child_process').spawn('/usr/bin/kubectl',['logs', '-f', pods[0], '-c', 'app']);
+    child.stderr.on('data', (data) => {
+      console.error(data.toString());
+    });
+  }
+
   const rl = require('readline').createInterface({ input: child.stdout });
 
-  const grepper = new RegExp("^.*order latency outlier", "m");
+  const greplatency = new RegExp("^.*order latency outlier", "m");
+  const grepsevere = new RegExp("^.*SEVERE", "m");
   timenow = Date.parse(timestamp);
 
   rl.on('line', function(line) {
-    writeStream.write(line+'\n');    
-    var match = grepper.exec(line);
+    if (!process.env.FEEDFILE) {
+      writeStream.write(line+'\n');
+    }
+    var match = greplatency.exec(line);
     if (match) {
       var words = line.trim().split(" ");
       teststamp = Date.parse(words[0].replace('[','')+" "+words[1].replace(']',''));
-      if ( timenow > teststamp ) {
+      if ( !process.env.FEEDFILE && timenow > teststamp ) {
         // ignore old data
        return;
       }
@@ -66,7 +89,19 @@ async function main() {
         }
       }
     } else {
-      //TODO look for SEVERE messages, if order failed for good reason, alert parent
+      // look for SEVERE messages
+      var match = grepsevere.exec(line);
+      if (match) {
+        var words = line.trim().split(" ");
+        teststamp = Date.parse(words[0].replace('[','')+" "+words[1].replace(']',''));
+        if ( !process.env.FEEDFILE && timenow > teststamp ) {
+          // ignore old data
+          return;
+        }
+        if (process.send) {
+          process.send(line);
+        }
+      }
     }
   });
 

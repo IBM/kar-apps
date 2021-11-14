@@ -17,19 +17,22 @@
 // Driver logic that creates fault events
 // - a child process parses the simulator output looking for above threshold order latency events
 // - driver uses these events to continue to next step
+// - a timeout is used in case latency event not received
 // Steps:
-// - stop random node n from N worker nodes (currently N>1)
+// - stop random node n from N worker nodes
 // - wait for recovery
 // - restart node n
-// - wait for long latency indicating recovery from new process
+// - wait for long latency indicating recovery from new process, or timeout
 
 let action = 'stop';
-let enable = true;
+let enable = false;
 let node = 'k3d-workernode-1-0';
 let nodes = ['k3d-workernode-1-0','k3d-workernode-2-0'];
 let path = require('path');
 let fork = require('child_process').fork;
 let spawnSync = require('child_process').spawnSync;
+let timeout;
+let child;
 
 function rndnode() {
   var oneOrZero = Math.floor(Math.random() * 2);
@@ -37,47 +40,82 @@ function rndnode() {
 }
 
 function rndsleep() {
-  sleep = 20 * Math.random();
-  return 10 + Math.trunc(sleep);
+  sleep = 30 * Math.random();
+  return 30 + Math.trunc(sleep);
 }
 
 // support testing from simulators console file
-// no waiting as simulated output will continue at constant rate
-async function doit() {
+//   no waiting as simulated output will continue at constant rate
+async function doit(sleep) {
   if (!process.env.FEEDFILE) {
-    var sleep = rndsleep();
-    console.log('  '+action+' '+node+' in '+sleep);
     await new Promise(resolve => setTimeout(resolve, (sleep * 1000)));
   }
   var timestamp = new Date().toLocaleString('en-US', { hour12: false });
   console.log(timestamp+' k3d node '+action+' '+node);
   if (!process.env.FEEDFILE) {
     var doitx = spawnSync('/usr/local/bin/k3d',['node',action,node]);
+    timeout = setTimeout(stopWaiting, 120*1000);
   }
   if ( action == "stop" ) {
     action = "start";
   } else {
     action = "stop";
   }
-  console.log("  enable message trigger");
+//debug  console.log("  enable message trigger");
   enable = true;
 }
 
-async function main () {
+// Keep going if for any reason no latency event is received 
+function stopWaiting() {
+  console.log("Timed out waiting for recovery event. Continuing");
+  if ( enable ) {
+    if ( action == "stop" ) {
+      // pick a new node
+      node = rndnode();
+    }
+    // disable actiing on another message until this action completes
+    enable = false;
+    // stop rnd node or start last node stopped
+    doit(0);
+  }
+}
 
+function forkChild() {
   const parser = __dirname+'/k3d-fault-parser.js';
   const program = path.resolve(parser);
-  const parameters = [3500];
+  const parameters = [5000];
   const options = {
-    //stdio: [ 'pipe', 'pipe', 'pipe', 'ipc' ]
     stdio: [ 0, 1, 2, 'ipc' ]
   };
 
   console.log('parent: forking child '+parser);
-  const child = fork(program, parameters, options);
+  child = fork(program, parameters, options);
+}
+
+async function main () {
+  //TODO if any nodes are stopped ...
+  // ... exit with message that all nodes need to be up
+
+  // fork child parser
+  forkChild();
+  child.on('exit', (code) => {
+    if ( 0 == `${code}` ) {
+      // if testing with filefeed
+      process.exit(0);
+    } else {
+      // sometimes kubectl logs breaks and new stream must be reestablished
+      forkChild();
+    }
+  });
 
   // first action is to stop a node
-  doit();
+  node = rndnode();
+  if (!process.env.FEEDFILE) {
+    // let app run for a bit
+    var sleep = rndsleep();
+    console.log('  '+action+' '+node+' in '+sleep);
+  }
+  doit(sleep);
 
   // process alerts from child
   const grepsevere = new RegExp("^.*SEVERE", "m");
@@ -87,6 +125,9 @@ async function main () {
       console.log('special child message:', message);
       return;
     }
+    if ( timeout ) {
+      clearTimeout(timeout);
+    }
     if ( enable ) {
       console.log('child message:', message);
       if ( action == "stop" ) {
@@ -94,15 +135,20 @@ async function main () {
         node = rndnode();
       }
       // disable actiing on another message until this action completes
-      console.log("  disable message trigger");
+//debug      console.log("  disable message trigger");
       enable = false;
+      if (!process.env.FEEDFILE) {
+        // let app run for a bit
+        var sleep = rndsleep();
+        console.log('  '+action+' '+node+' in '+sleep);
+      }
       // stop rnd node or start last node stopped
-      doit();
+      doit(sleep);
     } else {
       console.log('  ignoring child message:', message);
     }
   });
-    
+
 }
 
 main()

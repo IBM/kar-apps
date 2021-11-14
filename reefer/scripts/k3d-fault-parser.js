@@ -58,7 +58,8 @@ async function main() {
 	
     child = require('child_process').spawn('/usr/bin/kubectl',['logs', '-f', pods[0], '-c', 'app']);
     child.stderr.on('data', (data) => {
-      console.error(data.toString());
+      console.error('parser '+data.toString());
+      process.exit(1);
     });
   }
 
@@ -106,7 +107,7 @@ async function main() {
   });
 
   child.on('close', function() {
-    process.exit();
+    process.exit(0);
   });
 }
     

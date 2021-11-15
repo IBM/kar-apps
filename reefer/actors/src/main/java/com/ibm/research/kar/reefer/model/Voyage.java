@@ -28,6 +28,7 @@ public class Voyage implements Comparable<Voyage>{
     public static final String REEFER_COUNT="reeferCount";
     public static final String DISPLAY_ARRIVAL_DATE="displayArrivalDate";
     public static final String PROGRESS="progress";
+    public static final String ARRIVAL_PUBLISHED="reported";
 
     private String id;
     private Route route;
@@ -39,6 +40,7 @@ public class Voyage implements Comparable<Voyage>{
     private int orderCount=0;
     private int reeferCount=0;
     private int progress;
+    private boolean reported;
 
     @Override
     public boolean equals(Object o) {
@@ -59,7 +61,6 @@ public class Voyage implements Comparable<Voyage>{
         this.arrivalDate = arrivalDate;
         this.displayArrivalDate = arrivalDate.substring(0,10);
         this.sailDate = sailDateObject.toString().substring(0,10);
-//        this.id = String.format("%s-%s",route.getVessel().getName(),this.sailDateObject.toString()).replaceAll("/","-");
         this.id = String.format("%s:%s",route.getVessel().getName(),this.sailDate.toString()).replaceAll("/","-");
 
     }
@@ -86,7 +87,8 @@ public class Voyage implements Comparable<Voyage>{
     public Instant getSailDateObject() {
         return sailDateObject;
     }
-
+    public boolean publishedArrival() { return reported; }
+    public void setPublishedArrival(boolean reported ) { this.reported = reported; }
     public boolean capacityAvailable(int howManyReefersNeeded) {
         return (getRoute().getVessel().getFreeCapacity() - howManyReefersNeeded) >= 0;
     }
@@ -137,10 +139,17 @@ public class Voyage implements Comparable<Voyage>{
         Instant scheduledArrivalDate = Instant.parse(getArrivalDate());
         return scheduledArrivalDate.isBefore(currentDate);
     }
+    public boolean shipArrived() {
+        return getProgress() == 100;
+    }
     public boolean shipDeparted(Instant shipCurrentDate, VoyageStatus status) {
         Instant scheduledDepartureDate = getSailDateObject();
         return (!VoyageStatus.DEPARTED.equals(status) && (shipCurrentDate.equals(scheduledDepartureDate)
                 || shipCurrentDate.isAfter(scheduledDepartureDate)));
+    }
+    public boolean shipDeparted(Instant currentDate) {
+        Instant scheduledDepartureDate = getSailDateObject();
+        return currentDate.equals(scheduledDepartureDate) || scheduledDepartureDate.isBefore(currentDate);
     }
     public void setProgress(int progress) {
         this.progress = progress;

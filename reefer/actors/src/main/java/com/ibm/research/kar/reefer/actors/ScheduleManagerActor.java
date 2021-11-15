@@ -1,5 +1,7 @@
 package com.ibm.research.kar.reefer.actors;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.annotations.Activate;
@@ -15,17 +17,17 @@ import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Vessel;
 import com.ibm.research.kar.reefer.model.Voyage;
+import org.apache.commons.collections.MapUtils;
 
 import javax.json.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Actor
 public class ScheduleManagerActor extends BaseActor {
@@ -34,6 +36,7 @@ public class ScheduleManagerActor extends BaseActor {
     private Instant baseDate;
     private long reeferInventorySize;
     private JsonNumber reefersInTransit = Json.createValue(0);
+    private ActiveVoyageManager activeVoyageManager;
     private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(ScheduleManagerActor.class.getName());
 
     @Activate
@@ -53,18 +56,54 @@ public class ScheduleManagerActor extends BaseActor {
 
             JsonValue baseDateValue = state.get(Constants.SCHEDULE_BASE_DATE_KEY);
             Instant lastScheduleDate;
+            List<Voyage> restoredActiveList = new LinkedList<>();
             if (Objects.isNull(baseDateValue)) {
                 lastScheduleDate = coldStart();
             } else {
                 lastScheduleDate = warmStart(state, baseDateValue);
-                restoreActiveVoyages();
+                if (state.containsKey(Constants.ACTIVE_VOYAGES_KEY)) {
+                    Map<String, JsonValue> activeVoyages = new HashMap<>();
+                    activeVoyages.putAll(state.get(Constants.ACTIVE_VOYAGES_KEY).asJsonObject());
+
+                    for(JsonValue jv: activeVoyages.values()) {
+                        Voyage restoredVoyage = VoyageJsonSerializer.deserialize(jv.asJsonObject());
+                        restoredActiveList.add( restoredVoyage );
+//                        Voyage voyage = schedule.getVoyage(restoredVoyage.getId());
+//                        voyage.setProgress(restoredVoyage.getProgress());
+                    }
+                    activeVoyageManager = new ActiveVoyageManager(schedule, restoredActiveList);
+                    logger.info("ScheduleManagerActor.activate() - restored active voyages - current size:"+restoredActiveList.size());
+                }
+
             }
+            if ( activeVoyageManager == null ) {
+                activeVoyageManager = new ActiveVoyageManager(schedule, new LinkedList<>());
+            } else {
+                restoreActiveVoyages(restoredActiveList);
+            }
+            /*
+            if (state.containsKey(Constants.ACTIVE_VOYAGES_KEY)) {
+                Map<String, JsonValue> activeVoyages = new HashMap<>();
+                activeVoyages.putAll(state.get(Constants.ACTIVE_VOYAGES_KEY).asJsonObject());
+                List<Voyage> restoredActiveList = new LinkedList<>();
+                for(JsonValue jv: activeVoyages.values()) {
+                    restoredActiveList.add( VoyageJsonSerializer.deserialize(jv.asJsonObject()) );
+                }
+                activeVoyageManager = new ActiveVoyageManager(schedule, restoredActiveList);
+                logger.info("ScheduleManagerActor.activate() - restored active voyages - current size:"+restoredActiveList.size());
+            } else {
+                activeVoyageManager = new ActiveVoyageManager(schedule, new LinkedList<>());
+            }
+
+             */
+
             Kar.Actors.State.set(this, Constants.SCHEDULE_END_DATE_KEY, Json.createValue(lastScheduleDate.toString()));
             logger.info("ScheduleManagerActor.activate() ++++ Saved End Date:" + lastScheduleDate);
             Kar.Actors.State.set(this, Constants.REEFERS_IN_TRANSIT_COUNT_KEY, reefersInTransit);
             logger.info("ScheduleManagerActor.activate() - actor type:" + this.getType() + " generated routes - size:" + schedule.getRoutes().size());
             Kar.Actors.Reminders.schedule(this, "publishSpoiltReeferMetrics", "VoyageManagerReminder",
                     Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofSeconds(5));
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -83,7 +122,8 @@ public class ScheduleManagerActor extends BaseActor {
     @Remote
     public void publishSpoiltReeferMetrics() {
         int totalSpoiltReeferCount = 0;
-        List<Voyage> activeVoyages = schedule.getActiveSchedule();
+        //List<Voyage> activeVoyages = schedule.getActiveSchedule();
+        List<Voyage> activeVoyages = activeVoyageManager.getActiveVoyages();
         for (Voyage voyage : activeVoyages) {
             try {
                 ActorRef voyageActorRef = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, voyage.getId());
@@ -152,19 +192,30 @@ public class ScheduleManagerActor extends BaseActor {
         return fleetSize;
     }
 
-    private void restoreActiveVoyages() {
-        List<Voyage> activeVoyages = schedule.getActiveSchedule();
+    private void restoreActiveVoyages( List<Voyage> activeVoyages ) {
+      //  List<Voyage> activeVoyages = schedule.getActiveSchedule();
+       // List<Voyage> activeVoyages = activeVoyageManager.getActiveVoyages();
         int inTransit = 0;
-        for (Voyage voyage : activeVoyages) {
-            Optional<JsonObject> state = recoverVoyage(voyage.getId());
-            if (state.isPresent()) {
-                Voyage recoveredVoyageState = VoyageJsonSerializer.deserialize(state.get());
+        for (Voyage recoveredVoyageState : activeVoyages) {
+
+//            Optional<JsonObject> state = recoverVoyage(voyage.getId());
+ //           if (state.isPresent()) {
+                //Voyage recoveredVoyageState = VoyageJsonSerializer.deserialize(state.get());
+            try {
+                Voyage voyage = schedule.getVoyage(recoveredVoyageState.getId());
                 voyage.setOrderCount(recoveredVoyageState.getOrderCount());
                 voyage.changePosition(Long.valueOf(recoveredVoyageState.getRoute().getVessel().getPosition()).intValue());
                 voyage.setReeferCount(recoveredVoyageState.getReeferCount());
                 voyage.setFreeCapacity(recoveredVoyageState.getRoute().getVessel().getFreeCapacity());
                 inTransit += recoveredVoyageState.getReeferCount();
+            } catch( VoyageNotFoundException r) {
+                logger.warning("ScheduleManagerActor.restoreActiveVoyages() - voyage:"+recoveredVoyageState.getId()+" not in master schedule");
             }
+
+ //           }
+
+
+           // inTransit += voyage.getReeferCount();
         }
         reefersInTransit = Json.createValue(inTransit);
         Kar.Actors.State.set(this, Constants.REEFERS_IN_TRANSIT_COUNT_KEY, reefersInTransit);
@@ -242,14 +293,15 @@ public class ScheduleManagerActor extends BaseActor {
 
     @Remote
     public JsonValue activeVoyages() {
-        return voyageListToJsonArray(schedule.getActiveSchedule());
+       // return voyageListToJsonArray(schedule.getActiveSchedule());
+        return voyageListToJsonArray(activeVoyageManager.getActiveVoyages());
     }
 
     @Remote
     public JsonObject activeSchedule() {
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add(Constants.CURRENT_DATE_KEY, TimeUtils.getInstance().getCurrentDate().toString()).
-                add(Constants.ACTIVE_VOYAGES_KEY, voyageListToJsonArray(schedule.getActiveSchedule()));
+                add(Constants.ACTIVE_VOYAGES_KEY, activeVoyages());//voyageListToJsonArray(schedule.getActiveSchedule()));
         return job.build();
     }
 
@@ -313,28 +365,19 @@ public class ScheduleManagerActor extends BaseActor {
             activeVoyage.setReeferCount(voyage.getReeferCount());
 
             reefersInTransit = Json.createValue(reefersInTransit.intValue() + voyage.getReeferCount());
-         //   System.out.println("ScheduleManagerActor.voyageDeparted() >>>>>>>>>>>>>>>> reefersInTransit:::: " + reefersInTransit);
             saveMetrics();
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
             e.printStackTrace();
         }
     }
-    @Remote
-    public JsonValue reefersInTransit() {
-        List<Voyage> activeVoyages = schedule.getActiveSchedule();
-        int inTransit=0;
-        for (Voyage voyage : activeVoyages) {
-           inTransit += voyage.getReeferCount();
-        }
-        return Json.createValue(inTransit);
-    }
+
     @Remote
     public void voyageArrived(JsonObject message) {
         try {
             Voyage voyage = VoyageJsonSerializer.deserialize(message);
             if (logger.isLoggable(Level.INFO)) {
-                logger.info("VoyageController.delivered() - id:" + voyage.getId() + " message:" + message);
+                logger.info("ScheduleManagerActor.delivered() - id:" + voyage.getId() + " message:" + message);
             }
             schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
             voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
@@ -343,15 +386,24 @@ public class ScheduleManagerActor extends BaseActor {
             } else {
                 reefersInTransit = Json.createValue(0);
             }
-
-         //   System.out.println("ScheduleManagerActor.voyageArrived() >>>>>>>>>>>>>>>> reefersInTransit:::: " + reefersInTransit);
             saveMetrics();
+            // remove arrived voyage from active voyages list
+           // activeVoyageManager.removeArrivedVoyage(voyage);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
             e.printStackTrace();
         }
     }
-
+    @Remote
+    public JsonValue reefersInTransit() {
+        // List<Voyage> activeVoyages = schedule.getActiveSchedule();
+        List<Voyage> activeVoyages = activeVoyageManager.getActiveVoyages();
+        int inTransit=0;
+        for (Voyage voyage : activeVoyages) {
+            inTransit += voyage.getReeferCount();
+        }
+        return Json.createValue(inTransit);
+    }
     private void saveMetrics() {
         String metrics = String.format("%d", reefersInTransit.intValue());
         Kar.Actors.State.set(this, Constants.REEFERS_IN_TRANSIT_COUNT_KEY, reefersInTransit);
@@ -400,5 +452,86 @@ public class ScheduleManagerActor extends BaseActor {
         JsonArrayBuilder jab = Json.createArrayBuilder();
         routes.forEach(route -> jab.add(RouteJsonSerializer.serialize(route)));
         return jab.build();
+    }
+
+    private class ActiveVoyageManager {
+        private ActorRef scheduleManagerActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
+        private final ScheduleService schedule;
+        private List<Voyage> activeVoyages;
+        ActiveVoyageManager(ScheduleService schedule, List<Voyage> activeVoyages) {
+            this.schedule = schedule;
+            this.activeVoyages = activeVoyages;
+        }
+        public List<Voyage> getActiveVoyages() {
+            // returns all new voyages that are not present in the current activeVoyages list
+            List<Voyage> newActiveVoyages = schedule.getNewActiveVoyages(activeVoyages);
+    //        logger.info("ActiveVoyageManager.getActiveVoyages():::::::::::::::: newActiveVoyages:"+newActiveVoyages.size());
+            if ( !newActiveVoyages.isEmpty() ) {
+                StringBuilder sb = new StringBuilder();
+                // get a list of arrived voyages which need to be removed from active list.
+                List<String> arrivedVoyages = activeVoyages.stream()
+                        .filter(voyage -> !newActiveVoyages.contains(voyage))
+                        .map(Voyage::getId)
+                        .peek(vid -> sb.append(vid).append("\n") )
+                        .collect(Collectors.toList());
+                activeVoyages.clear();
+                activeVoyages.addAll( newActiveVoyages);
+                if ( !arrivedVoyages.isEmpty()) {
+                    logger.info("ActiveVoyageManager.getActiveVoyages():::::::::::::::: deleting arrived voyages:"+sb.toString());
+                }
+
+                Kar.Actors.State.update(scheduleManagerActor, arrivedVoyages,
+                        Collections.emptyMap(), Collections.emptyMap(),  getActiveVoyageUpdateMap(newActiveVoyages));
+            }
+            return activeVoyages;
+        }
+        private  Map<String, Map<String, JsonValue>> getActiveVoyageUpdateMap(List<Voyage> newActiveVoyages) {
+            Map<String, JsonValue> updateMap = new HashMap<>();
+            StringBuilder sb = new StringBuilder();
+            for( Voyage voyage : newActiveVoyages ) {
+/*
+                if ( voyage.shipArrived() ) {
+                    logger.info("VoyageController.getActiveVoyageUpdateMap() - voyage arrived:"+voyage.getId()+
+                            " publishedArrival:"+voyage.publishedArrival()+
+                            " active voyages size: "+activeVoyages.size());
+                    voyage.setPublishedArrival(true);
+
+                  //  if ( voyage.publishedArrival() ) {
+                        //removeArrivedVoyage(voyage);
+                    //    continue; // skip voyage that arrived and arrival was already published
+                   // } else {
+                 //      voyage.setPublishedArrival(true);
+                 //   }
+
+
+                } else {
+                    sb.append(voyage.getId()).append(" progress:").append(voyage.getProgress());
+                }
+*/
+                sb.append(voyage.getId()).append(" progress:").append(voyage.getProgress()).append("\n");
+                updateMap.put( voyage.getId(), VoyageJsonSerializer.serialize(voyage));
+            }
+            logger.info("ActiveVoyageManager.getActiveVoyageUpdateMap() \n"+sb.toString());
+            Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
+            subMapUpdates.put(Constants.ACTIVE_VOYAGES_KEY, updateMap);
+            return subMapUpdates;
+        }
+        public void removeArrivedVoyage(Voyage voyage) {
+            /**
+             * Remove voyage if reported==true && voyage arrival date < current date
+             */
+            Iterator<Voyage> it = activeVoyages.iterator();
+            List<String> voyageRemovalList = new LinkedList<>();
+            while( it.hasNext()) {
+                Voyage v = it.next();
+                if ( v.equals(voyage)) {
+                    it.remove();
+                    voyageRemovalList.add(v.getId());
+                    break;
+                }
+            }
+            Kar.Actors.State.update(scheduleManagerActor, voyageRemovalList, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+            logger.info("ActiveVoyageManager.removeArrivedVoyage() - active voyages size: "+activeVoyages.size());
+        }
     }
 }

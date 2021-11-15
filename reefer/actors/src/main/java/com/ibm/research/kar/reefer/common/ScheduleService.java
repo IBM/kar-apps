@@ -191,8 +191,8 @@ public class ScheduleService {
                 voyage.getRoute().getVessel().setPosition(daysOutAtSea);
                 int progress = Math.round((daysOutAtSea / (float) voyage.getRoute().getDaysAtSea()) * 100);
                 voyage.setProgress(progress);
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info("ScheduleService.updateDaysAtSea() - voyage:" + voyage.getId() + " daysOutAtSea:"
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("ScheduleService.updateDaysAtSea() - voyage:" + voyage.getId() + " daysOutAtSea:"
                             + voyage.getRoute().getVessel().getPosition() + " Progress:"
                             + voyage.getProgress());
                 }
@@ -235,9 +235,45 @@ public class ScheduleService {
         return getActiveSchedule(TimeUtils.getInstance().getCurrentDate());
     }
 
-    /*
-     * Returns voyages with active ships.
-     */
+    public List<Voyage> getNewActiveVoyages(final List<Voyage> activeVoyages) {
+        Instant currentDate = TimeUtils.getInstance().getCurrentDate();
+        // return all new voyages that are not present in 'activeVoyages' list
+        List<Voyage> scheduledVoyages = getActiveSchedule(currentDate);
+        StringBuilder sb = new StringBuilder();
+        for( Voyage v : scheduledVoyages ) {
+            sb.append("+++++ ").append(v.getId()).append(" progress:").append(v.getProgress()).append("\n");
+        }
+/*
+        List<Voyage> newVoyages = scheduledVoyages.stream()
+                .filter(voyage -> !activeVoyages.contains(voyage))
+              //  .filter(voyage -> voyage.getProgress() < 100)
+                .collect(Collectors.toList());
+
+
+        logger.info("ScheduleService.getNewActiveVoyages() - active voyage count::::::::::::::"+scheduledVoyages.size()+" new voyages:"+newVoyages.size()+" list:\n"+sb.toString());
+        return newVoyages;
+
+
+ */
+        logger.info("ScheduleService.getNewActiveVoyages() - currentDate:::"+currentDate+
+                " active voyage count::::::::::::::"+scheduledVoyages.size()+
+                " new voyages:"+scheduledVoyages.size()+" list:\n"+sb.toString());
+
+        return scheduledVoyages;
+    }
+    public Set<Voyage> getNewActiveVoyages(final Set<Voyage> activeVoyages) {
+        // return all new voyages that are not present in 'activeVoyages' list
+        List<Voyage> actives =  getActiveSchedule(TimeUtils.getInstance().getCurrentDate());
+        Set<Voyage> newActiveVoyages = new HashSet<>(actives);
+        newActiveVoyages.removeAll(activeVoyages);
+        return newActiveVoyages;
+        /*
+        .stream()
+                .filter(element -> !activeVoyages.contains(element))
+                .collect(Collectors.toSet());
+
+         */
+    }
     private List<Voyage> getActiveSchedule(Instant currentDate) {
         List<Voyage> activeSchedule = new ArrayList<>();
 
@@ -259,6 +295,7 @@ public class ScheduleService {
                 // we just stop iterating since all voyages beyond this point sail in the future.
                 break;
             }
+            /*
             Instant arrivalDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(),
                     voyage.getRoute().getDaysAtSea());
             // find active voyage which is one that started before current date and
@@ -269,10 +306,26 @@ public class ScheduleService {
                 activeSchedule.add(voyage);
             }
 
+             */
+
+/*
+            if ( TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate)
+                    || ( voyage.getSailDateObject().isBefore(currentDate) &&
+                    (!voyage.shipArrived() || atPortStill(currentDate, voyage) ) ) ) {
+                activeSchedule.add(voyage);
+            }
+
+ */
+            if ( !voyage.shipArrived() || atPortStill(currentDate, voyage)  ) {
+                activeSchedule.add(voyage);
+            }
         }
         return activeSchedule;
     }
-
+    private boolean atPortStill(Instant currentDate, Voyage voyage) {
+        Instant returnVoyageDate = TimeUtils.getInstance().futureDate(Instant.parse(voyage.getArrivalDate()), voyage.getRoute().getDaysAtPort());
+        return ( voyage.shipArrived() && ( TimeUtils.getInstance().isSameDay(returnVoyageDate, currentDate) || currentDate.isBefore(returnVoyageDate)) );
+    }
     public Set<Voyage> findVoyagesBeyondArrivalDate(JsonArray activeOrders) {
         Instant today = TimeUtils.getInstance().getCurrentDate();
         return activeOrders.

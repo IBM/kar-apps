@@ -36,6 +36,7 @@ public class VoyageJsonSerializer {
         voyage.setOrderCount(jsonVoyage.getInt(Voyage.ORDER_COUNT));
         voyage.setReeferCount(jsonVoyage.getInt(Voyage.REEFER_COUNT));
         voyage.changePosition(Long.valueOf(route.getVessel().getPosition()).intValue());
+        voyage.setPublishedArrival(jsonVoyage.getBoolean(Voyage.ARRIVAL_PUBLISHED));
         return voyage;
     }
 
@@ -71,6 +72,7 @@ public class VoyageJsonSerializer {
                 add(Voyage.ORDER_COUNT,v.getOrderCount()).
                 add(Voyage.REEFER_COUNT,v.getReeferCount()).
                 add(Voyage.PROGRESS, v.getProgress()).
+                add(Voyage.ARRIVAL_PUBLISHED, v.publishedArrival()).
                 build();
     }
     private static JsonObject routeToJson(Route r) {

@@ -25,6 +25,7 @@ import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 
 import javax.json.*;
+import javax.validation.constraints.Null;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.*;
@@ -32,7 +33,7 @@ import java.util.logging.*;
 @Actor
 public class AnomalyManagerActor extends BaseActor {
    private Map<String, ReeferLocation> reefersMap = null;
-   // Map supporting lookup of depot name given its enum value
+   // Map supporting lookup of depot enum value given its name
    private Map<String, JsonValue> depotEnumMap = new LinkedHashMap<>();
    // Map supporting lookup of depot name given its enum value
    private Map<Integer, String> reverseDepotEnumMap = new LinkedHashMap<>();
@@ -81,7 +82,6 @@ public class AnomalyManagerActor extends BaseActor {
       if (logger.isLoggable(Level.FINEST)) {
          logger.finest("AnomalyManagerActor.activate() -  total time to recover state: " + (System.currentTimeMillis() - t1));
       }
-
    }
 
    private void instantiateReeferTargetMap(String reeferTargets) {

@@ -125,7 +125,6 @@ public class DepotActor extends BaseActor {
         long t = System.currentTimeMillis();
         JsonValue jv2 = state.get(Constants.REEFER_MAP_KEY);
         Map<String, JsonValue> reeferInventory = jv2.asJsonObject();
-        //    System.out.println("DepotActor.restoreReeferInventory " + getId() + "- deserialization took  .........." + (System.currentTimeMillis() - t) + " inventory size:" + reeferInventory.size());
 
         if (logger.isLoggable(Level.INFO)) {
             logger.info("DepotActor.restoreReeferInventory() " + getId() + "- Fetched size of the reefer inventory:"
@@ -144,8 +143,10 @@ public class DepotActor extends BaseActor {
                 logger.log(Level.WARNING,"DepotActor.restoreReeferInventory()", e);
             }
         }
-
-        System.out.println("DepotActor.restoreReeferInventory - " + getId() + " inventory size:" + reeferInventory.size() + "  completed in .........." + (System.currentTimeMillis() - t));
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("DepotActor.restoreReeferInventory - " + getId() + " inventory size:" + reeferInventory.size() +
+                    "  completed in .........." + (System.currentTimeMillis() - t));
+        }
     }
 
     private void restoreOrderToReefersMap() {
@@ -387,8 +388,8 @@ public class DepotActor extends BaseActor {
             bookedTotalCount = inventory.getBooked();
             onMaintenanceTotalCount = inventory.getOnMaintenance();
             updateStore(Collections.emptyMap(), reeferMap(updateList));
-            logger.info(String.format("DepotActor.voyageReefersArrived()  <<<< \t%25s \tVoyage:%20s \tArrived:%8d \t%s \tArrival Date:%s",
-                    getId(), voyageId, reeferIds.length, getReeferInventoryCounts().toString(), arrivalDate.toString()));
+            logger.info(String.format("DepotActor.voyageReefersArrived()  <<<< \t%25s \tVoyage:%20s \tArrived:%8d \t%s \tArrival Date:%s \tUpdateList:%d ",
+                    getId(), voyageId, reeferIds.length, getReeferInventoryCounts().toString(), arrivalDate.toString(), updateList.size()));
         } catch (Exception e) {
             logger.log(Level.SEVERE,"DepotActor.voyageReefersArrived() - Error ", e);
             throw e;
@@ -475,20 +476,7 @@ public class DepotActor extends BaseActor {
                     .add(Constants.ORDER_ID_KEY, "").build();
         }
     }
-    private int getAvailableInventory() {
-        int actual = 0, bad = 0;
-        for (ReeferDTO reeferDTO : reeferMasterInventory) {
-            if (reeferDTO != null) {
-                if (reeferDTO.getState().equals(ReeferState.State.UNALLOCATED)) {
-                    actual++;
-                } else if (reeferDTO.getState().equals(ReeferState.State.MAINTENANCE)) {
-                    bad++;
-                }
 
-            }
-        }
-        return actual;
-    }
     private JsonObject createReply(Set<String> reeferIds, JsonObject order) {
         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                 add(Constants.DEPOT_KEY, getId()).
@@ -512,33 +500,6 @@ public class DepotActor extends BaseActor {
         }
         map.put(Constants.REEFER_MAP_KEY, reeferIdsToDelete);
         return map;
-    }
-
-    /**
-     * returns a list of reefers allocated to given orders. Uses in-memory map to find all reefers allocated
-     * to an order and adds them to a list. If a reefer arrives spoilt, the unreserveReefer() will change
-     * its state to on-maintenance and such reefer will be excluded from a list to be returned.
-     *
-     * @param orders                  - list of arrived orders
-     * @param arrivedOnMaintenanceMap -
-     * @return
-     */
-    private List<String> getArrivedReefers(JsonArray orders, Map<String, JsonValue> arrivedOnMaintenanceMap, String arrivalDate) {
-        List<String> reefers2Remove = new LinkedList<>();
-        orders.forEach(orderId -> {
-            String id = ((JsonString) orderId).getString();
-            if (order2ReeferMap.containsKey(id)) {
-                Set<String> reefers = order2ReeferMap.get(id);
-                reefers.forEach(reeferId -> {
-                    int inx = Integer.parseInt(reeferId);
-                    unreserveReefer(reeferMasterInventory[inx], arrivedOnMaintenanceMap, arrivalDate);
-                    if (!reeferMasterInventory[inx].getState().equals(ReeferState.State.MAINTENANCE)) {
-                        reefers2Remove.add(reeferId);
-                    }
-                });
-            }
-        });
-        return reefers2Remove;
     }
 
     /**
@@ -568,8 +529,8 @@ public class DepotActor extends BaseActor {
         } else if (reeferMasterInventory[reeferId].alreadyBad()) {
 
         } else if (reeferMasterInventory[reeferId].assignedToOrder()) {
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("DepotActor.reeferAnomaly() - " + getId() + " reeferId:" + reeferId
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("DepotActor.reeferAnomaly() - " + getId() + " reeferId:" + reeferId
                         + " assigned to order: " + reeferMasterInventory[reeferId].getOrderId());
             }
 
@@ -593,8 +554,8 @@ public class DepotActor extends BaseActor {
             updateMap.put(String.valueOf(reeferId), reeferToJsonObject(reeferMasterInventory[reeferId]));
             updateStore(Collections.emptyMap(), updateMap);
 
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("DepotActor.reeferAnomaly() - id:" + getId()
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("DepotActor.reeferAnomaly() - id:" + getId()
                         + " added reefer:" + reeferId + " to "
                         + Constants.ON_MAINTENANCE_PROVISIONER_LIST + " Map"
                         + " onMaintenance date:" + message.getString(Constants.DATE_KEY));

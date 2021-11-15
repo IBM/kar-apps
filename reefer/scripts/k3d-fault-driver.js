@@ -90,14 +90,10 @@ function forkChild() {
 
   console.log('parent: forking child '+parser);
   child = fork(program, parameters, options);
-}
+  child.on('message', message => {
+    processMessage(message);
+  });
 
-async function main () {
-  //TODO if any nodes are stopped ...
-  // ... exit with message that all nodes need to be up
-
-  // fork child parser
-  forkChild();
   child.on('exit', (code) => {
     console.log('simulator stream terminated with code ' + `${code}`);
     // if testing with filefeed
@@ -108,6 +104,46 @@ async function main () {
       forkChild();
     }
   });
+}
+
+// process alerts from child
+function processMessage(message) {
+  const grepsevere = new RegExp("^.*SEVERE", "m");
+  var match = grepsevere.exec(message);
+  if (match) {
+    console.log('special child message:', message);
+    return;
+  }
+  if ( timeout ) {
+    clearTimeout(timeout);
+  }
+  if ( enable ) {
+    console.log('child message:', message);
+    if ( action == "stop" ) {
+      // pick a new node
+      node = rndnode();
+    }
+    // disable actiing on another message until this action completes
+//debug      console.log("  disable message trigger");
+    enable = false;
+    if (!process.env.FEEDFILE) {
+      // let app run for a bit
+      var sleep = rndsleep();
+      console.log('  '+action+' '+node+' in '+sleep);
+    }
+    // stop rnd node or start last node stopped
+    doit(sleep);
+  } else {
+    console.log('  ignoring child message:', message);
+  }
+}
+
+async function main () {
+  //TODO if any nodes are stopped ...
+  // ... exit with message that all nodes need to be up
+
+  // fork child parser
+  forkChild();
 
   // first action is to stop a node
   node = rndnode();
@@ -117,38 +153,6 @@ async function main () {
     console.log('  '+action+' '+node+' in '+sleep);
   }
   doit(sleep);
-
-  // process alerts from child
-  const grepsevere = new RegExp("^.*SEVERE", "m");
-  child.on('message', message => {
-    var match = grepsevere.exec(message);
-    if (match) {
-      console.log('special child message:', message);
-      return;
-    }
-    if ( timeout ) {
-      clearTimeout(timeout);
-    }
-    if ( enable ) {
-      console.log('child message:', message);
-      if ( action == "stop" ) {
-        // pick a new node
-        node = rndnode();
-      }
-      // disable actiing on another message until this action completes
-//debug      console.log("  disable message trigger");
-      enable = false;
-      if (!process.env.FEEDFILE) {
-        // let app run for a bit
-        var sleep = rndsleep();
-        console.log('  '+action+' '+node+' in '+sleep);
-      }
-      // stop rnd node or start last node stopped
-      doit(sleep);
-    } else {
-      console.log('  ignoring child message:', message);
-    }
-  });
 
 }
 

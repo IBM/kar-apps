@@ -99,11 +99,10 @@ async function main () {
   // fork child parser
   forkChild();
   child.on('exit', (code) => {
-    if ( 0 == `${code}` ) {
-      // if testing with filefeed
-      if (process.env.FEEDFILE) {
-        process.exit(0);
-      }
+    console.log('simulator stream terminated with code ' + `${code}`);
+    // if testing with filefeed
+    if (process.env.FEEDFILE) {
+      process.exit(0);
     } else {
       // sometimes kubectl logs breaks and new stream must be reestablished
       forkChild();

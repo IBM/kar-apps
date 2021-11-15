@@ -53,16 +53,14 @@ spec:
                 values:
                 - worker
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: name
-                  operator: In
-                  values:
-                  - reefer-actors
-              topologyKey: "kubernetes.io/hostname"
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: name
+                operator: In
+                values:
+                - reefer-actors
+            topologyKey: "kubernetes.io/hostname"
 {{- end }}
       imagePullSecrets:
          - name: {{ .Values.kar.imagePullSecret }}
@@ -72,3 +70,6 @@ spec:
         ports:
         - name: app
           containerPort: {{ .Values.reefer.actors.port }}
+        env:
+        - name: LOG_TIMESTAMP
+          value: "true"

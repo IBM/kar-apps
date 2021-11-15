@@ -30,7 +30,7 @@
         <version.h2database>1.4.194</version.h2database>
         <version.javaee-api>8.0</version.javaee-api>
         <version.microprofile>4.0.1</version.microprofile>
-        <version.kar-java-sdk>1.1.0</version.kar-java-sdk>
+        <version.kar-java-sdk>1.2.0</version.kar-java-sdk>
 	<!-- CHECK IF THERE IS A BETTER WAY TO HANDLE REEFER VERSION. PERHAPS USE THE PARENT VERSION VARIABLE-->
         <version.reefer>${project.version}</version.reefer>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,7 +42,7 @@
         <version.maven-failsafe-plugin>2.22.2</version.maven-failsafe-plugin>
         <version.maven-surefire-plugin>2.22.2</version.maven-surefire-plugin>
         <!-- Liberty configuration -->
-        <liberty.version>21.0.0.7</liberty.version>
+        <liberty.version>21.0.0.9</liberty.version>
         <version.liberty-maven-plugin>3.3.4</version.liberty-maven-plugin>
         <liberty.var.default.http.port>${env.KAR_APP_PORT}</liberty.var.default.http.port>
         <liberty.var.default.https.port>-1</liberty.var.default.https.port>

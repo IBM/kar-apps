@@ -101,7 +101,9 @@ async function main () {
   child.on('exit', (code) => {
     if ( 0 == `${code}` ) {
       // if testing with filefeed
-      process.exit(0);
+      if (process.env.FEEDFILE) {
+        process.exit(0);
+      }
     } else {
       // sometimes kubectl logs breaks and new stream must be reestablished
       forkChild();

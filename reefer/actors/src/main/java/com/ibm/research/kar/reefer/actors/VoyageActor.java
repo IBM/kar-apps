@@ -133,6 +133,7 @@ public class VoyageActor extends BaseActor {
                  + getVoyageStatus());
       }
       if (Objects.isNull(voyage)) {
+         Kar.Actors.remove(this);
          logger.log(Level.WARNING, "VoyageActor.changePosition() - Error - voyageId " + getId() + " metadata is not defined - looks like the REST service is down");
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Rest Service Unavailable - voyage metadata unknown")
                  .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();

@@ -58,7 +58,7 @@ public class OrderActor extends BaseActor {
 
 
    }
-
+/*
    @Remote
    public JsonObject state() {
 
@@ -73,7 +73,7 @@ public class OrderActor extends BaseActor {
       }
 
    }
-
+*/
    /**
     * Called to book a new order using properties included in the message. Calls the VoyageActor
     * to allocate reefers and a ship to carry them.

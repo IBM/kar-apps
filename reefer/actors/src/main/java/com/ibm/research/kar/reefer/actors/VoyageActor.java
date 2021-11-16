@@ -132,10 +132,15 @@ public class VoyageActor extends BaseActor {
          logger.info("VoyageActor.changePosition() called Id:" + getId() + " " + message.toString() + " state:"
                  + getVoyageStatus());
       }
-      if (Objects.isNull(voyage)) {
+      if (Objects.isNull(voyage) ) {
          Kar.Actors.remove(this);
-         logger.log(Level.WARNING, "VoyageActor.changePosition() - Error - voyageId " + getId() + " metadata is not defined - looks like the REST service is down");
-         return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Rest Service Unavailable - voyage metadata unknown")
+         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
+                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
+      }
+      if ( voyage.shipArrived() ) {
+         Kar.Actors.remove(this);
+         logger.log(Level.WARNING, "VoyageActor.changePosition() - voyageId " + getId() + " voyage already arrived - ignoring ");
+         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                  .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
       }
       try {
@@ -186,7 +191,7 @@ public class VoyageActor extends BaseActor {
    @Remote
    public void reeferAnomaly(JsonObject message) {
       String spoiltReeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
-      if ( voyageInfo == null ) {   // voyage arrived?
+      if ( Objects.isNull(voyageInfo)) {   // voyage arrived?
          Kar.Actors.remove(this);
          JsonObjectBuilder job = Json.createObjectBuilder();
          // switch anomaly mgr target from voyage to depot
@@ -239,6 +244,11 @@ public class VoyageActor extends BaseActor {
     */
    @Remote
    public JsonObject reserve(JsonObject message) {
+      if ( Objects.isNull(voyageInfo)) {   // voyage arrived?
+         Kar.Actors.remove(this);
+         return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", " voyage " + getId() + " already arrived")
+                 .add(Constants.ORDER_ID_KEY, this.getId()).build();
+      }
       long t = System.currentTimeMillis();
       // wrapper around Json
       Order order = new Order(message);
@@ -335,7 +345,10 @@ public class VoyageActor extends BaseActor {
 
    @Remote
    public void replaceReefer(JsonObject message) {
-
+      if ( Objects.isNull(voyageInfo)) {   // voyage arrived?
+         Kar.Actors.remove(this);
+         return;
+      }
       try {
          String spoiltReeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
          if (VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
@@ -401,6 +414,7 @@ public class VoyageActor extends BaseActor {
     * @param voyage - Voyage info
     */
    private void processArrivedVoyage(final Voyage voyage) {
+
       try {
          JsonArrayBuilder voyageOrderIdsBuilder = Json.createArrayBuilder();
          StringBuilder reeferIds = new StringBuilder();

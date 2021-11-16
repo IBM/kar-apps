@@ -24,7 +24,7 @@ ENV MAIN=monitor.js
 ENV OTHER=health.js
 
 # Copy dependencies first; they change rarely
-COPY package.json package-lock.json ./
+COPY package.json ./
 RUN npm install --prod
 
 # Copy in application source

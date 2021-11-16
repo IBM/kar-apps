@@ -120,6 +120,10 @@ public class OrderActor extends BaseActor {
 
    @Remote
    public void replaceReefer(JsonObject message) {
+      if ( order == null ) {
+         Kar.Actors.remove(this);
+         return;
+      }
       ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId());
       Kar.Actors.tell(voyageActor, "replaceReefer", message);
    }
@@ -141,6 +145,11 @@ public class OrderActor extends BaseActor {
     */
    @Remote
    public JsonObject departed() {
+      if ( order == null ) {
+         Kar.Actors.remove(this);
+         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED)
+                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).add("ERROR","Order Already Arrived").build();
+      }
       if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
          messageOrderManager("orderDeparted");
          saveOrderStatusChange(OrderStatus.INTRANSIT);

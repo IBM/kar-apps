@@ -148,9 +148,9 @@ public class OrderThread extends Thread {
             today = Instant.parse(currentDate.toString().replaceAll("^\"|\"$", ""));
 
             int windowsize = SimulatorService.orderwindow.intValue();
-            // ignore voyages leaving today
-            Instant startday = today.plus(1, ChronoUnit.DAYS);
-            Instant endday = today.plus(1 + windowsize, ChronoUnit.DAYS);
+            // ignore voyages leaving today or tomorrow
+            Instant startday = today.plus(2, ChronoUnit.DAYS);
+            Instant endday = today.plus(2 + windowsize, ChronoUnit.DAYS);
             endday = endday.minusSeconds(1);
             JsonObject message = Json.createObjectBuilder().add("startDate", startday.toString())
                     .add("endDate", endday.toString()).build();

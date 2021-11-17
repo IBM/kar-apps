@@ -43,37 +43,16 @@ public class OrderActor extends BaseActor {
    @Activate
    public void activate() {
       Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
-      try {
-         // initial actor invocation should handle no state
-         if (!state.isEmpty()) {
-            order = new Order(state.get(Constants.ORDER_KEY).asJsonObject());
-            if (logger.isLoggable(Level.FINE)) {
-               logger.fine(String.format("OrderActor.activate() - orderId: %s state: %s voyageId: %s ",
-                       getId(), order.getStatus(), order.getVoyageId()));
-            }
+      // initial actor invocation should handle no state
+      if (!state.isEmpty()) {
+         order = new Order(state.get(Constants.ORDER_KEY).asJsonObject());
+         if (logger.isLoggable(Level.FINE)) {
+            logger.fine(String.format("OrderActor.activate() - orderId: %s state: %s voyageId: %s ",
+                    getId(), order.getStatus(), order.getVoyageId()));
          }
-      } catch (Exception e) {
-         logger.log(Level.SEVERE,"OrderActor.activate()", e);
       }
-
-
    }
-/*
-   @Remote
-   public JsonObject state() {
 
-      try {
-         if (order == null) {
-            activate();
-         }
-         return order.getAsJsonObject();
-      } catch (Exception e) {
-         logger.log(Level.SEVERE,"OrderActor.state()", e);
-         throw e;
-      }
-
-   }
-*/
    /**
     * Called to book a new order using properties included in the message. Calls the VoyageActor
     * to allocate reefers and a ship to carry them.
@@ -108,6 +87,7 @@ public class OrderActor extends BaseActor {
          return voyageBookingResult;
       } catch (Exception e) {
          logger.log(Level.WARNING, "OrderActor.createOrder() - Error - orderId " + getId() + " ", e);
+         Kar.Actors.remove(this);
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                  .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
       }
@@ -120,7 +100,7 @@ public class OrderActor extends BaseActor {
 
    @Remote
    public void replaceReefer(JsonObject message) {
-      if ( order == null ) {
+      if (order == null) {
          Kar.Actors.remove(this);
          return;
       }
@@ -145,12 +125,12 @@ public class OrderActor extends BaseActor {
     */
    @Remote
    public JsonObject departed() {
-      if ( order == null ) {
+      if (order == null) {
          Kar.Actors.remove(this);
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED)
-                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).add("ERROR","Order Already Arrived").build();
+                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).add("ERROR", "Order Already Arrived").build();
       }
-      if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
+      if (!OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
          messageOrderManager("orderDeparted");
          saveOrderStatusChange(OrderStatus.INTRANSIT);
       }
@@ -159,7 +139,6 @@ public class OrderActor extends BaseActor {
    }
 
    private void saveOrderStatusChange(OrderStatus state) {
-
       order.setStatus(state.name());
       Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
    }

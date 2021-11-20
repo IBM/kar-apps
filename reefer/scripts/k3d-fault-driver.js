@@ -24,19 +24,18 @@
 // - restart node n
 // - wait for long latency indicating recovery from new process, or timeout
 
-let action = 'stop';
-let enable = false;
-let node = 'k3d-workernode-1-0';
-let nodes = ['k3d-workernode-1-0','k3d-workernode-2-0'];
+let action, enable, timeout;
+let nodes, node, node2;
+let pairkill, singlenode;
+
 let path = require('path');
 let fork = require('child_process').fork;
 let spawnSync = require('child_process').spawnSync;
-let timeout;
 let child;
 
 function rndnode() {
-  var oneOrZero = Math.floor(Math.random() * 2);
-  return nodes[oneOrZero];
+  var target = Math.floor(Math.random() * nodes.length);
+  return nodes[target];
 }
 
 function rndsleep() {
@@ -53,21 +52,56 @@ async function doit(sleep) {
   var timestamp = new Date().toLocaleString('en-US', { hour12: false });
   console.log(timestamp+' k3d node '+action+' '+node);
   if (!process.env.FEEDFILE) {
+    // do the next action
     var doitx = spawnSync('/usr/local/bin/k3d',['node',action,node]);
-    timeout = setTimeout(stopWaiting, 120*1000);
+
+    // if (doitx.stderr) {
+    //   console.log(Error(doitx.stderr));
+    //   process.exitCode = 1;
+    // }
+
+    // if pairkill & stop, stop the paired node
+    if ( action == "stop" && pairkill) {
+      node2 = rndnode();
+      // pick paired node
+      while ( node2 == node ) {
+        node2 = rndnode();
+      }
+      await new Promise(resolve => setTimeout(resolve, (13 * 1000)));
+      timestamp = new Date().toLocaleString('en-US', { hour12: false });
+      console.log(timestamp+' k3d node '+action+' '+node2);
+      doitx = spawnSync('/usr/local/bin/k3d',['node',action,node2]);
+    }
+    // if pairkill & start, start the paired node
+    if ( action == "start" && pairkill) {
+      console.log(timestamp+' k3d node '+action+' '+node2);
+      doitx = spawnSync('/usr/local/bin/k3d',['node',action,node2]);
+    }
+
+    if ( action == "stop" && singlenode ) {
+      // schedule restart in 30 second
+      timeout = setTimeout(stopWaiting, 30*1000);
+    } else {
+      timeout = setTimeout(stopWaiting, 120*1000);
+    }
   }
+
+  // set next action
   if ( action == "stop" ) {
     action = "start";
   } else {
     action = "stop";
   }
-//debug  console.log("  enable message trigger");
+
+  // enable message trigger
   enable = true;
 }
 
-// Keep going if for any reason no latency event is received 
+// Restart singlenode or give up on latency event
 function stopWaiting() {
-  console.log("Timed out waiting for recovery event. Continuing");
+  if ( !singlenode || action == "stop" ) {
+    console.log("Timed out waiting for recovery event. Continuing");
+  }
   if ( enable ) {
     if ( action == "stop" ) {
       // pick a new node
@@ -117,6 +151,7 @@ function processMessage(message) {
   if ( timeout ) {
     clearTimeout(timeout);
   }
+  var pmsleep = 0;
   if ( enable ) {
     console.log('child message:', message);
     if ( action == "stop" ) {
@@ -124,15 +159,19 @@ function processMessage(message) {
       node = rndnode();
     }
     // disable actiing on another message until this action completes
-//debug      console.log("  disable message trigger");
     enable = false;
     if (!process.env.FEEDFILE) {
       // let app run for a bit
-      var sleep = rndsleep();
-      console.log('  '+action+' '+node+' in '+sleep);
+      pmsleep = rndsleep();
+
+      if ( pairkill ) {
+        console.log('  '+action+' two nodes in '+pmsleep);
+      } else {
+        console.log('  '+action+' '+node+' in '+pmsleep);
+      }
     }
-    // stop rnd node or start last node stopped
-    doit(sleep);
+    // stop rnd node or start last node(s) stopped
+    doit(pmsleep);
   } else {
     console.log('  ignoring child message:', message);
   }
@@ -142,15 +181,32 @@ async function main () {
   //TODO if any nodes are stopped ...
   // ... exit with message that all nodes need to be up
 
+  action = 'stop';
+  enable = false;
+  pairkill = false;
+  singlenode = true;
+
+  nodes = ['k3d-workernode-1-0','k3d-workernode-2-0'];
+  if ( singlenode ) {
+    nodes = ['k3d-workernode-1-0'];
+  }
+  if ( pairkill ) {
+    nodes = ['k3d-workernode-1-0','k3d-workernode-2-0','k3d-workernode-3-0'];
+  }
+
   // fork child parser
   forkChild();
+  await new Promise(resolve => setTimeout(resolve, (1000)));
 
   // first action is to stop a node
   node = rndnode();
   if (!process.env.FEEDFILE) {
-    // let app run for a bit
-    var sleep = rndsleep();
-    console.log('  '+action+' '+node+' in '+sleep);
+    var sleep = 10;
+    if ( pairkill ) {
+      console.log('  '+action+' two nodes in '+sleep);
+    } else {
+      console.log('  '+action+' '+node+' in '+sleep);
+    }
   }
   doit(sleep);
 

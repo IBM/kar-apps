@@ -98,6 +98,7 @@ public class VoyageActor extends BaseActor {
                for( String emptyReeferId : emptyReeferIds ) {
                   emptyReefersMap.put(emptyReeferId, emptyReeferId);
                }
+               logger.info("VoyageActor.activate() - voyage:" + getId() + " restored empties - size:" + emptyReefersMap.size());
             }
             if (state.containsKey(Constants.VOYAGE_ORDERS_KEY)) {
                orders.putAll(state.get(Constants.VOYAGE_ORDERS_KEY).asJsonObject());
@@ -537,6 +538,7 @@ public class VoyageActor extends BaseActor {
             notifyVoyageOrder(orderId, Order.OrderStatus.INTRANSIT, "departed");
          });
       } catch (Exception e) {
+         e.printStackTrace();
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
          logger.log(Level.SEVERE,"VoyageActor.processDepartedVoyage", stacktrace);
          throw e;

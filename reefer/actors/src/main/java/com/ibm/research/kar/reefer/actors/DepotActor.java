@@ -298,21 +298,21 @@ public class DepotActor extends BaseActor {
                         add(Constants.DEPOT_KEY, getId()).
 		                  add(Constants.REEFERS_KEY, Json.createValue(empties.size()));
                 if ( rids.isEmpty() ) {
-		              replyJob.add(Constants.VOYAGE_REEFERS_KEY, Json.createValue(""));
+		              replyJob.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, Json.createValue(""));
 		          } else {
-   		           replyJob.add(Constants.VOYAGE_REEFERS_KEY, Json.createValue(String.join(",", rids)));
+   		           replyJob.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, Json.createValue(String.join(",", rids)));
 		          }
                 return replyJob.build();
             }  else {
                 return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                         add(Constants.DEPOT_KEY, getId()).
                         add(Constants.REEFERS_KEY, Json.createValue(0)).
-                        add(Constants.VOYAGE_REEFERS_KEY, Json.createValue("")).
+                        add(Constants.VOYAGE_EMPTY_REEFERS_KEY, Json.createValue("")).
                         build();
             }
         } catch (Exception e) {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-            logger.log(Level.SEVERE, "DepotActor.voyageReefersDeparted() - Error ", stacktrace);
+            logger.log(Level.SEVERE, "DepotActor.voyageReefersDeparted() - "+getId()+" Error ", stacktrace);
             e.printStackTrace();
             throw e;
         }

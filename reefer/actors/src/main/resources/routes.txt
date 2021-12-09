@@ -7,7 +7,7 @@ Rotterdam-NL:Long-Beach-US:18
 Dubai-UAE:Manchester-GB:17
 Jakarta-ID:Nehru-Port-IN:12
 Piraeus-GR:Los-Angeles-US:15
-Busan-KR:Hamburg-DE:18>
+Busan-KR:Hamburg-DE:18
 Mundra-IN:Naples-IT:23
 Salalah-OM:Keihin-Ports-JP:18
 Barcelona-ES:Santos-BR:15

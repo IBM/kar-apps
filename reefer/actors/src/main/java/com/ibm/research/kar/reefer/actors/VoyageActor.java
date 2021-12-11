@@ -124,7 +124,8 @@ public class VoyageActor extends BaseActor {
          }
          voyage = VoyageJsonSerializer.deserialize(voyageInfo);
       } catch (Exception e) {
-         logger.log(Level.SEVERE,"VoyageActor.activate()",e);
+         logger.log(Level.SEVERE,"VoyageActor.activate() ",e);
+         logger.log(Level.SEVERE,"VoyageActor.activate() - voyage:"+getId(),  ExceptionUtils.getStackTrace(e).replaceAll("\n",""));
       }
 
    }

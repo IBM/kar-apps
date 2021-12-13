@@ -124,7 +124,7 @@ public class VoyageActor extends BaseActor {
          }
          voyage = VoyageJsonSerializer.deserialize(voyageInfo);
       } catch (Exception e) {
-         logger.log(Level.SEVERE,"VoyageActor.activate() ",e);
+         logger.log(Level.SEVERE,"VoyageActor.activate() -- ",e);
          logger.log(Level.SEVERE,"VoyageActor.activate() - voyage:"+getId(),  ExceptionUtils.getStackTrace(e).replaceAll("\n",""));
       }
 
@@ -225,7 +225,7 @@ public class VoyageActor extends BaseActor {
             return;
          }
          if ( !reefer2OrderMap.containsKey(spoiltReeferId)) {
-            logger.warning("VoyageActor.reeferAnomaly - voyage:"+getId()+" !!!!!!!!!!!!!!!!! order not found in reefer2OrderMap for spoilt reefer:"+spoiltReeferId);
+            return;
          }
          boolean newSpoiltOrder = false;
          if ( !spoiltReefersMap.containsKey(spoiltReeferId)) {

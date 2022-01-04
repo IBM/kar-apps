@@ -140,8 +140,8 @@ public class VoyageActor extends BaseActor {
     */
    @Remote
    public JsonValue changePosition(JsonObject message) {
-      if (logger.isLoggable(Level.INFO)) {
-         logger.info("VoyageActor.changePosition() called Id:" + getId() + " " + message.toString() + " state:"
+      if (logger.isLoggable(Level.FINE)) {
+         logger.fine("VoyageActor.changePosition() called Id:" + getId() + " " + message.toString() + " state:"
                  + getVoyageStatus());
       }
       if (Objects.isNull(voyage) ) {
@@ -323,7 +323,7 @@ public class VoyageActor extends BaseActor {
             if (!booking.asJsonObject().containsKey(Constants.ORDER_REEFERS_KEY)) {
                logger.warning("VoyageActor.reserve() - ID:" + getId() + " orderId:" + order.getId() + " !!!!!!!!!!!!!!!! booking has no reefers:" + booking);
             }
-            logger.info("VoyageActor.reserve() - ID:" + getId() + " orderId:" + order.getId() + " booked - reefers:"
+            logger.fine("VoyageActor.reserve() - ID:" + getId() + " orderId:" + order.getId() + " booked - reefers:"
 			+ orderReefers.size());
             save(reply, order, booking);
             ActorRef scheduleManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);

@@ -18,6 +18,7 @@ import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Vessel;
 import com.ibm.research.kar.reefer.model.Voyage;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.json.*;
 import java.time.Duration;
@@ -335,7 +336,7 @@ public class ScheduleManagerActor extends BaseActor {
         try {
             Voyage voyage = VoyageJsonSerializer.deserialize(message);
             if (logger.isLoggable(Level.FINE)) {
-                logger.fine("ScheduleManagerActor.departed() - id:" + voyage.getId() + " message:" + message);
+                logger.fine("ScheduleManagerActor.voyageDeparted() - id:" + voyage.getId() + " message:" + message);
             }
             Voyage activeVoyage = schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
             activeVoyage.setOrderCount(voyage.getOrderCount());
@@ -344,8 +345,11 @@ public class ScheduleManagerActor extends BaseActor {
 
             reefersInTransit = Json.createValue(reefersInTransit.intValue() + voyage.getReeferCount());
             saveMetrics();
+            // update voyage state
+            Kar.Actors.State.Submap.set(this, Constants.ACTIVE_VOYAGES_KEY, voyage.getId(), VoyageJsonSerializer.serialize(activeVoyage) );
         } catch (Exception e) {
-            logger.log(Level.WARNING, e.getMessage(), e);
+            String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+            logger.log(Level.SEVERE, "ScheduleManagerActor.voyageDeparted() "+stacktrace);
             e.printStackTrace();
         }
     }
@@ -354,8 +358,8 @@ public class ScheduleManagerActor extends BaseActor {
     public void voyageArrived(JsonObject message) {
         try {
             Voyage voyage = VoyageJsonSerializer.deserialize(message);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("ScheduleManagerActor.delivered() - id:" + voyage.getId() + " message:" + message);
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("ScheduleManagerActor.voyageArrived() - Voyage:" + voyage.getId() + " message:" + message);
             }
             schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
             voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
@@ -365,8 +369,11 @@ public class ScheduleManagerActor extends BaseActor {
                 reefersInTransit = Json.createValue(0);
             }
             saveMetrics();
+            // update voyage state
+            Kar.Actors.State.Submap.set(this, Constants.ACTIVE_VOYAGES_KEY, voyage.getId(), VoyageJsonSerializer.serialize(voyage) );
         } catch (Exception e) {
-            logger.log(Level.WARNING, e.getMessage(), e);
+            String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+            logger.log(Level.SEVERE, "ScheduleManagerActor.voyageArrived() "+stacktrace);
             e.printStackTrace();
         }
     }

@@ -213,7 +213,13 @@ public class VoyageActor extends BaseActor {
    @Remote
    public void reeferAnomaly(JsonObject message) {
       try {
+
          String spoiltReeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
+         // for debug
+         if ( voyage == null ) {
+            logger.warning("VoyageActor.reeferAnomaly - voyage:"+getId()+" voyage already arrived - spoilt reefer:"+spoiltReeferId+" should be in the depot by now");
+            return;
+         }
          // ignore anomaly if target is an empty reefer
          if ( emptyReefersMap.containsKey(spoiltReeferId)) {
             return;

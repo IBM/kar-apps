@@ -178,6 +178,10 @@ public class VoyageActor extends BaseActor {
                processArrivedVoyage(voyage);
                // voyage arrived, no longer need the state
                Kar.Actors.remove(this);
+               if (logger.isLoggable(Level.INFO)) {
+                  logger.info(
+                          "VoyageActor.changePosition() voyage:" + voyage.getId() + " - ARRIVED - Actor state removed");
+               }
             } else {
 
                JsonObjectBuilder jb = Json.createObjectBuilder();

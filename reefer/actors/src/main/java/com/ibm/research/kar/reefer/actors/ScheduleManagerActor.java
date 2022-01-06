@@ -190,7 +190,7 @@ public class ScheduleManagerActor extends BaseActor {
                 voyage.setFreeCapacity(recoveredVoyageState.getRoute().getVessel().getFreeCapacity());
                 inTransit += recoveredVoyageState.getReeferCount();
             } catch( VoyageNotFoundException r) {
-                logger.warning("ScheduleManagerActor.restoreActiveVoyages() - voyage:"+recoveredVoyageState.getId()+" not in master schedule");
+                logger.warning("ScheduleManagerActor.restoreActiveVoyages() - voyage:"+recoveredVoyageState.getId()+" not in master schedule - current date:"+TimeUtils.getInstance().getCurrentDate());
             }
         }
         reefersInTransit = Json.createValue(inTransit);

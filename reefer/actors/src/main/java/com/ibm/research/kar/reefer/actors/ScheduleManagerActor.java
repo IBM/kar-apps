@@ -268,7 +268,11 @@ public class ScheduleManagerActor extends BaseActor {
 
     @Remote
     public JsonValue activeVoyages() {
-        return voyageListToJsonArray(activeVoyageManager.getActiveVoyages());
+        List<Voyage> activeVoyages = activeVoyageManager.getActiveVoyages();
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("ScheduleManagerActor.activeVoyages() - active voyages list size:" + activeVoyages.size());
+        }
+        return voyageListToJsonArray(activeVoyages);
     }
 
     @Remote
@@ -443,9 +447,6 @@ public class ScheduleManagerActor extends BaseActor {
                 // delete voyages that arrived and update those still en route
                 Kar.Actors.State.update(scheduleManagerActor, arrivedVoyages,
                         Collections.emptyMap(), Collections.emptyMap(),  getActiveVoyageUpdateMap(newActiveVoyages));
-            }
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("ActiveVoyageManager.getActiveVoyages() - active voyages list size:" + activeVoyages.size());
             }
             return activeVoyages;
         }

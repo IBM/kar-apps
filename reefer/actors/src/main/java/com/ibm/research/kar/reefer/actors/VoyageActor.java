@@ -125,7 +125,7 @@ public class VoyageActor extends BaseActor {
          voyage = VoyageJsonSerializer.deserialize(voyageInfo);
       } catch (Exception e) {
          logger.log(Level.SEVERE,"VoyageActor.activate() -- ",e);
-         logger.log(Level.SEVERE,"VoyageActor.activate() - voyage:"+getId(),  ExceptionUtils.getStackTrace(e).replaceAll("\n",""));
+         logger.log(Level.SEVERE,"VoyageActor.activate() - voyage:"+getId()+ " "+ExceptionUtils.getStackTrace(e).replaceAll("\n",""));
       }
 
    }
@@ -199,7 +199,7 @@ public class VoyageActor extends BaseActor {
          }
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-         logger.log(Level.WARNING,"VoyageActor.changePosition()",stacktrace);
+         logger.log(Level.WARNING,"VoyageActor.changePosition() "+stacktrace);
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "VoyageActor.changePosition() Failed - "+e.getMessage())
                  .add(Constants.VOYAGE_ID_KEY, this.getId()).build();
       }
@@ -335,7 +335,7 @@ public class VoyageActor extends BaseActor {
          return booking.asJsonObject();
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-         logger.log(Level.WARNING, "VoyageActor.reserve() - Error - voyageId " + getId() + " ", stacktrace);
+         logger.log(Level.WARNING, "VoyageActor.reserve() - Error - voyageId " + getId() + " " +stacktrace);
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                  .add(Constants.ORDER_ID_KEY, this.getId()).build();
       }
@@ -541,7 +541,7 @@ public class VoyageActor extends BaseActor {
       } catch (Exception e) {
          e.printStackTrace();
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-         logger.log(Level.SEVERE,"VoyageActor.processDepartedVoyage", stacktrace);
+         logger.log(Level.SEVERE,"VoyageActor.processDepartedVoyage() " +stacktrace);
          throw e;
       }
 

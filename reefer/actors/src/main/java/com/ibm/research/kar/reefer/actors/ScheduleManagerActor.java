@@ -445,8 +445,13 @@ public class ScheduleManagerActor extends BaseActor {
                 activeVoyages.clear();
                 activeVoyages.addAll( newActiveVoyages);
                 // delete voyages that arrived and update those still en route
-                Kar.Actors.State.update(scheduleManagerActor, arrivedVoyages,
-                        Collections.emptyMap(), Collections.emptyMap(),  getActiveVoyageUpdateMap(newActiveVoyages));
+            //    Kar.Actors.State.update(scheduleManagerActor, arrivedVoyages,
+            //            Collections.emptyMap(), Collections.emptyMap(),  getActiveVoyageUpdateMap(newActiveVoyages));
+                Kar.Actors.State.update(scheduleManagerActor, Collections.emptyList(),
+                        getArrivedVoyagesRemoveMap(arrivedVoyages), Collections.emptyMap(),  getActiveVoyageUpdateMap(newActiveVoyages));
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info("ActiveVoyageManager.getActiveVoyages() - arrived voyage count:" + arrivedVoyages.size());
+                }
             }
             return activeVoyages;
         }
@@ -465,6 +470,11 @@ public class ScheduleManagerActor extends BaseActor {
             Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
             subMapUpdates.put(Constants.ACTIVE_VOYAGES_KEY, updateMap);
             return subMapUpdates;
+        }
+        private  Map<String, List<String>> getArrivedVoyagesRemoveMap(final List<String> arrivedVoyages) {
+            Map<String,List<String>> subMapDeletes = new HashMap<>();
+            subMapDeletes.put(Constants.ACTIVE_VOYAGES_KEY, arrivedVoyages);
+            return subMapDeletes;
         }
     }
 }

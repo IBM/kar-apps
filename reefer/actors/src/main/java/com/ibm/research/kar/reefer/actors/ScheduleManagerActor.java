@@ -370,7 +370,7 @@ public class ScheduleManagerActor extends BaseActor {
             }
             saveMetrics();
             // update voyage state
-            Kar.Actors.State.Submap.set(this, Constants.ACTIVE_VOYAGES_KEY, voyage.getId(), VoyageJsonSerializer.serialize(voyage) );
+            Kar.Actors.State.Submap.remove(this, Constants.ACTIVE_VOYAGES_KEY, voyage.getId() );
         } catch (Exception e) {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
             logger.log(Level.SEVERE, "ScheduleManagerActor.voyageArrived() "+stacktrace);

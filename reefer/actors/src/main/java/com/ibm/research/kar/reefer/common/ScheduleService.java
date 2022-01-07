@@ -179,7 +179,7 @@ public class ScheduleService {
     }
 
     private void dumpVoyages(Collection<Voyage> list) {
-        list.forEach(v -> System.out.println("+++++ Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate()));
+        list.forEach(v -> System.out.println("Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate()));
     }
 
     private boolean activeListsMatch(List<Voyage> actives1, List<Voyage> actives2) {

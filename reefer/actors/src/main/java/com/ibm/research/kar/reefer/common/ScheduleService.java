@@ -68,13 +68,10 @@ public class ScheduleService {
             return voyage.get();
         }
         // this only runs if voyage not found in master schedule
-        StringBuilder sb = new StringBuilder("ScheduleService.getVoyage() - voyage:").append(voyageId).
-                append(" Not Found in Master Schedule - Current Schedule Size:").
-                append(masterSchedule.size()).append(" - schedule: ");
+        logger.log(Level.WARNING,"ScheduleService.getVoyage() - voyage:" + voyageId+" Not Found in Master Schedule ");
         for( Voyage v: masterSchedule ) {
-            sb.append(" ------ Voyage:").append(v.getId()).append(" departure:").append( v.getSailDateObject()).append(" arrival:").append( v.getArrivalDate());
+            logger.log(Level.WARNING,"ScheduleService.getVoyage()------ Voyage:" +v.getId()+ " departure:" +v.getSailDateObject()+ " arrival:" +v.getArrivalDate());
         }
-        logger.log(Level.WARNING, "ScheduleService.getVoyage() - voyage:" + voyageId +"sb.lenght:"+sb.length()+ " master schedule:"+sb.toString());
         throw new VoyageNotFoundException("ScheduleService.getVoyage() - voyage:" + voyageId + " not found in MasterSchedule");
     }
 
@@ -86,7 +83,7 @@ public class ScheduleService {
      */
     public Instant generateShipSchedule(Instant baseScheduleDate, Instant currentDate, Instant lastVoyageDate) {
         masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, currentDate);
-        // dumpVoyages(masterSchedule);
+        dumpVoyages(masterSchedule);
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
 
     }
@@ -182,10 +179,7 @@ public class ScheduleService {
     }
 
     private void dumpVoyages(Collection<Voyage> list) {
-        StringBuilder sb = new StringBuilder();
-//        list.forEach(v -> System.out.println("\t Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate()));
-        list.forEach(v -> sb.append("\t Voyage:").append(v.getId()).append(" departure:").append( v.getSailDateObject()).append(" arrival:").append( v.getArrivalDate()));
-        logger.info("ScheduleService.dumpVoyages() - voyages:"+sb.toString());
+        list.forEach(v -> System.out.println("+++++ Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate()));
     }
 
     private boolean activeListsMatch(List<Voyage> actives1, List<Voyage> actives2) {

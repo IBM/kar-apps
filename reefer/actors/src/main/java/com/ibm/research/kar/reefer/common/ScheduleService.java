@@ -36,7 +36,7 @@ public class ScheduleService {
 
     public static final int THRESHOLD_IN_DAYS = 100; //30; //100;
     public static final int SCHEDULE_DAYS = 365; //60; //365;
-    public static final int ARRIVED_THRESHOLD_IN_DAYS = 20; //1;
+    public static final int ARRIVED_THRESHOLD_IN_DAYS = 2; //1;
 
     private ShippingScheduler scheduler;
 

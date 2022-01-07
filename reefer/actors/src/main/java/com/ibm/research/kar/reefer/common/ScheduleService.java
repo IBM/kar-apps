@@ -83,6 +83,7 @@ public class ScheduleService {
      */
     public Instant generateShipSchedule(Instant baseScheduleDate, Instant currentDate, Instant lastVoyageDate) {
         masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, currentDate);
+        logger.log(Level.INFO,"ScheduleService.generateShipSchedule() - generated schedule - size:" + masterSchedule.size()+" dumping schedule ....");
         dumpVoyages(masterSchedule);
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
 
@@ -178,8 +179,10 @@ public class ScheduleService {
         }
     }
 
-    private void dumpVoyages(Collection<Voyage> list) {
-        list.forEach(v -> System.out.println("Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate()));
+    private void dumpVoyages(Collection<Voyage> schedule) {
+        for( Voyage v: schedule ) {
+            logger.log(Level.INFO, "Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate())
+        }
     }
 
     private boolean activeListsMatch(List<Voyage> actives1, List<Voyage> actives2) {

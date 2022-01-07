@@ -181,7 +181,7 @@ public class ScheduleService {
 
     private void dumpVoyages(Collection<Voyage> schedule) {
         for( Voyage v: schedule ) {
-            logger.log(Level.INFO, "Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate())
+            logger.log(Level.INFO, "Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate());
         }
     }
 

@@ -431,7 +431,7 @@ public class DepotActor extends BaseActor {
 				      getId(), voyageId, reeferIds.length, getReeferInventoryCounts().toString(), emptyReeferIds.length,arrivalDate.toString(), updateList.size()));
         } catch (Exception e) {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-            logger.log(Level.SEVERE,"DepotActor.voyageReefersArrived() - Error ", stacktrace);
+            logger.log(Level.SEVERE,"DepotActor.voyageReefersArrived() - Error: "+ stacktrace);
             throw e;
         }
 

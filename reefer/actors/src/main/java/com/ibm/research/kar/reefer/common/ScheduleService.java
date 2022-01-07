@@ -21,6 +21,7 @@ import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Vessel;
 import com.ibm.research.kar.reefer.model.Voyage;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.json.JsonArray;
 import java.time.Instant;
@@ -84,7 +85,16 @@ public class ScheduleService {
     public Instant generateShipSchedule(Instant baseScheduleDate, Instant currentDate, Instant lastVoyageDate) {
         masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, currentDate);
         logger.log(Level.INFO,"ScheduleService.generateShipSchedule() - generated schedule - size:" + masterSchedule.size()+" dumping schedule ....");
-        dumpVoyages(masterSchedule);
+        //dumpVoyages(masterSchedule);
+        try {
+            for( Voyage v: masterSchedule ) {
+                logger.log(Level.INFO, "Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate());
+            }
+        } catch ( Exception e) {
+            String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+            logger.log(Level.SEVERE,"ScheduleService.generateShipSchedule() - Error: "+ stacktrace);
+        }
+
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
 
     }

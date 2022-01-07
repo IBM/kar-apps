@@ -78,8 +78,8 @@ public class DepotActor extends BaseActor {
                     String[] values = reeferMetrics.split(":");
                     logger.info("DepotActor.activate() " + getId() + "............. restored metrics:" + reeferMetrics);
                     bookedTotalCount = Integer.parseInt(values[0].trim());
-                    inTransitTotalCount = Integer.parseInt(values[1].trim());
-                    spoiltTotalCount = Integer.parseInt(values[2].trim());
+                    //inTransitTotalCount = Integer.parseInt(values[1].trim());
+                    //spoiltTotalCount = Integer.parseInt(values[2].trim());
                     onMaintenanceTotalCount = Integer.parseInt(values[3].trim());
                     totalReeferInventory = Json.createValue(Integer.parseInt(values[4].trim()));
                     currentInventorySize = Json.createValue(Integer.parseInt(values[5].trim()));
@@ -283,7 +283,7 @@ public class DepotActor extends BaseActor {
                 }
                 Inventory inventory = getReeferInventoryCounts();
                 bookedTotalCount = inventory.getBooked();
-                inTransitTotalCount += (voyageReefers.size() + empties.size());
+               // inTransitTotalCount += (voyageReefers.size() + empties.size());
                 currentInventorySize = Json.createValue(inventory.getTotal());
                 messageAnomalyManager(voyageId, AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType(),
                         builder.toString(), "voyageDeparted");
@@ -342,13 +342,13 @@ public class DepotActor extends BaseActor {
                     emptiesNeeded = excessInventory;
                 }
             }
-            logger.info("DepotActor.voyageReefersDeparted() -"+getId()+" empties Needed:"+emptiesNeeded);
+            logger.info("DepotActor.getEmptyReefersOnExcessInventory() -"+getId()+" empties Needed:"+emptiesNeeded);
             // allocate empty reefers to re-balance inventory between two depots. Empties are not associated
             // with orders.
             int reefersNeeded = ReeferAppConfig.ReeferMaxCapacityValue * emptiesNeeded;
             empties = ReeferAllocator.allocateReefers(reeferMasterInventory, reefersNeeded,
                     "", voyageId, inventory.available);
-            logger.info("DepotActor.voyageReefersDeparted()- "+getId()+" Available:"+inventory.available+" ReeferAllocator allocated empties:"+empties.size());
+            logger.info("DepotActor.getEmptyReefersOnExcessInventory()- "+getId()+" Available:"+inventory.available+" ReeferAllocator allocated empties:"+empties.size());
         }
         return empties;
     }
@@ -411,10 +411,11 @@ public class DepotActor extends BaseActor {
             String[] emptyReeferIds = new String[0];
 	         if ( message.containsKey(Constants.VOYAGE_EMPTY_REEFERS_KEY) ) {
 		         String emptyReefers = message.getString(Constants.VOYAGE_EMPTY_REEFERS_KEY);
-                if ( emptyReefers.trim().length()==0 || emptyReefers.trim().length()==1 ) {
+                if ( emptyReefers.trim().length()==0 ) {
                     emptyReefers ="";
+                } else {
+                    emptyReeferIds = emptyReefers.split(",");
                 }
-                emptyReeferIds = emptyReefers.split(",");
 	         }
             String[] newInventory = (String[]) ArrayUtils.addAll(reeferIds, emptyReeferIds);
             List<ReeferDTO> updateList = receiveNewInventory(newInventory);
@@ -585,8 +586,6 @@ public class DepotActor extends BaseActor {
     @Remote
     public void reeferAnomaly(JsonObject message) {
         int reeferId = message.getInt(Constants.REEFER_ID_KEY);
-        // the master inventory contains "active" reefers. If a given anomaly is for an unassigned
-        // reefer, create a new entry in the inventory for it, and set it on-maintenance
         if (reeferMasterInventory[reeferId] == null) {
             logger.info("DepotActor.reeferAnomaly() - " + getId() + " >>>>>>>>>>>> REEFER:" + reeferId +
                     " Not in inventory - departed already - sending back to Anomaly Manager");
@@ -708,7 +707,7 @@ public class DepotActor extends BaseActor {
             // reefer has spoilt while on a voyage
             ReeferDTO reefer = reeferMasterInventory[reeferId];
             reefer.setState(ReeferState.State.SPOILT);
-            spoiltTotalCount++;
+            //spoiltTotalCount++;
             Map<String, JsonValue> updateMap = new HashMap<>();
             updateMap.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
             updateStore(Collections.emptyMap(), updateMap);
@@ -871,6 +870,7 @@ public class DepotActor extends BaseActor {
             onMaintenanceMap.put(reefer.getId(), reefer.getId());
             onMaintenanceTotalCount++;
             onmr.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
+           /*
             if (spoiltTotalCount > 0) {
                 spoiltTotalCount--;
             }
@@ -878,12 +878,17 @@ public class DepotActor extends BaseActor {
                 logger.fine("DepotActor.unreserveReefer() - spoilt reefer:" + reefer.getId()
                         + " arrived - changed state to OnMaintenance - total spoilt reefers:" + spoiltTotalCount);
             }
+
+            */
         } else {
             reefer.reset();
         }
+        /*
         if (inTransitTotalCount > 0) {
             inTransitTotalCount--;
         }
+
+         */
     }
 
     private List<ReeferDTO> voyageAllocatedReefers(String voyageId) {

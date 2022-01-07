@@ -69,8 +69,8 @@ public class ScheduleService {
         }
         // this only runs if voyage not found in master schedule
         StringBuilder sb = new StringBuilder("ScheduleService.getVoyage() - voyage:").append(voyageId).append(" Not Found in Master Schedule - Current Schedule:");
-        masterSchedule.stream().peek( v -> sb.append("\t Voyage:").append(v.getId()).append(" departure:").append( v.getSailDateObject()).append(" arrival:").append( v.getArrivalDate()));
-        logger.log(Level.INFO, "ScheduleService.getVoyage() - voyage:" + voyageId +" master schedule:"+sb.toString());
+        masterSchedule.stream().peek( v -> sb.append(" ------ Voyage:").append(v.getId()).append(" departure:").append( v.getSailDateObject()).append(" arrival:").append( v.getArrivalDate()));
+        logger.log(Level.WARNING, "ScheduleService.getVoyage() - voyage:" + voyageId +" master schedule:"+sb.toString());
         throw new VoyageNotFoundException("ScheduleService.getVoyage() - voyage:" + voyageId + " not found in MasterSchedule");
     }
 

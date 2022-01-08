@@ -23,6 +23,7 @@ import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.json.*;
 import javax.validation.constraints.Null;
@@ -266,9 +267,15 @@ public class AnomalyManagerActor extends BaseActor {
          }
          String serializedReeferTargets = serializeReefers();
          Kar.Actors.State.set(this, Constants.REEFERS_KEY, Json.createValue(serializedReeferTargets));
+         if ( AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType() == targetType) {
+            logger.info("AnomalyManagerActor.update() - Depot: "+anomalyTarget+" received "+rids.length+" reefers");
+         } else {
+            logger.info("AnomalyManagerActor.update() - Voyage:"+anomalyTarget+" departed with "+rids.length+" reefers");
+         }
 
       } catch (Exception e) {
-         logger.log(Level.SEVERE, "AnomalyManagerActor.update()", e);
+         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+         logger.log(Level.SEVERE, "AnomalyManagerActor.update() - Error: "+stacktrace);
       }
 
    }

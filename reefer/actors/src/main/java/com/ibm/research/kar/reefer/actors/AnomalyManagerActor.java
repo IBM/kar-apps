@@ -58,6 +58,7 @@ public class AnomalyManagerActor extends BaseActor {
                reverseVesselEnumMap.put(enumValue, ((JsonString) vessel).getString());
                enumValue++;
             }
+            logger.info("AnomalyManagerActor.activate() - vesselEnumMap.size() = "+vesselEnumMap.size());
          } else {
             throw new IllegalStateException("AnomalyManagerActor.activate() - failed to fetch a list of vessels from the Schedule Manager");
          }
@@ -257,6 +258,9 @@ public class AnomalyManagerActor extends BaseActor {
 
    @Remote
    public void updateLocation(JsonObject message) {
+      if ( logger.isLoggable(Level.FINE)) {
+         logger.log(Level.FINE, "AnomalyManagerActor.updateLocation() - message: " + message);
+      }
       update(message);
    }
 

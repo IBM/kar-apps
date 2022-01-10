@@ -456,9 +456,6 @@ public class ScheduleManagerActor extends BaseActor {
             //            Collections.emptyMap(), Collections.emptyMap(),  getActiveVoyageUpdateMap(newActiveVoyages));
                 Kar.Actors.State.update(scheduleManagerActor, Collections.emptyList(),
                         getArrivedVoyagesRemoveMap(arrivedVoyages), Collections.emptyMap(),  getActiveVoyageUpdateMap(newActiveVoyages));
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info("ActiveVoyageManager.getActiveVoyages() - arrived voyage count:" + arrivedVoyages.size());
-                }
             }
             return activeVoyages;
         }

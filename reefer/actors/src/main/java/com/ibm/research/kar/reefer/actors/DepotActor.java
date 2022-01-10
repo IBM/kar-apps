@@ -658,8 +658,8 @@ public class DepotActor extends BaseActor {
                return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR,"Unable to allocate replacement reefer for " + reeferId).build();
            }
 
-           if (logger.isLoggable(Level.FINE)) {
-               logger.fine("DepotActor.replaceSpoiltReefer() - replacing reeferId:"
+           if (logger.isLoggable(Level.INFO)) {
+               logger.info("DepotActor.reeferReplace() - replacing reeferId:"
                        + reefer.getId() + " with:" + replacementReeferList.get(0).getId());
            }
            if (order2ReeferMap.containsKey(reefer.getOrderId())) {
@@ -673,6 +673,11 @@ public class DepotActor extends BaseActor {
            JsonValue currentDate = Kar.Actors.call(scheduleActor, "currentDate");
            setReeferOnMaintenance(reefer, ((JsonString) currentDate).getString());
 
+           messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
+                   String.valueOf(reeferId), "updateLocation");
+           messageAnomalyManager(reefer.getVoyageId(), AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType(),
+                   String.valueOf(replacementReeferList.get(0).getId()), "updateLocation");
+
            Map<String, JsonValue> updateMap = new HashMap<>();
            updateMap.put(String.valueOf(replacementReeferList.get(0).getId()), reeferToJsonObject(replacementReeferList.get(0)));
            updateStore(Collections.emptyMap(), updateMap);
@@ -680,7 +685,7 @@ public class DepotActor extends BaseActor {
                    .add(Constants.REEFER_REPLACEMENT_ID_KEY, replacementReeferList.get(0).getId())
                    .add(Constants.STATUS_KEY, Constants.OK).build();
        } catch( Exception e) {
-           logger.log(Level.WARNING,"DepotActor.replaceSpoiltReefer()", e);
+           logger.log(Level.WARNING,"DepotActor.reeferReplace() : Error ", e);
            return Json.createObjectBuilder()
                    .add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR,e.getMessage()).build();
        }

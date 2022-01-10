@@ -249,6 +249,11 @@ public class AnomalyManagerActor extends BaseActor {
       update(message);
    }
 
+   @Remote
+   public void updateLocation(JsonObject message) {
+      update(message);
+   }
+
    private void update(JsonObject message) {
       try {
          long t = System.currentTimeMillis();
@@ -270,7 +275,7 @@ public class AnomalyManagerActor extends BaseActor {
          if ( AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType() == targetType) {
             logger.info("AnomalyManagerActor.update() - Depot: "+anomalyTarget+" received "+rids.length+" reefers");
          } else {
-            logger.info("AnomalyManagerActor.update() - Voyage:"+anomalyTarget+" departed with "+rids.length+" reefers");
+            logger.info("AnomalyManagerActor.update() - Voyage:"+anomalyTarget+" added "+rids.length+" reefers");
          }
 
       } catch (Exception e) {

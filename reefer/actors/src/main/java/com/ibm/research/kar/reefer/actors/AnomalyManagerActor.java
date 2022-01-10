@@ -78,7 +78,8 @@ public class AnomalyManagerActor extends BaseActor {
             }
          }
       } catch (Throwable t) {
-         logger.log(Level.SEVERE,"AnomalyManagerActor.activate()", t);
+         String stacktrace = ExceptionUtils.getStackTrace(t).replaceAll("\n","");
+         logger.log(Level.SEVERE,"AnomalyManagerActor.activate() "+stacktrace);
       }
       if (logger.isLoggable(Level.FINEST)) {
          logger.finest("AnomalyManagerActor.activate() -  total time to recover state: " + (System.currentTimeMillis() - t1));
@@ -114,6 +115,7 @@ public class AnomalyManagerActor extends BaseActor {
                        " - should be either " + Constants.DEPOT_TARGET_TYPE + " or " + Constants.VOYAGE_TARGET_TYPE);
             }
             reefersMap.put(props[0], rl);
+            logger.info("AnomalyManagerActor.instantiateReeferTargetMap() + restored reefers map - size: "+reefersMap.size());
          }
          if (logger.isLoggable(Level.FINEST)) {
             logger.finest("AnomalyManagerActor.instantiateReeferTargetMap() - time to instantiate reeferMap from state took:" + (System.currentTimeMillis() - t1) + " size:" + reefersMap.size());
@@ -153,7 +155,8 @@ public class AnomalyManagerActor extends BaseActor {
          Kar.Actors.State.Submap.set(this, Constants.TARGET_MAP_KEY, depotEnumMap);
          System.out.println("AnomalyManagerActor.depotReefers() - saved depot reefers - total time:" + (System.currentTimeMillis() - t2) + " state size (KB):" + (sb.length() / 1024));
       } catch (Exception e) {
-         logger.log(Level.SEVERE,"AnomalyManagerActor.depotReefers()", e);
+         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+         logger.log(Level.SEVERE,"AnomalyManagerActor.depotReefers() "+stacktrace);
 
       }
 
@@ -168,7 +171,8 @@ public class AnomalyManagerActor extends BaseActor {
             reefersMap.put(String.valueOf(reeferId), new ReeferLocation(reeferId, depot, ReeferLocation.LocationType.DEPOT.getType()));
          }
       } catch (Exception e) {
-         logger.log(Level.SEVERE,"AnomalyManagerActor.createReefers()", e);
+         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+         logger.log(Level.SEVERE,"AnomalyManagerActor.createReefers() "+stacktrace );
       }
       return sb.toString();
    }
@@ -190,7 +194,8 @@ public class AnomalyManagerActor extends BaseActor {
                sb.append(((JsonNumber) jv).intValue()).append(":").append(voyageParts[1]);
             } catch (Exception e) {
                logger.log(Level.WARNING,
-                          String.format("AnomalyManagerActor.serializeReefers() - failed serializing voyage - target: %s reeferId:",reeferLocation.getTarget(), reeferId), e);
+                          String.format("AnomalyManagerActor.serializeReefers() - failed serializing voyage - target: %s reeferId:",reeferLocation.getTarget(), reeferId));
+               throw e;
             }
          } else {
             logger.log(Level.SEVERE,
@@ -235,7 +240,8 @@ public class AnomalyManagerActor extends BaseActor {
                     "AnomalyManagerActor.reeferAnomaly() - !!!!!!!!!!! reeferId:" + reeferId + " Not Found in inventory");
          }
       } catch (Exception e) {
-            logger.log(Level.SEVERE, "AnomalyManagerActor.reeferAnomaly()", e);
+         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+            logger.log(Level.SEVERE, "AnomalyManagerActor.reeferAnomaly() "+stacktrace);
       }
    }
 

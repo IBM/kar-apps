@@ -116,8 +116,8 @@ public class AnomalyManagerActor extends BaseActor {
                        " - should be either " + Constants.DEPOT_TARGET_TYPE + " or " + Constants.VOYAGE_TARGET_TYPE);
             }
             reefersMap.put(props[0], rl);
-            logger.info("AnomalyManagerActor.instantiateReeferTargetMap() + restored reefers map - size: "+reefersMap.size());
          }
+         logger.info("AnomalyManagerActor.instantiateReeferTargetMap() + restored reefers map - size: "+reefersMap.size());
          if (logger.isLoggable(Level.FINEST)) {
             logger.finest("AnomalyManagerActor.instantiateReeferTargetMap() - time to instantiate reeferMap from state took:" + (System.currentTimeMillis() - t1) + " size:" + reefersMap.size());
          }

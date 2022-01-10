@@ -140,7 +140,7 @@ public class Voyage implements Comparable<Voyage>{
         return scheduledArrivalDate.isBefore(currentDate);
     }
     public boolean shipArrived() {
-        return getProgress() == 100;
+        return getProgress() >= 100;
     }
     public boolean shipDeparted(Instant shipCurrentDate, VoyageStatus status) {
         Instant scheduledDepartureDate = getSailDateObject();

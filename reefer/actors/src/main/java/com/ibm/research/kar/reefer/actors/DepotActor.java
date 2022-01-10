@@ -669,14 +669,15 @@ public class DepotActor extends BaseActor {
                // add replacement
                reeferIds.add(String.valueOf(replacementReeferList.get(0).getId()));
            }
-           reefer.removeFromVoyage();
+           String reeferVoyageId = reefer.getVoyageId();
            JsonValue currentDate = Kar.Actors.call(scheduleActor, "currentDate");
            setReeferOnMaintenance(reefer, ((JsonString) currentDate).getString());
 
            messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
                    String.valueOf(reeferId), "updateLocation");
-           messageAnomalyManager(reefer.getVoyageId(), AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType(),
+           messageAnomalyManager(reeferVoyageId, AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType(),
                    String.valueOf(replacementReeferList.get(0).getId()), "updateLocation");
+           reefer.removeFromVoyage();
 
            Map<String, JsonValue> updateMap = new HashMap<>();
            updateMap.put(String.valueOf(replacementReeferList.get(0).getId()), reeferToJsonObject(replacementReeferList.get(0)));

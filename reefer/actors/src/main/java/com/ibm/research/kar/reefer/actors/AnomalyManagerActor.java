@@ -33,6 +33,9 @@ import java.util.logging.*;
 
 @Actor
 public class AnomalyManagerActor extends BaseActor {
+   private int ARRIVAL=1;
+   private int DEPARTURE=2;
+   private int REPLACE=3;
    private Map<String, ReeferLocation> reefersMap = null;
    // Map supporting lookup of depot enum value given its name
    private Map<String, JsonValue> depotEnumMap = new LinkedHashMap<>();
@@ -111,7 +114,6 @@ public class AnomalyManagerActor extends BaseActor {
                String voyage = reverseVesselEnumMap.get(Integer.parseInt(voyageParts[0].trim())) + ":" + voyageParts[1];
                rl = new ReeferLocation(Integer.parseInt(props[0]), voyage, Integer.parseInt(props[2]));
             } else {
-
                throw new IllegalStateException("AnomalyManagerActor.instantiateReeferTargetMap() - unexpected reefer target type:" + Integer.parseInt(props[2]) +
                        " - should be either " + Constants.DEPOT_TARGET_TYPE + " or " + Constants.VOYAGE_TARGET_TYPE);
             }
@@ -158,10 +160,7 @@ public class AnomalyManagerActor extends BaseActor {
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
          logger.log(Level.SEVERE,"AnomalyManagerActor.depotReefers() "+stacktrace);
-
       }
-
-
    }
 
    private String createReefers(String depot, int depotId, int lowerRange, int upperRange) {
@@ -248,12 +247,12 @@ public class AnomalyManagerActor extends BaseActor {
 
    @Remote
    public void voyageDeparted(JsonObject message) {
-      update(message);
+      update(message, DEPARTURE);
    }
 
    @Remote
    public void voyageArrived(JsonObject message) {
-      update(message);
+      update(message, ARRIVAL);
    }
 
    @Remote
@@ -261,15 +260,17 @@ public class AnomalyManagerActor extends BaseActor {
       if ( logger.isLoggable(Level.FINE)) {
          logger.log(Level.FINE, "AnomalyManagerActor.updateLocation() - message: " + message);
       }
-      update(message);
+      update(message, REPLACE);
    }
 
-   private void update(JsonObject message) {
+   private void update(JsonObject message, int eventType) {
       try {
          long t = System.currentTimeMillis();
          String anomalyTarget = message.getJsonString(Constants.ANOMALY_TARGET_KEY).getString();
          int targetType = message.getInt(Constants.ANOMALY_TARGET_TYPE_KEY);
          String reeferIds = message.getJsonString(Constants.REEFERS_KEY).getString();
+         String voyageId = message.getJsonString(Constants.VOYAGE_ID_KEY).getString();
+
          String[] rids = reeferIds.split(",");
          for (String reeferId : rids) {
             if (reefersMap.containsKey(reeferId)) {
@@ -280,14 +281,25 @@ public class AnomalyManagerActor extends BaseActor {
                logger.log(Level.WARNING, "AnomalyManagerActor.update() - reefer: " + reeferId + " not in the map");
             }
          }
-         String serializedReeferTargets = serializeReefers();
-         Kar.Actors.State.set(this, Constants.REEFERS_KEY, Json.createValue(serializedReeferTargets));
-         if ( AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType() == targetType) {
-            logger.info("AnomalyManagerActor.update() - Depot: "+anomalyTarget+" received "+rids.length+" reefers");
-         } else {
-            logger.info("AnomalyManagerActor.update() - Voyage:"+anomalyTarget+" added "+rids.length+" reefers");
+         if ( eventType == ARRIVAL ) {
+            // TEST ONLY
+            for(Map.Entry<String,ReeferLocation> entry: reefersMap.entrySet()) {
+               if ( entry.getValue().getTargetType() == ReeferLocation.LocationType.VOYAGE.getType()
+                       && entry.getValue().getTarget().equals(voyageId)) {
+                  logger.log(Level.SEVERE, "AnomalyManagerActor.update() - reefer: " + entry.getKey() + " is still associated with voyage:"+voyageId+" which has arrived");
+               }
+            }
          }
 
+         String serializedReeferTargets = serializeReefers();
+         Kar.Actors.State.set(this, Constants.REEFERS_KEY, Json.createValue(serializedReeferTargets));
+         if ( logger.isLoggable(Level.FINE)) {
+            if ( AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType() == targetType) {
+               logger.fine("AnomalyManagerActor.update() - Depot: "+anomalyTarget+" received "+rids.length+" reefers");
+            } else {
+               logger.fine("AnomalyManagerActor.update() - Voyage:"+anomalyTarget+" added "+rids.length+" reefers");
+            }
+         }
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
          logger.log(Level.SEVERE, "AnomalyManagerActor.update() - Error: "+stacktrace);

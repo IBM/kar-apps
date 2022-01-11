@@ -68,11 +68,6 @@ public class ScheduleService {
         if (voyage.isPresent()) {
             return voyage.get();
         }
-        // this only runs if voyage not found in master schedule
-        logger.log(Level.WARNING,"ScheduleService.getVoyage() - voyage:" + voyageId+" Not Found in Master Schedule ");
-        for( Voyage v: masterSchedule ) {
-            logger.log(Level.WARNING,"ScheduleService.getVoyage()------ Voyage:" +v.getId()+ " departure:" +v.getSailDateObject()+ " arrival:" +v.getArrivalDate());
-        }
         throw new VoyageNotFoundException("ScheduleService.getVoyage() - voyage:" + voyageId + " not found in MasterSchedule");
     }
 

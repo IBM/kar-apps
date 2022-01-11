@@ -286,7 +286,7 @@ public class DepotActor extends BaseActor {
                // inTransitTotalCount += (voyageReefers.size() + empties.size());
                 currentInventorySize = Json.createValue(inventory.getTotal());
                 messageAnomalyManager(voyageId, AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType(),
-                        builder.toString(), "voyageDeparted");
+                        builder.toString(), "voyageDeparted", voyageId);
                 // combine loaded reefers with empties
                 List<ReeferDTO> combinedList = ListUtils.union(voyageReefers, empties);
                 // remove reefers in combined list from this depot inventory
@@ -318,12 +318,12 @@ public class DepotActor extends BaseActor {
         }
 
     }
-    private void messageAnomalyManager(String targetId, int targetType, String reefers, String method) {
+    private void messageAnomalyManager(String targetId, int targetType, String reefers, String method, String voyageId) {
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add(Constants.ANOMALY_TARGET_KEY, targetId).
                 add(Constants.ANOMALY_TARGET_TYPE_KEY, Json.createValue(targetType)).
-                add(Constants.REEFERS_KEY, reefers);
-
+                add(Constants.REEFERS_KEY, reefers).
+                add(Constants.VOYAGE_ID_KEY,Json.createValue(voyageId) );
         ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
         Kar.Actors.tell(anomalyManagerActor, method, job.build());
     }
@@ -421,7 +421,7 @@ public class DepotActor extends BaseActor {
             List<ReeferDTO> updateList = receiveNewInventory(newInventory);
             receiveSpoiltInventory(spoiltInventory, arrivalDate);
             messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
-                    String.join(",", newInventory), "voyageArrived");
+                    String.join(",", newInventory), "voyageArrived", voyageId);
             Inventory inventory = getReeferInventoryCounts();
             currentInventorySize = Json.createValue(inventory.getTotal());
             bookedTotalCount = inventory.getBooked();
@@ -674,9 +674,9 @@ public class DepotActor extends BaseActor {
            setReeferOnMaintenance(reefer, ((JsonString) currentDate).getString());
 
            messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
-                   String.valueOf(reeferId), "updateLocation");
+                   String.valueOf(reeferId), "updateLocation",reeferVoyageId);
            messageAnomalyManager(reeferVoyageId, AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType(),
-                   String.valueOf(replacementReeferList.get(0).getId()), "updateLocation");
+                   String.valueOf(replacementReeferList.get(0).getId()), "updateLocation", reeferVoyageId);
            reefer.removeFromVoyage();
 
            Map<String, JsonValue> updateMap = new HashMap<>();

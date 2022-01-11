@@ -85,7 +85,6 @@ public class VoyageActor extends BaseActor {
             // store voyage information in Kar storage for reuse
             Kar.Actors.State.set(this, Constants.VOYAGE_INFO_KEY, voyageInfo);
          } else {
-            logger.info("VoyageActor.activate() - voyage:" + getId());
             if (state.containsKey(Constants.VOYAGE_INFO_KEY)) {
                voyageInfo = state.get(Constants.VOYAGE_INFO_KEY).asJsonObject();
             }
@@ -124,7 +123,6 @@ public class VoyageActor extends BaseActor {
          }
          voyage = VoyageJsonSerializer.deserialize(voyageInfo);
       } catch (Exception e) {
-         logger.log(Level.SEVERE,"VoyageActor.activate() -- ",e);
          logger.log(Level.SEVERE,"VoyageActor.activate() - voyage:"+getId()+ " "+ExceptionUtils.getStackTrace(e).replaceAll("\n",""));
       }
 
@@ -151,7 +149,9 @@ public class VoyageActor extends BaseActor {
       }
       if ( voyage.shipArrived() ) {
          Kar.Actors.remove(this);
-         logger.log(Level.WARNING, "VoyageActor.changePosition() - voyageId " + getId() + " voyage already arrived - ignoring ");
+         if ( logger.isLoggable(Level.FINE)) {
+            logger.log(Level.FINE, "VoyageActor.changePosition() - voyageId " + getId() + " voyage already arrived - ignoring ");
+         }
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                  .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
       }
@@ -203,7 +203,7 @@ public class VoyageActor extends BaseActor {
          }
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-         logger.log(Level.WARNING,"VoyageActor.changePosition() "+stacktrace);
+         logger.log(Level.SEVERE,"VoyageActor.changePosition() "+stacktrace);
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "VoyageActor.changePosition() Failed - "+e.getMessage())
                  .add(Constants.VOYAGE_ID_KEY, this.getId()).build();
       }
@@ -217,7 +217,8 @@ public class VoyageActor extends BaseActor {
          String spoiltReeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
          // for debug
          if ( voyage == null ) {
-            logger.warning("VoyageActor.reeferAnomaly - voyage:"+getId()+" voyage already arrived - spoilt reefer:"+spoiltReeferId+" should be in the depot by now");
+            logger.warning("VoyageActor.reeferAnomaly - voyage:"+getId()+
+                    " voyage already arrived - spoilt reefer:"+spoiltReeferId+" should be in the depot by now");
             return;
          }
          // ignore anomaly if target is an empty reefer
@@ -237,6 +238,8 @@ public class VoyageActor extends BaseActor {
          if ( !reefer2OrderMap.containsKey(spoiltReeferId)) {
             return;
          }
+         logger.info("VoyageActor.reeferAnomaly - voyage:"+getId()+" spoilt reefer: "+
+                 spoiltReeferId);
          boolean newSpoiltOrder = false;
          if ( !spoiltReefersMap.containsKey(spoiltReeferId)) {
             spoiltReefersMap.put(spoiltReeferId, Json.createValue(spoiltReeferId));
@@ -247,7 +250,9 @@ public class VoyageActor extends BaseActor {
                   for(Map.Entry<String, JsonValue> order: orders.entrySet()) {
                      sb.append(order.getKey()).append(",");
                   }
-                  logger.warning("VoyageActor.reeferAnomaly - voyage:"+getId()+" spoilt reefer:"+spoiltReeferId+" !!!!!!!!!!!!!!!!! order:"+orderId+" not found in the orders Map - orders map size:"+orders.size()+"\n"+sb.toString());
+                  logger.warning("VoyageActor.reeferAnomaly - voyage:"+getId()+" spoilt reefer:"+
+                          spoiltReeferId+" !!!!!!!!!!!!!!!!! order:"+orderId+" not found in the orders Map - orders map size:"+
+                          orders.size()+"\n"+sb.toString());
                }
                newSpoiltOrder = true;
                spoiltOrders.put(orderId, Json.createValue(orderId));
@@ -266,10 +271,8 @@ public class VoyageActor extends BaseActor {
             Kar.Actors.State.update(this, Collections.emptyList(), Collections.emptyMap(), actorStateMap, subMapUpdates);
          }
       } catch( Exception e) {
-         StringWriter sw = new StringWriter();
-         PrintWriter pw = new PrintWriter(sw);
-         e.printStackTrace(pw);
-         logger.warning("VoyageActor.reeferAnomaly - voyage:"+getId()+" Message:"+message+" Exception:"+sw.toString());
+         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+         logger.warning("VoyageActor.reeferAnomaly - voyage:"+getId()+" Message:"+message+" Exception: "+stacktrace);
       }
    }
 

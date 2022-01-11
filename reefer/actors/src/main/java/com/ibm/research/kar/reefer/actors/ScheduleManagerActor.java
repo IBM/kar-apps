@@ -270,8 +270,8 @@ public class ScheduleManagerActor extends BaseActor {
     @Remote
     public JsonValue activeVoyages() {
         List<Voyage> activeVoyages = activeVoyageManager.getActiveVoyages();
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info("ScheduleManagerActor.activeVoyages() - active voyages list size:" + activeVoyages.size());
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("ScheduleManagerActor.activeVoyages() - active voyages list size:" + activeVoyages.size());
         }
         return voyageListToJsonArray(activeVoyages);
     }
@@ -280,7 +280,7 @@ public class ScheduleManagerActor extends BaseActor {
     public JsonObject activeSchedule() {
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add(Constants.CURRENT_DATE_KEY, TimeUtils.getInstance().getCurrentDate().toString()).
-                add(Constants.ACTIVE_VOYAGES_KEY, activeVoyages());//voyageListToJsonArray(schedule.getActiveSchedule()));
+                add(Constants.ACTIVE_VOYAGES_KEY, activeVoyages());
         return job.build();
     }
 

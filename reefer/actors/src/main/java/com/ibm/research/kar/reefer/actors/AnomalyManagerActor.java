@@ -286,7 +286,14 @@ public class AnomalyManagerActor extends BaseActor {
             for(Map.Entry<String,ReeferLocation> entry: reefersMap.entrySet()) {
                if ( entry.getValue().getTargetType() == ReeferLocation.LocationType.VOYAGE.getType()
                        && entry.getValue().getTarget().equals(voyageId)) {
-                  logger.log(Level.SEVERE, "AnomalyManagerActor.update() - reefer: " + entry.getKey() + " is still associated with voyage:"+voyageId+" which has arrived");
+                  boolean exists = false;
+                  for (String reeferId : rids) {
+                     if (entry.getKey().equals(reeferId)) {
+                        exists = true;
+                        break;
+                     }
+                  }
+                  logger.log(Level.SEVERE, "AnomalyManagerActor.update() - reefer: " + entry.getKey() + " is still associated with voyage:"+voyageId+" which has arrived - reefer provided: "+exists+" rids.size= "+rids.length);
                }
             }
          }

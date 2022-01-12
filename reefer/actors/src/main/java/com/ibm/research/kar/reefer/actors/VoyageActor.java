@@ -437,6 +437,7 @@ public class VoyageActor extends BaseActor {
                   reeferIds.add(reeferId);
                }
             }
+
             JsonObject updatedBooking = Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                     add(Constants.DEPOT_KEY,  DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
                     add(Constants.REEFERS_KEY, Json.createValue(reeferIds.size())).
@@ -444,7 +445,7 @@ public class VoyageActor extends BaseActor {
                     add(JsonOrder.OrderKey, order.asJsonObject().getJsonObject(Constants.ORDER_KEY)).build();
             orders.put(orderId, updatedBooking);
 
-
+            logger.log(Level.INFO,"VoyageActor.replaceReefer() replaced: " +spoiltReeferId+ " with: "+newReeferId);
             Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
             Map<String, JsonValue> orderSubMapUpdates = new HashMap<>();
             orderSubMapUpdates.put(orderId, updatedBooking);

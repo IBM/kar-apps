@@ -105,9 +105,12 @@ public class VoyageActor extends BaseActor {
                // when processing refer anomaly
                for(Map.Entry<String, JsonValue> entry: orders.entrySet()) {
                   DepotReply reeferBookingRecord = new DepotReply(entry.getValue());
+                  StringBuilder sb = new StringBuilder();
                   for( String reeferId : reeferBookingRecord.getReefers()) {
                      reefer2OrderMap.put(reeferId, reeferBookingRecord.getOrderId());
+                     sb.append(" ").append(reeferId).append(" ,");
                   }
+                  logger.info("VoyageActor.activate() - voyage:" + getId() + " restored order: "+reeferBookingRecord.getOrderId()+" reefers: "+sb.toString());
                }
                logger.info("VoyageActor.activate() - voyage:" + getId() + " restored orders - size:" + orders.size());
             }
@@ -454,7 +457,8 @@ public class VoyageActor extends BaseActor {
             Kar.Actors.State.update(this, Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), subMapUpdates);
          }
       } catch( Exception e) {
-         logger.log(Level.SEVERE,"VoyageActor.replaceReefer()",e);
+         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+         logger.log(Level.SEVERE,"VoyageActor.replaceReefer() "+stacktrace);
       }
 
    }

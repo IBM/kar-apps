@@ -668,18 +668,21 @@ public class DepotActor extends BaseActor {
                reeferIds.remove(String.valueOf(reeferId));
                // add replacement
                reeferIds.add(String.valueOf(replacementReeferList.get(0).getId()));
+               order2ReeferMap.remove(reefer.getOrderId());
+               order2ReeferMap.put(reefer.getOrderId(),reeferIds);
            }
            String reeferVoyageId = reefer.getVoyageId();
            JsonValue currentDate = Kar.Actors.call(scheduleActor, "currentDate");
            setReeferOnMaintenance(reefer, ((JsonString) currentDate).getString());
 
-           messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
-                   String.valueOf(reeferId), "updateLocation",reeferVoyageId);
-           messageAnomalyManager(reeferVoyageId, AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType(),
-                   String.valueOf(replacementReeferList.get(0).getId()), "updateLocation", reeferVoyageId);
+//           messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
+//                   String.valueOf(reeferId), "updateLocation",reeferVoyageId);
+//           messageAnomalyManager(reeferVoyageId, AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType(),
+//                   String.valueOf(replacementReeferList.get(0).getId()), "updateLocation", reeferVoyageId);
            reefer.removeFromVoyage();
 
            Map<String, JsonValue> updateMap = new HashMap<>();
+           updateMap.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
            updateMap.put(String.valueOf(replacementReeferList.get(0).getId()), reeferToJsonObject(replacementReeferList.get(0)));
            updateStore(Collections.emptyMap(), updateMap);
            return Json.createObjectBuilder()

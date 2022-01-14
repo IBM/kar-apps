@@ -21,6 +21,7 @@ import com.ibm.research.kar.reefer.common.time.TimeUtils;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Vessel;
 import com.ibm.research.kar.reefer.model.Voyage;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.json.JsonArray;
 import java.time.Instant;
@@ -35,7 +36,7 @@ public class ScheduleService {
 
     public static final int THRESHOLD_IN_DAYS = 100; //30; //100;
     public static final int SCHEDULE_DAYS = 365; //60; //365;
-    public static final int ARRIVED_THRESHOLD_IN_DAYS = 1;
+    public static final int ARRIVED_THRESHOLD_IN_DAYS = 2; //1;
 
     private ShippingScheduler scheduler;
 
@@ -78,7 +79,17 @@ public class ScheduleService {
      */
     public Instant generateShipSchedule(Instant baseScheduleDate, Instant currentDate, Instant lastVoyageDate) {
         masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, currentDate);
-        // dumpVoyages(masterSchedule);
+        logger.log(Level.INFO,"ScheduleService.generateShipSchedule() - generated schedule - size:" + masterSchedule.size()+" dumping schedule ....");
+        //dumpVoyages(masterSchedule);
+        try {
+            for( Voyage v: masterSchedule ) {
+                logger.log(Level.INFO, "Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate());
+            }
+        } catch ( Exception e) {
+            String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+            logger.log(Level.SEVERE,"ScheduleService.generateShipSchedule() - Error: "+ stacktrace);
+        }
+
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
 
     }
@@ -173,8 +184,10 @@ public class ScheduleService {
         }
     }
 
-    private void dumpVoyages(Collection<Voyage> list) {
-        list.forEach(v -> System.out.println("\t Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate()));
+    private void dumpVoyages(Collection<Voyage> schedule) {
+        for( Voyage v: schedule ) {
+            logger.log(Level.INFO, "Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate());
+        }
     }
 
     private boolean activeListsMatch(List<Voyage> actives1, List<Voyage> actives2) {
@@ -230,54 +243,25 @@ public class ScheduleService {
      * and have not yet arrived or have arrived and are being unloaded
      */
     public List<Voyage> getActiveSchedule() {
-
-      //  System.out.println("ScheduleService.getActiveSchedule - :::::::::::::::::::::::: masterSchedule size:"+masterSchedule.size());
         return getActiveSchedule(TimeUtils.getInstance().getCurrentDate());
     }
 
-    public List<Voyage> getNewActiveVoyages(final List<Voyage> activeVoyages) {
+    public List<Voyage> getActiveVoyages() {
         Instant currentDate = TimeUtils.getInstance().getCurrentDate();
-        // return all new voyages that are not present in 'activeVoyages' list
         List<Voyage> scheduledVoyages = getActiveSchedule(currentDate);
         StringBuilder sb = new StringBuilder();
-        for( Voyage v : scheduledVoyages ) {
-            sb.append("+++++ ").append(v.getId()).append(" progress:").append(v.getProgress()).append("\n");
+        if ( logger.isLoggable(Level.FINE)) {
+            for( Voyage v : scheduledVoyages ) {
+                sb.append("+++++ ").append(v.getId()).append(" progress:").append(v.getProgress()).append("\n");
+            }
+            logger.fine("ScheduleService.getActiveVoyages() - currentDate:::"+currentDate+
+                    " active voyage count::::::::::::::"+scheduledVoyages.size()+
+                    " new voyages:"+scheduledVoyages.size()+" list:\n"+sb.toString());
         }
-/*
-        List<Voyage> newVoyages = scheduledVoyages.stream()
-                .filter(voyage -> !activeVoyages.contains(voyage))
-              //  .filter(voyage -> voyage.getProgress() < 100)
-                .collect(Collectors.toList());
-
-
-        logger.info("ScheduleService.getNewActiveVoyages() - active voyage count::::::::::::::"+scheduledVoyages.size()+" new voyages:"+newVoyages.size()+" list:\n"+sb.toString());
-        return newVoyages;
-
-
- */
-        logger.info("ScheduleService.getNewActiveVoyages() - currentDate:::"+currentDate+
-                " active voyage count::::::::::::::"+scheduledVoyages.size()+
-                " new voyages:"+scheduledVoyages.size()+" list:\n"+sb.toString());
-
         return scheduledVoyages;
-    }
-    public Set<Voyage> getNewActiveVoyages(final Set<Voyage> activeVoyages) {
-        // return all new voyages that are not present in 'activeVoyages' list
-        List<Voyage> actives =  getActiveSchedule(TimeUtils.getInstance().getCurrentDate());
-        Set<Voyage> newActiveVoyages = new HashSet<>(actives);
-        newActiveVoyages.removeAll(activeVoyages);
-        return newActiveVoyages;
-        /*
-        .stream()
-                .filter(element -> !activeVoyages.contains(element))
-                .collect(Collectors.toSet());
-
-         */
     }
     private List<Voyage> getActiveSchedule(Instant currentDate) {
         List<Voyage> activeSchedule = new ArrayList<>();
-
-
         if (logger.isLoggable(Level.FINE)) {
             StringBuilder sb = new StringBuilder();
             masterSchedule.forEach(voyage -> {
@@ -295,27 +279,10 @@ public class ScheduleService {
                 // we just stop iterating since all voyages beyond this point sail in the future.
                 break;
             }
-            /*
-            Instant arrivalDate = TimeUtils.getInstance().futureDate(voyage.getSailDateObject(),
-                    voyage.getRoute().getDaysAtSea());
-            // find active voyage which is one that started before current date and
-            // has not yet completed (including arrived but still stPort for unloading)
-            if (TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate)
-                    || (voyage.getSailDateObject().isBefore(currentDate) &&
-                    (arrivalDate.equals(currentDate) || arrivalDate.isAfter(currentDate)))) {
-                activeSchedule.add(voyage);
-            }
-
-             */
-
-/*
-            if ( TimeUtils.getInstance().isSameDay(voyage.getSailDateObject(), currentDate)
-                    || ( voyage.getSailDateObject().isBefore(currentDate) &&
-                    (!voyage.shipArrived() || atPortStill(currentDate, voyage) ) ) ) {
-                activeSchedule.add(voyage);
-            }
-
- */
+            // active voyage = sailed before current date AND
+            // not arrived yet OR arrived but still at port.
+            // Each ship stays at port for configurable amount
+            // of time ( currently two days).
             if ( !voyage.shipArrived() || atPortStill(currentDate, voyage)  ) {
                 activeSchedule.add(voyage);
             }

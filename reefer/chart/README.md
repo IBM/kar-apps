@@ -19,18 +19,18 @@
 This Helm chart support deploying the Reefer application to various Kubernetes clusters.
 
 ## Prerequisites to deployment 
- * If intending to deploy to a local kubernetes (kind, k3s or Docker Desktop)
+ * If intending to deploy to a local kubernetes (kind, k3d or Docker Desktop)
    * first run `[kar-install-dir]/scripts/docker-compose-stop.sh`
    * if deploying locally built reefer images, push them to a repo running at localhost:5000 and leave out the override of kar.imagePrefix below
  * Deploy the KAR Runtime System to the kar-system namespace: `[kar-install-dir]/scripts/kar-k8s-deploy.sh`
 
-## To deploy on `k3s` or `Docker Desktop`
+## To deploy on `Docker Desktop`
  * From `[kar-apps-install-dir]/reefer` execute:
 ```shell
 helm install reefer chart --set kar.imagePrefix=quay.io/ibm
 ```
 
-## To deploy on `kind`
+## To deploy on `kind` or `k3d`
  * From `[kar-apps-install-dir]/reefer` execute:
 ```shell
 helm install reefer chart --set ingress.pathBased=true --set kar.imagePrefix=quay.io/ibm

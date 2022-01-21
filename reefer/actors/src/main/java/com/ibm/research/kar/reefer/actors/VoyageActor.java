@@ -101,18 +101,18 @@ public class VoyageActor extends BaseActor {
             }
             if (state.containsKey(Constants.VOYAGE_ORDERS_KEY)) {
                orders.putAll(state.get(Constants.VOYAGE_ORDERS_KEY).asJsonObject());
+               int reeferCount=0;
                // build reefer to order map so that we can efficiently retrieve order id
                // when processing refer anomaly
                for(Map.Entry<String, JsonValue> entry: orders.entrySet()) {
                   DepotReply reeferBookingRecord = new DepotReply(entry.getValue());
-                  StringBuilder sb = new StringBuilder();
                   for( String reeferId : reeferBookingRecord.getReefers()) {
                      reefer2OrderMap.put(reeferId, reeferBookingRecord.getOrderId());
-                     sb.append(" ").append(reeferId).append(" ,");
+                     reeferCount++;
                   }
-                  logger.info("VoyageActor.activate() - voyage:" + getId() + " restored order: "+reeferBookingRecord.getOrderId()+" reefers: "+sb.toString());
+                  logger.info("VoyageActor.activate() - voyage:" + getId() + " restored order: "+reeferBookingRecord.getOrderId());
                }
-               logger.info("VoyageActor.activate() - voyage:" + getId() + " restored orders - size:" + orders.size());
+               logger.info("VoyageActor.activate() - voyage:" + getId() + " restored orders - size:" + orders.size()+" total reefers:"+reeferCount);
             }
             if (state.containsKey(Constants.SPOILT_REEFERS_KEY)) {
                spoiltReefersMap.putAll(state.get(Constants.SPOILT_REEFERS_KEY).asJsonObject());
@@ -122,7 +122,6 @@ public class VoyageActor extends BaseActor {
                spoiltOrders.putAll(state.get(Constants.SPOILT_ORDERS_KEY).asJsonObject());
                logger.info("VoyageActor.activate() - voyage:" + getId() + " restored spoilt orders - size:" + spoiltOrders.size());
             }
-
          }
          voyage = VoyageJsonSerializer.deserialize(voyageInfo);
       } catch (Exception e) {
@@ -427,8 +426,6 @@ public class VoyageActor extends BaseActor {
             JsonValue order = orders.get(orderId);
             reefer2OrderMap.remove(spoiltReeferId);
             reefer2OrderMap.put(String.valueOf(newReeferId), orderId);
-
-
             String reefers[] = order.asJsonObject().getString(Constants.ORDER_REEFERS_KEY).split(",");
             Set<String> reeferIds = new LinkedHashSet<>();
 
@@ -448,7 +445,7 @@ public class VoyageActor extends BaseActor {
                     add(JsonOrder.OrderKey, order.asJsonObject().getJsonObject(Constants.ORDER_KEY)).build();
             orders.put(orderId, updatedBooking);
 
-            logger.log(Level.INFO,"VoyageActor.replaceReefer() replaced: " +spoiltReeferId+ " with: "+newReeferId);
+            logger.log(Level.INFO,"VoyageActor.replaceReefer() - voyage:"+getId()+" replaced: " +spoiltReeferId+ " with: "+newReeferId);
             Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
             Map<String, JsonValue> orderSubMapUpdates = new HashMap<>();
             orderSubMapUpdates.put(orderId, updatedBooking);
@@ -458,7 +455,7 @@ public class VoyageActor extends BaseActor {
          }
       } catch( Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-         logger.log(Level.SEVERE,"VoyageActor.replaceReefer() "+stacktrace);
+         logger.log(Level.SEVERE,"VoyageActor.replaceReefer() - voyage:"+getId()+" Error"+stacktrace);
       }
 
    }
@@ -548,7 +545,7 @@ public class VoyageActor extends BaseActor {
                emptyReefersMap.put(emptyReeferId, emptyReeferId);
             }
          }
-         logger.info("VoyageActor.processDepartingVoyage() - Departure from "+voyage.getRoute().getOriginPort() +" empties count:"+emptiesCount+" emptyReefersMap.size():"+emptyReefersMap.size());
+         logger.info("VoyageActor.processDepartingVoyage() - voyage:"+getId()+" Departure from "+voyage.getRoute().getOriginPort() +" empties count:"+emptiesCount+" emptyReefersMap.size():"+emptyReefersMap.size());
          voyage.updateFreeCapacity(emptiesCount);
          voyage.setReeferCount(voyage.getReeferCount()+emptiesCount);
 
@@ -559,7 +556,7 @@ public class VoyageActor extends BaseActor {
       } catch (Exception e) {
          e.printStackTrace();
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-         logger.log(Level.SEVERE,"VoyageActor.processDepartedVoyage() " +stacktrace);
+         logger.log(Level.SEVERE,"VoyageActor.processDepartedVoyage() voyage:"+getId()+" Error:" +stacktrace);
          throw e;
       }
 

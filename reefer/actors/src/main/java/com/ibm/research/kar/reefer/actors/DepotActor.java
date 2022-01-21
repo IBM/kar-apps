@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This actor manages reefer inventory allocating reefers to new orders
@@ -258,23 +259,40 @@ public class DepotActor extends BaseActor {
      */
     @Remote
     public JsonValue voyageReefersDeparted(JsonObject message) {
-
         try {
             String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
-            // idempotence check - get a list of voyage reefers that are in ALLOCATED state.
-            // If kar repeats this call as part of fault tolerance (at least once contract)
-            // the list may be empty depending on what happened when the process died.
+            String voyageOrderIds = message.getString(Constants.VOYAGE_ORDERS_KEY);
+            Set<String> voyageOrders
+                    = Stream.of(voyageOrderIds.trim().split("\\s*,\\s*"))
+                    .collect(Collectors.toSet());
+
             List<ReeferDTO> voyageReefers = voyageAllocatedReefers(voyageId);
+            Set<String> depotOrders = new HashSet<>();
             if (voyageReefers.size() > 0) {
                 StringBuilder builder = new StringBuilder();
                 for (ReeferDTO reefer : voyageReefers) {
                     // remove departing reefers from inventory
                     reeferMasterInventory[reefer.getId()] = null;
                     if (order2ReeferMap.containsKey(reefer.getOrderId())) {
+                        if (  !depotOrders.contains(reefer.getOrderId())) {
+                            depotOrders.add(reefer.getOrderId());
+                        }
                         order2ReeferMap.remove(reefer.getOrderId());
                     }
                     builder.append(reefer.getId()).append(",");
                 }
+                StringBuilder reefers = new StringBuilder();
+                if ( depotOrders.size() != voyageOrders.size()) {
+                    depotOrders.removeAll(voyageOrders);
+                    for( String orderId : depotOrders ) {
+                        for( ReeferDTO reefer : voyageReefers ) {
+                            if ( reefer.getOrderId().equals(orderId)) {
+                                reefers.append(reefer.getId()).append(",");
+                            }
+                        }
+                    }
+                }
+                int orderCount = depotOrders.size();
                 // if there is excess of reefers in inventory, transfer some to the voyage to rebalance depots
                 List<ReeferDTO> empties = getEmptyReefersOnExcessInventory(message.getInt(Constants.VOYAGE_FREE_CAPACITY_KEY), voyageId);
                 for( ReeferDTO reefer : empties ) {
@@ -293,6 +311,7 @@ public class DepotActor extends BaseActor {
                 updateStore(deleteMap(combinedList), Collections.emptyMap());
                 logger.info(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tVoyage:%20s \tDeparted:%7d \t%s \tempties:%7d",
                         getId(),voyageId,voyageReefers.size(),inventory.toString(), empties.size()) );
+                logger.info("DepotActor.voyageReefersDeparted() >>>> Depot:"+getId()+" Voyage:"+voyageId+" voyage order count:"+orderCount); //+" voyage orders: "+String.join(", ", orderIds));
                 Set<String> rids = empties.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
                 JsonObjectBuilder replyJob =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                         add(Constants.DEPOT_KEY, getId()).
@@ -353,8 +372,6 @@ public class DepotActor extends BaseActor {
         return empties;
     }
 
-
-
     private int getUnallocatedReeferCount() {
         int count=0;
         for( ReeferDTO reefer : reeferMasterInventory) {
@@ -364,15 +381,7 @@ public class DepotActor extends BaseActor {
         }
         return count;
     }
-    private int getCurrentInventoryCount() {
-        int count=0;
-        for( ReeferDTO reefer : reeferMasterInventory) {
-            if ( reefer != null ) {
-                count++;
-            }
-        }
-        return count;
-    }
+
     private Inventory getReeferInventoryCounts() {
         int rbooked=0, rfree=0, rbad=0, total=0;
         for( ReeferDTO reefer : reeferMasterInventory) {
@@ -417,6 +426,7 @@ public class DepotActor extends BaseActor {
                     emptyReeferIds = emptyReefers.split(",");
                 }
 	         }
+            // combine reefers with products and empties as a new reefer inventory
             String[] newInventory = (String[]) ArrayUtils.addAll(reeferIds, emptyReeferIds);
             List<ReeferDTO> updateList = receiveNewInventory(newInventory);
             receiveSpoiltInventory(spoiltInventory, arrivalDate);
@@ -485,6 +495,7 @@ public class DepotActor extends BaseActor {
             order = new Order(message);
             // idempotence check if this method is being called more than once for the same order
             if (order2ReeferMap.containsKey(order.getId())) {
+                logger.info("DepotActor.bookReefers - "+getId()+" voyage:"+order.getVoyageId() +" Idempotance Triggered for order Id:"+order.getId());
                 Set<String> rids = order2ReeferMap.get(order.getId());
                 if (!rids.isEmpty()) {
                      return createReply(rids, order.getAsJsonObject());
@@ -595,8 +606,6 @@ public class DepotActor extends BaseActor {
             job.add(Constants.REEFER_ID_KEY, reeferId).add(Constants.DEPOT_KEY, getId()).add(Constants.TARGET_KEY, Constants.VOYAGE_TARGET_TYPE);
             ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
             Kar.Actors.tell(anomalyManagerActor, "reeferAnomaly", job.build());
-
-
         } else if (reeferMasterInventory[reeferId].alreadyBad()) {
 
         } else if (reeferMasterInventory[reeferId].assignedToOrder()) {
@@ -604,10 +613,8 @@ public class DepotActor extends BaseActor {
                 logger.fine("DepotActor.reeferAnomaly() - " + getId() + " reeferId:" + reeferId
                         + " assigned to order: " + reeferMasterInventory[reeferId].getOrderId());
             }
-
             JsonObject orderReplaceMessage = Json.createObjectBuilder()
                     .add(Constants.REEFER_ID_KEY,reeferId).build();
-
             ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorType,  reeferMasterInventory[reeferId].getOrderId());
             Kar.Actors.tell(orderActor, "replaceReefer", orderReplaceMessage);
         } else {
@@ -624,7 +631,6 @@ public class DepotActor extends BaseActor {
             Map<String, JsonValue> updateMap = new HashMap<>();
             updateMap.put(String.valueOf(reeferId), reeferToJsonObject(reeferMasterInventory[reeferId]));
             updateStore(Collections.emptyMap(), updateMap);
-
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("DepotActor.reeferAnomaly() - id:" + getId()
                         + " added reefer:" + reeferId + " to "
@@ -642,22 +648,19 @@ public class DepotActor extends BaseActor {
     @Remote
     public JsonObject reeferReplace(JsonObject message) {
        try {
-           int reeferId =message.getInt(Constants.REEFER_ID_KEY);
-
+           int reeferId = message.getInt(Constants.REEFER_ID_KEY);
            if (reeferMasterInventory[reeferId] == null) {
                logger.log(Level.WARNING, "DepotActor.reeferReplace() - depot:"+getId()+" Reefer " + reeferId + " no longer in the inventory - request to replace it is invalid");
                return Json.createObjectBuilder()
                        .add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR, "Depot "+getId()+" - request to replace reefer is invalid - reefer "+reeferId+" no longer in the inventory").build();
            }
            ReeferDTO reefer = reeferMasterInventory[reeferId];
-
            List<ReeferDTO> replacementReeferList = ReeferAllocator.allocateReefers(reeferMasterInventory,
                    Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId(), getUnallocatedReeferCount());
            if (replacementReeferList.isEmpty()) {
-               logger.log(Level.WARNING, "DepotActor.reeferReplace() - depot:"+getId()+"Unable to allocate replacement reefer for " + reeferId);
+               logger.log(Level.WARNING, "DepotActor.reeferReplace() - depot:"+getId()+" Unable to allocate replacement reefer for " + reeferId);
                return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR,"Unable to allocate replacement reefer for " + reeferId).build();
            }
-
            if (logger.isLoggable(Level.INFO)) {
                logger.info("DepotActor.reeferReplace() - replacing reeferId:"
                        + reefer.getId() + " with:" + replacementReeferList.get(0).getId());
@@ -671,16 +674,10 @@ public class DepotActor extends BaseActor {
                order2ReeferMap.remove(reefer.getOrderId());
                order2ReeferMap.put(reefer.getOrderId(),reeferIds);
            }
-           String reeferVoyageId = reefer.getVoyageId();
            JsonValue currentDate = Kar.Actors.call(scheduleActor, "currentDate");
            setReeferOnMaintenance(reefer, ((JsonString) currentDate).getString());
-
-//           messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
-//                   String.valueOf(reeferId), "updateLocation",reeferVoyageId);
-//           messageAnomalyManager(reeferVoyageId, AnomalyManagerActor.ReeferLocation.LocationType.VOYAGE.getType(),
-//                   String.valueOf(replacementReeferList.get(0).getId()), "updateLocation", reeferVoyageId);
            reefer.removeFromVoyage();
-
+           // persist changes applied to spoilt and replace reefers
            Map<String, JsonValue> updateMap = new HashMap<>();
            updateMap.put(String.valueOf(reefer.getId()), reeferToJsonObject(reefer));
            updateMap.put(String.valueOf(replacementReeferList.get(0).getId()), reeferToJsonObject(replacementReeferList.get(0)));
@@ -693,7 +690,6 @@ public class DepotActor extends BaseActor {
            return Json.createObjectBuilder()
                    .add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR,e.getMessage()).build();
        }
-
     }
 
 

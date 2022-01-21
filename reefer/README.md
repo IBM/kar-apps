@@ -16,52 +16,44 @@
 
 # Reefer Application Overview
 
-The application models simplified business processes involved in shipping perishable goods on a ship from a manufacturer to a client. A broker places an order for a shipment of goods which requires one or more refrigerated (reefer) containers and a ship. The land transportation of reefer containers as well as Customs clearance are not considered to simplify the design. To facilitate the transit of goods, the application uses a fleet of ships covering Atlantic and Pacific oceans. Each ship has a different tonnage (reefer cargo capacity) and is assigned to a shipping schedule serving a route between two ports. The itinerary includes departures date from origin port and arrival dates at the destination port. All reefers have identical physical dimensions and have a maximum holding capacity in terms of product units.
+The application models simplified business processes involved in shipping perishable goods on a ship from origin port to destination port. A broker places an order for a shipment of goods which requires one or more refrigerated (reefer) containers to be on a specific voyage. Land transportation, container loading/unloading, as well as Customs clearance are not considered. To facilitate the transit of goods, the application uses a fleet of ships covering Atlantic and Pacific oceans. Each ship has a different tonnage (reefer cargo capacity) and is assigned to a shipping schedule serving a route between two ports. The itinerary includes departure dates from origin port and arrival dates at the destination port. All reefers have identical physical dimensions and have a maximum holding capacity in terms of product units.
 
 The Reefer application runtime consists of four separately deployable components.  
 
 1. UI server running in OpenLiberty.
-Its main responsibility is to serve the Angular based Reefer application packaged in multiple javascript bundles.
+This server hosts an HTTP service to deliver the Angular based Reefer application packaged in multiple javascript bundles.
 
 2. SpringBoot REST server running in OpenLiberty.
-Its main responsibility is to process HTTP requests and return results to clients. Its clients are browsers, KAR actors, and Reefer simulators. This server also maintains the state for the application (in memory for now) and also generates and manages a shipping schedule.
+This server hosts a stateless WebAPI service that processes HTTP requests from clients and pushes GUI state changes to any connected angular front end. Its clients are browsers, KAR actors, and Reefer simulators. The REST server can be replicated for fault tolerance and throughput.
 
 3. Actor server running in OpenLiberty.
-Its main responsibility is to implement business logic for Reefer App use cases.
+This server hosts actor services that implement the Reefer application business logic. For development all actor instances can run in a single actor service. For production actor types can be segregated into different actor services and replicated.
 
 4. Simulator server running in OpenLiberty.
-Its main responsibility is to provide drivers for Reefer App use cases. Currently supported use cases are:
-   * Advance time and notify active voyages of their new locations
-   * Gradually create orders filling upcoming voyages to a specified target capacity
-   * Randomly generate reefer anomalies at specified failure rate
+This server hosts a single service that implements all simulator drivers.
 
 ## Application Architecture
 ![Alt text](docs/images/reefer-arch.png?raw=true "Reefer Architecture")
 
 ### GUI
-
 The Reefer Application GUI is implemented with Angular 9 using SPA (Single Page Application) design where all 
 HTML, Javascript, and CSS code is fetched by the browser in a single page load to
 improve user experience. The application offers four distinct views 
 
-1. Order Create View 
+1. Create Order View 
 - Manually create and submit an order
-
 2. Orders View
 - Shows number of future (booked), in-transit, and spoiled orders. Configures and starts/stops the Order Simulator 
-
-3. Active Voyage View
-- Shows active voyages with progress updated in real time. Configures and starts/stops the Ship Simulator
-
-4. Reefers View 
+3. Reefers View 
 - Shows number of booked, in-transit, spoiled, and on-maintenance reefers. Configures and starts/stops the Reefer Anomaly Simulator
+4. Active Voyage View
+- Shows active voyages with progress updated in real time. Configures and starts/stops the Ship Simulator
 
 ### REST Service
 This Spring Framework service provides an HTTP based, RESTful API to external application clients, internal actor components and simulators.
-Simulators call to advance time, fetch current reefer inventory, fetch ship schedule and to get a list of active voyages. 
+Simulators call REST to advance time, fetch current reefer inventory, fetch ship schedule and to get a list of active voyages. 
 REST receives updates from KAR actors and pushes these changes in real time to the GUI using Websockets to
 move ships and change reefer and order counts and totals.
-REST is also responsible for creating the voyage schedules based on REST start time and an initial fleet definition of ships and their routes defined statically in routes.json.
 Each voyage travels between origin and destination ports in a fixed number of days, remaining at each port for two days to unload/reload reefers.
 The voyage schedules are dynamically extended when necessary to allow the simulator to run for unlimited time.  
 
@@ -73,26 +65,36 @@ Represents an order entity in the application. In response to a new order reques
 createOrder calls the specified *Voyage Actor* to reserve space for its products and reserve the required containers.
 If successful, the order state becomes *booked* until the ship departs a port at which time the state changes
 to *in-transit*.
-Order actors are notified if an anomaly is detected for one of its reserved reefers.
-If the anomaly is received before departure the order actor requests a replacement reefer from the provisioner.
-If after departure the order actor changes state to *spoilt* and informs the provisioner.
-On arrival at port the actor removes itself from active actors.
+Order actors are notified if an anomaly is detected for one of its reserved reefers. If before departure the reefer is replaced, else it and the order are marked spoilt.
+On arrival at destination the actor removes itself from active actors.
 
 #### Voyage Actor
 Represents a voyage entity in the application. A voyage includes a ship, a departure date, and a route between origin and destination ports. 
 Its state also includes Ids of *Order Actors* that have booked space and their reefers.
 The *Ship Simulator* calls this actor at some point each "day" with the new date.
-If the date matches departure date, the voyage actor notifies all on-board *Order Actors* of their departure.
-If the date matches arrival date, the voyage actor first notifies all its *Order Actors* of arrival, then notifies the *Reefer Provisioner Actor* of the list of reefers to return to inventory, and finally removes itself from active actors.
- 
-#### Reefer Provisioner Actor
-Represents a *singleton* reefer manager entity in the application. It manages reefer inventory, allocating reefers to new orders and releasing reefers back to inventory when an order is delivered. 
+If the date matches departure date, the voyage actor notifies the departure depot of all containers that are no longer there, and notifies all on-board *Order Actors* of their departure.
+If the date matches arrival date, the voyage actor first notifies the arrival depot of all containers that have been added, notifies all its *Order Actors* of arrival, and finally removes itself from active actors.
+
+#### Depot Actor
+Manages reefer inventory for a specific port, allocating reefers to new orders, removing reefers from inventory on voyage departures and adding reefers to inventory when a voyage arrives. 
 If products in an order exceed capacity of a single reefer container, multiple containers are allocated to the order. 
 This actor also maintains statistics on the number of reefers booked, in-transit, spoilt and on maintenance which it 
-sends to the REST service at regular intervals when there are outstanding changes.
-When notified that a reefer has gone bad, the provisioner either passes the anomaly to the order that owns it or simply tags the reefer as *On Maintenance* where it remains unavailable for booking for 
-two days after which it becomes available again. 
-When notified that a voyage has arrived, any of its reefers marked spoilt are tagged as on maintenance.
+sends to the Depot Manager when there are changes.
+When notified that a reefer has gone bad, the provisioner simply tags empty reefers as *On Maintenance* where it remains unavailable for booking for two days, or if booked it calls the associated Order actor with a replacement reefer.
+When arrives, any of its reefers marked spoilt are tagged as on maintenance.
+
+#### Anomaly Router Actor
+Maintains current location for all reefer containers: in a specific depot or in-transit on a specific voyage. Routes new anomaly events to the actor that represents the current location.
+
+#### Order Manager Actor
+Maintains global state for all active orders: booked or in-transit. Makes state change available to REST to be pushed to connected GUIs.
+
+#### Voyage Manager Actor
+Maintains global state for all active voyages: those with booked orders or in-transit. Makes state change available to REST to be pushed to connected GUIs.
+
+#### Depot Manager Actor
+Maintains global state for all reefer containers. Makes state change available to REST to be pushed to connected GUIs.
+
 
 ### Simulators
 
@@ -134,6 +136,8 @@ When the anomaly generation is disabled, the manual **Create Anomaly** button ca
 - clone `kar` from https://github.com/IBM/kar.git
 - browse the README and follow the getting-started guide
 - clone `kar-apps` from https://github.com/IBM/kar-apps.git
+- podman version 3.4.2+ is required
+- when building docker images using podman, make sure BUILDAH_FORMAT=docker has been previously exported to the environment
 
 ## Deploying Reefer using docker-compose from the latest reefer release
 - start the KAR runtime using 
@@ -148,7 +152,7 @@ When the anomaly generation is disabled, the manual **Create Anomaly** button ca
 - when the application is ready, point browser at the URL listed for the reefer GUI
 - stop KAR and the reefer application using `[kar-apps-install-dir]/reefer/scripts/reefer-play-stop.sh`
 
-## Deploying Reefer using kind, k3s or docker desktop from latest reefer release
+## Deploying Reefer using kind, k3d or docker desktop from latest reefer release
 - See [KAR Deployment Options](https://github.com/IBM/kar/blob/main/docs/kar-deployments.md) for instructions on installing these
 - See [Reefer launch on Kubernetes](chart/README.md) for instructions
 
@@ -167,7 +171,7 @@ cd [kar-apps-install-dir]/reefer
 make reeferImages
 make pushReeferImages
 ```
-Start the application using docker-compose, podman, k3s, docker desktop or kind following the directions above but
+Start the application using docker-compose, podman, k3d, docker desktop or kind following the directions above but
 **without overriding the IMAGE_PREFIX**
 
 ### Native development

@@ -136,6 +136,8 @@ When the anomaly generation is disabled, the manual **Create Anomaly** button ca
 - clone `kar` from https://github.com/IBM/kar.git
 - browse the README and follow the getting-started guide
 - clone `kar-apps` from https://github.com/IBM/kar-apps.git
+- podman version 3.4.2+ is required
+- when building docker images using podman, make sure BUILDAH_FORMAT=docker has been previously exported to the environment
 
 ## Deploying Reefer using docker-compose from the latest reefer release
 - start the KAR runtime using 
@@ -150,7 +152,7 @@ When the anomaly generation is disabled, the manual **Create Anomaly** button ca
 - when the application is ready, point browser at the URL listed for the reefer GUI
 - stop KAR and the reefer application using `[kar-apps-install-dir]/reefer/scripts/reefer-play-stop.sh`
 
-## Deploying Reefer using kind, k3s or docker desktop from latest reefer release
+## Deploying Reefer using kind, k3d or docker desktop from latest reefer release
 - See [KAR Deployment Options](https://github.com/IBM/kar/blob/main/docs/kar-deployments.md) for instructions on installing these
 - See [Reefer launch on Kubernetes](chart/README.md) for instructions
 
@@ -169,7 +171,7 @@ cd [kar-apps-install-dir]/reefer
 make reeferImages
 make pushReeferImages
 ```
-Start the application using docker-compose, podman, k3s, docker desktop or kind following the directions above but
+Start the application using docker-compose, podman, k3d, docker desktop or kind following the directions above but
 **without overriding the IMAGE_PREFIX**
 
 ### Native development

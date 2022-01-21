@@ -272,6 +272,16 @@ public class AnomalyManagerActor extends BaseActor {
          String voyageId = message.getJsonString(Constants.VOYAGE_ID_KEY).getString();
 
          String[] rids = reeferIds.split(",");
+         String event = "NA";
+         if ( eventType == DEPARTURE ) {
+            event = "DEPARTED";
+         } else if ( eventType == ARRIVAL ) {
+            event = "ARRIVED";
+         } else {
+            event = "REPLACED";
+         }
+         logger.log(Level.WARNING, "AnomalyManagerActor.update() - voyage:"+voyageId+" "+event+" total reefers="+rids.length);
+
          for (String reeferId : rids) {
             if (reefersMap.containsKey(reeferId)) {
                ReeferLocation targetLocation = reefersMap.get(reeferId);
@@ -282,7 +292,6 @@ public class AnomalyManagerActor extends BaseActor {
             }
          }
          if ( eventType == ARRIVAL ) {
-            // TEST ONLY
             for(Map.Entry<String,ReeferLocation> entry: reefersMap.entrySet()) {
                if ( entry.getValue().getTargetType() == ReeferLocation.LocationType.VOYAGE.getType()
                        && entry.getValue().getTarget().equals(voyageId)) {

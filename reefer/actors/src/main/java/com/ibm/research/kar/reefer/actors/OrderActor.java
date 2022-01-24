@@ -58,22 +58,7 @@ public class OrderActor extends BaseActor {
 
 
    }
-/*
-   @Remote
-   public JsonObject state() {
 
-      try {
-         if (order == null) {
-            activate();
-         }
-         return order.getAsJsonObject();
-      } catch (Exception e) {
-         logger.log(Level.SEVERE,"OrderActor.state()", e);
-         throw e;
-      }
-
-   }
-*/
    /**
     * Called to book a new order using properties included in the message. Calls the VoyageActor
     * to allocate reefers and a ship to carry them.

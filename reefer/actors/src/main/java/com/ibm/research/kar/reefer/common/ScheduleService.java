@@ -79,16 +79,20 @@ public class ScheduleService {
      */
     public Instant generateShipSchedule(Instant baseScheduleDate, Instant currentDate, Instant lastVoyageDate) {
         masterSchedule = scheduler.generateSchedule(baseScheduleDate, lastVoyageDate, currentDate);
-        logger.log(Level.INFO,"ScheduleService.generateShipSchedule() - generated schedule - size:" + masterSchedule.size()+" dumping schedule ....");
-        //dumpVoyages(masterSchedule);
-        try {
-            for( Voyage v: masterSchedule ) {
-                logger.log(Level.INFO, "Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate());
+        if (logger.isLoggable(Level.FINE)) {
+            logger.log(Level.FINE,"ScheduleService.generateShipSchedule() - generated schedule - size:" + masterSchedule.size()+" dumping schedule ....");
+            try {
+                for( Voyage v: masterSchedule ) {
+                    logger.log(Level.FINE, "Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate());
+                }
+            } catch ( Exception e) {
+                String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+                logger.log(Level.SEVERE,"ScheduleService.generateShipSchedule() - Error: "+ stacktrace);
             }
-        } catch ( Exception e) {
-            String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-            logger.log(Level.SEVERE,"ScheduleService.generateShipSchedule() - Error: "+ stacktrace);
         }
+
+        //dumpVoyages(masterSchedule);
+
 
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
 
@@ -128,8 +132,8 @@ public class ScheduleService {
         masterSchedule.forEach(v -> {
             updateVoyage(v, previousSchedule);
         });
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info("ScheduleService.extendSchedule() >>>> currentDate:" +
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("ScheduleService.extendSchedule() >>>> currentDate:" +
                     currentDate.toString().replace("T00:00:00Z", "") +
                     " baseDate:" + baseDate.toString().replace("T00:00:00Z", "") +
                     " endDate:" + endDate.toString().replace("T00:00:00Z", "") +
@@ -140,7 +144,7 @@ public class ScheduleService {
         previousSchedule.clear();
         // persist last voyage departure date which will be used to restore schedule after
         // REST restart
-        if (logger.isLoggable(Level.INFO)) {
+        if (logger.isLoggable(Level.FINE)) {
             masterSchedule.forEach(v -> System.out.println(">>>> Voyage:" +
                     v.getId() +
                     " Departure:" +

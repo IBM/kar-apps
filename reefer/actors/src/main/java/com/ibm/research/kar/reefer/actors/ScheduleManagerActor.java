@@ -358,8 +358,8 @@ public class ScheduleManagerActor extends BaseActor {
     public void voyageArrived(JsonObject message) {
         try {
             Voyage voyage = VoyageJsonSerializer.deserialize(message);
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("ScheduleManagerActor.voyageArrived() - Voyage:" + voyage.getId() + " message:" + message);
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("ScheduleManagerActor.voyageArrived() - Voyage:" + voyage.getId() + " message:" + message);
             }
             schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
             voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());

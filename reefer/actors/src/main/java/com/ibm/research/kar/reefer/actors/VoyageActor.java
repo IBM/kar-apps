@@ -180,8 +180,8 @@ public class VoyageActor extends BaseActor {
                processArrivedVoyage(voyage);
                // voyage arrived, no longer need the state
                Kar.Actors.remove(this);
-               if (logger.isLoggable(Level.INFO)) {
-                  logger.info(
+               if (logger.isLoggable(Level.FINE)) {
+                  logger.fine(
                           "VoyageActor.changePosition() voyage:" + voyage.getId() + " - ARRIVED - Actor state removed");
                }
             } else {
@@ -240,8 +240,6 @@ public class VoyageActor extends BaseActor {
          if ( !reefer2OrderMap.containsKey(spoiltReeferId)) {
             return;
          }
-         logger.info("VoyageActor.reeferAnomaly - voyage:"+getId()+" spoilt reefer: "+
-                 spoiltReeferId);
          boolean newSpoiltOrder = false;
          if ( !spoiltReefersMap.containsKey(spoiltReeferId)) {
             spoiltReefersMap.put(spoiltReeferId, Json.createValue(spoiltReeferId));
@@ -415,7 +413,9 @@ public class VoyageActor extends BaseActor {
          JsonValue reply = Kar.Actors.call(depotActor, "reeferReplace",message);
 
          if ( !reply.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-           logger.info("VoyageActor.replaceReefer() - voyage:"+getId()+" - Error:"+reply.asJsonObject().getString(Constants.ERROR)+" - processing as reefer anomaly");
+            if ( logger.isLoggable(Level.FINE)) {
+               logger.fine("VoyageActor.replaceReefer() - voyage:"+getId()+" - Error:"+reply.asJsonObject().getString(Constants.ERROR)+" - processing as reefer anomaly");
+            }
             reeferAnomaly(message);
             return;
          }
@@ -444,8 +444,9 @@ public class VoyageActor extends BaseActor {
                     add(Constants.ORDER_REEFERS_KEY, Json.createValue(String.join(",", reeferIds))).
                     add(JsonOrder.OrderKey, order.asJsonObject().getJsonObject(Constants.ORDER_KEY)).build();
             orders.put(orderId, updatedBooking);
-
-            logger.log(Level.INFO,"VoyageActor.replaceReefer() - voyage:"+getId()+" replaced: " +spoiltReeferId+ " with: "+newReeferId);
+            if ( logger.isLoggable(Level.FINE)) {
+               logger.log(Level.FINE,"VoyageActor.replaceReefer() - voyage:"+getId()+" replaced: " +spoiltReeferId+ " with: "+newReeferId);
+            }
             Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
             Map<String, JsonValue> orderSubMapUpdates = new HashMap<>();
             orderSubMapUpdates.put(orderId, updatedBooking);
@@ -545,7 +546,12 @@ public class VoyageActor extends BaseActor {
                emptyReefersMap.put(emptyReeferId, emptyReeferId);
             }
          }
-         logger.info("VoyageActor.processDepartingVoyage() - voyage:"+getId()+" Departure from "+voyage.getRoute().getOriginPort() +" empties count:"+emptiesCount+" emptyReefersMap.size():"+emptyReefersMap.size());
+         if ( logger.isLoggable(Level.FINE)) {
+            logger.fine("VoyageActor.processDepartingVoyage() - voyage:"+getId()+
+                    " Departure from "+voyage.getRoute().getOriginPort() +
+                    " empties count:"+emptiesCount+" emptyReefersMap.size():"+emptyReefersMap.size());
+         }
+
          voyage.updateFreeCapacity(emptiesCount);
          voyage.setReeferCount(voyage.getReeferCount()+emptiesCount);
 

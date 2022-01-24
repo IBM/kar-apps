@@ -311,7 +311,6 @@ public class DepotActor extends BaseActor {
                 updateStore(deleteMap(combinedList), Collections.emptyMap());
                 logger.info(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tVoyage:%20s \tDeparted:%7d \t%s \tempties:%7d",
                         getId(),voyageId,voyageReefers.size(),inventory.toString(), empties.size()) );
-                logger.info("DepotActor.voyageReefersDeparted() >>>> Depot:"+getId()+" Voyage:"+voyageId+" voyage order count:"+orderCount); //+" voyage orders: "+String.join(", ", orderIds));
                 Set<String> rids = empties.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
                 JsonObjectBuilder replyJob =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                         add(Constants.DEPOT_KEY, getId()).
@@ -361,13 +360,11 @@ public class DepotActor extends BaseActor {
                     emptiesNeeded = excessInventory;
                 }
             }
-            logger.info("DepotActor.getEmptyReefersOnExcessInventory() -"+getId()+" empties Needed:"+emptiesNeeded);
             // allocate empty reefers to re-balance inventory between two depots. Empties are not associated
             // with orders.
             int reefersNeeded = ReeferAppConfig.ReeferMaxCapacityValue * emptiesNeeded;
             empties = ReeferAllocator.allocateReefers(reeferMasterInventory, reefersNeeded,
                     "", voyageId, inventory.available);
-            logger.info("DepotActor.getEmptyReefersOnExcessInventory()- "+getId()+" Available:"+inventory.available+" ReeferAllocator allocated empties:"+empties.size());
         }
         return empties;
     }
@@ -495,7 +492,6 @@ public class DepotActor extends BaseActor {
             order = new Order(message);
             // idempotence check if this method is being called more than once for the same order
             if (order2ReeferMap.containsKey(order.getId())) {
-                logger.info("DepotActor.bookReefers - "+getId()+" voyage:"+order.getVoyageId() +" Idempotance Triggered for order Id:"+order.getId());
                 Set<String> rids = order2ReeferMap.get(order.getId());
                 if (!rids.isEmpty()) {
                      return createReply(rids, order.getAsJsonObject());
@@ -661,8 +657,8 @@ public class DepotActor extends BaseActor {
                logger.log(Level.WARNING, "DepotActor.reeferReplace() - depot:"+getId()+" Unable to allocate replacement reefer for " + reeferId);
                return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR,"Unable to allocate replacement reefer for " + reeferId).build();
            }
-           if (logger.isLoggable(Level.INFO)) {
-               logger.info("DepotActor.reeferReplace() - replacing reeferId:"
+           if (logger.isLoggable(Level.FINE)) {
+               logger.fine("DepotActor.reeferReplace() - replacing reeferId:"
                        + reefer.getId() + " with:" + replacementReeferList.get(0).getId());
            }
            if (order2ReeferMap.containsKey(reefer.getOrderId())) {

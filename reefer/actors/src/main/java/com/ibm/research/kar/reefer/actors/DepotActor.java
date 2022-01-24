@@ -488,7 +488,7 @@ public class DepotActor extends BaseActor {
      * @return
      */
     @Remote
-    public JsonObject bookReefers(JsonObject message) {
+    public void bookReefers(JsonObject message) {
         Order order = null;
         try {
             // wrap Json with POJO
@@ -498,7 +498,9 @@ public class DepotActor extends BaseActor {
                 logger.info("DepotActor.bookReefers - "+getId()+" voyage:"+order.getVoyageId() +" Idempotance Triggered for order Id:"+order.getId());
                 Set<String> rids = order2ReeferMap.get(order.getId());
                 if (!rids.isEmpty()) {
-                     return createReply(rids, order.getAsJsonObject());
+                     JsonObject reply = createReply(rids, order.getAsJsonObject());
+                    Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+                            method("reefersBooked").arg(reply).tell();
                  }
             }
             int currentAvailableReeferCount = getUnallocatedReeferCount();
@@ -510,9 +512,11 @@ public class DepotActor extends BaseActor {
 
             } catch( Error er) {
                 logger.warning("DepotActor.bookReefers - "+getId()+" voyage:"+order.getVoyageId() +" Error while allocating reefers to order - cause:"+er.getMessage());
-                return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Failed to allocate reefers to order")
+                JsonObjectBuilder reply =  Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Failed to allocate reefers to order")
                         .add("cause", er.getMessage())
-                        .add(Constants.ORDER_ID_KEY, order.getId()).build();
+                        .add(Constants.ORDER_ID_KEY, order.getId());
+                Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+                        method("reeferBookingFailed").arg(reply.build()).tell();
             }
             if ( orderReefers.isEmpty() ) {
                 logger.warning("DepotActor.bookReefers - "+getId()+
@@ -520,8 +524,10 @@ public class DepotActor extends BaseActor {
                         " unable to allocate reefers to order - current inventory size:"+
                         currentAvailableReeferCount);
 
-                return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Failed to allocate reefers to order")
-                        .add(Constants.ORDER_ID_KEY, order.getId()).build();
+                JsonObjectBuilder reply = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", "Failed to allocate reefers to order")
+                        .add(Constants.ORDER_ID_KEY, order.getId());
+                Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+                        method("reeferBookingFailed").arg(reply.build()).tell();
             }
             // create order to reefers mapping for in-memory cache to reduce latency
             Set<String> rids = orderReefers.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
@@ -536,7 +542,9 @@ public class DepotActor extends BaseActor {
                 logger.fine("DepotActor.bookReefers())- Order:" + order.getId() + " reefer count:"
                         + orderReefers.size());
             }
-            return createReply(rids, order.getAsJsonObject());
+            JsonObject reply = createReply(rids, order.getAsJsonObject());
+            Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+                    method("reefersBooked").arg(reply).tell();
         } catch (Throwable e) {
 
             int actual = 0, bad = 0;
@@ -556,8 +564,10 @@ public class DepotActor extends BaseActor {
                     " - Currently onMaintenance:" + bad +
                     " - Total available (avail + maintenance):"+(actual+bad) +
                     " Order reefers:" + order.getProductQty() / 1000 + " Error ", e);
-            return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
-                    .add(Constants.ORDER_ID_KEY, "").build();
+            JsonObjectBuilder reply = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
+                    .add(Constants.ORDER_ID_KEY, order.getId());
+            Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+                    method("reeferBookingFailed").arg(reply.build()).tell();
         }
     }
 

@@ -21,21 +21,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
-import javax.ws.rs.core.Response;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
+import com.ibm.research.reefer.simulator.SimulatorService.OutstandingOrder;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.ThreadLocalRandom;
-
+// This thread is started for each oneshot, or for each new day if free running
+// For oneshots, the goal is to generate one order for all targeted voyages, as fast as possible
+// When free running, the goal is to generate updatesPerDay orders for all targeted orders, spaced thru day
+//  
 public class OrderSubThread extends Thread {
   boolean running = true;
   int threadloops = 0;
@@ -45,16 +48,20 @@ public class OrderSubThread extends Thread {
   Instant today;
 
   int tnum;
+  OutstandingOrder OO;
   int updatesPerDay;
   AtomicInteger ordersDoneToday;
   boolean oneshot;
 
+  // threadOrdersDone == # orders submitted since thread started
   int threadOrdersDone = 0;
   long totalOrderTime = 0;
   long dayEndTime;
   int expectedOrders;
   boolean startup = true;
   private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderSubThread.class.getName());
+
+  //ordersDoneToday are accumulated across subthreads
     OrderSubThread(int tnum, int updatesPerDay, AtomicInteger ordersDoneToday, boolean oneshot) {
     this.tnum = tnum;
     this.updatesPerDay = updatesPerDay;
@@ -68,6 +75,12 @@ public class OrderSubThread extends Thread {
     //  spread orders evenly across the simulated day
     //  randomize sleep times between orders to try to be out-of-sync with other OrderSubthreads
     try {
+      if (tnum == 1) {
+        OO = SimulatorService.OO_1;
+      }
+      else {
+        OO = SimulatorService.OO_2;
+      }
       // day end time is 98% of unit delay
       dayEndTime = System.currentTimeMillis() + 980 * SimulatorService.unitdelay.intValue();
       List<String> keyList;
@@ -88,7 +101,7 @@ public class OrderSubThread extends Thread {
         String voyage = keyList.get(indirects[i]);
         FutureVoyage entry = (FutureVoyage) SimulatorService.voyageFreeCap.get(voyage);
         if (entry == null) {
-          // new day, voyageFreeCap cleared
+          // new day, voyageFreeCap cleared, stop generating orders for this voyage
           break;
         }
         if (entry.getOrderSize() > 0) {
@@ -99,35 +112,26 @@ public class OrderSubThread extends Thread {
                   .add("customerId", "simulator").add("product", "pseudoBanana")
                   .add("productQty", entry.getOrderSize()).build();
           long ordersnap = System.nanoTime();
-          JsonValue rsp = null;
-
+          String simSequenceID = String.format("%1d%s",tnum,SimulatorService.incrAndGet(Json.createValue(OO.persistKey)));
+          OO.setOO(simSequenceID, ordersnap, OO.pending);
           try {
-            Response response = Kar.Services.post(Constants.REEFERSERVICE, "orders", order);
-            rsp = response.readEntity(JsonValue.class);
+            Kar.Services.post(Constants.REEFERSERVICE, "orders", order);
+            // increment counts of orders submitted
             ordersDoneToday.incrementAndGet();
             threadOrdersDone++;
-          } catch (Exception e) {
-            logger.warning(String.format("ordersubthread%d: error posting order %s", tnum, e.toString()));
-            ordersDoneToday.incrementAndGet();
-            threadOrdersDone++;
-          }
-          if (null == rsp || !Constants.OK.equals(rsp.asJsonObject().getString("bookingStatus"))
-                  || null == rsp.asJsonObject().getString("voyageId")) {
-            SimulatorService.os.addFailed();
-            logger.severe(String.format("ordersubthread%d: bad response when submitting order: %s: %s",
-                                         tnum, order.toString(), rsp));
-          } else {
+            // wait for order async completion message
+            //TODO what happens when thread gets an interrupt? Maybe should stop sending interrupts?
+            OO.wait();
             int otime = (int) ((System.nanoTime() - ordersnap) / 1000000);
             totalOrderTime += otime;
-            if (SimulatorService.os.addSuccessful(otime)) {
-              // orderstats indicates an outlier
-              String orderid = rsp.asJsonObject().getString("orderId");
-              logger.warning(String.format("ordersubthread%d: order latency outlier voyage=%s order=%s ===> %d",
-                                           tnum, voyage, orderid, otime));
-            }
+          } catch (Exception e) {
+            logger.severe(String.format("ordersubthread%d: error posting order %s", tnum, e.toString()));
+            ordersDoneToday.incrementAndGet();
+            threadOrdersDone++;
           }
         }
         // compute next sleep time
+        // No sleep between orders for oneshots
         if (!oneshot && threadOrdersDone > 0 && expectedOrders > threadOrdersDone) {
           long timeToSleep = 10;
           long timeRemaining = dayEndTime - System.currentTimeMillis();
@@ -151,9 +155,7 @@ public class OrderSubThread extends Thread {
       }
      }
     } catch (Throwable e) {
-      // expected
-      // logger.warning("ordersubthread: " + e);
-      // e.printStackTrace();
+      // expected ... terminate subthread when it is interrupted
     }
   }
 }

@@ -45,8 +45,8 @@ import com.ibm.research.kar.reefer.common.ScheduleService;
 
 public class SimulatorService {
 
-  private Map<String, JsonValue> persistentData;
-   private ActorRef aref = Kar.Actors.ref("simhelper", "simservice");
+  private static Map<String, JsonValue> persistentData;
+   private static ActorRef aref = Kar.Actors.ref("simhelper", "simservice");
   public final static AtomicInteger unitdelay = new AtomicInteger(0);
   public final static AtomicInteger shipthreadcount = new AtomicInteger(0);
   public final static AtomicBoolean reeferRestRunning = new AtomicBoolean(true);
@@ -66,6 +66,42 @@ public class SimulatorService {
   private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(SimulatorService.class.getName());
   // keep statistics on simulator orders
   public static OrderStats os = new OrderStats(0);
+  // Class to maintain status of outstanding async orders
+  public static class OutstandingOrder{
+    String corrId;
+    long startTime;
+    String status;
+    public final String persistKey = "nextOrderSeq";
+    public final String pending = "pending";
+    public final String accepted = "accepted";
+    public final String booked = "booked";
+    public final String failed = "failed";
+    void setOO(String cId, long st, String stat) {
+      this.corrId = cId;
+      this.startTime = st;
+      this.status = stat;
+    }
+    void setOOCorrId(String cId) {
+      this.corrId = cId;
+    }
+    void setOOStartTime(long time) {
+      this.startTime = time;
+    }
+    void setOOStatus(String status) {
+      this.status = status;
+    }
+    String getOOCorrId() {
+      return this.corrId;
+    }
+    long getOOStartTime() {
+      return this.startTime;
+    }
+    String getOOStatus() {
+      return this.status;
+    }
+  }
+  public final static OutstandingOrder OO_1 = new OutstandingOrder();
+  public final static OutstandingOrder OO_2 = new OutstandingOrder();
 
   // constructor
   public SimulatorService() {
@@ -78,7 +114,7 @@ public class SimulatorService {
 
   // local utility to retrieve cached value
   // create and fill cache if it is null
-  private JsonValue get(JsonValue key) {
+  private static JsonValue get(JsonValue key) {
     if (null == persistentData) {
       persistentData = new HashMap<String, JsonValue>();
       persistentData.putAll(Kar.Actors.State.getAll(aref));
@@ -88,19 +124,25 @@ public class SimulatorService {
   }
 
   // local utility to update local cache and persistent state
-  private JsonValue set(JsonValue key, JsonValue value) {
+  private static JsonValue set(JsonValue key, JsonValue value) {
     if (null == persistentData) {
       persistentData = new HashMap<String, JsonValue>();
       persistentData.putAll(Kar.Actors.State.getAll(aref));
     }
     persistentData.put(((JsonString) key).getString(), value);
     return Json.createValue(Kar.Actors.State.set(aref, ((JsonString)key).getString(), value));
+  }
 
+  // local utility to increment and return a persistent sequence number
+  synchronized public static JsonNumber incrAndGet(JsonValue key) {
+    JsonNumber current = (JsonNumber) getOrInit(Json.createValue(key.toString()));
+    JsonNumber plusone = (JsonNumber) Json.createValue(1+current.intValue());
+    return (JsonNumber)set(key, (JsonValue)plusone);
   }
 
   // local utility to get or init persistent values
-  private JsonValue getOrInit(JsonValue key) {
-    JsonNumber av = (JsonNumber) this.get(key);
+  private static JsonValue getOrInit(JsonValue key) {
+    JsonNumber av = (JsonNumber) get(key);
     if (av == null) {
       switch (((JsonString)key).getString()) {
         case "ordertarget": av = (JsonNumber) Json.createValue(75); break;
@@ -110,7 +152,7 @@ public class SimulatorService {
         case "reeferupdates": av = (JsonNumber) Json.createValue(10); break;
         default: av = (JsonNumber) Json.createValue(0);
       }
-      this.set(key, av);
+      set(key, av);
     }
     return av;
   }
@@ -398,6 +440,79 @@ public class SimulatorService {
     }
     logger.warning("simulator: createOrder rejected: orderthreadcount=" + orderthreadcount.get());
     return Json.createValue("rejected");
+  }
+
+  // Methods for processing async order status replies
+  private void updateAccepted(OutstandingOrder OO, String corrId) {
+    if (OO.getOOCorrId().equals(corrId) && OO.getOOStatus().equals(OO.pending)) {
+      OO.setOOStatus(OO.accepted);
+    }
+    else {
+      logger.severe(String.format("simulator: invalid update for %s,%s with value %s",
+              OO.getOOCorrId(),OO.getOOStatus(),OO.accepted));
+      OO.notify();
+    }
+  }
+  private void updateBooked(OutstandingOrder OO, String corrId) {
+    if (OO.getOOCorrId().equals(corrId) && OO.getOOStatus().equals(OO.accepted)) {
+      OO.setOOStatus(OO.booked);
+      OO.notify();
+    }
+    else {
+      logger.severe(String.format("simulator: invalid update for %s,%s with value %s",
+              OO.getOOCorrId(),OO.getOOStatus(),OO.booked));
+    }
+  }
+  private void updateFailed(OutstandingOrder OO, String corrId) {
+    if (OO.getOOCorrId().equals(corrId) &&
+            (OO.getOOStatus().equals(OO.pending) || OO.getOOStatus().equals(OO.accepted))) {
+      OO.setOOStatus(OO.failed);
+      OO.notify();
+    }
+    else {
+      logger.severe(String.format("simulator: invalid update for %s,%s with value %s",
+              OO.getOOCorrId(),OO.getOOStatus(),OO.failed));
+    }
+  }
+  /**
+  JsonObjectBuilder b = Json.createObjectBuilder();
+  b.add("status",Json.createValue("accepted")).add("correlationId", Json.createValue("foo")).add("orderId", "id");
+  b.add("status",Json.createValue("booked")).add("correlationId", Json.createValue("foo"));
+  b.add("status",Json.createValue("rejected")).add("correlationId", Json.createValue("foo")).add("reason", "some reason");
+*/
+  // Entry point for async order replies
+  public void orderStatus(JsonValue reply) {
+    try {
+      OutstandingOrder OO;
+      String corrId = ((JsonObject) reply).getString("correlationId");
+      OO = corrId.startsWith("1") ? OO_1 : OO_2;
+      String status = ((JsonObject) reply).getString("status");
+
+      if (status.equalsIgnoreCase("accepted")) {
+        String orderId = ((JsonObject) reply).getString("orderId");
+        logger.fine(String.format("simulator: order %s / %s accepted", orderId, corrId));
+        updateAccepted(OO, corrId);
+      } else if (status.equalsIgnoreCase("booked")) {
+        String orderId = ((JsonObject) reply).getString("orderId");
+        int otime = (int) ((System.nanoTime() - OO.getOOStartTime()) / 1000000);
+//      totalOrderTime += otime;
+        if (SimulatorService.os.addSuccessful(otime)) {
+        // orderstats indicates an outlier
+          //TODO add outlier voyage??
+          logger.warning(String.format("simulator: order latency outlier orderId=%s ===> %d",orderId, otime));
+        }
+        logger.fine(String.format("simulator: order %s / %s booked", orderId, corrId));
+        logger.fine("simulator: order "+corrId+" booked");
+        updateBooked(OO, corrId);
+      } else if (status.equalsIgnoreCase("failed")) {
+        SimulatorService.os.addFailed();
+        logger.warning("simulator: order "+corrId+" failed because: "+((JsonObject) reply).getString("reason"));
+        updateFailed(OO, corrId);
+      }
+    }
+    catch (Exception e) {
+      logger.severe("simulator: orderStatus invalid arguments=" + ((JsonObject) reply).toString());
+    }
   }
 
 

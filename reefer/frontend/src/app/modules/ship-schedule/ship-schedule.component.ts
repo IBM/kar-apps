@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { Component, OnInit, ViewChild, SystemJsNgModuleLoader } from '@angular/core';
+//import { Component, OnInit, ViewChild, SystemJsNgModuleLoader } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import {MatSort, MatSortable} from '@angular/material/sort';
 import { Voyage } from 'src/app/core/models/voyage';

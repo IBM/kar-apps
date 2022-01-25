@@ -261,10 +261,13 @@ public class DepotActor extends BaseActor {
     public JsonValue voyageReefersDeparted(JsonObject message) {
         try {
             String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
+            /*
             String voyageOrderIds = message.getString(Constants.VOYAGE_ORDERS_KEY);
             Set<String> voyageOrders
                     = Stream.of(voyageOrderIds.trim().split("\\s*,\\s*"))
                     .collect(Collectors.toSet());
+
+             */
 
             List<ReeferDTO> voyageReefers = voyageAllocatedReefers(voyageId);
             Set<String> depotOrders = new HashSet<>();
@@ -281,6 +284,7 @@ public class DepotActor extends BaseActor {
                     }
                     builder.append(reefer.getId()).append(",");
                 }
+                /*
                 StringBuilder reefers = new StringBuilder();
                 if ( depotOrders.size() != voyageOrders.size()) {
                     depotOrders.removeAll(voyageOrders);
@@ -292,6 +296,8 @@ public class DepotActor extends BaseActor {
                         }
                     }
                 }
+
+                 */
                 int orderCount = depotOrders.size();
                 // if there is excess of reefers in inventory, transfer some to the voyage to rebalance depots
                 List<ReeferDTO> empties = getEmptyReefersOnExcessInventory(message.getInt(Constants.VOYAGE_FREE_CAPACITY_KEY), voyageId);
@@ -330,7 +336,7 @@ public class DepotActor extends BaseActor {
             }
         } catch (Exception e) {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-            logger.log(Level.SEVERE, "DepotActor.voyageReefersDeparted() - "+getId()+" Error ", stacktrace);
+            logger.log(Level.SEVERE, "DepotActor.voyageReefersDeparted() - "+getId()+" Error ", e);
             e.printStackTrace();
             throw e;
         }

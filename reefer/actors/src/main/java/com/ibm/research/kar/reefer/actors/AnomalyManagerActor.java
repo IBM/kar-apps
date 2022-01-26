@@ -280,8 +280,6 @@ public class AnomalyManagerActor extends BaseActor {
          } else {
             event = "REPLACED";
          }
-         logger.log(Level.WARNING, "AnomalyManagerActor.update() - voyage:"+voyageId+" "+event+" total reefers="+rids.length);
-
          for (String reeferId : rids) {
             if (reefersMap.containsKey(reeferId)) {
                ReeferLocation targetLocation = reefersMap.get(reeferId);

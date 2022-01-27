@@ -29,7 +29,9 @@ import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
+import javax.ws.rs.core.Response;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -58,22 +60,35 @@ public class OrderActor extends BaseActor {
 
 
    }
-/*
    @Remote
-   public JsonObject state() {
-
+   public void orderBooked(JsonObject voyageBookingResult) {
       try {
-         if (order == null) {
-            activate();
+         if (logger.isLoggable(Level.INFO)) {
+            logger.info(String.format("OrderActor.orderBooked() - orderId: %s VoyageActor reply: %s", getId(), voyageBookingResult));
          }
-         return order.getAsJsonObject();
+         // Check if voyage has been booked
+         if (voyageBookingResult.containsKey(Constants.STATUS_KEY) && voyageBookingResult.getString(Constants.STATUS_KEY).equals(Constants.OK)) {
+            order.setDepot(voyageBookingResult.getString(Constants.DEPOT_KEY));
+            Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
+            messageOrderManager("orderBooked");
+         } else {
+            Kar.Actors.remove(this);
+         }
+         Kar.Services.post(Constants.REEFERSERVICE, "order/booked", voyageBookingResult);
       } catch (Exception e) {
-         logger.log(Level.SEVERE,"OrderActor.state()", e);
-         throw e;
+         logger.log(Level.WARNING, "OrderActor.orderBooked() - Error - orderId " + getId() + " ", e);
+         Kar.Actors.remove(this);
+         JsonObjectBuilder bookingError = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
+                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId()));
+         bookingFailed(bookingError.build());
       }
+   }
+
+   @Remote
+   public void bookingFailed(JsonObject message) {
 
    }
-*/
+
    /**
     * Called to book a new order using properties included in the message. Calls the VoyageActor
     * to allocate reefers and a ship to carry them.

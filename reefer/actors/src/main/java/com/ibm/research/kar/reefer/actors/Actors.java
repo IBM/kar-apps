@@ -41,6 +41,7 @@ public final class Actors {
    }
    interface Arg {
       Invoke arg(JsonValue value);
+      Invoke arg();
    }
    interface Invoke {
       void tell();
@@ -50,7 +51,7 @@ public final class Actors {
    public static class Builder implements Target,Method,Arg,Invoke {
       private ActorRef actor;
       private String method;
-      private JsonValue value;
+      private JsonValue value=null;
 
       private Builder() {}
 
@@ -73,14 +74,26 @@ public final class Actors {
          this.value = value;
          return this;
       }
-
+      @Override
+      public Invoke arg() {
+         return this;
+      }
       @Override
       public void tell() {
-         Kar.Actors.tell(actor, method, value);
+         if ( value != null ) {
+            Kar.Actors.tell(actor, method, value);
+         } else {
+            Kar.Actors.tell(actor, method);
+         }
       }
       @Override
       public JsonValue call() {
-         return Kar.Actors.call(actor, method, value);
+         if ( value != null ) {
+            return Kar.Actors.call(actor, method, value);
+         } else {
+            return Kar.Actors.call(actor, method);
+         }
+
       }
    }
 

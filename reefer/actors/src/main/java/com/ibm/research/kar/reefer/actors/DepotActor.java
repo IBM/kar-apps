@@ -517,6 +517,7 @@ public class DepotActor extends BaseActor {
                         .add(Constants.ORDER_ID_KEY, order.getId());
                 Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
                         method("reeferBookingFailed").arg(reply.build()).tell();
+                return;
             }
             if ( orderReefers.isEmpty() ) {
                 logger.warning("DepotActor.bookReefers - "+getId()+

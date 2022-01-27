@@ -148,7 +148,16 @@ public class OrderController {
         }
         return orderProperties;
     }
-
+    /**
+     * Returns a list of voyages that are currently at sea
+     *
+     * @return
+     */
+    @GetMapping("/orders/booked")
+    public List<Order> getActiveOrderList() {
+        JsonValue reply = Kar.Actors.call(orderMgrActor, "ordersInTransit");
+        return reply.asJsonArray().stream().map(Order::new).collect(Collectors.toList());
+    }
     /**
      * Returns a list of voyages that are currently at sea
      *

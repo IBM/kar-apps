@@ -30,10 +30,9 @@ Reefer includes an automated fault driver that randomly kills and restarts k3d a
    * first run `[kar-install-dir]/scripts/docker-compose-stop.sh` as the kar system components run in kubernetes.
    * if deploying locally built reefer images, push them to a repo running at localhost:5000 and leave out the override of kar.imagePrefix 
  * Deploy the KAR Runtime System to the kar-system namespace: `[kar-install-dir]/scripts/kar-k8s-deploy.sh`  
-   * On k3d ```[kar-install-dir]/scripts/kar-k8s-deploy.sh --set global.affinity=true```
+   * If using k3d: ```[kar-install-dir]/scripts/kar-k8s-deploy.sh --set global.affinity=true```
 
-## Deploy reefer using helm from directory  
-```[kar-apps-install-dir]/reefer```
+## Deploy reefer using helm from directory: ```[kar-apps-install-dir]/reefer```
 
 ### To deploy on `Docker Desktop`
 ```shell
@@ -45,7 +44,7 @@ helm install reefer chart --set kar.imagePrefix=quay.io/ibm
 helm install reefer chart --set kar.imagePrefix=quay.io/ibm --set ingress.pathBased=true
 ```
 
-## To deploy on `k3d`
+### To deploy on `k3d`
 ```shell
 helm install reefer chart --set kar.imagePrefix=quay.io/ibm --set ingress.pathBased=true --set global.affinity=true
 ```

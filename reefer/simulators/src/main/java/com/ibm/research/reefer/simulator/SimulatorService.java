@@ -448,18 +448,22 @@ public class SimulatorService {
       OO.setOOStatus(OO.accepted);
     }
     else {
-      logger.severe(String.format("simulator: invalid update for %s,%s with value %s",
+      logger.severe(String.format("simulator updateAccepted: invalid update for %s,%s with value %s",
               OO.getOOCorrId(),OO.getOOStatus(),OO.accepted));
-      OO.notify();
+      synchronized (OO) {
+        OO.notify();
+      }
     }
   }
   private void updateBooked(OutstandingOrder OO, String corrId) {
     if (OO.getOOCorrId().equals(corrId) && OO.getOOStatus().equals(OO.accepted)) {
       OO.setOOStatus(OO.booked);
-      OO.notify();
+      synchronized (OO) {
+        OO.notify();
+      }
     }
     else {
-      logger.severe(String.format("simulator: invalid update for %s,%s with value %s",
+      logger.severe(String.format("simulator updateBooked(): invalid update for %s,%s with value %s",
               OO.getOOCorrId(),OO.getOOStatus(),OO.booked));
     }
   }
@@ -467,10 +471,12 @@ public class SimulatorService {
     if (OO.getOOCorrId().equals(corrId) &&
             (OO.getOOStatus().equals(OO.pending) || OO.getOOStatus().equals(OO.accepted))) {
       OO.setOOStatus(OO.failed);
-      OO.notify();
+      synchronized (OO) {
+        OO.notify();
+      }
     }
     else {
-      logger.severe(String.format("simulator: invalid update for %s,%s with value %s",
+      logger.severe(String.format("simulator updateFailed(): invalid update for %s,%s with value %s",
               OO.getOOCorrId(),OO.getOOStatus(),OO.failed));
     }
   }

@@ -121,7 +121,11 @@ public class OrderSubThread extends Thread {
             threadOrdersDone++;
             // wait for order async completion message
             //TODO what happens when thread gets an interrupt? Maybe should stop sending interrupts?
-            OO.wait();
+            synchronized (OO) {
+              try {
+                OO.wait();
+              } catch( InterruptedException e) {}
+            }
             int otime = (int) ((System.nanoTime() - ordersnap) / 1000000);
             totalOrderTime += otime;
           } catch (Exception e) {

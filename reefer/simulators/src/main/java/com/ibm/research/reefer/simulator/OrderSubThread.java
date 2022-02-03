@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.json.Json;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 
@@ -108,11 +109,15 @@ public class OrderSubThread extends Thread {
           if (logger.isLoggable(Level.FINE)) {
             logger.fine(String.format("ordersubthread%d: create order size=%d for %s", tnum ,entry.getOrderSize(), voyage));
           }
+          JsonValue sid = SimulatorService.incrAndGet(Json.createValue(OO.persistKey));
+          String simSequenceID = String.format("%1d%d",tnum,((JsonNumber)sid).intValue()); //SimulatorService.incrAndGet(Json.createValue(OO.persistKey)));
+          System.out.println("OrderSubThread ---------------- threadId:"+Thread.currentThread().getId()+" tnum:"+tnum+" simSequenceID:"+simSequenceID+" sid:"+sid+" OO.hashCode:"+OO.hashCode());
           JsonObject order = Json.createObjectBuilder().add("voyageId", voyage)
                   .add("customerId", "simulator").add("product", "pseudoBanana")
-                  .add("productQty", entry.getOrderSize()).build();
+                  .add("productQty", entry.getOrderSize())
+                  .add(Constants.CORRELATION_ID_KEY, simSequenceID).
+                  build();
           long ordersnap = System.nanoTime();
-          String simSequenceID = String.format("%1d%s",tnum,SimulatorService.incrAndGet(Json.createValue(OO.persistKey)));
           OO.setOO(simSequenceID, ordersnap, OO.pending);
           try {
             Kar.Services.post(Constants.REEFERSERVICE, "orders", order);
@@ -129,7 +134,7 @@ public class OrderSubThread extends Thread {
             int otime = (int) ((System.nanoTime() - ordersnap) / 1000000);
             totalOrderTime += otime;
           } catch (Exception e) {
-            logger.severe(String.format("ordersubthread%d: error posting order %s", tnum, e.toString()));
+            logger.severe(String.format("ordersubthread%d: error posting order %s correlationId", tnum, e.toString(), simSequenceID));
             ordersDoneToday.incrementAndGet();
             threadOrdersDone++;
           }

@@ -74,7 +74,8 @@ saveOrder( order: OrderProperties)  {
   let headers = new Headers({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
   const options = { header: headers, params: new HttpParams({}) };
   console.log("rest.service.ts - saveOrder()");
-  return this.httpClient.post<OrderProperties>(this.REST_API_SERVER+'/orders',order,options).pipe(retry(3), catchError(this.handleError));
+  return this.httpClient.post<string>(this.REST_API_SERVER+'/orders',order,options).pipe(retry(0), catchError(this.handleError));
+   // return this.httpClient.post<OrderProperties>(this.REST_API_SERVER+'/orders',order,options).pipe(retry(3), catchError(this.handleError));
 }
 
 
@@ -303,7 +304,7 @@ generateAnomaly() {
       // Server-side errors
       errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
     }
-    console.log('Error');
+    console.log('Error::'+errorMessage);
     window.alert(errorMessage);
     return throwError(errorMessage);
   }

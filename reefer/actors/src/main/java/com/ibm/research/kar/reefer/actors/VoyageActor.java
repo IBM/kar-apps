@@ -70,12 +70,8 @@ public class VoyageActor extends BaseActor {
                     add(Constants.VOYAGE_ID_KEY, getId()).add(Constants.VOYAGE_ID_KEY, getId()).
                     build();
             // fetch voyage details
-            //ActorRef scheduleManager = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-           // JsonValue jv = Kar.Actors.call(scheduleManager, "voyage", Json.createValue(getId()));
-
             JsonValue jv = Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                     method("voyage").arg(Json.createValue(getId())).call();
-
             voyageInfo = jv.asJsonObject();
             // check if voyage already arrived in which case the progress attribute would be 100. It's possible that
             // the arrived voyage would be called with an anomaly
@@ -198,7 +194,6 @@ public class VoyageActor extends BaseActor {
                      jb.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, emptyReefers);
                   }
                } else {  // voyage in transit
-                  //messageSchedulerActor("positionChanged", voyage);
                   Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                           method("positionChanged").arg(VoyageJsonSerializer.serialize(voyage)).tell();
                }
@@ -236,12 +231,8 @@ public class VoyageActor extends BaseActor {
             // switch anomaly mgr target from voyage to depot
             job.add(Constants.REEFER_ID_KEY, message.getJsonNumber(Constants.REEFER_ID_KEY)).
                     add(Constants.TARGET_KEY, Constants.DEPOT_TARGET_TYPE);
-           // ActorRef anomalyManagerActor = Kar.Actors.ref(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId);
-          //  Kar.Actors.tell(anomalyManagerActor, "reeferAnomaly", job.build());
-
             Actors.Builder.instance().target(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId).
                     method("reeferAnomaly").arg(job.build()).tell();
-
             return;
          }
          if ( !reefer2OrderMap.containsKey(spoiltReeferId)) {
@@ -268,12 +259,8 @@ public class VoyageActor extends BaseActor {
                JsonValue jv = orders.get(orderId).asJsonObject();
                Order order = new Order(orders.get(orderId).asJsonObject().getJsonObject(JsonOrder.OrderKey));
                order.setSpoilt(true);
-               //ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
-               //Kar.Actors.call(orderManagerActor, "orderSpoilt", order.getAsJsonObject());
-
                Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                        method("orderSpoilt").arg(order.getAsJsonObject()).call();
-
             }
 
             Map<String, JsonValue> actorStateMap = new HashMap<>();
@@ -292,8 +279,6 @@ public class VoyageActor extends BaseActor {
       try {
           // convenience wrapper for DepotActor json reply
          DepotReply reply = new DepotReply(message);
-
-         if (reply.success()) {
             logger.info("VoyageActor.reefersBooked() - voyageId:" + getId() + " orderId:" + reply.getOrderId() + " booked - reefers:"
                     + reply.getReefers().size());
 
@@ -314,20 +299,12 @@ public class VoyageActor extends BaseActor {
             save(reply, message);
             Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                     method("updateVoyage").arg(VoyageJsonSerializer.serialize(voyage)).tell();
-            //// SUCCESS
+             //// SUCCESS
             JsonObject booking = buildResponse(reply.getOrder(), voyage.getRoute().getVessel().getFreeCapacity());
             Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, reply.getOrderId()).
                     method("orderBooked").arg(booking).tell();
-         } else {
-            logger.info("VoyageActor.reefersBooked() - voyageId:" + getId() + " orderId:" + reply.getOrderId() + " booking failed "
-                    + message);
-
-            //// FAILURE
-            reeferBookingFailed(message);
-         }
-
       } catch( Exception e) {
-         logSevereError("reefersBooked()", e);
+         logSevereError("VoyageActor.reefersBooked()", e);
       }
 
    }
@@ -336,7 +313,7 @@ public class VoyageActor extends BaseActor {
       try {
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, message.getString(Constants.ORDER_ID_KEY)).
                  method("orderFailed").arg(message).tell();
-      } catch( Exception e) {
+       } catch( Exception e) {
          logSevereError("reeferBookingFailed()", e);
       }
    }
@@ -372,12 +349,12 @@ public class VoyageActor extends BaseActor {
          // this order has already been processed so return result
          if (booking.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
             JsonObject status = buildResponse(order.getAsJsonObject(), voyage.getRoute().getVessel().getFreeCapacity());
-            Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
+           Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                     method("orderBooked").arg(status).tell();
          } else {
             Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                     method("orderFailed").arg(booking).tell();
-         }
+          }
          return true;
       }
       return false;
@@ -423,19 +400,19 @@ public class VoyageActor extends BaseActor {
    public void reserve(JsonObject message) {
       // wrapper around Json
       Order order = new Order(message);
+      logger.info("VoyageActor.reserve() - voyageId:"+getId()+" - message:"+message);
+
       try {
          if ( !validateAndContinue(order, message)) {
             return;
          }
-         //Kar.Actors.tell(Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())),
-          //       "bookReefers", message);
-         Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
+          Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
                  method("bookReefers").arg(message).tell();
       } catch (Exception e) {
          logSevereError("reserve()", e);
          JsonObjectBuilder job = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                  .add(Constants.ORDER_ID_KEY, this.getId());
-         Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
+        Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                  method("orderFailed").arg(job.build()).tell();
       }
    }
@@ -459,7 +436,6 @@ public class VoyageActor extends BaseActor {
    private JsonObject buildResponse(final JsonObject order, final int freeCapacity) {
       return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
               .add(JsonOrder.OrderKey, order)
-              .add(Constants.DEPOT_KEY, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort()))
               .add(Constants.VOYAGE_FREE_CAPACITY_KEY, freeCapacity)
               .build();
    }
@@ -483,9 +459,7 @@ public class VoyageActor extends BaseActor {
             reeferAnomaly(message);
             return;
          }
-        // ActorRef depotActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort()));
-       //  JsonValue reply = Kar.Actors.call(depotActor, "reeferReplace",message);
-         JsonValue reply = Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
+          JsonValue reply = Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
                  method("reeferReplace").arg(message).call();
 
          if ( !reply.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
@@ -573,22 +547,13 @@ public class VoyageActor extends BaseActor {
 	         if ( emptyReefers != null ) {
 	            job.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, emptyReefers);
 	         }
-           // Kar.Actors.call(Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())),
-           //         "voyageReefersArrived", job.build());
             Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())).
                     method("voyageReefersArrived").arg(job.build()).call();
-
          }
-
-      //   messageSchedulerActor("voyageArrived", voyage);
          Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                  method("voyageArrived").arg(VoyageJsonSerializer.serialize(voyage)).tell();
-
-         // ActorRef orderManagerActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
-       //  Kar.Actors.call(orderManagerActor, "ordersArrived", voyageOrderIds);
-         Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
+          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                  method("ordersArrived").arg(voyageOrderIds).call();
-
          orders.keySet().forEach(orderId -> {
             notifyVoyageOrder(orderId, Order.OrderStatus.DELIVERED, "delivered");
          });
@@ -605,14 +570,10 @@ public class VoyageActor extends BaseActor {
     */
    private void processDepartingVoyage(final Voyage voyage) {
       try {
-        // ActorRef depotActor = Kar.Actors.ref(ReeferAppConfig.DepotActorType,
-        //         DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort()));
          JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).
                  add(Constants.VOYAGE_REEFERS_KEY, Json.createValue(voyage.getReeferCount())).
                  add(Constants.VOYAGE_FREE_CAPACITY_KEY, Json.createValue(voyage.getRoute().getVessel().getFreeCapacity())).
                  build();
-         //JsonValue reply = Kar.Actors.call(depotActor, "voyageReefersDeparted", params);
-
          JsonValue reply = Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
                  method("voyageReefersDeparted").arg(params).call();
 
@@ -632,10 +593,8 @@ public class VoyageActor extends BaseActor {
          logger.info("VoyageActor.processDepartingVoyage() - voyageId:"+getId()+" Departure from "+voyage.getRoute().getOriginPort() +" empties count:"+emptiesCount+" emptyReefersMap.size():"+emptyReefersMap.size());
          voyage.updateFreeCapacity(emptiesCount);
          voyage.setReeferCount(voyage.getReeferCount()+emptiesCount);
-         //messageSchedulerActor("voyageDeparted", voyage);
          Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                  method("voyageDeparted").arg(VoyageJsonSerializer.serialize(voyage)).tell();
-
          orders.keySet().forEach(orderId -> {
             notifyVoyageOrder(orderId, Order.OrderStatus.INTRANSIT, "departed");
          });
@@ -653,10 +612,8 @@ public class VoyageActor extends BaseActor {
       Order order = new Order(booking.asJsonObject().getJsonObject(Constants.ORDER_KEY));
       if (!orderStatus.name().equals(order.getStatus())) {
          try {
-            //messageOrderActor(methodName, orderId);
             Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, orderId).
                     method(methodName).arg().call();
-
          } catch (Exception orderActorException) {
             // KAR sometimes fails to locate order actor instance even though it exists in REDIS. This can happen
             // after process restart
@@ -694,15 +651,6 @@ public class VoyageActor extends BaseActor {
          Kar.Actors.State.Submap.set(this, Constants.VOYAGE_ORDERS_KEY, order.getId(), jo);
       }
    }
-
-/*
-   private void messageSchedulerActor(String methodToCall, Voyage voyage) {
-      ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-      JsonObject jo = VoyageJsonSerializer.serialize(voyage);
-      Kar.Actors.tell(scheduleActor, methodToCall, jo);
-   }
-
- */
 
    /**
     * Converts voyage status from JsonValue to VoyageStatus

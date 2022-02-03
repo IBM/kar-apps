@@ -18,8 +18,13 @@ package com.ibm.research.kar.reefer.model;
 
 import com.ibm.research.kar.reefer.common.Constants;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+
 public class OrderProperties {
     String orderId;
+    String sessionId;
     String customerId;
     String product;
     String originPort;
@@ -30,33 +35,41 @@ public class OrderProperties {
     String msg;
     int productQty;
 
-    public OrderProperties() {
-    }
+   public OrderProperties() {
+   }
 
-    public OrderProperties(String product, int productQty, String voyageId) {
-        this.product = product;
-        this.productQty = productQty;
-        this.voyageId = voyageId;
-    }
+   public OrderProperties(JsonObject jo ) {
+      try {
+         if ( jo.containsKey(Constants.ORDER_ID_KEY)) {
+            this.orderId = jo.getString(Constants.ORDER_ID_KEY);
+         }
+         this.sessionId = jo.getString(Constants.CORRELATION_ID_KEY);
+         this.customerId = jo.getString(Constants.ORDER_CUSTOMER_ID_KEY);
+         this.product = jo.getString(Constants.ORDER_PRODUCT_KEY);
+         this.productQty = jo.getInt(Constants.ORDER_PRODUCT_QTY_KEY);
+         this.voyageId = jo.getString(Constants.VOYAGE_ID_KEY);
+         //this.date = jo.getString(Constants.ORDER_DATE_KEY);
+         this.originPort = jo.getString(Constants.ORDER_ORIGIN_KEY);
+         this.destinationPort = jo.getString(Constants.ORDER_DESTINATION_KEY);
+      } catch( Exception e) {
 
-    public String getMsg() {
-        return msg;
-    }
+         System.out.println("OrderProperties CTOR Failed");
+         e.printStackTrace();
+      }
 
-    public OrderProperties setMsg(String msg) {
-        this.msg = msg;
-        return this;
-    }
+   }
 
-    public String getBookingStatus() {
-        return bookingStatus;
+    public JsonObject getAsJsonObject() {
+        JsonObjectBuilder orderPropertiesBuilder = Json.createObjectBuilder();
+        orderPropertiesBuilder.add(Constants.CORRELATION_ID_KEY, getCorrelationId()).
+                add(Constants.VOYAGE_ID_KEY, getVoyageId()).
+                add(Constants.ORDER_PRODUCT_KEY, getProduct()).
+                add(Constants.ORDER_PRODUCT_QTY_KEY, getProductQty()).
+                add(Constants.ORDER_CUSTOMER_ID_KEY, getCustomerId()).
+                add(Constants.ORDER_ORIGIN_KEY, getOriginPort()).
+                add(Constants.ORDER_DESTINATION_KEY, getDestinationPort());
+        return orderPropertiesBuilder.build();
     }
-
-    public OrderProperties setBookingStatus(String bookingStatus) {
-        this.bookingStatus = bookingStatus;
-        return this;
-    }
-
     public String getProduct() {
         return product;
     }
@@ -89,13 +102,13 @@ public class OrderProperties {
         this.originPort = originPort;
     }
 
-    public String getDestinationPort() {
-        return destinationPort;
-    }
-
     public void setDestinationPort(String destinationPort) {
         this.destinationPort = destinationPort;
     }
+
+   public String getDestinationPort() {
+      return this.destinationPort ;
+   }
 
     public String getOrderId() {
         return orderId;
@@ -105,7 +118,12 @@ public class OrderProperties {
         this.orderId = orderId;
         return this;
     }
-
+    public void setCorrelationId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+    public String getCorrelationId() {
+        return this.sessionId;
+    }
     public String getDate() {
         return date;
     }

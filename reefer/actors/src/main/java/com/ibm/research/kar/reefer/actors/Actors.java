@@ -33,17 +33,17 @@ public final class Actors {
    }
 
 
-   interface Target {
+   public interface Target {
       Method target(String targetType, String targetId);
    }
-   interface Method {
+   public interface Method {
       Arg method(String name);
    }
-   interface Arg {
+   public interface Arg {
       Invoke arg(JsonValue value);
       Invoke arg();
    }
-   interface Invoke {
+   public interface Invoke {
       void tell();
       JsonValue call();
    }
@@ -96,6 +96,8 @@ public final class Actors {
 
       }
    }
+
+
 
 
 

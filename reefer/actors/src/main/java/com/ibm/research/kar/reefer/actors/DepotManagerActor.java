@@ -118,7 +118,7 @@ public class DepotManagerActor extends BaseActor {
         Shard shard = new Shard(beginRange, beginRange + (paddedSize-1));
         depot.addShard(shard);
         logger.info("DepotManager.assignShardToDepot() - Depot:"+depot.getId()+" size:"+depot.getSize()+" ship:"+shipName+
-                " shard low:"+shard.getLowerBound()+" shard up:"+shard.getUpperBound());
+                " shard low range:"+shard.getLowerBound()+" shard high range:"+shard.getUpperBound());
 
         return Long.valueOf(paddedSize).intValue();
     }

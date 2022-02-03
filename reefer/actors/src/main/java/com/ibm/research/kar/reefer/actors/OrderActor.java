@@ -24,6 +24,7 @@ import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
+import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 
@@ -31,7 +32,6 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
-import javax.ws.rs.core.Response;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,8 +57,6 @@ public class OrderActor extends BaseActor {
       } catch (Exception e) {
          logger.log(Level.SEVERE,"OrderActor.activate()", e);
       }
-
-
    }
    @Remote
    public void orderBooked(JsonObject voyageBookingResult) {
@@ -66,26 +64,23 @@ public class OrderActor extends BaseActor {
          if (logger.isLoggable(Level.INFO)) {
             logger.info(String.format("OrderActor.orderBooked() - orderId: %s VoyageActor reply: %s", getId(), voyageBookingResult));
          }
-         // Check if voyage has been booked
-         if (voyageBookingResult.containsKey(Constants.STATUS_KEY) && voyageBookingResult.getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-            order.setDepot(voyageBookingResult.getString(Constants.DEPOT_KEY));
-            Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
-            messageOrderManager("orderBooked");
-         } else {
-            Kar.Actors.remove(this);
-         }
-         Kar.Services.post(Constants.REEFERSERVICE, "order/booked", voyageBookingResult);
+         order.setStatus(OrderStatus.BOOKED.name());
+         Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
+         Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
+                    method("orderBooked").arg(order.getAsJsonObject()).tell();
       } catch (Exception e) {
          logger.log(Level.WARNING, "OrderActor.orderBooked() - Error - orderId " + getId() + " ", e);
-         Kar.Actors.remove(this);
-         JsonObjectBuilder bookingError = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
-                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId()));
-         bookingFailed(bookingError.build());
+         order.setMsg(e.getMessage());
+         bookingFailed(order.getAsJsonObject());
       }
    }
 
    @Remote
-   public void bookingFailed(JsonObject message) {
+   public void bookingFailed(JsonObject bookingStatus) {
+      Kar.Actors.remove(this);
+      Order failedOrder = new Order(bookingStatus);
+      Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
+              method("orderFailed").arg(failedOrder.getAsJsonObject()).tell();
 
    }
 
@@ -97,51 +92,35 @@ public class OrderActor extends BaseActor {
     * @return
     */
    @Remote
-   public JsonObject createOrder(JsonObject message) {
+   public void createOrder(JsonObject message) {
       // Idempotence test. Check if this order has already been booked.
       if (order != null && OrderStatus.BOOKED.name().equals(order.getStatus())) {
-         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
-                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
+         JsonObjectBuilder bookingStatus =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
+                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId()));
+         Kar.Services.post(Constants.REEFERSERVICE, "/orders/booking/success", bookingStatus.build());
       }
       try {
+         logger.log(Level.INFO, "OrderActor.createOrder() - orderId:" +getId() + " message:", message);
          // Java wrapper around Json payload
          order = new Order(message);
          // Call Voyage actor to book the voyage for this order. This call also
          // reserves reefers
-         JsonObject voyageBookingResult = bookVoyage(order);
-         if (logger.isLoggable(Level.FINE)) {
-            logger.fine(String.format("OrderActor.createOrder() - orderId: %s VoyageActor reply: %s", getId(), voyageBookingResult));
-         }
-         // Check if voyage has been booked
-         if (voyageBookingResult.containsKey(Constants.STATUS_KEY) && voyageBookingResult.getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-            order.setDepot(voyageBookingResult.getString(Constants.DEPOT_KEY));
-            Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
-            messageOrderManager("orderBooked");
-         } else {
-            Kar.Actors.remove(this);
-         }
-         return voyageBookingResult;
-      } catch (Exception e) {
+         Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+                 method("reserve").arg(order.getAsJsonObject()).tell();
+       } catch (Exception e) {
          logger.log(Level.WARNING, "OrderActor.createOrder() - Error - orderId " + getId() + " ", e);
-         Kar.Actors.remove(this);
-         return Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
-                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
+         order.setMsg(e.getMessage());
+         bookingFailed(order.getAsJsonObject());
       }
    }
-
-   private void messageOrderManager(String methodToCall) {
-      ActorRef orderMgrActor = Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId);
-      Kar.Actors.tell(orderMgrActor, methodToCall, order.getAsJsonObject());
-   }
-
    @Remote
    public void replaceReefer(JsonObject message) {
       if ( order == null ) {
          Kar.Actors.remove(this);
          return;
       }
-      ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId());
-      Kar.Actors.tell(voyageActor, "replaceReefer", message);
+      Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+              method("replaceReefer").arg(message).tell();
    }
 
    /**
@@ -167,7 +146,8 @@ public class OrderActor extends BaseActor {
                  .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).add("ERROR","Order Already Arrived").build();
       }
       if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
-         messageOrderManager("orderDeparted");
+         Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
+                 method("orderDeparted").arg(order.getAsJsonObject()).tell();
          saveOrderStatusChange(OrderStatus.INTRANSIT);
       }
       return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
@@ -175,21 +155,7 @@ public class OrderActor extends BaseActor {
    }
 
    private void saveOrderStatusChange(OrderStatus state) {
-
       order.setStatus(state.name());
       Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
    }
-
-   /**
-    * Called to book voyage for this order by messaging Voyage actor.
-    *
-    * @param order Json encoded order properties
-    * @return The voyage booking result
-    */
-   private JsonObject bookVoyage(Order order) {
-      ActorRef voyageActor = Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId());
-      return Kar.Actors.call(voyageActor, "reserve", order.getAsJsonObject()).asJsonObject();
-   }
-
-
 }

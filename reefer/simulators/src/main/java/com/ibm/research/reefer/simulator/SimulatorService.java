@@ -118,26 +118,26 @@ public class SimulatorService {
     if (null == persistentData) {
       persistentData = new HashMap<String, JsonValue>();
       persistentData.putAll(Kar.Actors.State.getAll(aref));
-
     }
     return persistentData.get(((JsonString) key).getString());
   }
 
   // local utility to update local cache and persistent state
-  private static JsonValue set(JsonValue key, JsonValue value) {
+  private static void set(JsonValue key, JsonValue value) {
     if (null == persistentData) {
-      persistentData = new HashMap<String, JsonValue>();
+      persistentData = new HashMap<>();
       persistentData.putAll(Kar.Actors.State.getAll(aref));
     }
     persistentData.put(((JsonString) key).getString(), value);
-    return Json.createValue(Kar.Actors.State.set(aref, ((JsonString)key).getString(), value));
+    Kar.Actors.State.set(aref, ((JsonString)key).getString(), value);
   }
 
   // local utility to increment and return a persistent sequence number
   synchronized public static JsonNumber incrAndGet(JsonValue key) {
-    JsonNumber current = (JsonNumber) getOrInit(Json.createValue(key.toString()));
+    JsonNumber current = (JsonNumber) getOrInit(key);   
     JsonNumber plusone = (JsonNumber) Json.createValue(1+current.intValue());
-    return (JsonNumber)set(key, (JsonValue)plusone);
+    set(key, plusone);
+    return plusone;
   }
 
   // local utility to get or init persistent values
@@ -448,8 +448,8 @@ public class SimulatorService {
       OO.setOOStatus(OO.accepted);
     }
     else {
-      logger.severe(String.format("simulator updateAccepted: invalid update for %s,%s with value %s",
-              OO.getOOCorrId(),OO.getOOStatus(),OO.accepted));
+      logger.severe(String.format("simulator updateAccepted: invalid update for %s,%s with value %s corrId:%s OO.hashCode():%s",
+              OO.getOOCorrId(),OO.getOOStatus(),OO.accepted, corrId, OO.hashCode()));
       synchronized (OO) {
         OO.notify();
       }
@@ -463,8 +463,8 @@ public class SimulatorService {
       }
     }
     else {
-      logger.severe(String.format("simulator updateBooked(): invalid update for %s,%s with value %s",
-              OO.getOOCorrId(),OO.getOOStatus(),OO.booked));
+      logger.severe(String.format("simulator updateBooked(): invalid update for %s,%s with value %s corrId:%s OO.hashCode():%s",
+              OO.getOOCorrId(),OO.getOOStatus(),OO.booked, corrId, OO.hashCode()));
     }
   }
   private void updateFailed(OutstandingOrder OO, String corrId) {

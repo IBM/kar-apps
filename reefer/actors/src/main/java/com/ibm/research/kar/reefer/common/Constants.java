@@ -60,10 +60,12 @@ public class Constants {
    public static final String ANOMALY_ORIGIN_KEY="anomaly-origin";
    public static final String ANOMALY_TARGET_TYPE_KEY="anomaly-target_type";
    public static final String ORDER_ID_KEY="orderId";
+   public static final String CORRELATION_ID_KEY="correlationId";
    public static final String ORDERS_KEY="orders";
    public static final String ORDER_REEFERS_KEY="order-reefers";
    public static final String ORDER_METRICS_KEY="order-metrics";
    public static final String ORDER_KEY="order";
+   public static final String ORDER_MESSAGE_KEY="order-message";
    public static final String ORDER_DATE_KEY="date";
    public static final String ORDER_SPOILT_KEY="spoilt";
    public static final String ORDER_ALREADY_SPOILT_KEY="spoilt-already";
@@ -76,6 +78,8 @@ public class Constants {
    public static final String SCHEDULE_END_DATE_KEY="schedule-end-date";
    public static final String ORDER_BOOKING_STATUS_KEY="booking-status";
    public static final String VOYAGE_ORDER_MAP_KEY="voyage-order-map";
+   public static final String ORDER_ORIGIN_KEY="order-origin";
+   public static final String ORDER_DESTINATION_KEY="order-destination";
 
    // each reefer can hold up to 1000 product units. Simplification is that
    // each product unit has the same size.
@@ -97,9 +101,10 @@ public class Constants {
    public static final String OK="OK";
    public static final String FAILED="Failed";
    public static final String ERROR="error";
-
+   public static final String REASON_KEY="reason";
+   public static final String REJECTED_KEY="rejected";
    public static final String SIMSERVICE="simservice";
    public static final String REEFERSERVICE="reeferservice";
-
+   public static final String CLIENT_TYPE="client-type";
    public static final String REEFER_DEPOT_SUFFIX="ReeferDepot";
 }

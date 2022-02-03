@@ -48,6 +48,7 @@ public class Order {
     };
 
     String id;
+    String correlationId;
     String customerId;
     String product;
     int productQty;
@@ -56,25 +57,20 @@ public class Order {
     String date;
     boolean spoilt;
     String depot;
+    String msg;
 
     public Order(OrderProperties orderProperties) {
-        this(orderProperties.getCustomerId(),orderProperties.getProduct(),
+        this(orderProperties.getCorrelationId(),orderProperties.getCustomerId(),orderProperties.getProduct(),
             orderProperties.getProductQty(),orderProperties.getVoyageId(),
             OrderStatus.PENDING.getLabel(),new ArrayList<>());
-        orderProperties.setOrderId(getId());
-    }
-    /*
-    public Order(OrderDTO dto) {
-        this(dto.getId(), dto.getCustomerId(), dto.getProduct(), 
-        dto.getProductQty(), dto.getVoyageId(), dto.getStatus(), new ArrayList<String>());
     }
 
-     */
     public Order(JsonValue jo ) {
         this(jo.asJsonObject());
     }
     public Order(JsonObject jo ) {
         this.id = jo.getString(Constants.ORDER_ID_KEY);
+        this.correlationId = jo.getString(Constants.CORRELATION_ID_KEY);
         this.customerId = jo.getString(Constants.ORDER_CUSTOMER_ID_KEY);
         this.product = jo.getString(Constants.ORDER_PRODUCT_KEY);
         this.productQty = jo.getInt(Constants.ORDER_PRODUCT_QTY_KEY);
@@ -85,23 +81,13 @@ public class Order {
         if ( jo.containsKey(Constants.DEPOT_KEY)) {
             this.depot = jo.getString(Constants.DEPOT_KEY);
         }
-    }
-/*
-    public Order( String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
-//        this(String.valueOf(Instant.now().toEpochMilli()), customerId, product, productQty, voyageId, status,reeferIds);
-        //this(UUID.randomUUID().toString(), customerId, product, productQty, voyageId, status,reeferIds);
-        //this(String.valueOf(System.nanoTime()), customerId, product, productQty, voyageId, status, reeferIds);
-        this(newId(), customerId, product, productQty, voyageId, status, reeferIds);
+        if ( jo.containsKey(Constants.ORDER_MESSAGE_KEY)) {
+            this.msg = jo.getString(Constants.ORDER_MESSAGE_KEY);
+        }
     }
 
- */
-   //public Order( String id, String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
-    public Order(  String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
-        // use class level locking to prevent duplicate id generation. REST is multithreaded and is possible for two
-        // threads to call the c'tor at the same time and generates same id for two different orders
-        synchronized( Order.class) {
-            this.id = UUID.randomUUID().toString();
-        }
+    public Order( String correlationId, String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
+        this.correlationId = correlationId;
         this.customerId = customerId;
         this.product = product;
         this.productQty = productQty;
@@ -113,12 +99,24 @@ public class Order {
         this.spoilt = false;
     }
 
-    public String newId() {
+    public String generateOrderId() {
         synchronized(Order.class) {
-            return String.valueOf(System.nanoTime());
+            this.id = UUID.randomUUID().toString();
+            return this.id;
         }
     }
-
+    public void setMsg(String message) {
+        this.msg = message;
+    }
+    public String getMsg() {
+        return this.msg;
+    }
+    public void setCorrelationId(String correlationId) {
+        this.correlationId = correlationId;
+    }
+    public String getCorrelationId() {
+        return this.correlationId;
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -198,6 +196,9 @@ public class Order {
         this.customerId = customerId;
     }
 
+    public boolean isOriginSimulator() {
+        return customerId != null && customerId.equals("simulator");
+    }
     public JsonObject getAsJsonObject() {
         JsonObjectBuilder orderBuilder = Json.createObjectBuilder();
         orderBuilder.add(Constants.ORDER_ID_KEY, getId()).
@@ -208,9 +209,15 @@ public class Order {
                 add(Constants.ORDER_STATUS_KEY, getStatus()).
                 add(Constants.ORDER_DATE_KEY, getDate()).
                 add(Constants.ORDER_SPOILT_KEY, isSpoilt());
-                if ( getDepot() != null) {
-                    orderBuilder.add(Constants.DEPOT_KEY, getDepot());
-                }
+        if ( getDepot() != null) {
+            orderBuilder.add(Constants.DEPOT_KEY, getDepot());
+        }
+        if ( correlationId != null) {
+            orderBuilder.add(Constants.CORRELATION_ID_KEY, correlationId);
+        }
+        if ( msg != null) {
+            orderBuilder.add(Constants.ORDER_MESSAGE_KEY, msg);
+        }
         return orderBuilder.build();
     }
     public JsonObject getOrderParams() {

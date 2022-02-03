@@ -244,7 +244,7 @@ public class OrderThread extends Thread {
                 threadWaiting = 1;
               }
               if (ordersubthread2 != null &&
-                  ! "TERMINATED".equals(ordersubthread1.getState().toString())) {
+                  ! "TERMINATED".equals(ordersubthread2.getState().toString())) {
                 ordersubthread2.interrupt();
                 threadWaiting += 2;
               }

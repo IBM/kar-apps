@@ -527,7 +527,7 @@ public class SimulatorService {
   // wake up order and reefer threads if sleeping
   public void newDay() {
     if (null != orderthread) {
-      orderthread.interrupt();
+//      orderthread.interrupt();
     }
     if (null != reeferthread) {
       reeferthread.interrupt();

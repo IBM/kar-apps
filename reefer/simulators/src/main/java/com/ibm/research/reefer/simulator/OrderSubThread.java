@@ -111,7 +111,7 @@ public class OrderSubThread extends Thread {
           }
           JsonValue sid = SimulatorService.incrAndGet(Json.createValue(OO.persistKey));
           String simSequenceID = String.format("%1d%d",tnum,((JsonNumber)sid).intValue()); //SimulatorService.incrAndGet(Json.createValue(OO.persistKey)));
-          System.out.println("OrderSubThread ---------------- threadId:"+Thread.currentThread().getId()+" tnum:"+tnum+" simSequenceID:"+simSequenceID+" sid:"+sid+" OO.hashCode:"+OO.hashCode());
+//          System.out.println("OrderSubThread ---------------- threadId:"+Thread.currentThread().getId()+" tnum:"+tnum+" simSequenceID:"+simSequenceID+" sid:"+sid+" OO.hashCode:"+OO.hashCode());
           JsonObject order = Json.createObjectBuilder().add("voyageId", voyage)
                   .add("customerId", "simulator").add("product", "pseudoBanana")
                   .add("productQty", entry.getOrderSize())

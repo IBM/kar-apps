@@ -137,14 +137,14 @@ public class OrderManagerActor extends BaseActor {
             if (activeOrders.containsKey(order.getId()) ) {
                 activeOrder = activeOrders.get(order.getId()).asJsonObject();
                 if ( activeOrder.getString(Constants.ORDER_STATUS_KEY).equals(Order.OrderStatus.PENDING.name())) {
+                    order.setStatus(Order.OrderStatus.BOOKED.name());
                     activeOrders.put(order.getId(), order.getAsJsonObject());
                     bookedOrderList.add(order);
                     bookedTotalCount++;
-                    Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/success", order.getAsJsonObject());
-                    order.setStatus(Order.OrderStatus.BOOKED.name());
                     Map<String, JsonValue> updateMap = new HashMap<>();
                     updateMap.put(order.getId(), order.getAsJsonObject());
                     updateStore(Collections.emptyMap(), updateMap);
+                    Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/success", order.getAsJsonObject());
                 } else if ( activeOrder.getString(Constants.ORDER_STATUS_KEY).equals(Order.OrderStatus.BOOKED.name())){
                     // idempotence check - returned previously saved booking
                     Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/success", activeOrder);
@@ -153,7 +153,7 @@ public class OrderManagerActor extends BaseActor {
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE,"OrderManagerActor.orderBooked()", e);
+            logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() ", e);
             throw e;
         }
     }
@@ -167,7 +167,7 @@ public class OrderManagerActor extends BaseActor {
             logger.log(Level.INFO,"OrderManagerActor.orderFailed() - ................... Reminder Cancelled");
             Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", message);
         } catch (Exception e) {
-            logger.log(Level.SEVERE,"OrderManagerActor.orderFailed()", e);
+            logger.log(Level.SEVERE,"OrderManagerActor.orderFailed() ", e);
             throw e;
         }
     }

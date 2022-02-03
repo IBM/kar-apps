@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { Route } from '@angular/compiler/src/core';
-
+import { Route } from './route';
 export interface Voyage {
   id: string;
   route: Route;

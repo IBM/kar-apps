@@ -21,7 +21,7 @@
     <properties>
 
         <version.maven-clean-plugin>3.0.0</version.maven-clean-plugin>
-        <version.node>v12.18.2</version.node>
+        <version.node>v14.18.3</version.node>
         <version.npm>6.14.5</version.npm>
         <version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
         <version.maven-antrun-plugin>1.7</version.maven-antrun-plugin>

@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { GlobalConstants } from 'src/app/shared/global-constants';
-import * as Rx from "rxjs/Rx";
+import 'rxjs';
 
 var SockJs = require("sockjs-client");
 var Stomp = require("stompjs");

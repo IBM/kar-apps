@@ -23,8 +23,7 @@ import {ShipScheduleService} from '../../core/services/ship-schedule.service';
 import {RestService} from '../../core/services/rest.service';
 import {ShipSchedule} from '../../core/models/ship-schedule';
 import {SocketService} from '../../core/services/socket.service';
-import { Observable, Subject } from 'rxjs/Rx';
-import { Subscription } from "rxjs/Subscription";
+import { Observable, Subject, Subscription } from 'rxjs';
 import { map, tap, catchError, retry } from 'rxjs/operators';
 import {SelectionModel} from '@angular/cdk/collections';
 import {MatCheckboxModule} from '@angular/material/checkbox';
@@ -64,7 +63,7 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   selectedDestinationPort : string;
   selectedProduct: string;
   productQty: number = 1000;
-  voyages: Voyage[];
+  voyages: Voyage[] = [];
   dataSource = new MatTableDataSource(this.voyages);
   selection = new SelectionModel<Voyage>(false, []);
 

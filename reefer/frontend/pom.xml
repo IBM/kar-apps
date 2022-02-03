@@ -80,8 +80,8 @@
           <!--nodeVersion>${node.version}</nodeVersion-->
           <npmVersion>${version.npm}</npmVersion>
           <!--npmVersion>${npm.version}</npmVersion-->
-          <nodeDownloadRoot>http://nodejs.org/dist/</nodeDownloadRoot>
-          <npmDownloadRoot>http://registry.npmjs.org/npm/-/</npmDownloadRoot>
+          <nodeDownloadRoot>https://nodejs.org/dist/</nodeDownloadRoot>
+          <npmDownloadRoot>https://registry.npmjs.org/npm/-/</npmDownloadRoot>
           <installDirectory>./</installDirectory>
         </configuration>
         <executions>

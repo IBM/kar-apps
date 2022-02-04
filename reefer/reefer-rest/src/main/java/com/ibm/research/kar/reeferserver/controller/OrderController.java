@@ -111,7 +111,7 @@ public class OrderController {
    @PostMapping("/orders")
    @ResponseBody
    public JsonValue bookOrder(@RequestBody String message) throws IOException {
-      System.out.println("OrderController.bookOrder - Called >>>>>>>>" + message);
+//      System.out.println("OrderController.bookOrder - Called >>>>>>>>" + message);
       try {
          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                  method("bookOrder").
@@ -142,7 +142,7 @@ public class OrderController {
     */
    @PostMapping("/order/booking/success")
    public void orderBooked(@RequestBody String bookingMessage) {
-      System.out.println("OrderController.orderBooked - Order Actor booking status:" + bookingMessage);
+//      System.out.println("OrderController.orderBooked - Order Actor booking status:" + bookingMessage);
       if (logger.isLoggable(Level.INFO)) {
          logger.info("OrderController.orderBooked - Order Actor booking status:" + bookingMessage);
       }
@@ -192,7 +192,7 @@ public class OrderController {
    @PostMapping("/order/booking/accepted")
    public void orderBookingAccepted(@RequestBody String bookingMessage) {
       try {
-         System.out.println("OrderController.orderBookingAccepted - booking status:" + bookingMessage);
+//         System.out.println("OrderController.orderBookingAccepted - booking status:" + bookingMessage);
          Order order = new Order(messageToJson(bookingMessage));
          if (order.isOriginSimulator()) {
             JsonObjectBuilder bookingStatus = Json.createObjectBuilder();

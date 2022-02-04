@@ -90,6 +90,8 @@ public class OrderManagerActor extends BaseActor {
     public void orderRollback(JsonObject message) {
         logger.info("OrderManagerActor.orderRollback - Called -" + message);
 
+        Order order = new Order(message);
+        Kar.Actors.Reminders.cancel(this, order.getId());
     }
     @Remote
     public void bookOrder(JsonObject message) {

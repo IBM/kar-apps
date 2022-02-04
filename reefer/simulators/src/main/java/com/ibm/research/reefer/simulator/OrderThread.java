@@ -106,16 +106,9 @@ public class OrderThread extends Thread {
           // set the loop count for max number of order groups to make for each voyage, "updatesPerDay"
           JsonValue date = (JsonValue) SimulatorService.currentDate.get();
           if (startup || oneshot || !currentDate.equals(date)) {
-            /*
-            // terminate existing subthreads
-            if (ordersubthread1 != null) {
-              ordersubthread1.interrupt();
-            }
-            if (ordersubthread2 != null) {
-              ordersubthread2.interrupt();
-            }
-*/
             dayEndTime = System.currentTimeMillis() + 1000 * SimulatorService.unitdelay.intValue();
+            logger.fine("OrderThread: newday! ordersExpectedToday:"+ordersExpectedToday+
+                    " ordersDoneToday:"+ordersDoneToday.get());
             if (ordersDoneToday.get() < ordersExpectedToday) {
               SimulatorService.os.addMissed(ordersExpectedToday - ordersDoneToday.get());
               logger.warning("orderthread: " + ordersDoneToday.get() + " of " + ordersExpectedToday

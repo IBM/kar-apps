@@ -139,11 +139,16 @@ public class OrderSubThread extends Thread {
             threadOrdersDone++;
           }
         }
+
+        long timeRemaining = dayEndTime - System.currentTimeMillis();
+        // stop processing if less than 10ms left in day
+        if (timeRemaining < 10) {
+          Thread.currentThread().interrupt();
+        }
         // compute next sleep time
         // No sleep between orders for oneshots
         if (!oneshot && threadOrdersDone > 0 && expectedOrders > threadOrdersDone) {
           long timeToSleep = 10;
-          long timeRemaining = dayEndTime - System.currentTimeMillis();
           long orderTimeRemaining = (totalOrderTime / threadOrdersDone)
                   * (expectedOrders - threadOrdersDone);
           long triggerRandom = 20;  // 20 millis

@@ -69,9 +69,11 @@ public class OrderActor extends BaseActor {
          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                     method("orderBooked").arg(order.getAsJsonObject()).tell();
       } catch (Exception e) {
-         logger.log(Level.WARNING, "OrderActor.orderBooked() - Error - orderId " + getId() + " ", e);
-         order.setMsg(e.getMessage());
-         bookingFailed(order.getAsJsonObject());
+         logger.log(Level.WARNING, "OrderActor.orderBooked() - Error - orderId " + getId() + " "+e.getMessage()+" ", e);
+         //order.setMsg(e.getMessage());
+         //Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
+         //        method("orderFailed").arg(order.getAsJsonObject()).tell();
+         //bookingFailed(order.getAsJsonObject());
       }
    }
 

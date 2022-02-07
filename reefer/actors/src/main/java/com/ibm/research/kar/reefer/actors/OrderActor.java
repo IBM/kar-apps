@@ -134,7 +134,10 @@ public class OrderActor extends BaseActor {
    public void delivered() {
       Kar.Actors.remove(this);
    }
-
+   @Remote
+   public void cancel() {
+      Kar.Actors.remove(this);
+   }
    /**
     * Called when ship departs from an origin port.
     *

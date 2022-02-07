@@ -127,7 +127,41 @@ public class VoyageActor extends BaseActor {
       }
 
    }
+   @Remote
+   public void rollbackOrder(JsonObject message) {
+      Order order = new Order(message);
+      // ship already arrived?
+      if ( voyage.getProgress() >= 100 ) {
+         logger.warning("VoyageActor.rollbackOrder() voyageId:" + getId() + " - already arrived - unable to rollback order:" + order.getId() );
+         return;
+      }
+      if ( !orders.containsKey(order.getId() ) ) {
+         logger.warning("VoyageActor.rollbackOrder() voyageId:" + getId() + " - unknown order:" + order.getId() );
+         return;
+      }
+      DepotReply reply = new DepotReply(orders.get(order.getId()).asJsonObject());
+      // ship already departed?
+      if ( voyage.getProgress() > 0 ) {
+            // the order is on a ship, so we can't remove it. Since OrderManager
+            // does not know about this order (rollback call), let it know that
+            // this order has been booked.
+            JsonObject booking = buildResponse(reply.getOrder(), voyage.getRoute().getVessel().getFreeCapacity());
+            Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, reply.getOrderId()).
+                    method("orderBooked").arg(booking).tell();
+      } else {
+         // The ship is still at port. Tell Depot to undo reefer allocation for this order.
+         Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, reply.getDepot()).
+                 method("rollbackOrder").arg(order.getAsJsonObject()).tell();
+         Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
+                 method("cancel").arg(order.getAsJsonObject()).tell();
+         orders.remove(order.getId());
+         voyage.setReeferCount(voyage.getReeferCount() - reply.getReeferCount());
+         voyage.updateFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity() + reply.getReeferCount());
+         save(reply, orders.get(order.getId()));
+         logger.warning("VoyageActor.rollbackOrder() voyageId:" + getId() + " - order:" + order.getId()+" rolled back" );
 
+      }
+   }
    /**
     * Called on ship position change. Determines if the ship departed from
     * its origin port or arrived at the destination. Updates REST ship
@@ -715,6 +749,18 @@ public class VoyageActor extends BaseActor {
          }
 
          throw new IllegalStateException("Missing Order Object");
+      }
+      protected String getDepot() {
+         try {
+            if ( jv.asJsonObject() != null ) {
+               return jv.asJsonObject().getJsonObject(Constants.ORDER_KEY).getString(Constants.DEPOT_KEY);
+            }
+         } catch( Exception e) {
+            e.printStackTrace();
+            System.out.println("VoyageActor.getDepot()- Missing Order in:"+jv);
+         }
+
+         throw new IllegalStateException("VoyageActor.getDepot() - Missing Order Object");
       }
       protected Set<String> getReefers() {
          Set<String> orderReefers = new HashSet<>();

@@ -468,7 +468,7 @@ public class DepotActor extends BaseActor {
         // wrap Json with POJO
         Order order = new Order(message);
         if (order2ReeferMap.containsKey(order.getId())) {
-            logger.info("DepotActor.rollbackOrder - depot:"+getId()+" voyageId:"+order.getVoyageId() +" orderId:"+order.getId());
+            logger.warning("DepotActor.rollbackOrder - depot:"+getId()+" voyageId:"+order.getVoyageId() +" orderId:"+order.getId());
             Set<String> rids = order2ReeferMap.get(order.getId());
             String[] array = new String[rids.size()];
             List<ReeferDTO> updateList = receiveInventory(rids.toArray(array));

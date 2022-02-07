@@ -27,6 +27,7 @@ import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -69,11 +70,9 @@ public class OrderActor extends BaseActor {
          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                     method("orderBooked").arg(order.getAsJsonObject()).tell();
       } catch (Exception e) {
-         logger.log(Level.WARNING, "OrderActor.orderBooked() - Error - orderId " + getId() + " "+e.getMessage()+" ", e);
-         //order.setMsg(e.getMessage());
-         //Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
-         //        method("orderFailed").arg(order.getAsJsonObject()).tell();
-         //bookingFailed(order.getAsJsonObject());
+         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+         logger.log(Level.SEVERE,"OrderActor.orderBooked() - Error - orderId " + getId()+" Error:" +stacktrace);
+
       }
    }
 

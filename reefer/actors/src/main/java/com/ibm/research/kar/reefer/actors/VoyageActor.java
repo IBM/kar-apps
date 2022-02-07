@@ -153,7 +153,7 @@ public class VoyageActor extends BaseActor {
          Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, reply.getDepot()).
                  method("rollbackOrder").arg(order.getAsJsonObject()).tell();
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                 method("cancel").arg(order.getAsJsonObject()).tell();
+                 method("cancel").arg().tell();
          orders.remove(order.getId());
          voyage.setReeferCount(voyage.getReeferCount() - reply.getReeferCount());
          voyage.updateFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity() + reply.getReeferCount());

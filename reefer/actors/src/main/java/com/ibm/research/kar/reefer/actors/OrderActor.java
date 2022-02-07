@@ -65,6 +65,9 @@ public class OrderActor extends BaseActor {
          if (logger.isLoggable(Level.INFO)) {
             logger.info(String.format("OrderActor.orderBooked() - orderId: %s VoyageActor reply: %s", getId(), voyageBookingResult));
          }
+         if ( order == null ) {
+            logger.warning(String.format("OrderActor.orderBooked() - orderId: %s - Invalid state: order instance is null - VoyageActor reply: %s", getId(), voyageBookingResult));
+         }
          order.setStatus(OrderStatus.BOOKED.name());
          Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
@@ -78,6 +81,9 @@ public class OrderActor extends BaseActor {
 
    @Remote
    public void bookingFailed(JsonObject bookingStatus) {
+      if (logger.isLoggable(Level.INFO)) {
+         logger.info(String.format("OrderActor.bookingFailed() - orderId: %s VoyageActor reply: %s", getId(), bookingStatus));
+      }
       Kar.Actors.remove(this);
       Order failedOrder = new Order(bookingStatus);
       Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
@@ -135,6 +141,7 @@ public class OrderActor extends BaseActor {
    }
    @Remote
    public void cancel() {
+      logger.info(String.format("OrderActor.cancel() - orderId: %s - order cancelled due to rollback", getId()));
       Kar.Actors.remove(this);
    }
    /**

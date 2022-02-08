@@ -539,7 +539,6 @@ public class VoyageActor extends BaseActor {
       }
 
    }
-
    /**
     * Calls REST and Order actors when a ship arrives at the destination port
     *
@@ -561,6 +560,7 @@ public class VoyageActor extends BaseActor {
             } else if (orderReeferIds.trim().length() == 0) {
                logger.log(Level.WARNING, String.format("VoyageActor.processArrivedVoyage - voyageId: %s  REEFERS NOT BOOKED TO ORDER: %s booking status: %s",getId(), orderId ,order));
             } else {
+               String[] reefers = orderReeferIds.split(",");
                reeferIds.append(orderReeferIds).append(",");
             }
          });
@@ -580,13 +580,16 @@ public class VoyageActor extends BaseActor {
 	         if ( emptyReefers != null ) {
 	            job.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, emptyReefers);
 	         }
+            int reeferCount = reeferIds.toString().split(",").length;
+            reeferCount += spoiltReeferIds.toString().split(",").length;
+            logger.info("VoyageActor.processArrivedVoyage - voyageId:"+getId()+" ARRIVED with "+orders.size()+" orders - reefers:"+reeferCount);
             Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())).
-                    method("voyageReefersArrived").arg(job.build()).call();
+                    method("voyageReefersArrived").arg(job.build()).tell();
          }
          Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                  method("voyageArrived").arg(VoyageJsonSerializer.serialize(voyage)).tell();
           Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
-                 method("ordersArrived").arg(voyageOrderIds).call();
+                 method("ordersArrived").arg(voyageOrderIds).tell();
          orders.keySet().forEach(orderId -> {
             notifyVoyageOrder(orderId, Order.OrderStatus.DELIVERED, "delivered");
          });

@@ -413,6 +413,7 @@ public class DepotActor extends BaseActor {
             String[] newInventory = (String[]) ArrayUtils.addAll(reeferIds, emptyReeferIds);
             List<ReeferDTO> updateList = receiveInventory(newInventory);
             receiveSpoiltInventory(spoiltInventory, arrivalDate);
+            logger.info("DepotActor.voyageReefersArrived() - depot:" +getId()+" voyage:"+voyageId+" new reefers count:"+newInventory.length);
             messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
                     String.join(",", newInventory), "voyageArrived", voyageId);
             Inventory inventory = getReeferInventoryCounts();

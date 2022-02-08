@@ -65,7 +65,7 @@ public class OrderActor extends BaseActor {
          if (logger.isLoggable(Level.INFO)) {
             logger.info(String.format("OrderActor.orderBooked() - orderId: %s VoyageActor reply: %s", getId(), voyageBookingResult));
          }
-         order = new Order(voyageBookingResult);
+         order = new Order(voyageBookingResult.getJsonObject(Constants.ORDER_KEY));
          //order.setStatus(OrderStatus.BOOKED.name());
          saveOrderStatusChange(OrderStatus.BOOKED);
          //Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());

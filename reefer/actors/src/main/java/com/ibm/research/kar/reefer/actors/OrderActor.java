@@ -65,11 +65,10 @@ public class OrderActor extends BaseActor {
          if (logger.isLoggable(Level.INFO)) {
             logger.info(String.format("OrderActor.orderBooked() - orderId: %s VoyageActor reply: %s", getId(), voyageBookingResult));
          }
-         if ( order == null ) {
-            logger.warning(String.format("OrderActor.orderBooked() - orderId: %s - Invalid state: order instance is null - VoyageActor reply: %s", getId(), voyageBookingResult));
-         }
-         order.setStatus(OrderStatus.BOOKED.name());
-         Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
+         order = new Order(voyageBookingResult);
+         //order.setStatus(OrderStatus.BOOKED.name());
+         saveOrderStatusChange(OrderStatus.BOOKED);
+         //Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                     method("orderBooked").arg(order.getAsJsonObject()).tell();
       } catch (Exception e) {
@@ -114,6 +113,7 @@ public class OrderActor extends BaseActor {
          // reserves reefers
          Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
                  method("reserve").arg(order.getAsJsonObject()).tell();
+         saveOrderStatusChange(OrderStatus.PENDING);
        } catch (Exception e) {
          logger.log(Level.WARNING, "OrderActor.createOrder() - Error - orderId " + getId() + " ", e);
          order.setMsg(e.getMessage());

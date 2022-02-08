@@ -130,8 +130,7 @@ public class VoyageActor extends BaseActor {
    @Remote
    public void rollbackOrder(JsonObject message) {
       Order order = new Order(message);
-      // ship already arrived?
-      if ( voyage.getProgress() >= 100 ) {
+      if ( voyage.arrived() ) {
          logger.warning("VoyageActor.rollbackOrder() voyageId:" + getId() + " - already arrived - unable to rollback order:" + order.getId() );
          return;
       }
@@ -141,8 +140,8 @@ public class VoyageActor extends BaseActor {
       }
       DepotReply reply = new DepotReply(orders.get(order.getId()).asJsonObject());
       // ship already departed?
-      if ( voyage.getProgress() > 0 ) {
-            // the order is on a ship, so we can't remove it. Since OrderManager
+      if ( voyage.departed() ) {
+            // the order is on a ship at sea, so we can't remove it. Since OrderManager
             // does not know about this order (rollback call), let it know that
             // this order has been booked.
             JsonObject booking = buildResponse(reply.getOrder(), voyage.getRoute().getVessel().getFreeCapacity());

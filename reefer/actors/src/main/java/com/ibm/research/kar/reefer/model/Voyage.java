@@ -121,7 +121,12 @@ public class Voyage implements Comparable<Voyage>{
     public int getProgress() {
         return progress;
     }
-
+    public boolean departed() {
+        return getProgress() > 0;
+    }
+    public boolean arrived() {
+        return getProgress() >= 100;
+    }
     public boolean positionChanged( int daysOutAtSea) {
         return daysOutAtSea > 0 && daysOutAtSea != getRoute().getVessel().getPosition();
     }

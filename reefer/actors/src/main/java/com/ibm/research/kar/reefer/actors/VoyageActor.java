@@ -345,7 +345,7 @@ public class VoyageActor extends BaseActor {
    public void reeferBookingFailed(JsonObject message) {
       try {
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, message.getString(Constants.ORDER_ID_KEY)).
-                 method("orderFailed").arg(message).tell();
+                 method("bookingFailed").arg(message).tell();
        } catch( Exception e) {
          logSevereError("reeferBookingFailed()", e);
       }
@@ -358,7 +358,7 @@ public class VoyageActor extends BaseActor {
                  add("ERROR", " voyage " + getId() + " already arrived").
                  add(Constants.ORDER_ID_KEY, order.getId());
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                 method("orderFailed").arg(job.build()).tell();
+                 method("bookingFailed").arg(job.build()).tell();
          return true;
       }
       return false;
@@ -370,7 +370,7 @@ public class VoyageActor extends BaseActor {
          JsonObjectBuilder job = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", " voyage " + getId() + " already departed")
                  .add(Constants.ORDER_ID_KEY, this.getId());
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                 method("orderFailed").arg(job.build()).tell();
+                 method("bookingFailed").arg(job.build()).tell();
          return true;
       }
       return false;
@@ -386,7 +386,7 @@ public class VoyageActor extends BaseActor {
                     method("orderBooked").arg(status).tell();
          } else {
             Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                    method("orderFailed").arg(booking).tell();
+                    method("bookingFailed").arg(booking).tell();
           }
          return true;
       }
@@ -401,7 +401,7 @@ public class VoyageActor extends BaseActor {
          JsonObjectBuilder job =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED)
                  .add("ERROR", msg);
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                 method("orderFailed").arg(job.build()).tell();
+                 method("bookingFailed").arg(job.build()).tell();
          return true;
       }
       return false;
@@ -446,7 +446,7 @@ public class VoyageActor extends BaseActor {
          JsonObjectBuilder job = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                  .add(Constants.ORDER_ID_KEY, this.getId());
         Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                 method("orderFailed").arg(job.build()).tell();
+                 method("bookingFailed").arg(job.build()).tell();
       }
    }
 

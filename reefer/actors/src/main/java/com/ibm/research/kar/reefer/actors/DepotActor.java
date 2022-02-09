@@ -262,6 +262,7 @@ public class DepotActor extends BaseActor {
             String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
 
             List<ReeferDTO> voyageReefers = voyageAllocatedReefers(voyageId);
+
             Set<String> depotOrders = new HashSet<>();
             if (voyageReefers.size() > 0) {
                 StringBuilder builder = new StringBuilder();
@@ -283,6 +284,7 @@ public class DepotActor extends BaseActor {
                     reeferMasterInventory[reefer.getId()] = null;
                     builder.append(reefer.getId()).append(",");
                 }
+                logger.info("DepotActor.voyageReefersDeparted() >>>> Depot:"+getId()+" Voyage:"+voyageId+" reefer count:"+orderCount+" empties:"+empties.size());
                 Inventory inventory = getReeferInventoryCounts();
                 bookedTotalCount = inventory.getBooked();
                 currentInventorySize = Json.createValue(inventory.getTotal());

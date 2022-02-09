@@ -581,7 +581,7 @@ public class VoyageActor extends BaseActor {
 	            job.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, emptyReefers);
 	         }
             int reeferCount = reeferIds.toString().split(",").length;
-            reeferCount += spoiltReeferIds.toString().split(",").length;
+            //reeferCount += spoiltReeferIds.toString().split(",").length;
             logger.info("VoyageActor.processArrivedVoyage - voyageId:"+getId()+" ARRIVED with "+orders.size()+" orders - reefers:"+reeferCount);
             Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())).
                     method("voyageReefersArrived").arg(job.build()).tell();
@@ -626,7 +626,7 @@ public class VoyageActor extends BaseActor {
                emptyReefersMap.put(emptyReeferId, emptyReeferId);
             }
          }
-         logger.info("VoyageActor.processDepartingVoyage() - voyageId:"+getId()+" Departure from "+voyage.getRoute().getOriginPort() +" empties count:"+emptiesCount+" emptyReefersMap.size():"+emptyReefersMap.size());
+         logger.info("VoyageActor.processDepartingVoyage() - voyageId:"+getId()+" Departure from "+voyage.getRoute().getOriginPort() +" reefer count:"+voyage.getReeferCount()+" empties count:"+emptiesCount+" emptyReefersMap.size():"+emptyReefersMap.size());
          voyage.updateFreeCapacity(emptiesCount);
          voyage.setReeferCount(voyage.getReeferCount()+emptiesCount);
          Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).

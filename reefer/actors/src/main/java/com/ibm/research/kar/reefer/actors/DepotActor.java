@@ -257,10 +257,10 @@ public class DepotActor extends BaseActor {
      * @return
      */
     @Remote
-    public JsonValue voyageReefersDeparted(JsonObject message) {
+   // public JsonValue voyageReefersDeparted(JsonObject message) {
+    public void voyageReefersDeparted(JsonObject message) {
         try {
             String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
-
             List<ReeferDTO> voyageReefers = voyageAllocatedReefers(voyageId);
 
             Set<String> depotOrders = new HashSet<>();
@@ -306,13 +306,19 @@ public class DepotActor extends BaseActor {
 		          } else {
    		           replyJob.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, Json.createValue(String.join(",", rids)));
 		          }
-                return replyJob.build();
+                //return replyJob.build();
+                Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, voyageId).
+                        method("addEmptyReefers").arg(replyJob.build()).tell();
             }  else {
-                return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
+                /*
+                 JsonObject replyJob =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                         add(Constants.DEPOT_KEY, getId()).
                         add(Constants.REEFERS_KEY, Json.createValue(0)).
                         add(Constants.VOYAGE_EMPTY_REEFERS_KEY, Json.createValue("")).
                         build();
+
+
+                 */
             }
         } catch (Exception e) {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");

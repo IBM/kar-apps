@@ -307,7 +307,7 @@ public class DepotActor extends BaseActor {
    		           replyJob.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, Json.createValue(String.join(",", rids)));
 		          }
                 //return replyJob.build();
-                Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, voyageId).
+                Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, voyageId).
                         method("addEmptyReefers").arg(replyJob.build()).tell();
             }  else {
                 /*

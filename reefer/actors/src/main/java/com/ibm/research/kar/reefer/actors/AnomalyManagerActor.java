@@ -291,6 +291,7 @@ public class AnomalyManagerActor extends BaseActor {
                }
             }
          }
+         
          for (String reeferId : rids) {
             if (reefersMap.containsKey(reeferId)) {
                updateCount++;

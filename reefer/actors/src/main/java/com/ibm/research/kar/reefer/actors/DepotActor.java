@@ -296,11 +296,11 @@ public class DepotActor extends BaseActor {
                 updateStore(deleteMap(combinedList), Collections.emptyMap());
                 logger.info(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tVoyage:%20s \tDeparted:%7d \t%s \tempties:%7d",
                         getId(),voyageId,voyageReefers.size(),inventory.toString(), empties.size()) );
-                logger.info("DepotActor.voyageReefersDeparted() >>>> Depot:"+getId()+" Voyage:"+voyageId+" voyage order count:"+orderCount); //+" voyage orders: "+String.join(", ", orderIds));
                 Set<String> rids = empties.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
+                logger.info("DepotActor.voyageReefersDeparted() >>>> Depot:"+getId()+" Voyage:"+voyageId+" voyage order count:"+orderCount+" rids.size:"+rids.size());
                 JsonObjectBuilder replyJob =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                         add(Constants.DEPOT_KEY, getId()).
-		                  add(Constants.REEFERS_KEY, Json.createValue(empties.size()));
+		                  add(Constants.REEFERS_KEY, Json.createValue(rids.size()));
                 if ( rids.isEmpty() ) {
 		              replyJob.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, Json.createValue(""));
 		          } else {

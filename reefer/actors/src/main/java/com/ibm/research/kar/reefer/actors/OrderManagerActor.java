@@ -89,9 +89,12 @@ public class OrderManagerActor extends BaseActor {
     @Remote
     public void orderRollback(JsonObject message) {
         logger.info("OrderManagerActor.orderRollback - Called -" + message);
-
         Order order = new Order(message);
         Kar.Actors.Reminders.cancel(this, order.getId());
+        if (orderCorrelationIds.containsKey(order.getCorrelationId())) {
+            Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+                    method("rollbackOrder").arg(order.getAsJsonObject()).tell();
+        }
     }
     @Remote
     public void bookOrder(JsonObject message) {
@@ -135,7 +138,6 @@ public class OrderManagerActor extends BaseActor {
             JsonObject activeOrder;
             Order order = new Order(message);
             Kar.Actors.Reminders.cancel(this, order.getId());
-            logger.log(Level.INFO,"OrderManagerActor.orderBooked() - ................... Reminder Cancelled");
             if (activeOrders.containsKey(order.getId()) ) {
                 activeOrder = activeOrders.get(order.getId()).asJsonObject();
                 if ( activeOrder.getString(Constants.ORDER_STATUS_KEY).equals(Order.OrderStatus.PENDING.name())) {
@@ -166,7 +168,6 @@ public class OrderManagerActor extends BaseActor {
             Kar.Actors.Reminders.cancel(this, order.getId());
             activeOrders.remove(order.getId());
             orderCorrelationIds.remove(order.getCorrelationId());
-            logger.log(Level.INFO,"OrderManagerActor.orderFailed() - ................... Reminder Cancelled");
             Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", message);
         } catch (Exception e) {
             logger.log(Level.SEVERE,"OrderManagerActor.orderFailed() ", e);

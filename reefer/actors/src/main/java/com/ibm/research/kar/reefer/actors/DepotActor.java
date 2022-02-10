@@ -479,9 +479,13 @@ public class DepotActor extends BaseActor {
         if (order2ReeferMap.containsKey(order.getId())) {
             logger.warning("DepotActor.rollbackOrder - depot:"+getId()+" voyageId:"+order.getVoyageId() +" orderId:"+order.getId());
             Set<String> rids = order2ReeferMap.get(order.getId());
-            String[] array = new String[rids.size()];
-            List<ReeferDTO> updateList = receiveInventory(rids.toArray(array));
+            String[] reefersToRollback = new String[rids.size()];
+            List<ReeferDTO> updateList = receiveInventory(rids.toArray(reefersToRollback));
             order2ReeferMap.remove(order.getId());
+            logger.info("DepotActor.rollbackOrder() - depot:" +getId()+" voyage:"+order.getVoyageId()+" reefersToRollback:"+reefersToRollback.length);
+            messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
+                    String.join(",", reefersToRollback), "voyageOrderRollback", order.getVoyageId());
+
             updateStore(Collections.emptyMap(), reeferMap(updateList));
         }
     }

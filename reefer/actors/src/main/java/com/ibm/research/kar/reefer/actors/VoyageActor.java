@@ -130,8 +130,11 @@ public class VoyageActor extends BaseActor {
    @Remote
    public void rollbackOrder(JsonObject message) {
       Order order = new Order(message);
-      if ( voyage.arrived() ) {
+      if ( voyage == null || voyage.arrived() ) {
          logger.warning("VoyageActor.rollbackOrder() voyageId:" + getId() + " - already arrived - unable to rollback order:" + order.getId() );
+         if (voyage == null ) {
+            Kar.Actors.remove(this);
+         }
          return;
       }
       if ( !orders.containsKey(order.getId() ) ) {

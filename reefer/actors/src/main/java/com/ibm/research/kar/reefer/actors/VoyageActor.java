@@ -454,9 +454,9 @@ public class VoyageActor extends BaseActor {
       Map<String, JsonValue> actorStateMap = new HashMap<>();
       actorStateMap.put(Constants.VOYAGE_STATUS_KEY, voyageStatus);
       actorStateMap.put(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
-      if ( emptyReefers != null ) {
-         actorStateMap.put(Constants.VOYAGE_EMPTY_REEFERS_KEY, emptyReefers);
-      }
+ //     if ( emptyReefers != null ) {
+ //        actorStateMap.put(Constants.VOYAGE_EMPTY_REEFERS_KEY, emptyReefers);
+ //     }
 
       Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
       Map<String, JsonValue> orderSubMapUpdates = new HashMap<>();
@@ -577,12 +577,15 @@ public class VoyageActor extends BaseActor {
                     add(Constants.VOYAGE_ARRIVAL_DATE_KEY, voyage.getArrivalDate()).
                     add(Constants.REEFERS_KEY, reeferIds.toString()).
                     add(Constants.SPOILT_REEFERS_KEY, spoiltReeferIds.toString());
+            int emptiesCount = 0;
 	         if ( emptyReefers != null ) {
 	            job.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, emptyReefers);
+               emptiesCount = emptyReefers.toString().split(",").length;
 	         }
             int reeferCount = reeferIds.toString().split(",").length;
+
             //reeferCount += spoiltReeferIds.toString().split(",").length;
-            logger.info("VoyageActor.processArrivedVoyage - voyageId:"+getId()+" ARRIVED with "+orders.size()+" orders - reefers:"+reeferCount);
+            logger.info("VoyageActor.processArrivedVoyage - voyageId:"+getId()+" ARRIVED with "+orders.size()+" orders - reefers:"+reeferCount+" emptiesCount:"+emptiesCount+" emptyReefersMap.size:"+emptyReefersMap.size());
             Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())).
                     method("voyageReefersArrived").arg(job.build()).tell();
          }
@@ -624,7 +627,7 @@ public class VoyageActor extends BaseActor {
          jb.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, empties);
          jb.add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
          Kar.Actors.State.set(this, jb.build());
-         logger.info("VoyageActor.addEmptyReefers() - voyageId:"+getId()+" Saved New State");
+         logger.info("VoyageActor.addEmptyReefers() - voyageId:"+getId()+" Saved New State - empties:"+emptiesCount+" empties:"+empties);
       } catch( Exception e) {
          logSevereError("processDepartedVoyage()", e);
          throw e;

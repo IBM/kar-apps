@@ -118,8 +118,12 @@ public class OrderManagerActor extends BaseActor {
                 orderCorrelationIds.put(order.getCorrelationId(), order.getId());
                 logger.info("OrderManagerActor.bookOrder - order saved -" + order.getAsJsonObject());
             } else {
+                // the process must have died while handling request and kar just retried the call 
                 logger.log(Level.WARNING, "OrderManagerActor.bookOrder() - duplicate order - correlationId:"+order.getCorrelationId());
-                orderBooked(activeOrders.get(order.getId()).asJsonObject());
+                // fetch previously generated order id
+                String savedOrderId = orderCorrelationIds.get(order.getCorrelationId());
+                // process as a late booked order.
+                orderBooked(activeOrders.get(savedOrderId).asJsonObject());
             }
 
         } catch (Exception e) {

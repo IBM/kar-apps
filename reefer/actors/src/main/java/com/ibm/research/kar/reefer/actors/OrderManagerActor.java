@@ -26,6 +26,7 @@ import com.ibm.research.kar.reefer.common.FixedSizeQueue;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.OrderProperties;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.json.*;
 import java.time.Duration;
@@ -110,11 +111,11 @@ public class OrderManagerActor extends BaseActor {
                 Kar.Actors.Reminders.schedule(this, "orderRollback", order.getId(), Instant.now().plus(2, ChronoUnit.MINUTES), Duration.ofMillis(1000), order.getAsJsonObject());
                 Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                         method("createOrder").arg(order.getAsJsonObject()).tell();
-                activeOrders.put(order.getId(), order.getAsJsonObject());
-                orderCorrelationIds.put(order.getCorrelationId(), order.getId());
                 Map<String, JsonValue> updateMap = new HashMap<>();
                 updateMap.put(order.getId(), order.getAsJsonObject());
                 updateStore(Collections.emptyMap(), updateMap);
+                activeOrders.put(order.getId(), order.getAsJsonObject());
+                orderCorrelationIds.put(order.getCorrelationId(), order.getId());
                 logger.info("OrderManagerActor.bookOrder - order saved -" + order.getAsJsonObject());
             } else {
                 logger.log(Level.WARNING, "OrderManagerActor.bookOrder() - duplicate order - correlationId:"+order.getCorrelationId());
@@ -124,6 +125,8 @@ public class OrderManagerActor extends BaseActor {
         } catch (Exception e) {
             e.printStackTrace();
             logger.log(Level.SEVERE, e.getMessage(), e);
+            String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+            logger.log(Level.SEVERE, stacktrace);
             if ( order == null ) {
                 logger.log(Level.SEVERE, "OrderManagerActor.bookOrder() - Unable to create order instance from message:"+message);
             } else {

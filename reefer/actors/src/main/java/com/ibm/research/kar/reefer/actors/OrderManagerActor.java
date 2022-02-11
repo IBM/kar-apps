@@ -110,14 +110,15 @@ public class OrderManagerActor extends BaseActor {
                 Kar.Actors.Reminders.schedule(this, "orderRollback", order.getId(), Instant.now().plus(2, ChronoUnit.MINUTES), Duration.ofMillis(1000), order.getAsJsonObject());
                 Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                         method("createOrder").arg(order.getAsJsonObject()).tell();
-                orderCorrelationIds.put(order.getCorrelationId(), order.getId());
                 activeOrders.put(order.getId(), order.getAsJsonObject());
+                orderCorrelationIds.put(order.getCorrelationId(), order.getId());
                 Map<String, JsonValue> updateMap = new HashMap<>();
                 updateMap.put(order.getId(), order.getAsJsonObject());
                 updateStore(Collections.emptyMap(), updateMap);
-
+                logger.info("OrderManagerActor.bookOrder - order saved -" + order.getAsJsonObject());
             } else {
                 logger.log(Level.WARNING, "OrderManagerActor.bookOrder() - duplicate order - correlationId:"+order.getCorrelationId());
+                orderBooked(activeOrders.get(order.getId()).asJsonObject());
             }
 
         } catch (Exception e) {
@@ -135,6 +136,7 @@ public class OrderManagerActor extends BaseActor {
     @Remote
     public void orderBooked(JsonObject message) {
         try {
+            logger.info("OrderManagerActor.orderBooked - Called -" + message);
             JsonObject activeOrder;
             Order order = new Order(message);
             Kar.Actors.Reminders.cancel(this, order.getId());
@@ -198,8 +200,6 @@ public class OrderManagerActor extends BaseActor {
             throw e;
         }
     }
-
-
     @Remote
     public void ordersArrived(JsonValue message) {
         List<String> orders2Remove = new ArrayList<>();

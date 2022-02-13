@@ -357,7 +357,9 @@ public class VoyageActor extends BaseActor {
       if ( Objects.isNull(voyageInfo)) {   // voyage arrived
          Kar.Actors.remove(this);
          JsonObjectBuilder job = Json.createObjectBuilder();
+         order.setMsg("Voyage " + getId() + " already arrived - order: "+order.getId()+" rejected");
          job.add(Constants.STATUS_KEY, "FAILED").
+                  add(Constants.ORDER_KEY, order.getAsJsonObject()).
                  add("ERROR", " voyage " + getId() + " already arrived").
                  add(Constants.ORDER_ID_KEY, order.getId());
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
@@ -370,7 +372,9 @@ public class VoyageActor extends BaseActor {
       // booking may come after voyage departure
       if (VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
          logger.log(Level.WARNING, "VoyageActor.reserve() - voyageId:" + getId() + " - already departed - rejecting order booking - " + order.getId());
+         order.setMsg("Voyage " + getId() + " already departed - order: "+order.getId()+" rejected");
          JsonObjectBuilder job = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", " voyage " + getId() + " already departed")
+                 .add(Constants.ORDER_KEY, order.getAsJsonObject())
                  .add(Constants.ORDER_ID_KEY, this.getId());
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                  method("bookingFailed").arg(job.build()).tell();
@@ -401,8 +405,11 @@ public class VoyageActor extends BaseActor {
       if (!voyage.capacityAvailable(howManyReefersNeeded)) {
          String msg = "Error - ship capacity exceeded - current available capacity:" + voyage.getRoute().getVessel().getFreeCapacity() * 1000 +
                  " - reduce product quantity or choose a different voyage";
+         order.setMsg("Voyage "+getId()+" fully booked - order:"+order.getId()+" rejected");
          JsonObjectBuilder job =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED)
+                 .add(Constants.ORDER_KEY, order.getAsJsonObject())
                  .add("ERROR", msg);
+
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                  method("bookingFailed").arg(job.build()).tell();
          return true;
@@ -446,7 +453,9 @@ public class VoyageActor extends BaseActor {
                  method("bookReefers").arg(message).tell();
       } catch (Exception e) {
          logSevereError("reserve()", e);
+         order.setMsg("Voyage "+getId()+" order booking: "+order.getId()+" failed - reason: "+e.getMessage());
          JsonObjectBuilder job = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
+                 .add(Constants.ORDER_KEY, order.getAsJsonObject())
                  .add(Constants.ORDER_ID_KEY, this.getId());
         Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                  method("bookingFailed").arg(job.build()).tell();

@@ -305,10 +305,11 @@ public class DepotActor extends BaseActor {
 		              replyJob.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, Json.createValue(""));
 		          } else {
    		           replyJob.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, Json.createValue(String.join(",", rids)));
+                    Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, voyageId).
+                            method("addEmptyReefers").arg(replyJob.build()).tell();
 		          }
                 //return replyJob.build();
-                Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, voyageId).
-                        method("addEmptyReefers").arg(replyJob.build()).tell();
+
             }  else {
                 /*
                  JsonObject replyJob =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).

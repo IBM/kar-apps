@@ -84,7 +84,7 @@ public class OrderActor extends BaseActor {
          logger.info(String.format("OrderActor.bookingFailed() - orderId: %s VoyageActor reply: %s", getId(), bookingStatus));
       }
       Kar.Actors.remove(this);
-      Order failedOrder = new Order(bookingStatus);
+      Order failedOrder = new Order(bookingStatus.getJsonObject(Constants.ORDER_KEY));
       Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
               method("orderFailed").arg(failedOrder.getAsJsonObject()).tell();
 

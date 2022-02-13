@@ -95,6 +95,9 @@ public class OrderManagerActor extends BaseActor {
         if (orderCorrelationIds.containsKey(order.getCorrelationId())) {
             Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
                     method("rollbackOrder").arg(order.getAsJsonObject()).tell();
+            activeOrders.remove(order.getId());
+            orderCorrelationIds.remove(order.getCorrelationId());
+            Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", message);
         }
     }
     @Remote
@@ -118,7 +121,7 @@ public class OrderManagerActor extends BaseActor {
                 orderCorrelationIds.put(order.getCorrelationId(), order.getId());
                 logger.info("OrderManagerActor.bookOrder - order saved -" + order.getAsJsonObject());
             } else {
-                // the process must have died while handling request and kar just retried the call 
+                // the process must have died while handling request and kar just retried the call
                 logger.log(Level.WARNING, "OrderManagerActor.bookOrder() - duplicate order - correlationId:"+order.getCorrelationId());
                 // fetch previously generated order id
                 String savedOrderId = orderCorrelationIds.get(order.getCorrelationId());

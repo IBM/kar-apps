@@ -183,10 +183,12 @@ public class OrderController {
             System.out.println("OrderController.orderBookingFailed - Order Failed - reply: "+bookingMessage);
             JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
             bookingStatus.add(Constants.STATUS_KEY,Json.createValue("failed")).
-                    add(Constants.REASON_KEY,order.getMsg()).
                     add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
                     add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
                     add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
+            if ( order.getMsg() != null ) {
+               bookingStatus.add(Constants.REASON_KEY,order.getMsg());
+            }
             Kar.Services.post(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
          } else {
             System.out.println("OrderController.orderBookingFailed - unknown target for failed order booking - reply: "+bookingMessage);

@@ -98,6 +98,7 @@ public class OrderManagerActor extends BaseActor {
             activeOrders.remove(order.getId());
             orderCorrelationIds.remove(order.getCorrelationId());
             order.setStatus(Constants.FAILED);
+            order.setMsg("OrderManager - Order booking request timed out");
             Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
         }
     }

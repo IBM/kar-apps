@@ -98,7 +98,8 @@ public class OrderManagerActor extends BaseActor {
                     method("rollbackOrder").arg(order.getAsJsonObject()).tell();
             activeOrders.remove(order.getId());
             orderCorrelationIds.remove(order.getCorrelationId());
-            Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", message);
+            order.setStatus(Constants.FAILED);
+            Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
         }
     }
     @Remote
@@ -107,7 +108,7 @@ public class OrderManagerActor extends BaseActor {
         Order order = null;
         try {
             order = new Order(new OrderProperties(message));
-            
+
             // idempotence check
             if (!orderCorrelationIds.containsKey(order.getCorrelationId())) {
                 // generate unique order id
@@ -117,6 +118,7 @@ public class OrderManagerActor extends BaseActor {
                 if ( orderCount % 10 == 0 ) {
                     orderCount++;
                     order.setMsg("Simulated error in OrderManager");
+                    order.setStatus(Constants.FAILED);
                     Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
                     return;
                 }
@@ -148,6 +150,7 @@ public class OrderManagerActor extends BaseActor {
                 logger.log(Level.SEVERE, "OrderManagerActor.bookOrder() - Unable to create order instance from message:"+message);
             } else {
                 order.setMsg(e.getMessage());
+                order.setStatus(Constants.FAILED);
                 Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
             }
 
@@ -190,7 +193,8 @@ public class OrderManagerActor extends BaseActor {
             Kar.Actors.Reminders.cancel(this, order.getId());
             activeOrders.remove(order.getId());
             orderCorrelationIds.remove(order.getCorrelationId());
-            Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", message);
+            order.setStatus(Constants.FAILED);
+            Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
         } catch (Exception e) {
             logger.log(Level.SEVERE,"OrderManagerActor.orderFailed() ", e);
             throw e;

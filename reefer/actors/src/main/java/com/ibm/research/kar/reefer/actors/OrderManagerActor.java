@@ -107,18 +107,19 @@ public class OrderManagerActor extends BaseActor {
         Order order = null;
         try {
             order = new Order(new OrderProperties(message));
-            if ( orderCount % 10 == 0 ) {
-                orderCount++;
-                order.setMsg("Simulated error in OrderManager");
-                Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
-            }
-
-
-
+            
             // idempotence check
             if (!orderCorrelationIds.containsKey(order.getCorrelationId())) {
                 // generate unique order id
                 order.generateOrderId();
+
+
+                if ( orderCount % 10 == 0 ) {
+                    orderCount++;
+                    order.setMsg("Simulated error in OrderManager");
+                    Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
+                    return;
+                }
                 Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
                 Kar.Actors.Reminders.schedule(this, "orderRollback", order.getId(), Instant.now().plus(2, ChronoUnit.MINUTES), Duration.ofMillis(1000), order.getAsJsonObject());
                 Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).

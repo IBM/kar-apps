@@ -490,11 +490,12 @@ public class SimulatorService {
   // Entry point for async order replies
   public void orderStatus(JsonValue reply) {
     try {
+      System.out.println("SimulatorService.orderStatus - reply: "+reply);
       OutstandingOrder OO;
       String corrId = ((JsonObject) reply).getString("correlationId");
       OO = corrId.startsWith("1") ? OO_1 : OO_2;
       String status = ((JsonObject) reply).getString(Constants.ORDER_STATUS_KEY);
-      System.out.println("SimulatorService.orderStatus - reply: "+reply+" status:"+status);
+
       if (status.equalsIgnoreCase("accepted")) {
         String orderId = ((JsonObject) reply).getString("orderId");
         logger.fine(String.format("simulator: order %s / %s accepted", orderId, corrId));

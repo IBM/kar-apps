@@ -166,11 +166,14 @@ public class OrderManagerActor extends BaseActor {
                     updateStore(Collections.emptyMap(), updateMap);
                     Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/success", order.getAsJsonObject());
                 } else if ( activeOrder.getString(Constants.ORDER_STATUS_KEY).equals(Order.OrderStatus.BOOKED.name())){
+                    logger.log(Level.INFO,"OrderManagerActor.orderBooked() - sending reply to REST - idempotance path");
                     // idempotence check - returned previously saved booking
                     Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/success", activeOrder);
                 } else {
                     logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() - Unexpected Order State:"+activeOrder);
                 }
+            } else {
+                logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() - order:"+order.getId()+" not found in activeOrders Map");
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() ", e);

@@ -643,7 +643,7 @@ public class VoyageActor extends BaseActor {
          jb.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, empties);
          jb.add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
          Kar.Actors.State.set(this, jb.build());
-         logger.info("VoyageActor.addEmptyReefers() - voyageId:"+getId()+" Saved New State - empties:"+emptyReefersMap.size()+" empties:"+empties);
+         logger.info("VoyageActor.addEmptyReefers() - voyageId:"+getId()+" Saved New State - empties:"+emptyReefersMap.size());
       } catch( Exception e) {
          logSevereError("processDepartedVoyage()", e);
          throw e;

@@ -494,7 +494,7 @@ public class SimulatorService {
       OutstandingOrder OO;
       String corrId = ((JsonObject) reply).getString("correlationId");
       OO = corrId.startsWith("1") ? OO_1 : OO_2;
-      String status = ((JsonObject) reply).getString(Constants.ORDER_STATUS_KEY);
+      String status = ((JsonObject) reply).getString(Constants.STATUS_KEY);
 
       if (status.equalsIgnoreCase("accepted")) {
         String orderId = ((JsonObject) reply).getString("orderId");

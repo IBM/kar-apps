@@ -181,7 +181,13 @@ public class OrderController {
          // use websockets for uniform communication of clients.
          if (order.isOriginSimulator()) {
             System.out.println("OrderController.orderBookingFailed - Order Failed - reply: "+bookingMessage);
-            Kar.Services.post(Constants.SIMSERVICE, "simulator/orderstatus", reply);
+            JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
+            bookingStatus.add(Constants.STATUS_KEY,Json.createValue("failed")).
+                    add(Constants.REASON_KEY,order.getMsg()).
+                    add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
+                    add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
+                    add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
+            Kar.Services.post(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
          } else {
             System.out.println("OrderController.orderBookingFailed - unknown target for failed order booking - reply: "+bookingMessage);
          }

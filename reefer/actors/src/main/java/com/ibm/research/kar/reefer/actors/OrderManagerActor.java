@@ -57,7 +57,6 @@ public class OrderManagerActor extends BaseActor {
     private String orderMetrics = "";
     private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderManagerActor.class.getName());
 
-    int orderCount=0;
     @Activate
     public void activate() {
 
@@ -104,7 +103,7 @@ public class OrderManagerActor extends BaseActor {
     }
     @Remote
     public void bookOrder(JsonObject message) {
-        logger.info("OrderManagerActor.bookOrder - Called - orderCount:"+orderCount+" " + message);
+        logger.info("OrderManagerActor.bookOrder - Called - "+ message);
         Order order = null;
         try {
             order = new Order(new OrderProperties(message));
@@ -113,15 +112,6 @@ public class OrderManagerActor extends BaseActor {
             if (!orderCorrelationIds.containsKey(order.getCorrelationId())) {
                 // generate unique order id
                 order.generateOrderId();
-
-
-                if ( orderCount % 10 == 0 ) {
-                    orderCount++;
-                    order.setMsg("Simulated error in OrderManager");
-                    order.setStatus(Constants.FAILED);
-                    Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
-                    return;
-                }
                 Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
                 Kar.Actors.Reminders.schedule(this, "orderRollback", order.getId(), Instant.now().plus(2, ChronoUnit.MINUTES), Duration.ofMillis(1000), order.getAsJsonObject());
                 Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).

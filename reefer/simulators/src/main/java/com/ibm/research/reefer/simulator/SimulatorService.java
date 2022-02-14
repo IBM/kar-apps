@@ -490,7 +490,6 @@ public class SimulatorService {
   // Entry point for async order replies
   public void orderStatus(JsonValue reply) {
     try {
-      System.out.println("SimulatorService.orderStatus - reply: "+reply);
       OutstandingOrder OO;
       String corrId = ((JsonObject) reply).getString("correlationId");
       OO = corrId.startsWith("1") ? OO_1 : OO_2;

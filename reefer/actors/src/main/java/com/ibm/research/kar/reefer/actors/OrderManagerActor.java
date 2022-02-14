@@ -57,6 +57,7 @@ public class OrderManagerActor extends BaseActor {
     private String orderMetrics = "";
     private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderManagerActor.class.getName());
 
+    private boolean first = true;
     @Activate
     public void activate() {
 
@@ -106,6 +107,14 @@ public class OrderManagerActor extends BaseActor {
         Order order = null;
         try {
             order = new Order(new OrderProperties(message));
+            if ( first ) {
+                first = false;
+                order.setMsg("Simulated error in OrderManager");
+                Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
+            }
+
+
+
             // idempotence check
             if (!orderCorrelationIds.containsKey(order.getCorrelationId())) {
                 // generate unique order id

@@ -108,7 +108,7 @@ public class VoyageActor extends BaseActor {
                      reefer2OrderMap.put(reeferId, reeferBookingRecord.getOrderId());
                      reeferCount++;
                   }
-                  logger.info("VoyageActor.activate() - voyageId:" + getId() + " restored order: "+reeferBookingRecord.getOrderId());
+                  //logger.info("VoyageActor.activate() - voyageId:" + getId() + " restored order: "+reeferBookingRecord.getOrderId());
                }
                logger.info("VoyageActor.activate() - voyageId:" + getId() + " restored orders - size:" + orders.size()+" total reefers:"+reeferCount);
             }
@@ -636,7 +636,7 @@ public class VoyageActor extends BaseActor {
          }
          logger.info("VoyageActor.addEmptyReefers() - voyageId:"+getId()+
                  " Departure from "+voyage.getRoute().getOriginPort() +" reefer count:"+
-                 voyage.getReeferCount()+" empties count:"+emptyReefersMap.size()+" depot reply:"+message);
+                 voyage.getReeferCount()+" empties count:"+emptyReefersMap.size());//+" depot reply:"+message);
          voyage.updateFreeCapacity(emptyReefersMap.size());
          voyage.setReeferCount(voyage.getReeferCount()+emptyReefersMap.size());
          JsonObjectBuilder jb = Json.createObjectBuilder();

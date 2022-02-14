@@ -180,7 +180,10 @@ public class OrderController {
          // messages via websockets. At some point the sim needs to be updated to
          // use websockets for uniform communication of clients.
          if (order.isOriginSimulator()) {
+            System.out.println("OrderController.orderBookingFailed - Order Failed - reply: "+bookingMessage);
             Kar.Services.post(Constants.SIMSERVICE, "simulator/orderstatus", reply);
+         } else {
+            System.out.println("OrderController.orderBookingFailed - unknown target for failed order booking - reply: "+bookingMessage);
          }
       } catch (Exception e) {
          System.out.println("OrderController.orderBookingFailed - Order Failed - error:" + e);

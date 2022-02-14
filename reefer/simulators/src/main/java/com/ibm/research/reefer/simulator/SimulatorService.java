@@ -32,6 +32,7 @@ import javax.json.JsonValue;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
+import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.common.ScheduleService;
 
@@ -492,7 +493,7 @@ public class SimulatorService {
       OutstandingOrder OO;
       String corrId = ((JsonObject) reply).getString("correlationId");
       OO = corrId.startsWith("1") ? OO_1 : OO_2;
-      String status = ((JsonObject) reply).getString("status");
+      String status = ((JsonObject) reply).getString(Constants.ORDER_STATUS_KEY);
 
       if (status.equalsIgnoreCase("accepted")) {
         String orderId = ((JsonObject) reply).getString("orderId");

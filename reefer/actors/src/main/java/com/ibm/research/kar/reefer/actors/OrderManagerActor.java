@@ -149,11 +149,11 @@ public class OrderManagerActor extends BaseActor {
     }
     @Remote
     public void orderBooked(JsonObject message) {
+        Order order = null;
         try {
             logger.info("OrderManagerActor.orderBooked - Called -" + message);
             JsonObject activeOrder;
-            Order order = new Order(message);
-            Kar.Actors.Reminders.cancel(this, order.getId());
+            order = new Order(message);
             if (activeOrders.containsKey(order.getId()) ) {
                 activeOrder = activeOrders.get(order.getId()).asJsonObject();
                 if ( activeOrder.getString(Constants.ORDER_STATUS_KEY).equals(Order.OrderStatus.PENDING.name())) {
@@ -178,13 +178,19 @@ public class OrderManagerActor extends BaseActor {
         } catch (Exception e) {
             logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() ", e);
             throw e;
+        } finally {
+            if ( order == null ) {
+                logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() - Invalid state - order instance invalid (null)");
+                return;
+            }
+            Kar.Actors.Reminders.cancel(this, order.getId());
         }
     }
     @Remote
     public void orderFailed(JsonObject message) {
+        Order order = null;
         try {
-            Order order = new Order(message);
-            Kar.Actors.Reminders.cancel(this, order.getId());
+            order = new Order(message);
             activeOrders.remove(order.getId());
             orderCorrelationIds.remove(order.getCorrelationId());
             order.setStatus(Constants.FAILED);
@@ -192,6 +198,12 @@ public class OrderManagerActor extends BaseActor {
         } catch (Exception e) {
             logger.log(Level.SEVERE,"OrderManagerActor.orderFailed() ", e);
             throw e;
+        } finally {
+            if ( order == null ) {
+                logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() - Invalid state - order instance invalid (null)");
+                return;
+            }
+            Kar.Actors.Reminders.cancel(this, order.getId());
         }
     }
     @Remote

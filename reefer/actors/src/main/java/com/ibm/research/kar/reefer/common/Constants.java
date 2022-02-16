@@ -85,6 +85,7 @@ public class Constants {
    // each product unit has the same size.
    public static final int REEFER_CAPACITY=1000;
    public static final int REEFER_DAYS_ON_MAINTENANCE=2;
+   public static final int ORDER_TIMEOUT_SECS=120;
    public static final String DEPOTS_KEY="depots";
    public static final String DEPOT_KEY="depot";
    public static final String SHARDS_KEY="shards";

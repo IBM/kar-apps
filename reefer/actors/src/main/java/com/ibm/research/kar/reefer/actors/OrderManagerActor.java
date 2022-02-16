@@ -118,7 +118,7 @@ public class OrderManagerActor extends BaseActor {
                 Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
                 Kar.Actors.Reminders.schedule(this, "orderRollback", order.getId(), Instant.now().plus(2, ChronoUnit.MINUTES), Duration.ofMillis(1000), order.getAsJsonObject());
 
-                Reminder[] reminder = Kar.Actors.Reminders.get(this, order.getCorrelationId());
+                Reminder[] reminder = Kar.Actors.Reminders.get(this, order.getId());
                 if ( reminder != null && reminder.length > 0) {
                     System.out.println("OrderManagerActor.bookOrder - Reminder registered with data:"+reminder[0].data());
                 }

@@ -117,9 +117,16 @@ public class OrderManagerActor extends BaseActor {
                 order.generateOrderId();
                 Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
                 Kar.Actors.Reminders.schedule(this, "orderRollback", order.getId(), Instant.now().plus(2, ChronoUnit.MINUTES), Duration.ofMillis(1000), order.getAsJsonObject());
-                Reminder[] reminder = Kar.Actors.Reminders.get(this, order.getId());
-                if ( reminder != null && reminder.length > 0) {
-                    logger.info("OrderManagerActor.bookOrder - Reminder registered with data:"+reminder[0].data());
+                Reminder[] reminders = Kar.Actors.Reminders.get(this, order.getId());
+                if ( reminders != null && reminders.length > 0) {
+                    logger.info("OrderManagerActor.bookOrder - Reminder registered with data:"+reminders[0].data());
+                } else {
+                    if ( reminders == null) {
+                        logger.info("OrderManagerActor.bookOrder - reminders not defined (null) ");
+                    } else {
+                        logger.info("OrderManagerActor.bookOrder - reminders.get() returned empty array for id:"+order.getId());
+                    }
+
                 }
                 Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                         method("createOrder").arg(order.getAsJsonObject()).tell();

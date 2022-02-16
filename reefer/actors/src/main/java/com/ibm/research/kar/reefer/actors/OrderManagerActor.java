@@ -92,8 +92,12 @@ public class OrderManagerActor extends BaseActor {
     public void orderRollback(JsonObject message) {
         logger.info("OrderManagerActor.orderRollback - Called -" + message);
         Order order = new Order(message);
-        Kar.Actors.Reminders.cancel(this, order.getId());
-        if (orderCorrelationIds.containsKey(order.getCorrelationId())) {
+        if ( !activeOrders.containsKey(order.getId())) {
+            logger.info("OrderManagerActor.orderRollback - Order: " + order.getId()+" not in activeMap - probably duplicate order - ignoring rollback");
+            Kar.Actors.Reminders.cancel(this, order.getId());
+            return;
+        }
+        if (orderCorrelationIds.containsKey(order.getCorrelationId()) ) {
             Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
                     method("rollbackOrder").arg(order.getAsJsonObject()).tell();
             activeOrders.remove(order.getId());
@@ -102,6 +106,7 @@ public class OrderManagerActor extends BaseActor {
             order.setMsg("OrderManager - Order booking request timed out");
             Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
         }
+        Kar.Actors.Reminders.cancel(this, order.getId());
     }
     @Remote
     public void bookOrder(JsonObject message) {

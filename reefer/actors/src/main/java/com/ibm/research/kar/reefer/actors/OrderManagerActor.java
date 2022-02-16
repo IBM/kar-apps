@@ -17,6 +17,7 @@
 package com.ibm.research.kar.reefer.actors;
 
 import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.Reminder;
 import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
@@ -111,10 +112,16 @@ public class OrderManagerActor extends BaseActor {
 
             // idempotence check
             if (!orderCorrelationIds.containsKey(order.getCorrelationId())) {
+
                 // generate unique order id
                 order.generateOrderId();
                 Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
                 Kar.Actors.Reminders.schedule(this, "orderRollback", order.getId(), Instant.now().plus(2, ChronoUnit.MINUTES), Duration.ofMillis(1000), order.getAsJsonObject());
+
+                Reminder[] reminder = Kar.Actors.Reminders.get(this, order.getCorrelationId());
+                if ( reminder != null && reminder.length > 0) {
+                    System.out.println("OrderManagerActor.bookOrder - Reminder registered with data:"+reminder[0].data());
+                }
                 Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                         method("createOrder").arg(order.getAsJsonObject()).tell();
                 Map<String, JsonValue> updateMap = new HashMap<>();

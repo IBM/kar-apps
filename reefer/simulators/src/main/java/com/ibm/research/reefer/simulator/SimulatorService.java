@@ -32,7 +32,6 @@ import javax.json.JsonValue;
 
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
-import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
 import com.ibm.research.kar.reefer.common.ScheduleService;
 
@@ -72,15 +71,17 @@ public class SimulatorService {
     String corrId;
     long startTime;
     String status;
+    String voyage;
     public final String persistKey = "nextOrderSeq";
     public final String pending = "pending";
     public final String accepted = "accepted";
     public final String booked = "booked";
     public final String failed = "failed";
-    void setOO(String cId, long st, String stat) {
+      void setOO(String cId, long st, String stat, String voyage) {
       this.corrId = cId;
       this.startTime = st;
       this.status = stat;
+      this.voyage = voyage;
     }
     void setOOCorrId(String cId) {
       this.corrId = cId;
@@ -99,6 +100,9 @@ public class SimulatorService {
     }
     String getOOStatus() {
       return this.status;
+    }
+    String getOOVoyage() {
+      return this.voyage;
     }
   }
   public final static OutstandingOrder OO_1 = new OutstandingOrder();
@@ -477,8 +481,8 @@ public class SimulatorService {
       }
     }
     else {
-      logger.severe(String.format("simulator updateFailed(): invalid update for %s,%s with value %s",
-              OO.getOOCorrId(),OO.getOOStatus(),OO.failed));
+      logger.severe(String.format("simulator updateFailed(): invalid update for %s,%s with value %s corrId:%s OO.hashCode():%s",
+              OO.getOOCorrId(),OO.getOOStatus(),OO.failed, corrId, OO.hashCode()));
     }
   }
   /**
@@ -493,7 +497,7 @@ public class SimulatorService {
       OutstandingOrder OO;
       String corrId = ((JsonObject) reply).getString("correlationId");
       OO = corrId.startsWith("1") ? OO_1 : OO_2;
-      String status = ((JsonObject) reply).getString(Constants.STATUS_KEY);
+      String status = ((JsonObject) reply).getString("status");
 
       if (status.equalsIgnoreCase("accepted")) {
         String orderId = ((JsonObject) reply).getString("orderId");
@@ -502,18 +506,17 @@ public class SimulatorService {
       } else if (status.equalsIgnoreCase("booked")) {
         String orderId = ((JsonObject) reply).getString("orderId");
         int otime = (int) ((System.nanoTime() - OO.getOOStartTime()) / 1000000);
-//      totalOrderTime += otime;
         if (SimulatorService.os.addSuccessful(otime)) {
         // orderstats indicates an outlier
-          //TODO add outlier voyage??
-          logger.warning(String.format("simulator: order latency outlier orderId=%s ===> %d",orderId, otime));
+          String voyage = OO.getOOVoyage();
+          logger.warning(String.format("simulator: order latency outlier voyage=%s orderId=%s ===> %d",voyage, orderId, otime));
         }
         logger.fine(String.format("simulator: order %s / %s booked", orderId, corrId));
         logger.fine("simulator: order "+corrId+" booked");
         updateBooked(OO, corrId);
       } else if (status.equalsIgnoreCase("failed")) {
         SimulatorService.os.addFailed();
-        logger.warning("simulator: order "+corrId+" failed because: "+((JsonObject) reply).getString("reason"));
+        logger.severe("simulator: order "+corrId+" failed because: "+((JsonObject) reply).getString("reason"));
         updateFailed(OO, corrId);
       }
     }

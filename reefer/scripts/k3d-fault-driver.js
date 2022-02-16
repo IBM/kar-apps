@@ -184,7 +184,7 @@ async function main () {
   action = 'stop';
   enable = false;
   pairkill = false;
-  singlenode = true;
+  singlenode = false;
 
   nodes = ['k3d-workernode-1-0','k3d-workernode-2-0'];
   if ( singlenode ) {

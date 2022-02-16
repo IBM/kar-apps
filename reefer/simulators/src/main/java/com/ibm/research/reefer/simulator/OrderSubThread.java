@@ -118,14 +118,13 @@ public class OrderSubThread extends Thread {
                   .add(Constants.CORRELATION_ID_KEY, simSequenceID).
                   build();
           long ordersnap = System.nanoTime();
-          OO.setOO(simSequenceID, ordersnap, OO.pending);
+          OO.setOO(simSequenceID, ordersnap, OO.pending, voyage);
           try {
             Kar.Services.post(Constants.REEFERSERVICE, "orders", order);
             // increment counts of orders submitted
             ordersDoneToday.incrementAndGet();
             threadOrdersDone++;
             // wait for order async completion message
-            //TODO what happens when thread gets an interrupt? Maybe should stop sending interrupts?
             synchronized (OO) {
               try {
                 OO.wait();

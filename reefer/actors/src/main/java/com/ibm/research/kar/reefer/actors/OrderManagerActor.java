@@ -30,6 +30,7 @@ import com.ibm.research.kar.reefer.model.OrderProperties;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.json.*;
+import java.io.StringReader;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -114,25 +115,43 @@ public class OrderManagerActor extends BaseActor {
         Order order = null;
         try {
             order = new Order(new OrderProperties(message));
+            Reminder[] reminders = Kar.Actors.Reminders.get(this, order.getCorrelationId());
+            if ( reminders != null && reminders.length > 0) {
+                logger.info("OrderManagerActor.bookOrder - Reminder registered with data:"+reminders[0].data());
+                try (JsonReader jsonReader = Json.createReader(new StringReader(reminders[0].data()))) {
+                    order = new Order(jsonReader.readObject());
+                } catch (Exception e) {
+                    String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+                    System.out.println("OrderManagerActor.bookOrder - Error: "+stacktrace);
+                    logger.log(Level.SEVERE, stacktrace);
+                    throw e;
+                }
 
+
+            } else {
+                // generate unique order id
+                order.generateOrderId();
+                Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
+                Kar.Actors.Reminders.schedule(this, "orderRollback", order.getCorrelationId(), Instant.now().plus(Constants.ORDER_TIMEOUT_SECS, ChronoUnit.SECONDS), Duration.ofMillis(1000), order.getAsJsonObject());
+            }
+            Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
+                    method("createOrder").arg(order.getAsJsonObject()).tell();
+            Map<String, JsonValue> updateMap = new HashMap<>();
+            updateMap.put(order.getId(), order.getAsJsonObject());
+            updateStore(Collections.emptyMap(), updateMap);
+            activeOrders.put(order.getId(), order.getAsJsonObject());
+            orderCorrelationIds.put(order.getCorrelationId(), order.getId());
+            logger.info("OrderManagerActor.bookOrder - order saved -" + order.getAsJsonObject());
+
+           /*
             // idempotence check
             if (!orderCorrelationIds.containsKey(order.getCorrelationId())) {
 
                 // generate unique order id
                 order.generateOrderId();
                 Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
-                Kar.Actors.Reminders.schedule(this, "orderRollback", order.getId(), Instant.now().plus(Constants.ORDER_TIMEOUT_SECS, ChronoUnit.SECONDS), Duration.ofMillis(1000), order.getAsJsonObject());
-                Reminder[] reminders = Kar.Actors.Reminders.get(this, order.getId());
-                if ( reminders != null && reminders.length > 0) {
-                    logger.info("OrderManagerActor.bookOrder - Reminder registered with data:"+reminders[0].data());
-                } else {
-                    if ( reminders == null) {
-                        logger.info("OrderManagerActor.bookOrder - reminders not defined (null) ");
-                    } else {
-                        logger.info("OrderManagerActor.bookOrder - reminders.get() returned empty array for id:"+order.getId());
-                    }
+                Kar.Actors.Reminders.schedule(this, "orderRollback", order.getCorrelationId(), Instant.now().plus(Constants.ORDER_TIMEOUT_SECS, ChronoUnit.SECONDS), Duration.ofMillis(1000), order.getAsJsonObject());
 
-                }
                 Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                         method("createOrder").arg(order.getAsJsonObject()).tell();
                 Map<String, JsonValue> updateMap = new HashMap<>();
@@ -150,6 +169,8 @@ public class OrderManagerActor extends BaseActor {
                 orderBooked(activeOrders.get(savedOrderId).asJsonObject());
             }
 
+
+            */
         } catch (Exception e) {
             e.printStackTrace();
             logger.log(Level.SEVERE, e.getMessage(), e);

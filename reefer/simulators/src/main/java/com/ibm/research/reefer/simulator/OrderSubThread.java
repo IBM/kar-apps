@@ -127,7 +127,7 @@ public class OrderSubThread extends Thread {
             // wait for order async completion message
             synchronized (OO) {
               try {
-                OO.wait();
+                OO.wait(30*1000 + Constants.ORDER_TIMEOUT_SECS);
               } catch( InterruptedException e) {}
             }
             int otime = (int) ((System.nanoTime() - ordersnap) / 1000000);

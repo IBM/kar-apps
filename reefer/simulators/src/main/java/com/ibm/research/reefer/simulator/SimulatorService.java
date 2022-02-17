@@ -77,7 +77,7 @@ public class SimulatorService {
     public final String accepted = "accepted";
     public final String booked = "booked";
     public final String failed = "failed";
-      void setOO(String cId, long st, String stat, String voyage) {
+    void setOO(String cId, long st, String stat, String voyage) {
       this.corrId = cId;
       this.startTime = st;
       this.status = stat;
@@ -453,7 +453,7 @@ public class SimulatorService {
       OO.setOOStatus(OO.accepted);
     }
     else {
-      logger.severe(String.format("simulator updateAccepted: invalid update for %s,%s with value %s corrId:%s OO.hashCode():%s",
+      logger.severe(String.format("simulator updateAccepted: invalid update for %s,%s with value=%s corrId=%s OO.hashCode()=%s",
               OO.getOOCorrId(),OO.getOOStatus(),OO.accepted, corrId, OO.hashCode()));
       synchronized (OO) {
         OO.notify();
@@ -468,36 +468,32 @@ public class SimulatorService {
       }
     }
     else {
-      logger.severe(String.format("simulator updateBooked(): invalid update for %s,%s with value %s corrId:%s OO.hashCode():%s",
+      logger.severe(String.format("simulator updateBooked(): invalid update for %s,%s with value=%s corrId=%s OO.hashCode()=%s",
               OO.getOOCorrId(),OO.getOOStatus(),OO.booked, corrId, OO.hashCode()));
     }
   }
-  private void updateFailed(OutstandingOrder OO, String corrId) {
-    if (OO.getOOCorrId().equals(corrId) &&
-            (OO.getOOStatus().equals(OO.pending) || OO.getOOStatus().equals(OO.accepted))) {
-      OO.setOOStatus(OO.failed);
-      synchronized (OO) {
-        OO.notify();
-      }
-    }
-    else {
-      logger.severe(String.format("simulator updateFailed(): invalid update for %s,%s with value %s corrId:%s OO.hashCode():%s",
-              OO.getOOCorrId(),OO.getOOStatus(),OO.failed, corrId, OO.hashCode()));
+  private void updateFailed(OutstandingOrder OO, String corrId, String status) {
+    logger.severe(String.format("simulator updateFailed(): update received for %s,%s with value=%s corrId=%s OO.hashCode()=%s",
+            OO.getOOCorrId(),OO.getOOStatus(), status, corrId, OO.hashCode()));
+    synchronized (OO) {
+      OO.notify();
     }
   }
-  /**
-  JsonObjectBuilder b = Json.createObjectBuilder();
-  b.add("status",Json.createValue("accepted")).add("correlationId", Json.createValue("foo")).add("orderId", "id");
-  b.add("status",Json.createValue("booked")).add("correlationId", Json.createValue("foo"));
-  b.add("status",Json.createValue("rejected")).add("correlationId", Json.createValue("foo")).add("reason", "some reason");
-*/
+
   // Entry point for async order replies
   public void orderStatus(JsonValue reply) {
     try {
       OutstandingOrder OO;
-      String corrId = ((JsonObject) reply).getString("correlationId");
+      String corrId = "missing";
+      if (((JsonObject) reply).containsKey("correlationId")) {
+        corrId = ((JsonObject) reply).getString("correlationId");
+      }
       OO = corrId.startsWith("1") ? OO_1 : OO_2;
-      String status = ((JsonObject) reply).getString("status");
+
+      String status = "missing";
+      if (((JsonObject) reply).containsKey("status")) {
+        status = ((JsonObject) reply).getString("status");
+      }
 
       if (status.equalsIgnoreCase("accepted")) {
         String orderId = ((JsonObject) reply).getString("orderId");
@@ -517,7 +513,12 @@ public class SimulatorService {
       } else if (status.equalsIgnoreCase("failed")) {
         SimulatorService.os.addFailed();
         logger.severe("simulator: order "+corrId+" failed because: "+((JsonObject) reply).getString("reason"));
-        updateFailed(OO, corrId);
+        updateFailed(OO, corrId, status);
+      } else {
+        // got some strange status
+        SimulatorService.os.addFailed();
+        logger.severe("simulator: invalid reply message received with order "+corrId+" and status "+status);
+        updateFailed(OO, corrId, status);
       }
     }
     catch (Exception e) {

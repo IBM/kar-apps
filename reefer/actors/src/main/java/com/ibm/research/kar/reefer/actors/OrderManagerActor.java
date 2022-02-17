@@ -117,17 +117,8 @@ public class OrderManagerActor extends BaseActor {
             order = new Order(new OrderProperties(message));
             Reminder[] reminders = Kar.Actors.Reminders.get(this, order.getCorrelationId());
             if ( reminders != null && reminders.length > 0) {
-                logger.info("OrderManagerActor.bookOrder - Reminder registered with data:"+reminders[0].data());
-                try (JsonReader jsonReader = Json.createReader(new StringReader(reminders[0].data()))) {
-                    order = new Order(jsonReader.readObject());
-                } catch (Exception e) {
-                    String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-                    System.out.println("OrderManagerActor.bookOrder - Error: "+stacktrace);
-                    logger.log(Level.SEVERE, stacktrace);
-                    throw e;
-                }
-
-
+                logger.info("OrderManagerActor.bookOrder - Reminder registered with data:"+reminders[0].getArguments());
+                order = new Order((JsonObject)(reminders[0].getArguments()[0]) );
             } else {
                 // generate unique order id
                 order.generateOrderId();

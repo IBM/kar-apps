@@ -213,7 +213,7 @@ public class OrderManagerActor extends BaseActor {
                 logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() - Invalid state - order instance invalid (null)");
                 return;
             }
-            Kar.Actors.Reminders.cancel(this, order.getId());
+            Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
         }
     }
     @Remote
@@ -233,7 +233,7 @@ public class OrderManagerActor extends BaseActor {
                 logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() - Invalid state - order instance invalid (null)");
                 return;
             }
-            Kar.Actors.Reminders.cancel(this, order.getId());
+            Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
         }
     }
     @Remote

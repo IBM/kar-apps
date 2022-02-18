@@ -455,14 +455,12 @@ public class SimulatorService {
     else {
       logger.severe(String.format("simulator updateAccepted: invalid update for %s,%s with value=%s corrId=%s OO.hashCode()=%s",
               OO.getOOCorrId(),OO.getOOStatus(),OO.accepted, corrId, OO.hashCode()));
-      synchronized (OO) {
-        OO.notify();
-      }
     }
   }
   private void updateBooked(OutstandingOrder OO, String corrId) {
     if (OO.getOOCorrId().equals(corrId) && OO.getOOStatus().equals(OO.accepted)) {
       OO.setOOStatus(OO.booked);
+      // notify ordersubthread that order completed 
       synchronized (OO) {
         OO.notify();
       }
@@ -473,8 +471,7 @@ public class SimulatorService {
     }
   }
   private void updateFailed(OutstandingOrder OO, String corrId, String status) {
-    logger.severe(String.format("simulator updateFailed(): update received for %s,%s with value=%s corrId=%s OO.hashCode()=%s",
-            OO.getOOCorrId(),OO.getOOStatus(), status, corrId, OO.hashCode()));
+    // notify ordersubthread that order is finito 
     synchronized (OO) {
       OO.notify();
     }
@@ -515,7 +512,7 @@ public class SimulatorService {
         logger.severe("simulator: order "+corrId+" failed because: "+((JsonObject) reply).getString("reason"));
         updateFailed(OO, corrId, status);
       } else {
-        // got some strange status
+        // got unexpected status value
         SimulatorService.os.addFailed();
         logger.severe("simulator: invalid reply message received with order "+corrId+" and status "+status);
         updateFailed(OO, corrId, status);

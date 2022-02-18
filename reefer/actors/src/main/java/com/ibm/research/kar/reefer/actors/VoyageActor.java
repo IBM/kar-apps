@@ -73,6 +73,9 @@ public class VoyageActor extends BaseActor {
             JsonValue jv = Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                     method("voyage").arg(Json.createValue(getId())).call();
             voyageInfo = jv.asJsonObject();
+            if ( voyageInfo == null ) {
+               logger.severe("VoyageActor.activate() - voyageId:" + getId() + " voyageInfo not available - schedule manager replied with:"+jv);
+            }
             // check if voyage already arrived in which case the progress attribute would be 100. It's possible that
             // the arrived voyage would be called with an anomaly
             if ( voyageInfo != null && voyageInfo.getJsonNumber("progress").intValue() == 100) {
@@ -226,9 +229,6 @@ public class VoyageActor extends BaseActor {
                   processDepartingVoyage(voyage);
                   voyageStatus = Json.createValue(VoyageStatus.DEPARTED.name());
                   jb.add(Constants.VOYAGE_STATUS_KEY, voyageStatus);
-                 // if ( emptyReefers != null ) {
-                //     jb.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, emptyReefers);
-                //  }
                } else {  // voyage in transit
                   Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                           method("positionChanged").arg(VoyageJsonSerializer.serialize(voyage)).tell();

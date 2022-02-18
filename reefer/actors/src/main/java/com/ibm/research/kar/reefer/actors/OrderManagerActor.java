@@ -94,11 +94,8 @@ public class OrderManagerActor extends BaseActor {
         logger.info("OrderManagerActor.orderRollback - Called -" + message);
         Order order = new Order(message);
         if ( !activeOrders.containsKey(order.getId())) {
-            logger.info("OrderManagerActor.orderRollback - Order: " + order.getId()+" not in activeMap - probably duplicate order - ignoring rollback");
-            Kar.Actors.Reminders.cancel(this, order.getId());
-            return;
-        }
-        if (orderCorrelationIds.containsKey(order.getCorrelationId()) ) {
+            logger.severe("OrderManagerActor.orderRollback - Order: " + order.getId()+" not in activeMap - probably duplicate order - ignoring rollback");
+        } else {
             Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
                     method("rollbackOrder").arg(order.getAsJsonObject()).tell();
             activeOrders.remove(order.getId());
@@ -117,7 +114,7 @@ public class OrderManagerActor extends BaseActor {
             order = new Order(new OrderProperties(message));
             Reminder[] reminders = Kar.Actors.Reminders.get(this, order.getCorrelationId());
             if ( reminders != null && reminders.length > 0) {
-                logger.info("OrderManagerActor.bookOrder - Reminder registered with data:"+reminders[0].getArguments());
+                logger.info("OrderManagerActor.bookOrder - Reminder registered with data:"+reminders[0].getArguments()[0]);
                 order = new Order((JsonObject)(reminders[0].getArguments()[0]) );
             } else {
                 // generate unique order id

@@ -142,7 +142,6 @@ public class OrderController {
     */
    @PostMapping("/order/booking/success")
    public void orderBooked(@RequestBody String bookingMessage) {
-//      System.out.println("OrderController.orderBooked - Order Actor booking status:" + bookingMessage);
       if (logger.isLoggable(Level.INFO)) {
          logger.info("OrderController.orderBooked - Order Actor booking status:" + bookingMessage);
       }
@@ -160,7 +159,7 @@ public class OrderController {
                     add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
                     add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
                     add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
-            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
+            Kar.Services.post(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
          }
       } catch (Exception e) {
          System.out.println("OrderController.orderBooked - Order Failed - error:" + e);
@@ -189,7 +188,7 @@ public class OrderController {
             if ( order.getMsg() != null ) {
                bookingStatus.add(Constants.REASON_KEY,order.getMsg());
             }
-            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
+            Kar.Services.post(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
          } else {
             System.out.println("OrderController.orderBookingFailed - unknown target for failed order booking - reply: "+bookingMessage);
          }
@@ -199,17 +198,15 @@ public class OrderController {
          throw e;
       }
    }
-
    @PostMapping("/order/booking/accepted")
    public void orderBookingAccepted(@RequestBody String bookingMessage) {
       try {
-//         System.out.println("OrderController.orderBookingAccepted - booking status:" + bookingMessage);
          Order order = new Order(messageToJson(bookingMessage));
          if (order.isOriginSimulator()) {
             JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
             bookingStatus.add(Constants.STATUS_KEY, Json.createValue("accepted")).
                     add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId())).add(Constants.ORDER_ID_KEY, order.getId());
-            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build()); //messageToJson(bookingMessage));
+            Kar.Services.post(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build()); //messageToJson(bookingMessage));
          }
       } catch (Exception e) {
          System.out.println("OrderController.orderBookingAccepted - Order Failed - error:" + e);

@@ -163,17 +163,18 @@ public class OrderManagerActor extends BaseActor {
          }
          activeOrder = activeOrders.get(order.getId()).asJsonObject();
          if ( Order.pending(activeOrder) ) {
-              order.setStatus(Order.OrderStatus.BOOKED.name());
-              activeOrders.put(order.getId(), order.getAsJsonObject());
-              bookedOrderList.add(order);
-              bookedTotalCount++;
-              Map<String, JsonValue> updateMap = new HashMap<>();
-              updateMap.put(order.getId(), order.getAsJsonObject());
-              updateStore(Collections.emptyMap(), updateMap);
-              Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", order.getAsJsonObject());
-              logger.log(Level.INFO, "OrderManagerActor.orderBooked() - sending reply to REST - idempotance path");
-              // idempotence check - returned previously saved booking
-              Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", activeOrder);
+            order.setStatus(Order.OrderStatus.BOOKED.name());
+            activeOrders.put(order.getId(), order.getAsJsonObject());
+            bookedOrderList.add(order);
+            bookedTotalCount++;
+            Map<String, JsonValue> updateMap = new HashMap<>();
+            updateMap.put(order.getId(), order.getAsJsonObject());
+            updateStore(Collections.emptyMap(), updateMap);
+            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", order.getAsJsonObject());
+         } else if ( Order.booked( activeOrder) ) {
+            logger.log(Level.INFO, "OrderManagerActor.orderBooked() - sending reply to REST - idempotance path");
+            // idempotence check - returned previously saved booking
+            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", activeOrder);
          } else {
             logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - Unexpected Order State:" + activeOrder);
          }

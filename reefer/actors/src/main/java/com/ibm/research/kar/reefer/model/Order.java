@@ -226,4 +226,10 @@ public class Order {
         jsonOrderBuilder.add("order", orderParams);
         return jsonOrderBuilder.build();
     }
+    public static boolean booked(JsonObject jo) {
+        return jo.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name());
+    }
+    public static boolean pending(JsonObject jo) {
+        return jo.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.PENDING.name());
+    }
 }

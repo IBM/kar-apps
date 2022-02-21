@@ -89,7 +89,7 @@ public class ScheduleManagerActor extends BaseActor {
 
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logSevereError("activate", e);
         }
     }
     @Remote
@@ -121,7 +121,7 @@ public class ScheduleManagerActor extends BaseActor {
             }
             Kar.Actors.State.set(this, Constants.TOTAL_SPOILT_KEY, Json.createValue(totalSpoiltReeferCount));
         } catch( Exception e) {
-            e.printStackTrace();
+            logSevereError("publishSpoiltReeferMetrics", e);
         }
 
     }
@@ -437,6 +437,11 @@ public class ScheduleManagerActor extends BaseActor {
         return jab.build();
     }
 
+    private void logSevereError(String methdodName, Exception e) {
+        String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+        logger.log(Level.SEVERE,"ScheduleManagerActor." +methdodName+ " Error:" +stacktrace);
+
+    }
     private class ActiveVoyageManager {
         private ActorRef scheduleManagerActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
         private final ScheduleService schedule;

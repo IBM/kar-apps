@@ -89,7 +89,9 @@ public class ScheduleService {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
             logger.log(Level.SEVERE,"ScheduleService.generateShipSchedule() - Error: "+ stacktrace);
         }
-
+        if ( masterSchedule.isEmpty()) {
+            return lastVoyageDate;
+        }
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
 
     }

@@ -30,7 +30,6 @@ import com.ibm.research.kar.reefer.model.OrderProperties;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.json.*;
-import java.io.StringReader;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -41,316 +40,288 @@ import java.util.logging.Logger;
 @Actor
 public class OrderManagerActor extends BaseActor {
 
-    private int maxOrderCount = 10;
-    // need separate queues for each state type. Can't use single list as the
-    // booked orders are more frequent and would push all the other types out of
-    // the bounded queue
-    private FixedSizeQueue inTransitOrderList = new FixedSizeQueue(maxOrderCount);
-    private FixedSizeQueue bookedOrderList = new FixedSizeQueue(maxOrderCount);
-    private FixedSizeQueue spoiltOrderList = new FixedSizeQueue(maxOrderCount);
+   private int maxOrderCount = 10;
+   // need separate queues for each state type. Can't use single list as the
+   // booked orders are more frequent and would push all the other types out of
+   // the bounded queue
+   private FixedSizeQueue inTransitOrderList = new FixedSizeQueue(maxOrderCount);
+   private FixedSizeQueue bookedOrderList = new FixedSizeQueue(maxOrderCount);
+   private FixedSizeQueue spoiltOrderList = new FixedSizeQueue(maxOrderCount);
 
-    private Map<String, JsonValue> activeOrders = new HashMap<>();
-    // key=correlationId, value=orderId
-    private Map<String, String> orderCorrelationIds = new HashMap<>();
-    private int bookedTotalCount = 0;
-    private int inTransitTotalCount = 0;
-    private int spoiltTotalCount = 0;
+   private Map<String, JsonValue> activeOrders = new HashMap<>();
 
-    private String orderMetrics = "";
-    private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderManagerActor.class.getName());
+   private int bookedTotalCount = 0;
+   private int inTransitTotalCount = 0;
+   private int spoiltTotalCount = 0;
 
-    @Activate
-    public void activate() {
+   private String orderMetrics = "";
+   private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderManagerActor.class.getName());
 
-        Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
-        try {
-            // initial actor invocation should handle no state
-            if (!state.isEmpty()) {
+   @Activate
+   public void activate() {
 
-                if (state.containsKey(Constants.ORDER_METRICS_KEY)) {
-                    orderMetrics = (((JsonString) state.get(Constants.ORDER_METRICS_KEY)).getString());
-                    String[] values = orderMetrics.split(":");
+      Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
+      try {
+         // initial actor invocation should handle no state
+         if (!state.isEmpty()) {
 
-                    bookedTotalCount = Integer.valueOf(values[0].trim());
-                    inTransitTotalCount = Integer.valueOf(values[1].trim());
-                    spoiltTotalCount = Integer.valueOf(values[2].trim());
-                }
-                if (state.containsKey(Constants.ORDERS_KEY)) {
-                    long t = System.currentTimeMillis();
-                    activeOrders.putAll(state.get(Constants.ORDERS_KEY).asJsonObject());
-                    // map correlationIds to orderIds so that we can efficiently do idempotence check
-                    activeOrders.forEach((key,value) -> orderCorrelationIds.put(value.asJsonObject().getString(Constants.CORRELATION_ID_KEY), key));
-                }
-                logger.info("OrderManagerActor.activate() - Totals - totalInTransit:" + inTransitTotalCount + " totalBooked: " + bookedTotalCount + " totalSpoilt:" + spoiltTotalCount);
+            if (state.containsKey(Constants.ORDER_METRICS_KEY)) {
+               orderMetrics = (((JsonString) state.get(Constants.ORDER_METRICS_KEY)).getString());
+               String[] values = orderMetrics.split(":");
 
+               bookedTotalCount = Integer.valueOf(values[0].trim());
+               inTransitTotalCount = Integer.valueOf(values[1].trim());
+               spoiltTotalCount = Integer.valueOf(values[2].trim());
             }
-        } catch (Throwable e) {
-            logger.log(Level.SEVERE,"OrderManagerActor.activate()", e);
-            throw new RuntimeException(e);
-        }
-    }
-    @Remote
-    public void orderRollback(JsonObject message) {
-        logger.info("OrderManagerActor.orderRollback - Called -" + message);
-        Order order = new Order(message);
-        if ( !activeOrders.containsKey(order.getId())) {
-            logger.severe("OrderManagerActor.orderRollback - Order: " + order.getId()+" not in activeMap - probably duplicate order - ignoring rollback");
-        } else {
+            if (state.containsKey(Constants.ORDERS_KEY)) {
+               long t = System.currentTimeMillis();
+               activeOrders.putAll(state.get(Constants.ORDERS_KEY).asJsonObject());
+            }
+            logger.info("OrderManagerActor.activate() - Totals - totalInTransit:" + inTransitTotalCount + " totalBooked: " + bookedTotalCount + " totalSpoilt:" + spoiltTotalCount);
+
+         }
+      } catch (Throwable e) {
+         logger.log(Level.SEVERE, "OrderManagerActor.activate()", e);
+         throw new RuntimeException(e);
+      }
+   }
+
+   @Remote
+   public void orderRollback(JsonObject message) {
+      Order order = null;
+      try {
+         logger.severe("OrderManagerActor.orderRollback - Called -" + message);
+         order = new Order(message);
+         if (!activeOrders.containsKey(order.getId())) {
+            logger.severe("OrderManagerActor.orderRollback - Order: " + order.getId() + " not in activeMap - probably duplicate order - ignoring rollback");
+         } else {
             Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
                     method("rollbackOrder").arg(order.getAsJsonObject()).tell();
             activeOrders.remove(order.getId());
-            orderCorrelationIds.remove(order.getCorrelationId());
             order.setStatus(Constants.FAILED);
             order.setMsg("OrderManager - Order booking request timed out");
-            Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
-        }
-        Kar.Actors.Reminders.cancel(this, order.getId());
-    }
-    @Remote
-    public void bookOrder(JsonObject message) {
-        logger.info("OrderManagerActor.bookOrder - Called - "+ message);
-        Order order = null;
-        try {
-            order = new Order(new OrderProperties(message));
-            Reminder[] reminders = Kar.Actors.Reminders.get(this, order.getCorrelationId());
-            if ( reminders != null && reminders.length > 0) {
-                logger.info("OrderManagerActor.bookOrder - Reminder registered with data:"+reminders[0].getArguments()[0]);
-                order = new Order((JsonObject)(reminders[0].getArguments()[0]) );
-            } else {
-                // generate unique order id
-                order.generateOrderId();
-                Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
-                Kar.Actors.Reminders.schedule(this, "orderRollback", order.getCorrelationId(), Instant.now().plus(Constants.ORDER_TIMEOUT_SECS, ChronoUnit.SECONDS), Duration.ofMillis(1000), order.getAsJsonObject());
-            }
-            Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                    method("createOrder").arg(order.getAsJsonObject()).tell();
-            Map<String, JsonValue> updateMap = new HashMap<>();
-            updateMap.put(order.getId(), order.getAsJsonObject());
-            updateStore(Collections.emptyMap(), updateMap);
-            activeOrders.put(order.getId(), order.getAsJsonObject());
-            orderCorrelationIds.put(order.getCorrelationId(), order.getId());
-            logger.info("OrderManagerActor.bookOrder - order saved -" + order.getAsJsonObject());
+            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
+         }
+      } catch( Exception e) {
+         logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
+      } finally {
+         if ( order == null ) {
+            logger.log(Level.SEVERE, "OrderManagerActor.orderRollback() - Invalid state - order instance invalid (null)");
+            return;
+         }
+         Kar.Actors.Reminders.cancel(this, order.getId());
+      }
 
-           /*
-            // idempotence check
-            if (!orderCorrelationIds.containsKey(order.getCorrelationId())) {
+   }
 
-                // generate unique order id
-                order.generateOrderId();
-                Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
-                Kar.Actors.Reminders.schedule(this, "orderRollback", order.getCorrelationId(), Instant.now().plus(Constants.ORDER_TIMEOUT_SECS, ChronoUnit.SECONDS), Duration.ofMillis(1000), order.getAsJsonObject());
-
-                Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                        method("createOrder").arg(order.getAsJsonObject()).tell();
-                Map<String, JsonValue> updateMap = new HashMap<>();
-                updateMap.put(order.getId(), order.getAsJsonObject());
-                updateStore(Collections.emptyMap(), updateMap);
-                activeOrders.put(order.getId(), order.getAsJsonObject());
-                orderCorrelationIds.put(order.getCorrelationId(), order.getId());
-                logger.info("OrderManagerActor.bookOrder - order saved -" + order.getAsJsonObject());
-            } else {
-                // the process must have died while handling request and kar just retried the call
-                logger.log(Level.WARNING, "OrderManagerActor.bookOrder() - duplicate order - correlationId:"+order.getCorrelationId());
-                // fetch previously generated order id
-                String savedOrderId = orderCorrelationIds.get(order.getCorrelationId());
-                // process as a late booked order.
-                orderBooked(activeOrders.get(savedOrderId).asJsonObject());
-            }
-
-
-            */
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.log(Level.SEVERE, e.getMessage(), e);
-            String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-            logger.log(Level.SEVERE, stacktrace);
-            if ( order == null ) {
-                logger.log(Level.SEVERE, "OrderManagerActor.bookOrder() - Unable to create order instance from message:"+message);
-            } else {
-                order.setMsg(e.getMessage());
-                order.setStatus(Constants.FAILED);
-                Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
-            }
-
-        }
-    }
-    @Remote
-    public void orderBooked(JsonObject message) {
-        Order order = null;
-        try {
-            logger.info("OrderManagerActor.orderBooked - Called -" + message);
-            JsonObject activeOrder;
-            order = new Order(message);
-            if (activeOrders.containsKey(order.getId()) ) {
-                activeOrder = activeOrders.get(order.getId()).asJsonObject();
-                if ( activeOrder.getString(Constants.ORDER_STATUS_KEY).equals(Order.OrderStatus.PENDING.name())) {
-                    order.setStatus(Order.OrderStatus.BOOKED.name());
-                    activeOrders.put(order.getId(), order.getAsJsonObject());
-                    bookedOrderList.add(order);
-                    bookedTotalCount++;
-                    Map<String, JsonValue> updateMap = new HashMap<>();
-                    updateMap.put(order.getId(), order.getAsJsonObject());
-                    updateStore(Collections.emptyMap(), updateMap);
-                    Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/success", order.getAsJsonObject());
-                } else if ( activeOrder.getString(Constants.ORDER_STATUS_KEY).equals(Order.OrderStatus.BOOKED.name())){
-                    logger.log(Level.INFO,"OrderManagerActor.orderBooked() - sending reply to REST - idempotance path");
-                    // idempotence check - returned previously saved booking
-                    Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/success", activeOrder);
-                } else {
-                    logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() - Unexpected Order State:"+activeOrder);
-                }
-            } else {
-                logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() - order:"+order.getId()+" not found in activeOrders Map");
-            }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() ", e);
-            throw e;
-        } finally {
-            if ( order == null ) {
-                logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() - Invalid state - order instance invalid (null)");
-                return;
-            }
-            Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
-        }
-    }
-    @Remote
-    public void orderFailed(JsonObject message) {
-        Order order = null;
-        try {
-            order = new Order(message);
-            activeOrders.remove(order.getId());
-            orderCorrelationIds.remove(order.getCorrelationId());
+   @Remote
+   public void bookOrder(JsonObject message) {
+      logger.info("OrderManagerActor.bookOrder - Called - " + message);
+      Order order = null;
+      try {
+         order = new Order(new OrderProperties(message));
+         Reminder[] reminders = Kar.Actors.Reminders.get(this, order.getCorrelationId());
+         if (reminders != null && reminders.length > 0) {
+            logger.info("OrderManagerActor.bookOrder - Reminder registered with data:" + reminders[0].getArguments()[0]);
+            order = new Order((JsonObject) (reminders[0].getArguments()[0]));
+         } else {
+            // generate unique order id
+            order.generateOrderId();
+            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
+            Kar.Actors.Reminders.schedule(this, "orderRollback", order.getCorrelationId(), Instant.now().plus(Constants.ORDER_TIMEOUT_SECS, ChronoUnit.SECONDS), Duration.ofMillis(1000), order.getAsJsonObject());
+         }
+         Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
+                 method("createOrder").arg(order.getAsJsonObject()).tell();
+         Map<String, JsonValue> updateMap = new HashMap<>();
+         updateMap.put(order.getId(), order.getAsJsonObject());
+         updateStore(Collections.emptyMap(), updateMap);
+         activeOrders.put(order.getId(), order.getAsJsonObject());
+         logger.info("OrderManagerActor.bookOrder - order saved -" + order.getAsJsonObject());
+      } catch (Exception e) {
+         logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
+         if (order == null) {
+            logger.log(Level.SEVERE, "OrderManagerActor.bookOrder() - Unable to create order instance from message:" + message);
+         } else {
+            order.setMsg(e.getMessage());
             order.setStatus(Constants.FAILED);
-            Kar.Services.post(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
-        } catch (Exception e) {
-            logger.log(Level.SEVERE,"OrderManagerActor.orderFailed() ", e);
-            throw e;
-        } finally {
-            if ( order == null ) {
-                logger.log(Level.SEVERE,"OrderManagerActor.orderBooked() - Invalid state - order instance invalid (null)");
-                return;
+            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
+         }
+
+      }
+   }
+
+   @Remote
+   public void orderBooked(JsonObject message) {
+      Order order = null;
+      try {
+         logger.info("OrderManagerActor.orderBooked - Called -" + message);
+         JsonObject activeOrder;
+         order = new Order(message);
+         if (!activeOrders.containsKey(order.getId())) {
+            logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - order:" + order.getId() + " not found in activeOrders Map");
+            return;
+         }
+         activeOrder = activeOrders.get(order.getId()).asJsonObject();
+         if ( Order.pending(activeOrder) ) {
+              order.setStatus(Order.OrderStatus.BOOKED.name());
+              activeOrders.put(order.getId(), order.getAsJsonObject());
+              bookedOrderList.add(order);
+              bookedTotalCount++;
+              Map<String, JsonValue> updateMap = new HashMap<>();
+              updateMap.put(order.getId(), order.getAsJsonObject());
+              updateStore(Collections.emptyMap(), updateMap);
+              Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", order.getAsJsonObject());
+              logger.log(Level.INFO, "OrderManagerActor.orderBooked() - sending reply to REST - idempotance path");
+              // idempotence check - returned previously saved booking
+              Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", activeOrder);
+         } else {
+            logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - Unexpected Order State:" + activeOrder);
+         }
+
+      } catch (Exception e) {
+         logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() ", e);
+         throw e;
+      } finally {
+         if (order == null) {
+            logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - Invalid state - order instance invalid (null)");
+            return;
+         }
+         Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
+      }
+   }
+
+   @Remote
+   public void orderFailed(JsonObject message) {
+      Order order = null;
+      try {
+         order = new Order(message);
+         activeOrders.remove(order.getId());
+         order.setStatus(Constants.FAILED);
+         Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
+      } catch (Exception e) {
+         logger.log(Level.SEVERE, "OrderManagerActor.orderFailed() ", e);
+         throw e;
+      } finally {
+         if (order == null) {
+            logger.log(Level.SEVERE, "OrderManagerActor.orderFailed() - Invalid state - order instance invalid (null)");
+            return;
+         }
+         Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
+      }
+   }
+
+   @Remote
+   public void orderDeparted(JsonValue message) {
+      try {
+         Order order = new Order(message);
+         if (activeOrders.containsKey(order.getId())) {
+            Order activeOrder = new Order(activeOrders.get(order.getId()));
+            // idempotence check to prevent double counting
+            if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus())) {
+               inTransitOrderList.add(order);
+               bookedOrderList.remove(order);
+               inTransitTotalCount++;
+               bookedTotalCount--;
+               order.setStatus(Order.OrderStatus.INTRANSIT.name());
+               activeOrders.put(order.getId(), order.getAsJsonObject());
+               Map<String, JsonValue> updateMap = new HashMap<>();
+               updateMap.put(order.getId(), order.getAsJsonObject());
+               updateStore(Collections.emptyMap(), updateMap);
             }
-            Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
-        }
-    }
-    @Remote
-    public void orderDeparted(JsonValue message) {
-        try {
-            Order order = new Order(message);
-            if (activeOrders.containsKey(order.getId())) {
-                Order activeOrder = new Order(activeOrders.get(order.getId()));
-                // idempotence check to prevent double counting
-                if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus())) {
-                    inTransitOrderList.add(order);
-                    bookedOrderList.remove(order);
-                    inTransitTotalCount++;
-                    bookedTotalCount--;
-                    order.setStatus(Order.OrderStatus.INTRANSIT.name());
-                    activeOrders.put(order.getId(), order.getAsJsonObject());
-                    Map<String, JsonValue> updateMap = new HashMap<>();
-                    updateMap.put(order.getId(), order.getAsJsonObject());
-                    updateStore(Collections.emptyMap(), updateMap);
-                }
+         }
+      } catch (Exception e) {
+         logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted()", e);
+         throw e;
+      }
+   }
+
+   @Remote
+   public void ordersArrived(JsonValue message) {
+      List<String> orders2Remove = new ArrayList<>();
+      JsonArray orders = message.asJsonArray();
+      orders.forEach(oId -> {
+         String orderId = ((JsonString) oId).getString();
+         if (activeOrders.containsKey(orderId)) {
+            if (orderArrived(new Order(activeOrders.get(orderId)))) {
+               orders2Remove.add(orderId);
+               activeOrders.remove(orderId);
             }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE,"OrderManagerActor.orderDeparted()", e);
-            throw e;
-        }
-    }
-    @Remote
-    public void ordersArrived(JsonValue message) {
-        List<String> orders2Remove = new ArrayList<>();
-        JsonArray orders = message.asJsonArray();
-        orders.forEach(oId -> {
-            String orderId = ((JsonString) oId).getString();
-            if (activeOrders.containsKey(orderId)) {
-                if (orderArrived(new Order(activeOrders.get(orderId)))) {
-                    orders2Remove.add(orderId);
-                    activeOrders.remove(orderId);
-                    orderCorrelationIds.remove(orderId);
-                }
+         }
+      });
+      HashMap<String, List<String>> deleteMap = new HashMap<>();
+      deleteMap.put(Constants.ORDERS_KEY, orders2Remove);
+      updateStore(deleteMap, Collections.emptyMap());
+   }
+
+   private boolean orderArrived(Order activeOrder) {
+      try {
+         if (!Order.OrderStatus.DELIVERED.name().equals(activeOrder.getStatus())) {
+            inTransitOrderList.remove(activeOrder);
+            inTransitTotalCount--;
+            if (activeOrder.isSpoilt()) {
+               spoiltTotalCount--;
+               spoiltOrderList.remove(activeOrder);
             }
-        });
-        HashMap<String, List<String>> deleteMap = new HashMap<>();
-        deleteMap.put(Constants.ORDERS_KEY, orders2Remove);
-        updateStore(deleteMap, Collections.emptyMap());
-    }
+            return true;
+         }
+         return false;
+      } catch (Exception e) {
+         logger.log(Level.SEVERE, "OrderManagerActor.orderArrived()", e);
+         throw e;
+      }
+   }
 
-    private boolean orderArrived(Order activeOrder) {
-        try {
-            if (!Order.OrderStatus.DELIVERED.name().equals(activeOrder.getStatus())) {
-                inTransitOrderList.remove(activeOrder);
-                inTransitTotalCount--;
-                if (activeOrder.isSpoilt()) {
-                    spoiltTotalCount--;
-                    spoiltOrderList.remove(activeOrder);
-                }
-                return true;
+   @Remote
+   public void orderSpoilt(JsonObject message) {
+      try {
+         Order order = new Order(message);
+         if (activeOrders.containsKey(order.getId())) {
+            Order activeOrder = new Order(activeOrders.get(order.getId()));
+            // idempotence check to prevent double counting
+            if (!activeOrder.isSpoilt()) {
+               spoiltOrderList.add(order);
+               spoiltTotalCount++;
+               order.setSpoilt(true);
+               activeOrders.put(order.getId(), order.getAsJsonObject());
+               Map<String, JsonValue> updateMap = new HashMap<>();
+               updateMap.put(order.getId(), order.getAsJsonObject());
+               updateStore(Collections.emptyMap(), updateMap);
             }
-            return false;
-        } catch (Exception e) {
-            logger.log(Level.SEVERE,"OrderManagerActor.orderArrived()", e);
-            throw e;
-        }
-    }
+         }
+      } catch (Exception e) {
+         logger.log(Level.SEVERE, "OrderManagerActor.orderSpoilt()", e);
+         throw e;
+      }
+   }
 
-    @Remote
-    public void orderSpoilt(JsonObject message) {
-        try {
-            Order order = new Order(message);
-            if (activeOrders.containsKey( order.getId())) {
-                Order activeOrder = new Order(activeOrders.get( order.getId()));
-                // idempotence check to prevent double counting
-                if (!activeOrder.isSpoilt()) {
-                    spoiltOrderList.add(order);
-                    spoiltTotalCount++;
-                    order.setSpoilt(true);
+   @Remote
+   public JsonValue ordersBooked() {
+      return getOrderList(bookedOrderList);
+   }
 
-                    activeOrders.put(order.getId(), order.getAsJsonObject());
-                    Map<String, JsonValue> updateMap = new HashMap<>();
-                    updateMap.put(order.getId(), order.getAsJsonObject());
-                    updateStore(Collections.emptyMap(), updateMap);
-                }
-            }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE,"OrderManagerActor.orderSpoilt()", e);
-            throw e;
-        }
+   @Remote
+   public JsonValue ordersSpoilt() {
+      return getOrderList(spoiltOrderList);
+   }
 
-    }
+   @Remote
+   public JsonValue ordersInTransit() {
+      return getOrderList(inTransitOrderList);
+   }
 
-    @Remote
-    public JsonValue ordersBooked() {
-        return getOrderList(bookedOrderList);
-    }
+   private JsonValue getOrderList(FixedSizeQueue orders) {
+      JsonArrayBuilder jab = Json.createArrayBuilder();
+      orders.forEach(order -> jab.add(order.getAsJsonObject()));
+      return jab.build();
+   }
 
-    @Remote
-    public JsonValue ordersSpoilt() {
-        return getOrderList(spoiltOrderList);
-    }
-
-    @Remote
-    public JsonValue ordersInTransit() {
-        return getOrderList(inTransitOrderList);
-    }
-
-    private JsonValue getOrderList(FixedSizeQueue orders) {
-        JsonArrayBuilder jab = Json.createArrayBuilder();
-        orders.forEach(order -> jab.add(order.getAsJsonObject()));
-        return jab.build();
-    }
-
-
-    private void updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap) {
-        String metrics = String.format("%d:%d:%d", bookedTotalCount, inTransitTotalCount, spoiltTotalCount);
-
-        Map<String, JsonValue> actorStateMap = new HashMap<>();
-        actorStateMap.put(Constants.ORDER_METRICS_KEY, Json.createValue(metrics));
-
-        Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
-        subMapUpdates.put(Constants.ORDERS_KEY, updateMap);
-
-        Kar.Actors.State.update(this, Collections.emptyList(), deleteMap, actorStateMap, subMapUpdates);
-    }
+   private void updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap) {
+      String metrics = String.format("%d:%d:%d", bookedTotalCount, inTransitTotalCount, spoiltTotalCount);
+      Map<String, JsonValue> actorStateMap = new HashMap<>();
+      actorStateMap.put(Constants.ORDER_METRICS_KEY, Json.createValue(metrics));
+      Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
+      subMapUpdates.put(Constants.ORDERS_KEY, updateMap);
+      Kar.Actors.State.update(this, Collections.emptyList(), deleteMap, actorStateMap, subMapUpdates);
+   }
 
 }

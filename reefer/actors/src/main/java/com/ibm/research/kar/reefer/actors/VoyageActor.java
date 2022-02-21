@@ -449,7 +449,7 @@ public class VoyageActor extends BaseActor {
          if ( !validateAndContinue(order, message)) {
             return;
          }
-          Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
+         Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
                  method("bookReefers").arg(message).tell();
       } catch (Exception e) {
          logSevereError("reserve()", e);
@@ -463,19 +463,19 @@ public class VoyageActor extends BaseActor {
    }
 
    private void save(DepotReply booking, JsonValue bookingStatus) {
-      Map<String, JsonValue> actorStateMap = new HashMap<>();
-      actorStateMap.put(Constants.VOYAGE_STATUS_KEY, voyageStatus);
-      actorStateMap.put(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
- //     if ( emptyReefers != null ) {
- //        actorStateMap.put(Constants.VOYAGE_EMPTY_REEFERS_KEY, emptyReefers);
- //     }
-
-      Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
-      Map<String, JsonValue> orderSubMapUpdates = new HashMap<>();
-      orderSubMapUpdates.put(booking.getOrderId(), bookingStatus);
-      subMapUpdates.put(Constants.VOYAGE_ORDERS_KEY, orderSubMapUpdates);
-
-      Kar.Actors.State.update(this, Collections.emptyList(), Collections.emptyMap(), actorStateMap, subMapUpdates);
+      try {
+         Map<String, JsonValue> actorStateMap = new HashMap<>();
+         actorStateMap.put(Constants.VOYAGE_STATUS_KEY, voyageStatus);
+         actorStateMap.put(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
+         Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
+         Map<String, JsonValue> orderSubMapUpdates = new HashMap<>();
+         orderSubMapUpdates.put(booking.getOrderId(), bookingStatus);
+         subMapUpdates.put(Constants.VOYAGE_ORDERS_KEY, orderSubMapUpdates);
+         Kar.Actors.State.update(this, Collections.emptyList(), Collections.emptyMap(), actorStateMap, subMapUpdates);
+      } catch( Exception e) {
+         logger.severe("VoyageActor.save() - Error - bookingStatus: "+bookingStatus+" booking:"+booking);
+         logSevereError("save", e);
+      }
    }
 
    private JsonObject buildResponse(final JsonObject order, final int freeCapacity) {

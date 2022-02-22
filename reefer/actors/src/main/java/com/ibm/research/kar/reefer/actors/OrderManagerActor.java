@@ -109,7 +109,7 @@ public class OrderManagerActor extends BaseActor {
             logger.log(Level.SEVERE, "OrderManagerActor.orderRollback() - Invalid state - order instance invalid (null)");
             return;
          }
-         Kar.Actors.Reminders.cancel(this, order.getId());
+         Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
       }
 
    }
@@ -146,7 +146,6 @@ public class OrderManagerActor extends BaseActor {
             order.setStatus(Constants.FAILED);
             Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
          }
-
       }
    }
 

@@ -66,14 +66,14 @@ public class ShippingScheduler {
         Instant arrivalDate;
         Instant departureDate = firstDepartureDate;
         Set<Voyage> schedule = new TreeSet<>();
-        while(departureDate.isBefore(endDate) ) {
+        while(departureDate.isBefore(endDate) || departureDate.equals(endDate) ) {
            // get the ship arrival date at destination port (departureDate+transitTime)
             arrivalDate = TimeUtils.getInstance().futureDate(departureDate, route.getDaysAtSea());
             // add voyage to a sorted schedule if its arrival date is after the arrivedDateThreshold
             addVoyageToSchedule(newScheduledVoyage(route, departureDate, route.getOriginPort(), route.getDestinationPort()), schedule, arrivedDateThreshold);
             // the ship returns back to origin port after it is unloaded and loaded up again
             departureDate = TimeUtils.getInstance().futureDate(arrivalDate, route.getDaysAtPort());
-            if ( departureDate.isBefore(endDate) ) {
+            if ( departureDate.isBefore(endDate) || departureDate.equals(endDate) ) {
                 // add return voyage to a sorted schedule - swap origin with destination port, the ship is going back
                 addVoyageToSchedule(newScheduledVoyage(route, departureDate, route.getDestinationPort(), route.getOriginPort()), schedule, arrivedDateThreshold);
                 // calculate departure date for next voyage from origin to destination

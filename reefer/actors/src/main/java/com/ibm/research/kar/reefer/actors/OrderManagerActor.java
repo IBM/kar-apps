@@ -227,10 +227,14 @@ public class OrderManagerActor extends BaseActor {
                Map<String, JsonValue> updateMap = new HashMap<>();
                updateMap.put(order.getId(), order.getAsJsonObject());
                updateStore(Collections.emptyMap(), updateMap);
+            } else {
+               logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted() "+" order: " +order.getId()+" state: "+activeOrder.getStatus()+" expected "+Order.OrderStatus.INTRANSIT.name());
             }
+         } else {
+            logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted() "+" order: " +order.getId()+" not in active orders map - message:"+message);
          }
       } catch (Exception e) {
-         logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted()", e);
+         logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted() ", e);
          throw e;
       }
    }

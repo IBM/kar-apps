@@ -361,16 +361,21 @@ public class ScheduleManagerActor extends BaseActor {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("ScheduleManagerActor.voyageArrived() - Voyage:" + voyage.getId() + " message:" + message);
             }
-            schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
-            voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
-            if ( (reefersInTransit.intValue() - voyage.getReeferCount()) >= 0) {
-                reefersInTransit = Json.createValue(reefersInTransit.intValue() - voyage.getReeferCount());
+            Voyage scheduleVoyage = schedule.getVoyage(voyage.getId());
+            if ( !scheduleVoyage.shipArrived() ) {
+                schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
+                voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
+                if ( (reefersInTransit.intValue() - voyage.getReeferCount()) >= 0) {
+                    reefersInTransit = Json.createValue(reefersInTransit.intValue() - voyage.getReeferCount());
+                } else {
+                    reefersInTransit = Json.createValue(0);
+                }
+                saveMetrics();
+                // update voyage state
+                Kar.Actors.State.Submap.remove(this, Constants.ACTIVE_VOYAGES_KEY, voyage.getId() );
             } else {
-                reefersInTransit = Json.createValue(0);
+                logger.info("ScheduleManagerActor.voyageArrived() - Voyage:" + voyage.getId() + " already arrived - ignoring event - message:" + message);
             }
-            saveMetrics();
-            // update voyage state
-            Kar.Actors.State.Submap.remove(this, Constants.ACTIVE_VOYAGES_KEY, voyage.getId() );
         } catch (Exception e) {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
             logger.log(Level.SEVERE, "ScheduleManagerActor.voyageArrived() "+stacktrace);

@@ -159,7 +159,7 @@ public class OrderController {
                     add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
                     add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
                     add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
-            Kar.Services.post(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
+            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
          }
       } catch (Exception e) {
          System.out.println("OrderController.orderBooked - Order Failed - error:" + e);
@@ -188,7 +188,7 @@ public class OrderController {
             if ( order.getMsg() != null ) {
                bookingStatus.add(Constants.REASON_KEY,order.getMsg());
             }
-            Kar.Services.post(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
+            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
          } else {
             System.out.println("OrderController.orderBookingFailed - unknown target for failed order booking - reply: "+bookingMessage);
          }
@@ -206,7 +206,7 @@ public class OrderController {
             JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
             bookingStatus.add(Constants.STATUS_KEY, Json.createValue("accepted")).
                     add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId())).add(Constants.ORDER_ID_KEY, order.getId());
-            Kar.Services.post(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build()); //messageToJson(bookingMessage));
+            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build()); //messageToJson(bookingMessage));
          }
       } catch (Exception e) {
          System.out.println("OrderController.orderBookingAccepted - Order Failed - error:" + e);

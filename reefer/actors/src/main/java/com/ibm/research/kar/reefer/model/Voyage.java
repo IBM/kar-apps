@@ -148,6 +148,9 @@ public class Voyage implements Comparable<Voyage>{
         return getProgress() >= 100;
     }
     public boolean shipDeparted(Instant shipCurrentDate, VoyageStatus status) {
+        if ( VoyageStatus.UNKNOWN.equals(status)) {
+            return false;
+        }
         Instant scheduledDepartureDate = getSailDateObject();
         return (!VoyageStatus.DEPARTED.equals(status) && (shipCurrentDate.equals(scheduledDepartureDate)
                 || shipCurrentDate.isAfter(scheduledDepartureDate)));

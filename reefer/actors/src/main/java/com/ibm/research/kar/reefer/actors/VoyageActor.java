@@ -36,6 +36,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 @Actor
@@ -688,6 +690,15 @@ public class VoyageActor extends BaseActor {
          //voyage.setReeferCount(voyage.getReeferCount()+emptiesCount);
          Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                  method("voyageDeparted").arg(VoyageJsonSerializer.serialize(voyage)).tell();
+        // if (!Order.OrderStatus.DELIVERED.name().equals(order.getStatus()) && !Order.OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
+         Set<String> voyageOrderIds = orders.keySet().stream().collect(Collectors.toSet());
+         JsonObject msg = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).
+                 add(Constants.ORDERS_KEY, Json.createArrayBuilder(voyageOrderIds)).
+                 build();
+         Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
+                    method("ordersDeparted").arg(msg).tell();
+
+       //  }
          orders.keySet().forEach(orderId -> {
             notifyVoyageOrder(orderId, Order.OrderStatus.INTRANSIT, "departed");
          });

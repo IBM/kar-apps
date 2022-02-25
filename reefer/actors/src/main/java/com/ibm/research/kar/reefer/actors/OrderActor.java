@@ -156,9 +156,10 @@ public class OrderActor extends BaseActor {
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED)
                  .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).add("ERROR","Order Already Arrived").build();
       }
-      if (order != null && !OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
-         Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
-                 method("orderDeparted").arg(order.getAsJsonObject()).tell();
+
+      if (!OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
+     //    Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
+     //            method("orderDeparted").arg(order.getAsJsonObject()).tell();
          saveOrderStatusChange(OrderStatus.INTRANSIT);
       }
       return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)

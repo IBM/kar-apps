@@ -74,7 +74,6 @@ public class OrderManagerActor extends BaseActor {
                spoiltTotalCount = Integer.valueOf(values[2].trim());
             }
             if (state.containsKey(Constants.ORDERS_KEY)) {
-               long t = System.currentTimeMillis();
                activeOrders.putAll(state.get(Constants.ORDERS_KEY).asJsonObject());
             }
             logger.info("OrderManagerActor.activate() - Totals - totalInTransit:" + inTransitTotalCount + " totalBooked: " + bookedTotalCount + " totalSpoilt:" + spoiltTotalCount);
@@ -179,7 +178,7 @@ public class OrderManagerActor extends BaseActor {
          }
 
       } catch (Exception e) {
-         logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() ", e);
+         logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - error ", ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
          throw e;
       } finally {
          if (order == null) {
@@ -199,7 +198,7 @@ public class OrderManagerActor extends BaseActor {
          order.setStatus(Constants.FAILED);
          Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
       } catch (Exception e) {
-         logger.log(Level.SEVERE, "OrderManagerActor.orderFailed() ", e);
+         logger.log(Level.SEVERE, "OrderManagerActor.orderFailed() - error ", ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
          throw e;
       } finally {
          if (order == null) {
@@ -227,14 +226,44 @@ public class OrderManagerActor extends BaseActor {
                Map<String, JsonValue> updateMap = new HashMap<>();
                updateMap.put(order.getId(), order.getAsJsonObject());
                updateStore(Collections.emptyMap(), updateMap);
-            } else {
-               logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted() "+" order: " +order.getId()+" state: "+activeOrder.getStatus()+" expected "+Order.OrderStatus.INTRANSIT.name());
             }
          } else {
             logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted() "+" order: " +order.getId()+" not in active orders map - message:"+message);
          }
       } catch (Exception e) {
-         logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted() ", e);
+         logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted() - error ", ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
+         throw e;
+      }
+   }
+
+   @Remote
+   public void ordersDeparted(JsonValue message) {
+      try {
+         logger.log(Level.INFO, "OrderManagerActor.ordersDeparted() - message: "+message);
+         String voyageId = message.asJsonObject().getString(Constants.VOYAGE_ID_KEY);
+         JsonArray orders = message.asJsonObject().getJsonArray(Constants.ORDERS_KEY);
+         orders.forEach(oId -> {
+            String orderId = ((JsonString) oId).getString();
+            if (activeOrders.containsKey(orderId)) {
+               Order activeOrder = new Order(activeOrders.get(orderId));
+               Map<String, JsonValue> updateMap = new HashMap<>();
+               if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus())) {
+                  activeOrder.setStatus(Order.OrderStatus.INTRANSIT.name());
+                  inTransitOrderList.add(activeOrder);
+                  bookedOrderList.remove(activeOrder);
+                  inTransitTotalCount++;
+                  bookedTotalCount--;
+                  updateMap.put(activeOrder.getId(), activeOrder.getAsJsonObject());
+               }
+               if (!updateMap.isEmpty()) {
+                  updateStore(Collections.emptyMap(), updateMap);
+               }
+            }  else {
+               logger.log(Level.SEVERE, "OrderManagerActor.ordersDeparted() "+" order: " +orderId+" not in active orders map - message:"+message);
+            }
+         });
+      } catch (Exception e) {
+         logger.log(Level.SEVERE, "OrderManagerActor.ordersDeparted() - error ", ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
          throw e;
       }
    }
@@ -270,7 +299,7 @@ public class OrderManagerActor extends BaseActor {
          }
          return false;
       } catch (Exception e) {
-         logger.log(Level.SEVERE, "OrderManagerActor.orderArrived()", e);
+         logger.log(Level.SEVERE, "OrderManagerActor.orderArrived() - error ", ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
          throw e;
       }
    }
@@ -293,7 +322,7 @@ public class OrderManagerActor extends BaseActor {
             }
          }
       } catch (Exception e) {
-         logger.log(Level.SEVERE, "OrderManagerActor.orderSpoilt()", e);
+         logger.log(Level.SEVERE, "OrderManagerActor.orderSpoilt() - error ", ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
          throw e;
       }
    }

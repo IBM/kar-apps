@@ -220,8 +220,7 @@ public class OrderManagerActor extends BaseActor {
             Order activeOrder = new Order(activeOrders.get(order.getId()));
             logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted() orderStatus "+activeOrder.getStatus()+ " message:"+message);
             // idempotence check to prevent double counting
-            if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus()) &&
-                    !Order.OrderStatus.DELIVERED.name().equals(activeOrder.getStatus())) {
+            if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus()) ) {
                inTransitOrderList.add(order);
                bookedOrderList.remove(order);
                inTransitTotalCount++;

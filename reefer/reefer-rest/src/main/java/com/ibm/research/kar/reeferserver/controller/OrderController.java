@@ -28,6 +28,7 @@ import com.ibm.research.kar.reefer.model.OrderProperties;
 import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.service.SimulatorService;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
@@ -255,16 +256,26 @@ public class OrderController {
     */
    @GetMapping("/orders/stats")
    public OrderStats getOrderStats() {
-      JsonValue orderMgrMetrics = Kar.Actors.State.get(orderMgrActor, Constants.ORDER_METRICS_KEY);
       int bookedTotalCount = 0;
       int inTransitTotalCount = 0;
       int spoiltTotalCount = 0;
-      if (orderMgrMetrics != null && orderMgrMetrics != JsonValue.NULL) {
-         String orderMetrics = ((JsonString) orderMgrMetrics).getString();
-         String[] values = orderMetrics.split(":");
-         bookedTotalCount = Integer.valueOf(values[0].trim());
-         inTransitTotalCount = Integer.valueOf(values[1].trim());
-         spoiltTotalCount = Integer.valueOf(values[2].trim());
+      if ( orderMgrActor == null ) {
+         logger.log(Level.SEVERE,"OrderController.getOrderStats() - error - orderMgrActor instance is null");
+         return new OrderStats(0,0,0);
+      }
+      try {
+         JsonValue orderMgrMetrics = Kar.Actors.State.get(orderMgrActor, Constants.ORDER_METRICS_KEY);
+         if (orderMgrMetrics != null && orderMgrMetrics != JsonValue.NULL) {
+            String orderMetrics = ((JsonString) orderMgrMetrics).getString();
+            String[] values = orderMetrics.split(":");
+            bookedTotalCount = Integer.valueOf(values[0].trim());
+            inTransitTotalCount = Integer.valueOf(values[1].trim());
+            spoiltTotalCount = Integer.valueOf(values[2].trim());
+         }
+      } catch( Exception e) {
+         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+         logger.log(Level.SEVERE,"OrderController.getOrderStats() - error "+stacktrace);
+         throw e;
       }
       return new OrderStats(inTransitTotalCount, bookedTotalCount, spoiltTotalCount);
    }

@@ -251,12 +251,14 @@ public class OrderManagerActor extends BaseActor {
             if (activeOrders.containsKey(orderId)) {
                Order activeOrder = new Order(activeOrders.get(orderId));
                Map<String, JsonValue> updateMap = new HashMap<>();
+               // idempotence check
                if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus())) {
                   activeOrder.setStatus(Order.OrderStatus.INTRANSIT.name());
                   inTransitOrderList.add(activeOrder);
                   bookedOrderList.remove(activeOrder);
                   inTransitTotalCount++;
                   bookedTotalCount--;
+                  activeOrders.put(activeOrder.getId(), activeOrder.getAsJsonObject());
                   updateMap.put(activeOrder.getId(), activeOrder.getAsJsonObject());
                }
                if (!updateMap.isEmpty()) {

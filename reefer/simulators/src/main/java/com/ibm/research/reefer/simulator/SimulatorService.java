@@ -453,8 +453,8 @@ public class SimulatorService {
       OO.setOOStatus(OO.accepted);
     }
     else {
-      logger.severe(String.format("simulator updateAccepted: invalid update for %s,%s with value=%s corrId=%s OO.hashCode()=%s",
-              OO.getOOCorrId(),OO.getOOStatus(),OO.accepted, corrId, OO.hashCode()));
+      logger.severe(String.format("simulator updateAccepted: invalid update for %s,%s with value=%s corrId=%s",
+              OO.getOOCorrId(),OO.getOOStatus(),OO.accepted, corrId));
     }
   }
   private void updateBooked(OutstandingOrder OO, String corrId) {
@@ -466,8 +466,8 @@ public class SimulatorService {
       }
     }
     else {
-      logger.severe(String.format("simulator updateBooked(): invalid update for %s,%s with value=%s corrId=%s OO.hashCode()=%s",
-              OO.getOOCorrId(),OO.getOOStatus(),OO.booked, corrId, OO.hashCode()));
+      logger.severe(String.format("simulator updateBooked(): invalid update for %s,%s with value=%s corrId=%s",
+              OO.getOOCorrId(),OO.getOOStatus(),OO.booked, corrId));
     }
   }
   private void updateFailed(OutstandingOrder OO, String corrId, String status) {

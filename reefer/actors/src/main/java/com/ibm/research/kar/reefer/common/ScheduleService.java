@@ -90,10 +90,9 @@ public class ScheduleService {
                 logger.log(Level.SEVERE,"ScheduleService.generateShipSchedule() - Error: "+ stacktrace);
             }
         }
-
-        //dumpVoyages(masterSchedule);
-
-
+        if ( masterSchedule.isEmpty()) {
+            return lastVoyageDate;
+        }
         return ((TreeSet<Voyage>) masterSchedule).last().getSailDateObject();
 
     }
@@ -173,18 +172,11 @@ public class ScheduleService {
         List<Voyage> activeScheduleNow = getActiveSchedule(currentDate);
 
         if (!activeListsMatch(originalActiveSchedule, activeScheduleNow)) {
-            System.out.println("ScheduleService.validateSchedule() - After " + lbl + " active schedule does not match pre-" + lbl + " schedule ");
-            System.out.println("Before " + lbl + " Active List:");
+            logger.log(Level.INFO, "ScheduleService.validateSchedule() - After " + lbl + " active schedule does not match pre-" + lbl + " schedule ");
+            logger.log(Level.INFO, "Before " + lbl + " Active List:");
             dumpVoyages(originalActiveSchedule);
-            System.out.println("After " + lbl + " Active List:");
+            logger.log(Level.INFO, "After " + lbl + " Active List:");
             dumpVoyages(activeScheduleNow);
-            if ( logger.isLoggable(Level.FINE)) {
-                logger.fine("ScheduleService.validateSchedule() - current date:" +
-                        currentDate +
-                        " schedule base date:" +
-                        scheduleBaseDate);
-            }
-
         }
     }
 
@@ -208,38 +200,28 @@ public class ScheduleService {
                 voyage.getRoute().getVessel().setPosition(daysOutAtSea);
                 int progress = Math.round((daysOutAtSea / (float) voyage.getRoute().getDaysAtSea()) * 100);
                 voyage.setProgress(progress);
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("ScheduleService.updateDaysAtSea() - voyage:" + voyage.getId() + " daysOutAtSea:"
-                            + voyage.getRoute().getVessel().getPosition() + " Progress:"
-                            + voyage.getProgress());
-                }
                 return voyage;
             }
-
         }
         throw new VoyageNotFoundException("Voyage " + voyageId + " Not Found - current date: "+TimeUtils.getInstance().getCurrentDate());
     }
 
     public List<Voyage> getMatchingSchedule(Instant startDate, Instant endDate) {
-
         return masterSchedule.
                 stream().
                 filter(voyage -> voyage.getSailDateObject().equals(startDate) || voyage.getSailDateObject().isAfter(startDate)).
                 filter(voyage -> voyage.getSailDateObject().equals(endDate) || voyage.getSailDateObject().isBefore(endDate)).
                 collect(Collectors.toList());
-
     }
 
 
     public List<Voyage> getMatchingSchedule(String origin, String destination, Instant date) {
-
         return masterSchedule.
                 stream().
                 filter(voyage -> voyage.getSailDateObject().equals(date) || voyage.getSailDateObject().isAfter(date)).
                 filter(voyage -> voyage.getRoute().getOriginPort().equals(origin)
                         && voyage.getRoute().getDestinationPort().equals(destination)).
                 collect(Collectors.toList());
-
     }
 
     /*
@@ -258,9 +240,6 @@ public class ScheduleService {
             for( Voyage v : scheduledVoyages ) {
                 sb.append("+++++ ").append(v.getId()).append(" progress:").append(v.getProgress()).append("\n");
             }
-            logger.fine("ScheduleService.getActiveVoyages() - currentDate:::"+currentDate+
-                    " active voyage count::::::::::::::"+scheduledVoyages.size()+
-                    " new voyages:"+scheduledVoyages.size()+" list:\n"+sb.toString());
         }
         return scheduledVoyages;
     }

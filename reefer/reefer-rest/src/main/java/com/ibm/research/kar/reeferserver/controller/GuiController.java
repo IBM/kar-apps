@@ -43,7 +43,7 @@ public class GuiController {
 
     private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(GuiController.class.getName());
 
-    public void sendActiveVoyageUpdate(ShippingSchedule schedule) { //List<Voyage> voyages, String currentDate) {
+    public void sendActiveVoyageUpdate(ShippingSchedule schedule) {
         long start = System.currentTimeMillis();
         template.convertAndSend("/topic/voyages", schedule);
         long end = System.currentTimeMillis();

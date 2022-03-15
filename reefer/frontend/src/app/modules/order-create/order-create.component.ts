@@ -33,6 +33,7 @@ import { OrderProperties } from 'src/app/core/models/order-properties';
 import { OrderBookedDialogComponent } from './dialogs/order-booked-dialog/order-booked-dialog.component';
 import { Voyage } from 'src/app/core/models/voyage';
 import { clear } from 'console';
+import { v4 as uuidv4 } from 'uuid';
 
 @Component({
   selector: 'app-order-create',
@@ -129,8 +130,9 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
   var today = new Date();
 
    const order:  OrderProperties = {
-        orderId:today.getTime().toString(),
+        orderId:'', //today.getTime().toString(),
         customerId:val.customerId,
+        correlationId: uuidv4(),
         product: val.product,
         productQty: val.productQty,
         originPort: val.originPort,
@@ -139,14 +141,24 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
         bookingStatus: '',
         msg:''
     };
-    this.restService.saveOrder(order).subscribe((data : OrderProperties) => {
-      console.log("order-create - saveOrder - rest reply:"+data.orderId+" status:"+data.bookingStatus+" msg:"+data.msg);
+    this.restService.saveOrder(order).subscribe((data : String) => {
+      console.log("order-create - saveOrder - rest reply:"+data);//.orderId+" status:"+data.bookingStatus+" msg:"+data.msg);
       this.resetVoyages();
       //location.reload();
       //this.showOrderIdDialog(data.orderId );
        this.showOrderIdDialog(data );
 
       })
+      /*
+          this.restService.saveOrder(order).subscribe((data : OrderProperties) => {
+            console.log("order-create - saveOrder - rest reply:"+data.orderId+" status:"+data.bookingStatus+" msg:"+data.msg);
+            this.resetVoyages();
+            //location.reload();
+            //this.showOrderIdDialog(data.orderId );
+             this.showOrderIdDialog(data );
+
+            })
+            */
   }
   resetVoyages() {
     this.selectedOriginPort="";
@@ -173,7 +185,8 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
      this.allPorts = this.originPorts;
   }
   //showOrderIdDialog(orderId: string) {
-  showOrderIdDialog(orderProperties: OrderProperties) {
+ //   showOrderIdDialog(orderProperties: OrderProperties) {
+  showOrderIdDialog(orderProperties: String) {
     const dialogConfig = new MatDialogConfig();
 
     dialogConfig.disableClose = true;
@@ -181,9 +194,9 @@ export class OrderCreateComponent implements OnInit, OnDestroy {
     dialogConfig.width="600px";
     dialogConfig.data = {
      // orderId: orderId,
-      orderId: orderProperties.orderId,
-      status: orderProperties.bookingStatus,
-      msg: orderProperties.msg,
+      orderId: "", // orderProperties.orderId,
+      status: "Submitted", //orderProperties.bookingStatus,
+      msg: "Order Submitted", //orderProperties.msg,
     };
 
     const dialogRef = this.dialog.open(OrderBookedDialogComponent,

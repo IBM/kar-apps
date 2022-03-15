@@ -33,6 +33,7 @@
     "stompjs": "^2.3.3",
     "tls": "0.0.1",
     "tslib": "^2.3.1",
+    "uuid": "^8.3.2",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {

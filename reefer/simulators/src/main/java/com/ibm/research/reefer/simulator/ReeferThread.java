@@ -98,6 +98,7 @@ public class ReeferThread extends Thread {
                             inventorySize = ((JsonNumber) is).intValue();
                         } catch (Exception e) {
                             logger.warning("reeferthread: Unable to fetch reefer inventory size - cause:" + e.getMessage());
+                            inventorySize = 0;
                         }
                         // Get anomaly target for today
                         if (oneshot) {

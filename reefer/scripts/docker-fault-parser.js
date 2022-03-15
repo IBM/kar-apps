@@ -69,7 +69,7 @@ async function main() {
   const rl = require('readline').createInterface({ input: child.stderr });
 
   const greplatency = new RegExp("^.*order latency outlier", "m");
-  const grepsevere = new RegExp("^.*SEVERE", "m");
+  const grepsevere = new RegExp("^.*\(SEVERE|ERROR\)", "m");
   timenow = Date.parse(timestamp);
 
   rl.on('line', function(line) {

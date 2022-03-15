@@ -71,9 +71,7 @@ public class ScheduleManagerActor extends BaseActor {
                         restoredActiveList.add( restoredVoyage );
                     }
                     activeVoyageManager = new ActiveVoyageManager(schedule, restoredActiveList);
-                    logger.info("ScheduleManagerActor.activate() - restored active voyages - current size:"+restoredActiveList.size());
                 }
-
             }
             if ( activeVoyageManager == null ) {
                 activeVoyageManager = new ActiveVoyageManager(schedule, new LinkedList<>());
@@ -89,7 +87,7 @@ public class ScheduleManagerActor extends BaseActor {
 
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logSevereError("activate - error ", e);
         }
     }
     @Remote
@@ -116,12 +114,12 @@ public class ScheduleManagerActor extends BaseActor {
                     }
                 } catch (Exception e) {
                     // voyage may have already arrived and was removed
-                    logger.log(Level.WARNING, "ScheduleManagerActor.publishSpoiltReeferMetrics()", e);
+                    logger.log(Level.WARNING, "ScheduleManagerActor.publishSpoiltReeferMetrics() error ", e);
                 }
             }
             Kar.Actors.State.set(this, Constants.TOTAL_SPOILT_KEY, Json.createValue(totalSpoiltReeferCount));
         } catch( Exception e) {
-            e.printStackTrace();
+            logSevereError("publishSpoiltReeferMetrics - error ", e);
         }
 
     }
@@ -174,7 +172,6 @@ public class ScheduleManagerActor extends BaseActor {
             }
         } else {
             Kar.Actors.State.set(this, Constants.REEFER_FLEET_SIZE_KEY, Json.createValue(fleetSize));
-            logger.info("ScheduleManagerActor.activate() ++++++++++++ saved fleet size:" + fleetSize);
         }
         return fleetSize;
     }
@@ -243,7 +240,7 @@ public class ScheduleManagerActor extends BaseActor {
             Kar.Actors.tell(depotManagerActor, "newDay", message);
 
         } catch (Exception e) {
-            logger.log(Level.WARNING, "ScheduleManagerActor.advanceDate()", e);
+            logger.log(Level.WARNING, "ScheduleManagerActor.advanceDate() - error ", e);
         }
         JsonObjectBuilder reply = Json.createObjectBuilder();
         return reply.add(Constants.STATUS_KEY, Constants.OK).add(Constants.CURRENT_DATE_KEY, today.toString()).build();
@@ -263,7 +260,7 @@ public class ScheduleManagerActor extends BaseActor {
             scheduledVoyage.setOrderCount(voyage.getOrderCount());
             scheduledVoyage.setReeferCount((voyage.getReeferCount()));
         } catch (Exception e) {
-            logger.log(Level.WARNING,"ScheduleManagerActor.updateVoyage()",e);
+            logger.log(Level.WARNING,"ScheduleManagerActor.updateVoyage() - error ",e);
         }
     }
 
@@ -335,9 +332,6 @@ public class ScheduleManagerActor extends BaseActor {
     public void voyageDeparted(JsonObject message) {
         try {
             Voyage voyage = VoyageJsonSerializer.deserialize(message);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("ScheduleManagerActor.voyageDeparted() - id:" + voyage.getId() + " message:" + message);
-            }
             Voyage activeVoyage = schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
             activeVoyage.setOrderCount(voyage.getOrderCount());
             activeVoyage.setFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity());
@@ -349,8 +343,7 @@ public class ScheduleManagerActor extends BaseActor {
             Kar.Actors.State.Submap.set(this, Constants.ACTIVE_VOYAGES_KEY, voyage.getId(), VoyageJsonSerializer.serialize(activeVoyage) );
         } catch (Exception e) {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-            logger.log(Level.SEVERE, "ScheduleManagerActor.voyageDeparted() "+stacktrace);
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "ScheduleManagerActor.voyageDeparted() error "+stacktrace);
         }
     }
 
@@ -358,22 +351,24 @@ public class ScheduleManagerActor extends BaseActor {
     public void voyageArrived(JsonObject message) {
         try {
             Voyage voyage = VoyageJsonSerializer.deserialize(message);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("ScheduleManagerActor.voyageArrived() - Voyage:" + voyage.getId() + " message:" + message);
-            }
-            schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
-            voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
-            if ( (reefersInTransit.intValue() - voyage.getReeferCount()) >= 0) {
-                reefersInTransit = Json.createValue(reefersInTransit.intValue() - voyage.getReeferCount());
+            Voyage scheduleVoyage = schedule.getVoyage(voyage.getId());
+            if ( !scheduleVoyage.shipArrived() ) {
+                schedule.updateDaysAtSea(voyage.getId(), Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
+                voyage.changePosition(Long.valueOf(voyage.getRoute().getVessel().getPosition()).intValue());
+                if ( (reefersInTransit.intValue() - voyage.getReeferCount()) >= 0) {
+                    reefersInTransit = Json.createValue(reefersInTransit.intValue() - voyage.getReeferCount());
+                } else {
+                    reefersInTransit = Json.createValue(0);
+                }
+                saveMetrics();
+                // update voyage state
+                Kar.Actors.State.Submap.remove(this, Constants.ACTIVE_VOYAGES_KEY, voyage.getId() );
             } else {
-                reefersInTransit = Json.createValue(0);
+                logger.info("ScheduleManagerActor.voyageArrived() - Voyage:" + voyage.getId() + " already arrived - ignoring event - message:" + message);
             }
-            saveMetrics();
-            // update voyage state
-            Kar.Actors.State.Submap.remove(this, Constants.ACTIVE_VOYAGES_KEY, voyage.getId() );
         } catch (Exception e) {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-            logger.log(Level.SEVERE, "ScheduleManagerActor.voyageArrived() "+stacktrace);
+            logger.log(Level.SEVERE, "ScheduleManagerActor.voyageArrived() error "+stacktrace);
             e.printStackTrace();
         }
     }
@@ -437,6 +432,11 @@ public class ScheduleManagerActor extends BaseActor {
         return jab.build();
     }
 
+    private void logSevereError(String methdodName, Exception e) {
+        String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
+        logger.log(Level.SEVERE,"ScheduleManagerActor." +methdodName+ " Error:" +stacktrace);
+
+    }
     private class ActiveVoyageManager {
         private ActorRef scheduleManagerActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
         private final ScheduleService schedule;
@@ -452,8 +452,6 @@ public class ScheduleManagerActor extends BaseActor {
                 activeVoyages.clear();
                 activeVoyages.addAll( newActiveVoyages);
                 // delete voyages that arrived and update those still en route
-            //    Kar.Actors.State.update(scheduleManagerActor, arrivedVoyages,
-            //            Collections.emptyMap(), Collections.emptyMap(),  getActiveVoyageUpdateMap(newActiveVoyages));
                 Kar.Actors.State.update(scheduleManagerActor, Collections.emptyList(),
                         getArrivedVoyagesRemoveMap(arrivedVoyages), Collections.emptyMap(),  getActiveVoyageUpdateMap(newActiveVoyages));
             }

@@ -151,6 +151,8 @@ public class ShipThread extends Thread {
                         }
                     } catch (Exception e) {
                         logger.warning("shipthread: Unable to fetch active voyages from REST - cause:" + e.getMessage());
+                        // in case of failure, make sure we dont trigger NPE in the for-loop below
+                       activeVoyages = Json.createArrayBuilder().build();
                     }
 
                     // compute ship positions to send to all active voyages

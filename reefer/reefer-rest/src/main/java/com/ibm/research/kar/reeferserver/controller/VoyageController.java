@@ -80,7 +80,6 @@ public class VoyageController {
             return getVoyages(reply);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
-            e.printStackTrace();
             throw e;
         }
     }
@@ -106,7 +105,6 @@ public class VoyageController {
             return getVoyages(reply);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
-            e.printStackTrace();
             return new ArrayList<Voyage>();
         }
 

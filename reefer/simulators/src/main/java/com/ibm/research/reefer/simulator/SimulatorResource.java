@@ -219,6 +219,21 @@ public class SimulatorResource {
     }
   }
 
+/**
+ * Handle replies from async order creation
+ */
+  @POST
+  @Path("/orderstatus")
+  public void orderstatus(JsonValue args) {
+    try {
+      simService.orderStatus(args);
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("help! from orderstatus");
+    }
+  }
+
+  
 //-------------------- Misc controls ----------------
 
   /**

@@ -16,6 +16,7 @@
 
 export interface OrderProperties {
   orderId: string;
+  correlationId: string;
   customerId: string;
   product: string;
   originPort: string;

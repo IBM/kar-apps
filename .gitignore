@@ -46,6 +46,7 @@ buildNumber.properties
 ## Angular
 ##############################
 .DS_STORE
+reefer/frontend/.angular
 
 /dist/
 /bazel-out

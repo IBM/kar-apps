@@ -284,7 +284,9 @@ public class DepotActor extends BaseActor {
                     reeferMasterInventory[reefer.getId()] = null;
                     builder.append(reefer.getId()).append(",");
                 }
-                logger.info("DepotActor.voyageReefersDeparted() >>>> Depot:"+getId()+" Voyage:"+voyageId+" reefer count:"+orderCount+" empties:"+empties.size());
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info("DepotActor.voyageReefersDeparted() >>>> Depot:"+getId()+" Voyage:"+voyageId+" reefer count:"+orderCount+" empties:"+empties.size());
+                }
                 Inventory inventory = getReeferInventoryCounts();
                 bookedTotalCount = inventory.getBooked();
                 currentInventorySize = Json.createValue(inventory.getTotal());
@@ -294,10 +296,14 @@ public class DepotActor extends BaseActor {
                 List<ReeferDTO> combinedList = ListUtils.union(voyageReefers, empties);
                 // remove reefers in combined list from this depot inventory
                 updateStore(deleteMap(combinedList), Collections.emptyMap());
-                logger.info(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tVoyage:%20s \tDeparted:%7d \t%s \tempties:%7d",
-                        getId(),voyageId,voyageReefers.size(),inventory.toString(), empties.size()) );
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tVoyage:%20s \tDeparted:%7d \t%s \tempties:%7d",
+                            getId(),voyageId,voyageReefers.size(),inventory.toString(), empties.size()) );
+                }
                 Set<String> rids = empties.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
-                logger.info("DepotActor.voyageReefersDeparted() >>>> Depot:"+getId()+" Voyage:"+voyageId+" voyage order count:"+orderCount+" rids.size:"+rids.size());
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info("DepotActor.voyageReefersDeparted() >>>> Depot:"+getId()+" Voyage:"+voyageId+" voyage order count:"+orderCount+" rids.size:"+rids.size());
+                }
                 JsonObjectBuilder replyJob =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
                         add(Constants.DEPOT_KEY, getId()).
 		                  add(Constants.REEFERS_KEY, Json.createValue(rids.size()));
@@ -308,18 +314,6 @@ public class DepotActor extends BaseActor {
                     Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, voyageId).
                             method("addEmptyReefers").arg(replyJob.build()).tell();
 		          }
-                //return replyJob.build();
-
-            }  else {
-                /*
-                 JsonObject replyJob =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK).
-                        add(Constants.DEPOT_KEY, getId()).
-                        add(Constants.REEFERS_KEY, Json.createValue(0)).
-                        add(Constants.VOYAGE_EMPTY_REEFERS_KEY, Json.createValue("")).
-                        build();
-
-
-                 */
             }
         } catch (Exception e) {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
@@ -353,13 +347,14 @@ public class DepotActor extends BaseActor {
                     emptiesNeeded = excessInventory;
                 }
             }
-            logger.info("DepotActor.getEmptyReefersOnExcessInventory() -"+getId()+" empties Needed:"+emptiesNeeded);
             // allocate empty reefers to re-balance inventory between two depots. Empties are not associated
             // with orders.
             int reefersNeeded = ReeferAppConfig.ReeferMaxCapacityValue * emptiesNeeded;
             empties = ReeferAllocator.allocateReefers(reeferMasterInventory, reefersNeeded,
                     "", voyageId, inventory.available);
-            logger.info("DepotActor.getEmptyReefersOnExcessInventory()- "+getId()+" Available:"+inventory.available+" ReeferAllocator allocated empties:"+empties.size());
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("DepotActor.getEmptyReefersOnExcessInventory()- "+getId()+" Available:"+inventory.available+" ReeferAllocator allocated empties:"+empties.size());
+            }
         }
         return empties;
     }
@@ -422,7 +417,6 @@ public class DepotActor extends BaseActor {
             String[] newInventory = (String[]) ArrayUtils.addAll(reeferIds, emptyReeferIds);
             List<ReeferDTO> updateList = receiveInventory(newInventory);
             receiveSpoiltInventory(spoiltInventory, arrivalDate);
-            logger.info("DepotActor.voyageReefersArrived() - depot:" +getId()+" voyage:"+voyageId+" new reefers count:"+newInventory.length);
             messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
                     String.join(",", newInventory), "voyageArrived", voyageId);
             Inventory inventory = getReeferInventoryCounts();
@@ -430,8 +424,10 @@ public class DepotActor extends BaseActor {
             bookedTotalCount = inventory.getBooked();
             onMaintenanceTotalCount = inventory.getOnMaintenance();
             updateStore(Collections.emptyMap(), reeferMap(updateList));
-            logger.info(String.format("DepotActor.voyageReefersArrived()  <<<< \t%25s \tVoyage:%20s \tArrived:%8d \t%s \tEmpties:%6d \tArrival Date:%s \tUpdateList:%d \tnewInventory:%d",
-				      getId(), voyageId, reeferIds.length, getReeferInventoryCounts().toString(), emptyReeferIds.length,arrivalDate.toString(), updateList.size(), newInventory.length));
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info(String.format("DepotActor.voyageReefersArrived()  <<<< \t%25s \tVoyage:%20s \tArrived:%8d \t%s \tEmpties:%6d \tArrival Date:%s \tUpdateList:%d \tnewInventory:%d",
+                        getId(), voyageId, reeferIds.length, getReeferInventoryCounts().toString(), emptyReeferIds.length,arrivalDate.toString(), updateList.size(), newInventory.length));
+            }
         } catch (Exception e) {
             String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
             logger.log(Level.SEVERE,"DepotActor.voyageReefersArrived() - Error: "+ stacktrace);
@@ -485,7 +481,9 @@ public class DepotActor extends BaseActor {
             order2ReeferMap.remove(order.getId());
             Inventory inventory = getReeferInventoryCounts();
             bookedTotalCount = inventory.getBooked();
-            logger.info("DepotActor.rollbackOrder() - depot:" +getId()+" voyage:"+order.getVoyageId()+" reefersToRollback:"+reefersToRollback.length);
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("DepotActor.rollbackOrder() - depot:" +getId()+" voyage:"+order.getVoyageId()+" reefersToRollback:"+reefersToRollback.length);
+            }
             messageAnomalyManager(getId(), AnomalyManagerActor.ReeferLocation.LocationType.DEPOT.getType(),
                     String.join(",", reefersToRollback), "voyageOrderRollback", order.getVoyageId());
             updateStore(Collections.emptyMap(), reeferMap(updateList));
@@ -527,10 +525,6 @@ public class DepotActor extends BaseActor {
             bookedTotalCount = inventory.getBooked();
             // persists allocated reefers
             updateStore(Collections.emptyMap(), reeferMap(orderReefers));
-            if (logger.isLoggable(Level.INFO)) {
-                logger.info("DepotActor.bookReefers())- Order:" + order.getId() + " >>>>>>>>>>>>>>>>>>>>>>>> reefer count:"
-                        + orderReefers.size());
-            }
             order.setDepot(this.getId());
             JsonObject reply = createReply(rids, order.getAsJsonObject());
             Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
@@ -650,10 +644,6 @@ public class DepotActor extends BaseActor {
                     method("reeferAnomaly").arg(job.build()).tell();
         } else if (reeferMasterInventory[reeferId].alreadyBad()) {
         } else if (reeferMasterInventory[reeferId].assignedToOrder()) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("DepotActor.reeferAnomaly() - " + getId() + " reeferId:" + reeferId
-                        + " assigned to order: " + reeferMasterInventory[reeferId].getOrderId());
-            }
             JsonObject orderReplaceMessage = Json.createObjectBuilder()
                     .add(Constants.REEFER_ID_KEY,reeferId).build();
             Actors.Builder.instance().target(ReeferAppConfig.OrderActorType,  reeferMasterInventory[reeferId].getOrderId()).
@@ -822,8 +812,6 @@ public class DepotActor extends BaseActor {
                     map.put(String.valueOf(id), reeferToJsonObject(reeferMasterInventory[id], reeferObjectBuilder));
                 }
             }
-            logger.info("DepotActor.initMasterInventory::::::" + getId() +" - added:"+map.size()+" reefers to inventory");
-
             long t = System.currentTimeMillis();
             updateStore(Collections.emptyMap(), map);
          } catch (Exception e) {
@@ -842,14 +830,9 @@ public class DepotActor extends BaseActor {
         try {
             JsonValue reply = Actors.Builder.instance().target(ReeferAppConfig.DepotManagerActorType,  ReeferAppConfig.DepotManagerId).
                     method("depotInventory").arg(Json.createValue(getId())).call();
-
-            logger.info("DepotActor.getReeferInventory() ID:" + getId() + "- Depot Configuration:" + reply);
             totalReeferInventory = reply.asJsonObject().getJsonNumber(Constants.TOTAL_REEFER_COUNT_KEY);
             depotSize = reply.asJsonObject().getJsonNumber(Constants.DEPOT_SIZE_KEY);
             currentInventorySize = depotSize;
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("DepotActor.getReeferInventory() - Inventory Size:" + totalReeferInventory);
-            }
             JsonArray jsonShards = reply.asJsonObject().getJsonArray(Constants.SHARDS_KEY);
             InventoryConfig config = new InventoryConfig(((JsonNumber) depotSize).intValue(), ((JsonNumber) totalReeferInventory).intValue());
             if ( jsonShards != null ) {
@@ -861,7 +844,7 @@ public class DepotActor extends BaseActor {
             }
             return config;
         } catch (Exception e) {
-            logger.log(Level.SEVERE,"DepotActor.getReeferInventory() -  failed - cause:" + e.getMessage());
+            logger.log(Level.SEVERE,"DepotActor.getReeferInventory() -  failed - cause: " + e.getMessage());
             throw e;
         }
 

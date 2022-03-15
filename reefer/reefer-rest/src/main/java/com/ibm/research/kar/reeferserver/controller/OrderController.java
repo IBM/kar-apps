@@ -88,9 +88,7 @@ public class OrderController {
          orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
 
       } catch (Exception e) {
-         System.out.println("OrderController.jsonToOrderProperties - Error ");
-         e.printStackTrace();
-         logger.log(Level.WARNING, e.getMessage(), e);
+         logger.log(Level.WARNING, e.getMessage()+" error ", e);
       }
       return orderProperties;
    }
@@ -112,7 +110,6 @@ public class OrderController {
    @PostMapping("/orders")
    @ResponseBody
    public JsonValue bookOrder(@RequestBody String message) throws IOException {
-//      System.out.println("OrderController.bookOrder - Called >>>>>>>>" + message);
       try {
          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                  method("bookOrder").
@@ -129,9 +126,7 @@ public class OrderController {
       try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
          return jsonReader.readObject();
       } catch (Exception e) {
-         System.out.println("OrderController.messageToJson - Error ");
-         e.printStackTrace();
-         logger.log(Level.WARNING, e.getMessage(), e);
+         logger.log(Level.WARNING, e.getMessage()+" error ", e);
          throw e;
       }
    }
@@ -163,7 +158,6 @@ public class OrderController {
             Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
          }
       } catch (Exception e) {
-         System.out.println("OrderController.orderBooked - Order Failed - error:" + e);
          logger.severe("OrderController.orderBooked - failed to process booking - received message: "+bookingMessage);
          throw e;
       }
@@ -191,10 +185,9 @@ public class OrderController {
             }
             Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
          } else {
-            System.out.println("OrderController.orderBookingFailed - unknown target for failed order booking - reply: "+bookingMessage);
+            logger.severe("OrderController.orderBookingFailed - unknown target for failed order booking - reply: "+bookingMessage);
          }
       } catch (Exception e) {
-         System.out.println("OrderController.orderBookingFailed - Order Failed - error:" + e);
          logger.severe("OrderController.orderBookingFailed - failed to process booking - received message: "+bookingMessage);
          throw e;
       }
@@ -210,7 +203,6 @@ public class OrderController {
             Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build()); //messageToJson(bookingMessage));
          }
       } catch (Exception e) {
-         System.out.println("OrderController.orderBookingAccepted - Order Failed - error:" + e);
          logger.severe("OrderController.orderBookingAccepted - failed to process booking - received message: "+bookingMessage);
          throw e;
       }

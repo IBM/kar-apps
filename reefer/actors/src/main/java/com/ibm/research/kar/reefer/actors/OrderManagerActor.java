@@ -80,7 +80,7 @@ public class OrderManagerActor extends BaseActor {
 
          }
       } catch (Throwable e) {
-         logger.log(Level.SEVERE, "OrderManagerActor.activate()", e);
+         logger.log(Level.SEVERE, "OrderManagerActor.activate() - error ", e);
          throw new RuntimeException(e);
       }
    }
@@ -89,10 +89,9 @@ public class OrderManagerActor extends BaseActor {
    public void orderRollback(JsonObject message) {
       Order order = null;
       try {
-         logger.severe("OrderManagerActor.orderRollback - Called -" + message);
          order = new Order(message);
          if (!activeOrders.containsKey(order.getId())) {
-            logger.severe("OrderManagerActor.orderRollback - Order: " + order.getId() + " not in activeMap - probably duplicate order - ignoring rollback");
+            logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " not in activeMap - probably duplicate order - ignoring rollback");
          } else {
             Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
                     method("rollbackOrder").arg(order.getAsJsonObject()).tell();
@@ -115,13 +114,11 @@ public class OrderManagerActor extends BaseActor {
 
    @Remote
    public void bookOrder(JsonObject message) {
-      logger.info("OrderManagerActor.bookOrder - Called - " + message);
       Order order = null;
       try {
          order = new Order(new OrderProperties(message));
          Reminder[] reminders = Kar.Actors.Reminders.get(this, order.getCorrelationId());
          if (reminders != null && reminders.length > 0) {
-            logger.info("OrderManagerActor.bookOrder - Reminder registered with data:" + reminders[0].getArguments()[0]);
             order = new Order((JsonObject) (reminders[0].getArguments()[0]));
          } else {
             // generate unique order id
@@ -135,11 +132,10 @@ public class OrderManagerActor extends BaseActor {
          updateMap.put(order.getId(), order.getAsJsonObject());
          updateStore(Collections.emptyMap(), updateMap);
          activeOrders.put(order.getId(), order.getAsJsonObject());
-         logger.info("OrderManagerActor.bookOrder - order saved -" + order.getAsJsonObject());
       } catch (Exception e) {
          logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
          if (order == null) {
-            logger.log(Level.SEVERE, "OrderManagerActor.bookOrder() - Unable to create order instance from message:" + message);
+            logger.log(Level.SEVERE, "OrderManagerActor.bookOrder() - error - Unable to create order instance from message:" + message);
          } else {
             order.setMsg(e.getMessage());
             order.setStatus(Constants.FAILED);
@@ -152,11 +148,10 @@ public class OrderManagerActor extends BaseActor {
    public void orderBooked(JsonObject message) {
       Order order = null;
       try {
-         logger.info("OrderManagerActor.orderBooked - Called -" + message);
          JsonObject activeOrder;
          order = new Order(message);
          if (!activeOrders.containsKey(order.getId())) {
-            logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - order:" + order.getId() + " not found in activeOrders Map");
+            logger.log(Level.WARNING, "OrderManagerActor.orderBooked() - order:" + order.getId() + " not found in activeOrders Map");
             return;
          }
          activeOrder = activeOrders.get(order.getId()).asJsonObject();
@@ -174,7 +169,7 @@ public class OrderManagerActor extends BaseActor {
             // idempotence check - returned previously saved booking
             Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", activeOrder);
          } else {
-            logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - Unexpected Order State:" + activeOrder);
+            logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - error Unexpected Order State:" + activeOrder);
          }
 
       } catch (Exception e) {
@@ -191,7 +186,6 @@ public class OrderManagerActor extends BaseActor {
 
    @Remote
    public void orderFailed(JsonObject message) {
-      logger.info("OrderManagerActor.orderFailed - Called -" + message);
       Order order = null;
       try {
          order = new Order(message);
@@ -218,7 +212,6 @@ public class OrderManagerActor extends BaseActor {
 
          if (activeOrders.containsKey(order.getId())) {
             Order activeOrder = new Order(activeOrders.get(order.getId()));
-            logger.log(Level.SEVERE, "OrderManagerActor.orderDeparted() orderStatus "+activeOrder.getStatus()+ " message:"+message);
             // idempotence check to prevent double counting
             if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus()) ) {
                inTransitOrderList.add(order);
@@ -243,7 +236,6 @@ public class OrderManagerActor extends BaseActor {
    @Remote
    public void ordersDeparted(JsonValue message) {
       try {
-         logger.log(Level.INFO, "OrderManagerActor.ordersDeparted() - message: "+message);
          String voyageId = message.asJsonObject().getString(Constants.VOYAGE_ID_KEY);
          JsonArray orders = message.asJsonObject().getJsonArray(Constants.ORDERS_KEY);
          orders.forEach(oId -> {

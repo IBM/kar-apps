@@ -63,9 +63,6 @@ public class VoyageActor extends BaseActor {
       try {
          // fetch actor state from Kar storage
          Map<String, JsonValue> state = Kar.Actors.State.getAll(this);
-         if (logger.isLoggable(Level.FINE)) {
-            logger.fine("VoyageActor.init() voyageId:" + this.getId() + " all state" + state);
-         }
          // initial actor invocation should handle no state
          if (state.isEmpty()) {
             JsonObject params = Json.createObjectBuilder().
@@ -113,7 +110,6 @@ public class VoyageActor extends BaseActor {
                      reefer2OrderMap.put(reeferId, reeferBookingRecord.getOrderId());
                      reeferCount++;
                   }
-                  //logger.info("VoyageActor.activate() - voyageId:" + getId() + " restored order: "+reeferBookingRecord.getOrderId());
                }
                logger.info("VoyageActor.activate() - voyageId:" + getId() + " restored orders - size:" + orders.size()+" total reefers:"+reeferCount);
             }
@@ -179,10 +175,6 @@ public class VoyageActor extends BaseActor {
     */
    @Remote
    public JsonValue changePosition(JsonObject message) {
-      if (logger.isLoggable(Level.FINE)) {
-         logger.fine("VoyageActor.changePosition() voyageId:" + getId() + " " + message.toString() + " state:"
-                 + getVoyageStatus());
-      }
       if (Objects.isNull(voyage) ) {
          Kar.Actors.remove(this);
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
@@ -190,9 +182,6 @@ public class VoyageActor extends BaseActor {
       }
       if ( voyage.shipArrived() ) {
          Kar.Actors.remove(this);
-         if ( logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "VoyageActor.changePosition() - voyageId:" + getId() + " voyage already arrived - ignoring ");
-         }
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                  .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
       }
@@ -203,10 +192,6 @@ public class VoyageActor extends BaseActor {
          if (voyage.positionChanged(daysOutAtSea)) {
             // given ship sail date and current days at sea get ship's current date
             Instant shipCurrentDate = voyage.getSailDateObject().plus(daysOutAtSea, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
-            if (logger.isLoggable(Level.FINE)) {
-               logger.fine(
-                       "VoyageActor.changePosition() voyage info:" + voyageInfo + " ship current date:" + shipCurrentDate);
-            }
             voyage.changePosition(daysOutAtSea);
             // if ship's current date matches (or exceeds) its arrival date, the ship arrived
             if (voyage.shipArrived(shipCurrentDate, getVoyageStatus())) {
@@ -276,8 +261,6 @@ public class VoyageActor extends BaseActor {
          if ( !reefer2OrderMap.containsKey(spoiltReeferId)) {
             return;
          }
-         logger.info("VoyageActor.reeferAnomaly - voyageId:"+getId()+" spoilt reefer: "+
-                 spoiltReeferId);
          boolean newSpoiltOrder = false;
          if ( !spoiltReefersMap.containsKey(spoiltReeferId)) {
             spoiltReefersMap.put(spoiltReeferId, Json.createValue(spoiltReeferId));
@@ -315,10 +298,8 @@ public class VoyageActor extends BaseActor {
    @Remote
    public void reefersBooked(JsonObject message) {
       try {
-          // convenience wrapper for DepotActor json reply
-         DepotReply reply = new DepotReply(message);
-            logger.info("VoyageActor.reefersBooked() - voyageId:" + getId() + " orderId:" + reply.getOrderId() + " booked - reefers:"
-                    + reply.getReefers().size());
+            // convenience wrapper for DepotActor json reply
+            DepotReply reply = new DepotReply(message);
 
             Set<String> orderReefers = reply.getReefers();
             for (String rid : orderReefers) {
@@ -327,8 +308,6 @@ public class VoyageActor extends BaseActor {
             if (orderReefers.isEmpty()) {
                logger.warning("VoyageActor.reefersBooked() - voyageId:" + getId() + " orderId:" + reply.getOrderId() + " !!!!!!!!!!!!!!!! booking has no reefers:" + message);
             }
-            logger.fine("VoyageActor.reefersBooked() - voyageId:" + getId() + " orderId:" + reply.getOrderId() + " booked - reefers:"
-                    + orderReefers.size());
             voyage.setReeferCount(voyage.getReeferCount() + reply.getReeferCount());
             voyage.updateFreeCapacity(reply.getReeferCount());
             orders.put(reply.getOrderId(), message);
@@ -598,11 +577,8 @@ public class VoyageActor extends BaseActor {
                   sb.append(reeferId).append(",");
                }
 	            job.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, sb.toString());
-              // emptiesCount = emptyReefers.toString().split(",").length;
 	         }
             int reeferCount = reeferIds.toString().split(",").length;
-
-            //reeferCount += spoiltReeferIds.toString().split(",").length;
             logger.info("VoyageActor.processArrivedVoyage - voyageId:"+getId()+" ARRIVED with "+orders.size()+" orders - reefers:"+reeferCount+" emptiesCount:"+emptyReefersMap.size());
             Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getDestinationPort())).
                     method("voyageReefersArrived").arg(job.build()).tell();
@@ -624,7 +600,6 @@ public class VoyageActor extends BaseActor {
       try {
          // the depot may return a number of empty reefers to sail on the voyage due to
          // excess reefer inventory
-         //int emptiesCount = 0; //message.getInt(Constants.REEFERS_KEY);
          String emptiesRids = message.getString(Constants.VOYAGE_EMPTY_REEFERS_KEY);
          if (emptiesRids.trim().length()==0 ) {
             emptiesRids ="";
@@ -633,19 +608,14 @@ public class VoyageActor extends BaseActor {
          for( String emptyReeferId : emptiesRids.split(",") ) {
             if	( emptyReeferId.trim().length() > 0 ) {
                emptyReefersMap.put(emptyReeferId, emptyReeferId);
-               //emptiesCount++;
             }
          }
-         logger.info("VoyageActor.addEmptyReefers() - voyageId:"+getId()+
-                 " Departure from "+voyage.getRoute().getOriginPort() +" reefer count:"+
-                 voyage.getReeferCount()+" empties count:"+emptyReefersMap.size());//+" depot reply:"+message);
          voyage.updateFreeCapacity(emptyReefersMap.size());
          voyage.setReeferCount(voyage.getReeferCount()+emptyReefersMap.size());
          JsonObjectBuilder jb = Json.createObjectBuilder();
          jb.add(Constants.VOYAGE_EMPTY_REEFERS_KEY, empties);
          jb.add(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
          Kar.Actors.State.set(this, jb.build());
-         logger.info("VoyageActor.addEmptyReefers() - voyageId:"+getId()+" Saved New State - empties:"+emptyReefersMap.size());
       } catch( Exception e) {
          logSevereError("processDepartedVoyage()", e);
          throw e;
@@ -662,43 +632,19 @@ public class VoyageActor extends BaseActor {
                  add(Constants.VOYAGE_REEFERS_KEY, Json.createValue(voyage.getReeferCount())).
                  add(Constants.VOYAGE_FREE_CAPACITY_KEY, Json.createValue(voyage.getRoute().getVessel().getFreeCapacity())).
                  build();
-         //JsonValue reply = Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
-           //      method("voyageReefersDeparted").arg(params).call();
          Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
                  method("voyageReefersDeparted").arg(params).tell();
-/*
-
-         // the depot may return a number of empty reefers to sail on the voyage due to
-         // excess reefer inventory
-         int emptiesCount = reply.asJsonObject().getInt(Constants.REEFERS_KEY);
-         String emptiesRids = reply.asJsonObject().getString(Constants.VOYAGE_EMPTY_REEFERS_KEY);
-         if (emptiesRids.trim().length()==0 ) {
-            emptiesRids ="";
-         }
-         emptyReefers = Json.createValue(emptiesRids);
-         for( String emptyReeferId : ((JsonString)emptyReefers).getString().split(",") ) {
-            if	( emptyReeferId.trim().length() > 0 ) {
-               emptyReefersMap.put(emptyReeferId, emptyReeferId);
-            }
-         }
-
- */
          logger.info("VoyageActor.processDepartingVoyage() - voyageId:"+getId()+
                  " Departure from "+voyage.getRoute().getOriginPort() +" reefer count:"+
                  voyage.getReeferCount()); //+" empties count:"+emptiesCount+" depot reply:"+reply);
-         //voyage.updateFreeCapacity(emptiesCount);
-         //voyage.setReeferCount(voyage.getReeferCount()+emptiesCount);
          Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                  method("voyageDeparted").arg(VoyageJsonSerializer.serialize(voyage)).tell();
-        // if (!Order.OrderStatus.DELIVERED.name().equals(order.getStatus()) && !Order.OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
          Set<String> voyageOrderIds = orders.keySet().stream().collect(Collectors.toSet());
          JsonObject msg = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).
                  add(Constants.ORDERS_KEY, Json.createArrayBuilder(voyageOrderIds)).
                  build();
          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                     method("ordersDeparted").arg(msg).tell();
-
-       //  }
          orders.keySet().forEach(orderId -> {
             notifyVoyageOrder(orderId, Order.OrderStatus.INTRANSIT, "departed");
          });

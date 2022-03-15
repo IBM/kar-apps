@@ -63,7 +63,7 @@ public class AnomalyManagerActor extends BaseActor {
                reverseVesselEnumMap.put(enumValue, ((JsonString) vessel).getString());
                enumValue++;
             }
-            logger.info("AnomalyManagerActor.activate() - vesselEnumMap.size() = " + vesselEnumMap.size());
+
          } else {
             throw new IllegalStateException("AnomalyManagerActor.activate() - failed to fetch a list of vessels from the Schedule Manager");
          }
@@ -121,7 +121,6 @@ public class AnomalyManagerActor extends BaseActor {
             }
             reefersMap.put(props[0], rl);
          }
-         logger.info("AnomalyManagerActor.instantiateReeferTargetMap() + restored reefers map - size: " + reefersMap.size());
          if (logger.isLoggable(Level.FINEST)) {
             logger.finest("AnomalyManagerActor.instantiateReeferTargetMap() - time to instantiate reeferMap from state took:" + (System.currentTimeMillis() - t1) + " size:" + reefersMap.size());
          }
@@ -158,7 +157,10 @@ public class AnomalyManagerActor extends BaseActor {
          long t2 = System.currentTimeMillis();
          Kar.Actors.State.set(this, Constants.REEFERS_KEY, Json.createValue(sb.toString()));
          Kar.Actors.State.Submap.set(this, Constants.TARGET_MAP_KEY, depotEnumMap);
-         System.out.println("AnomalyManagerActor.depotReefers() - saved depot reefers - total time:" + (System.currentTimeMillis() - t2) + " state size (KB):" + (sb.length() / 1024));
+         if (logger.isLoggable(Level.FINEST)) {
+            logger.log(Level.FINEST,"AnomalyManagerActor.depotReefers() - saved depot reefers - total time:" + (System.currentTimeMillis() - t2) + " state size (KB):" + (sb.length() / 1024));
+         }
+
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n", "");
          logger.log(Level.SEVERE, "AnomalyManagerActor.depotReefers() " + stacktrace);
@@ -281,7 +283,6 @@ public class AnomalyManagerActor extends BaseActor {
 
          String[] rids = reeferIds.split(",");
          String event = getEventTypeAsString(eventType);
-         logger.log(Level.INFO, "AnomalyManagerActor.update() - voyage:" + voyageId + " " + event + " total reefers=" + rids.length);
          if (eventType == ARRIVAL) {
             handleArrivals(voyageId, anomalyTarget, targetType);
          } else {

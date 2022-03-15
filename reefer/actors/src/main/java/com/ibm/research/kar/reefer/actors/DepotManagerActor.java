@@ -67,7 +67,6 @@ public class DepotManagerActor extends BaseActor {
                 inx += assignShardToDepot(route.getDestinationPort(),route.getVessel().getId(),route.getVessel().getMaxCapacity(), inx );
             }
             totalInventorySize = inx;
-            logger.info("DepotManager.activate() -Routes:\n"+sb.toString());
             JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
             Map<String, JsonValue> depotMap = new HashMap<>();
             JsonObjectBuilder mapJob = Json.createObjectBuilder();
@@ -101,7 +100,7 @@ public class DepotManagerActor extends BaseActor {
                     depots.add(deserializeDepot(jv.asJsonObject()));
                 }
             } catch (Exception e) {
-                logger.log(Level.SEVERE,"DepotManager.activate()", e);
+                logger.log(Level.SEVERE,"DepotManager.activate() - Error ", e);
             }
         }
         Kar.Actors.Reminders.schedule(this, "publishReeferMetrics", "AAA", Instant.now().plus(1, ChronoUnit.SECONDS), Duration.ofMillis(1000));
@@ -117,9 +116,10 @@ public class DepotManagerActor extends BaseActor {
         // each with a unique range of reefer ids.
         Shard shard = new Shard(beginRange, beginRange + (paddedSize-1));
         depot.addShard(shard);
-        logger.info("DepotManager.assignShardToDepot() - Depot:"+depot.getId()+" size:"+depot.getSize()+" ship:"+shipName+
-                " shard low range:"+shard.getLowerBound()+" shard high range:"+shard.getUpperBound());
-
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("DepotManager.assignShardToDepot() - Depot:"+depot.getId()+" size:"+depot.getSize()+" ship:"+shipName+
+                    " shard low range:"+shard.getLowerBound()+" shard high range:"+shard.getUpperBound());
+        }
         return Long.valueOf(paddedSize).intValue();
     }
 
@@ -201,7 +201,6 @@ public class DepotManagerActor extends BaseActor {
         try {
             String depotId = ((JsonString) depotName).getString();
             boolean found = false;
-            logger.info("DepotManager.depotInventory() - depotId:"+depotId+" depots.size()="+depots.size());
             StringBuilder sb = new StringBuilder();
             for (Depot depot : depots) {
                 sb.append(depot).append("\n");
@@ -221,7 +220,7 @@ public class DepotManagerActor extends BaseActor {
                 logger.warning("DepotManager.depotInventory() - depot:" + depotId + " NOT found in depots - known depots:" + sb.toString());
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE,"DepotManager.depotInventory()", e);
+            logger.log(Level.SEVERE,"DepotManager.depotInventory() Error ", e);
         }
 
         return job.build();

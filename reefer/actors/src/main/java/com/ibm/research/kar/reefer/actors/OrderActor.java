@@ -24,7 +24,6 @@ import com.ibm.research.kar.actor.annotations.Remote;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
-import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Order.OrderStatus;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -56,38 +55,29 @@ public class OrderActor extends BaseActor {
             }
          }
       } catch (Exception e) {
-         logger.log(Level.SEVERE,"OrderActor.activate()", e);
+         logger.log(Level.SEVERE,"OrderActor.activate() Error ", e);
       }
    }
    @Remote
    public void orderBooked(JsonObject voyageBookingResult) {
       try {
-         if (logger.isLoggable(Level.INFO)) {
-            logger.info(String.format("OrderActor.orderBooked() - orderId: %s VoyageActor reply: %s", getId(), voyageBookingResult));
-         }
          order = new Order(voyageBookingResult.getJsonObject(Constants.ORDER_KEY));
-         //order.setStatus(OrderStatus.BOOKED.name());
          saveOrderStatusChange(OrderStatus.BOOKED);
-         //Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                     method("orderBooked").arg(order.getAsJsonObject()).tell();
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-         logger.log(Level.SEVERE,"OrderActor.orderBooked() - Error - orderId " + getId()+" Error:" +stacktrace);
+         logger.log(Level.SEVERE,"OrderActor.orderBooked() - Error - orderId " + getId()+" Error: " +stacktrace);
 
       }
    }
 
    @Remote
    public void bookingFailed(JsonObject bookingStatus) {
-      if (logger.isLoggable(Level.INFO)) {
-         logger.info(String.format("OrderActor.bookingFailed() - orderId: %s VoyageActor reply: %s", getId(), bookingStatus));
-      }
       Kar.Actors.remove(this);
       Order failedOrder = new Order(bookingStatus.getJsonObject(Constants.ORDER_KEY));
       Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
               method("orderFailed").arg(failedOrder.getAsJsonObject()).tell();
-
    }
 
    /**
@@ -141,7 +131,7 @@ public class OrderActor extends BaseActor {
    }
    @Remote
    public void cancel() {
-      logger.info(String.format("OrderActor.cancel() - orderId: %s - order cancelled due to rollback", getId()));
+      logger.warning(String.format("OrderActor.cancel() - orderId: %s - order cancelled due to rollback", getId()));
       Kar.Actors.remove(this);
    }
    /**
@@ -156,10 +146,7 @@ public class OrderActor extends BaseActor {
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED)
                  .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).add("ERROR","Order Already Arrived").build();
       }
-
       if (!OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
-     //    Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
-     //            method("orderDeparted").arg(order.getAsJsonObject()).tell();
          saveOrderStatusChange(OrderStatus.INTRANSIT);
       }
       return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)

@@ -17,23 +17,36 @@
 # Helm Chart
 
 This Helm chart support deploying the Reefer application to various Kubernetes clusters.
+In all cases below kafka and redis are deployed in the target K8s cluster.  
+
+Except on k3d only a single instance of reefer components are started.
+k3d deployment has an option to deploy replicas of reefer components using global.affinity=true.
+When affinity is specified, the replicated reefer components are run on different nodes from
+kar system components and the reefer simulator.
+Reefer includes an automated fault driver that randomly kills and restarts k3d application nodes.
 
 ## Prerequisites to deployment 
  * If intending to deploy to a local kubernetes (kind, k3d or Docker Desktop)
-   * first run `[kar-install-dir]/scripts/docker-compose-stop.sh`
-   * if deploying locally built reefer images, push them to a repo running at localhost:5000 and leave out the override of kar.imagePrefix below
- * Deploy the KAR Runtime System to the kar-system namespace: `[kar-install-dir]/scripts/kar-k8s-deploy.sh`
+   * first run `[kar-install-dir]/scripts/docker-compose-stop.sh` as the kar system components run in kubernetes.
+   * if deploying locally built reefer images, push them to a repo running at localhost:5000 and leave out the override of kar.imagePrefix 
+ * Deploy the KAR Runtime System to the kar-system namespace: `[kar-install-dir]/scripts/kar-k8s-deploy.sh`  
+   * If using k3d: ```[kar-install-dir]/scripts/kar-k8s-deploy.sh --set global.affinity=true```
 
-## To deploy on `Docker Desktop`
- * From `[kar-apps-install-dir]/reefer` execute:
+## Deploy reefer using helm from directory: ```[kar-apps-install-dir]/reefer```
+
+### To deploy on `Docker Desktop`
 ```shell
 helm install reefer chart --set kar.imagePrefix=quay.io/ibm
 ```
 
-## To deploy on `kind` or `k3d`
- * From `[kar-apps-install-dir]/reefer` execute:
+### To deploy on `kind`
 ```shell
-helm install reefer chart --set ingress.pathBased=true --set kar.imagePrefix=quay.io/ibm
+helm install reefer chart --set kar.imagePrefix=quay.io/ibm --set ingress.pathBased=true
+```
+
+### To deploy on `k3d`
+```shell
+helm install reefer chart --set kar.imagePrefix=quay.io/ibm --set ingress.pathBased=true --set global.affinity=true
 ```
 
 ## To deploy on `IBM Cloud Kubernetes Service`

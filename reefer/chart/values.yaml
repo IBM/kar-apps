@@ -40,7 +40,7 @@ reefer:
     imageName: kar-app-reefer-rest
     port: 9080
     nodeport: 30080
-    replicas: 3
+    replicas: 2
 
   simulator:
     imageName: kar-app-reefer-simulators
@@ -60,10 +60,10 @@ reefer:
   actors:
     imageName: kar-app-reefer-actors
     port: 8080
-    replicas: 3
+    replicas: 2
 
   singletons:
     imageName: kar-app-reefer-actors
     port: 8080
-    replicas: 3
+    replicas: 2
     fleetsize: 20

@@ -29,7 +29,7 @@
 # - have created a code engine project
 #   login to ibmcloud and select personal group
 #   ic target -g Default
-#   ic ce project create -n reefer-test
+#   ic ce project create -n kar-project
 #   $KAR/scripts/kar-ce-project-enable.sh <service-key> <cr-apikey>
 #
 # Then for each new session
@@ -40,11 +40,10 @@
 #
 # That's it!
 
-
 start_backend=""
 start_frontend=""
-restart_backend=""
-restart_frontend=""
+stop_backend=""
+stop_frontend=""
 kardir=""
 rest_url=""
 args=""
@@ -52,9 +51,9 @@ parse=true
 
 function usage() {
     cat << EOF
-Usage: reefer-ce-run.sh [ -start_backend \$KAR | -start_frontend \$rest_url | -restart_backend | -restart_frontend ]
+Usage: reefer-ce-run.sh [ -start_backend \$KAR | -start_frontend \$rest_url | -stop_backend | -stop_frontend ]
 where
-    \$KAR        is path to git clone of https://github.ibm.com/solsa/kar.git
+    \$KAR        is path to git clone of https://github.com/IBM/kar-apps.git
     \$rest_url   is the URL of the reefer-rest application
 
 EOF
@@ -79,11 +78,11 @@ while [ -n "$1" ]; do
             shift;
             rest_url="$1"
             ;;
-        -restart_backend)
-	    restart_backend="1"
+        -stop_backend)
+	    stop_backend="1"
             ;;
-        -restart_frontend)
-	    restart_frontend="1"
+        -stop_frontend)
+	    stop_frontend="1"
             ;;
         --) parse=;;
         *) args="$args '$1'";;
@@ -95,10 +94,10 @@ if [ -n "$help" ]; then
     usage 0
 fi
 
-numc=$(echo "$start_backend $start_frontend $restart_backend $restart_frontend" | wc -w)
+numc=$(echo "$start_backend $start_frontend $stop_backend $stop_frontend" | wc -w)
 if [ "$numc" != "1" ]; then
     echo
-    echo "please specify one of [ -start_backend | -start_frontend | -restart_backend | -restart_frontend ]"
+    echo "please specify one of [ -start_backend | -start_frontend | -stop_backend | -stop_frontend ]"
     echo
     usage 1
 fi
@@ -116,12 +115,13 @@ if [ -n "$start_backend" ]; then
 	echo "reefer backend components already running:"
 	printf "$response"
 	echo
-	echo "did you mean -restart_backend ?"
+	echo
+	echo "did you mean -stop_backend ?"
 	echo
 	exit 1
     fi
     
-    # erase all existing reefer app state
+    # erase any existing reefer app state
     kar purge -app reefer
     if [ "$?" != 0 ]; then
 	echo "app state purge failed"
@@ -171,62 +171,27 @@ if [ -n "$start_frontend" ]; then
 	     --env REST_URL=$rest_url
 fi
 
-if [ -n "$restart_backend" ]; then
-    response=$(ibmcloud ce app list)
+if [ -n "$stop_backend" ]; then
+    response=$(ibmcloud ce app list | awk '{print $1}'|grep reefer)
     if [ -z "$response" ]; then
 	echo "no reefer backend components are running"
 	exit 1
     fi
 
-    read -p "Please confirm that the simulator is turned off [yN] " res
-    case $res in
-	[Yy]* ) ;;
-	* ) exit 1;;
-    esac
-
-    echo "purging all existing reefer app state"
-    kar purge -app reefer
-    if [ "$?" != 0 ]; then
-	echo "purge failed ... please update environment with \"source \$KAR/scripts/kar-env-ibmcloud.sh <service-key>\""
-	echo
-	exit 1
-    fi
-
-    test=$(echo "$response" | grep "reefer-actors")
-    if [ -n "$test" ]; then
-	echo "restarting reefer-actors"
-	ibmcloud ce app update --name reefer-actors --wait=false
-    fi
-
-    test=$(echo "$response" | grep "reefer-rest")
-    if [ -n "$test" ]; then
-	echo "restarting reefer-rest"
-	ibmcloud ce app update --name reefer-rest --wait=false
-    fi
-
-    test=$(echo "$response" | grep "reefer-simulators")
-    if [ -n "$test" ]; then
-	echo "restarting reefer-simulators"
-	ibmcloud ce app update --name reefer-simulators --wait=false
-    fi
-
-    test=$(echo "$response" | grep "reefer-monitor")
-    if [ -n "$test" ]; then
-	echo "restarting reefer-monitor"
-	ibmcloud ce app update --name reefer-monitor --wait=false
-    fi
-
-    echo "Check status with: ibmcloud ce app list"
+    for f in $(echo -n $response); do
+        echo " stopping $f"
+	ibmcloud ce app delete --name $f --force
+    done
 fi
 
 
-if [ -n "$restart_frontend" ]; then
+if [ -n "$stop_frontend" ]; then
     response=$(ibmcloud ce app list | grep reefer-frontend)
     if [ -z "$response" ]; then
 	echo "reefer frontend not running"
 	exit 1
     fi
 
-    echo "restarting reefer-frontend"
-    ibmcloud ce app update --name reefer-frontend
+    echo "stopping reefer-frontend"
+    ibmcloud ce app delete --name reefer-frontend --force
 fi

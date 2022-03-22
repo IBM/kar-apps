@@ -196,7 +196,7 @@ public class VoyageActor extends BaseActor {
             // if ship's current date matches (or exceeds) its arrival date, the ship arrived
             if (voyage.shipArrived(shipCurrentDate, getVoyageStatus())) {
                if (!VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
-                  logger.log(Level.WARNING, "VoyageActor.changePosition() - voyageId:" + voyage.getId() + " arrived BUT its expected state is not DEPARTED. Instead it is " + getVoyageStatus());
+                  logger.log(Level.INFO, "VoyageActor.changePosition() - voyageId:" + voyage.getId() + " arrived BUT its expected state is not DEPARTED. Instead it is " + getVoyageStatus());
                }
 
                voyageStatus = Json.createValue(VoyageStatus.ARRIVED.name());

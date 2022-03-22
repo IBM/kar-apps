@@ -17,6 +17,7 @@
 package com.ibm.research.kar.reefer.actors;
 
 import com.ibm.research.kar.Kar;
+import com.ibm.research.kar.actor.ActorInstance;
 import com.ibm.research.kar.actor.ActorRef;
 
 import javax.json.JsonValue;
@@ -45,7 +46,8 @@ public final class Actors {
    }
    public interface Invoke {
       void tell();
-      JsonValue call();
+      JsonValue call(ActorInstance caller);
+      JsonValue rootCall();
    }
 
    public static class Builder implements Target,Method,Arg,Invoke {
@@ -87,13 +89,20 @@ public final class Actors {
          }
       }
       @Override
-      public JsonValue call() {
+      public JsonValue call(ActorInstance caller) {
          if ( value != null ) {
-            return Kar.Actors.call(actor, method, value);
+            return Kar.Actors.call(caller, actor, method, value);
          } else {
-            return Kar.Actors.call(actor, method);
+            return Kar.Actors.call(caller, actor, method);
          }
-
+      }
+      @Override
+      public JsonValue rootCall() {
+         if ( value != null ) {
+            return Kar.Actors.rootCall(actor, method, value);
+         } else {
+            return Kar.Actors.rootCall(actor, method);
+         }
       }
    }
 
@@ -103,4 +112,3 @@ public final class Actors {
 
 
 }
-

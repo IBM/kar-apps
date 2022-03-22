@@ -70,7 +70,7 @@ public class VoyageActor extends BaseActor {
                     build();
             // fetch voyage details
             JsonValue jv = Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
-                    method("voyage").arg(Json.createValue(getId())).call();
+                    method("voyage").arg(Json.createValue(getId())).call(this);
             voyageInfo = jv.asJsonObject();
             if ( voyageInfo == null ) {
                logger.severe("VoyageActor.activate() - voyageId:" + getId() + " voyageInfo not available - schedule manager replied with:"+jv);
@@ -281,7 +281,7 @@ public class VoyageActor extends BaseActor {
                Order order = new Order(orders.get(orderId).asJsonObject().getJsonObject(JsonOrder.OrderKey));
                order.setSpoilt(true);
                Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
-                       method("orderSpoilt").arg(order.getAsJsonObject()).call();
+                       method("orderSpoilt").arg(order.getAsJsonObject()).call(this);
             }
 
             Map<String, JsonValue> actorStateMap = new HashMap<>();
@@ -486,7 +486,7 @@ public class VoyageActor extends BaseActor {
             return;
          }
           JsonValue reply = Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
-                 method("reeferReplace").arg(message).call();
+                 method("reeferReplace").arg(message).call(this);
 
          if ( !reply.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
            logger.info("VoyageActor.replaceReefer() - voyageId:"+getId()+" - Error:"+reply.asJsonObject().getString(Constants.ERROR)+" - processing as reefer anomaly");
@@ -662,7 +662,7 @@ public class VoyageActor extends BaseActor {
       if (!orderStatus.name().equals(order.getStatus())) {
          try {
             Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, orderId).
-                    method(methodName).arg().call();
+                    method(methodName).arg().call(this);
          } catch (Exception orderActorException) {
             // KAR sometimes fails to locate order actor instance even though it exists in REDIS. This can happen
             // after process restart

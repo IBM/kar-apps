@@ -51,7 +51,7 @@ public class DepotManagerActor extends BaseActor {
 
         if (state.isEmpty()) {
             ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-            JsonValue routes = Kar.Actors.call(scheduleActor, "routes");
+            JsonValue routes = Kar.Actors.call(this, scheduleActor, "routes");
             int inx = 0;
             // Using a route, calculate each depot total size and sum up total inventory.
             StringBuilder sb = new StringBuilder();
@@ -160,7 +160,7 @@ public class DepotManagerActor extends BaseActor {
                 }
             }
             ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-            JsonValue reefersInTransit = Kar.Actors.call(scheduleActor,"reefersInTransit");
+            JsonValue reefersInTransit = Kar.Actors.call(this, scheduleActor,"reefersInTransit");
 
             JsonValue spoiltReefersMetrics = Kar.Actors.State.get(scheduleActor, Constants.TOTAL_SPOILT_KEY);
             if (reefersInTransit != null && reefersInTransit != JsonValue.NULL) {

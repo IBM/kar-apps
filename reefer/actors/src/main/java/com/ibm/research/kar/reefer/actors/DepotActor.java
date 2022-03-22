@@ -653,7 +653,7 @@ public class DepotActor extends BaseActor {
             if ( message.containsKey(Constants.DATE_KEY)) {
                 today = Instant.parse(message.getString(Constants.DATE_KEY));
             } else if ( currentDate == null ) {
-                JsonValue reply = Kar.Actors.call(scheduleActor, "currentDate");
+                JsonValue reply = Kar.Actors.call(this, scheduleActor, "currentDate");
                 today = Instant.parse(((JsonString) reply).getString());
             } else {
                 today = currentDate;
@@ -705,7 +705,7 @@ public class DepotActor extends BaseActor {
                order2ReeferMap.remove(reefer.getOrderId());
                order2ReeferMap.put(reefer.getOrderId(),reeferIds);
            }
-           JsonValue currentDate = Kar.Actors.call(scheduleActor, "currentDate");
+           JsonValue currentDate = Kar.Actors.call(this, scheduleActor, "currentDate");
            setReeferOnMaintenance(reefer, ((JsonString) currentDate).getString());
            reefer.removeFromVoyage();
            // persist changes applied to spoilt and replace reefers
@@ -829,7 +829,7 @@ public class DepotActor extends BaseActor {
         InventoryConfig inv = null;
         try {
             JsonValue reply = Actors.Builder.instance().target(ReeferAppConfig.DepotManagerActorType,  ReeferAppConfig.DepotManagerId).
-                    method("depotInventory").arg(Json.createValue(getId())).call();
+                    method("depotInventory").arg(Json.createValue(getId())).call(this);
             totalReeferInventory = reply.asJsonObject().getJsonNumber(Constants.TOTAL_REEFER_COUNT_KEY);
             depotSize = reply.asJsonObject().getJsonNumber(Constants.DEPOT_SIZE_KEY);
             currentInventorySize = depotSize;

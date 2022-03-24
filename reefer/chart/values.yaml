@@ -27,7 +27,7 @@ ingress:
 
 global:
   affinity: false
-  karargs: "-rpclib"
+  karargs: "-placement_cache=false"
 
 reefer:
   frontend:

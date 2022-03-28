@@ -453,7 +453,7 @@ public class SimulatorService {
       OO.setOOStatus(OO.accepted);
     }
     else {
-      logger.severe(String.format("simulator updateAccepted: invalid update for %s,%s with value=%s corrId=%s",
+      logger.warning(String.format("simulator updateAccepted: invalid update for %s,%s with value=%s corrId=%s",
               OO.getOOCorrId(),OO.getOOStatus(),OO.accepted, corrId));
     }
   }
@@ -466,7 +466,7 @@ public class SimulatorService {
       }
     }
     else {
-      logger.severe(String.format("simulator updateBooked(): invalid update for %s,%s with value=%s corrId=%s",
+      logger.warning(String.format("simulator updateBooked(): invalid update for %s,%s with value=%s corrId=%s",
               OO.getOOCorrId(),OO.getOOStatus(),OO.booked, corrId));
     }
   }

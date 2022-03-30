@@ -41,20 +41,20 @@ public class TimeController {
 
     @PostMapping("/time/startDate")
     public Instant getStartDate() {
-        JsonValue reply = Kar.Actors.call(scheduleActor, "startDate");
+        JsonValue reply = Kar.Actors.rootCall(scheduleActor, "startDate");
         return Instant.parse(((JsonString) reply).getString());
     }
 
     @PostMapping("/time/currentDate")
     public Instant getCurrentDate() {
-        JsonValue reply = Kar.Actors.call(scheduleActor, "currentDate");
+        JsonValue reply = Kar.Actors.rootCall(scheduleActor, "currentDate");
         return Instant.parse(((JsonString) reply).getString());
     }
 
     @PostMapping("/time/tomorrowsDate")
     public Instant getTomorrowsDate() {
         try {
-            JsonValue reply = Kar.Actors.call(scheduleActor, "tomorrowsDate");
+            JsonValue reply = Kar.Actors.rootCall(scheduleActor, "tomorrowsDate");
             return Instant.parse(((JsonString) reply).getString());
         } catch (Exception e) {
             e.printStackTrace();
@@ -75,7 +75,7 @@ public class TimeController {
         }
 
 
-        JsonValue reply = Kar.Actors.call(scheduleActor, "currentDate");
+        JsonValue reply = Kar.Actors.rootCall(scheduleActor, "currentDate");
         return Instant.parse(((JsonString) reply).getString());
     }
 
@@ -84,7 +84,7 @@ public class TimeController {
         Instant today = null;
 
         try {
-            JsonValue reply = Kar.Actors.call(scheduleActor, "advanceDate");
+            JsonValue reply = Kar.Actors.rootCall(scheduleActor, "advanceDate");
             today = Instant.parse(reply.asJsonObject().getString(Constants.CURRENT_DATE_KEY).toString());
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);

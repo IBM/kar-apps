@@ -143,7 +143,7 @@ public class ReeferThread extends Thread {
                             }
                             try {
                                 //Kar.Actors.call(reeferProvisionerActor, "reeferAnomaly", params);
-                                Kar.Actors.call(anomalyManagerActor, "reeferAnomaly", params);
+                                Kar.Actors.rootCall(anomalyManagerActor, "reeferAnomaly", params);
                             } catch (Exception e) {
                                 logger.warning("reeferthread: error sending anomaly " + e.toString());
                             }

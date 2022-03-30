@@ -62,7 +62,7 @@ public class ReeferActor extends BaseActor {
 
     /**
      * Called to change reefer state.
-     * 
+     *
      * @param reeferProperties
      */
     public void setState(JsonObject reeferProperties) {
@@ -123,7 +123,7 @@ public class ReeferActor extends BaseActor {
     }
     /**
      * Called when the reefer anomaly occurs (controlled by the simulator).
-     * 
+     *
      * @param message
      * @return
      */
@@ -139,7 +139,7 @@ public class ReeferActor extends BaseActor {
                     + " Assigned to Order Id:" + ((JsonString) jsonOrderId).getString()
                     + " - Spoiled Reefer - Notifying Order Actor");
             // Notify the Order actor that this reefer is spoilt. The Order actor returns its current
-            // state (either in-transit or booked). 
+            // state (either in-transit or booked).
             JsonObject orderReply = notifyOrderOfSpoilage(((JsonString) jsonOrderId).getString());
             System.out.println("ReeferActor.anomaly() - Id:" + this.getId()
                     + " Order Actor:" + ((JsonString) jsonOrderId).getString() + " reply:" + orderReply);
@@ -155,7 +155,7 @@ public class ReeferActor extends BaseActor {
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.SPOILT.name()).add(Constants.ORDER_STATUS_KEY,
                         Order.OrderStatus.BOOKED.name());
             } else {
-                // reefer neither booked nor in-transit goes on maintenance 
+                // reefer neither booked nor in-transit goes on maintenance
                 propertiesBuilder.add(ReeferState.STATE_KEY, Json.createValue(ReeferState.State.MAINTENANCE.name()));
                 reply.add(Constants.REEFER_STATE_KEY, ReeferState.State.MAINTENANCE.name())
                         .add(Constants.ORDER_STATUS_KEY, orderReply.getString(Constants.ORDER_STATUS_KEY));
@@ -183,6 +183,6 @@ public class ReeferActor extends BaseActor {
     private JsonObject notifyOrderOfSpoilage(String orderId) {
         ActorRef orderActor = Kar.Actors.ref(ReeferAppConfig.OrderActorType, orderId);
         JsonObject params = Json.createObjectBuilder().add("reeferId", getId()).build();
-        return Kar.Actors.call(orderActor, "anomaly", params).asJsonObject();
+        return Kar.Actors.call(this, orderActor, "anomaly", params).asJsonObject();
     }
 }

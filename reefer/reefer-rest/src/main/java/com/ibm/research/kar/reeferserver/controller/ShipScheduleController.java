@@ -40,7 +40,7 @@ public class ShipScheduleController {
     public List<Route> getRoutes() {
         try {
             ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-            JsonValue reply = Kar.Actors.call(scheduleActor, "routes");
+            JsonValue reply = Kar.Actors.rootCall(scheduleActor, "routes");
             JsonArray ja = reply.asJsonArray();
             List<Route> routes =
                     ja.stream().map(jv -> jv.asJsonObject()).map(RouteJsonSerializer::deserialize).collect(Collectors.toList());

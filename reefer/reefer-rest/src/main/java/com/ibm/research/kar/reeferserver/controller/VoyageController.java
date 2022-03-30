@@ -76,7 +76,7 @@ public class VoyageController {
                 logger.info("VoyageController.getMatchingVoyages() - origin:" + originPort + " destination:"
                         + destinationPort + " date:" + departureDate);
             }
-            JsonValue reply = Kar.Actors.call(scheduleActor, "matchingVoyages", job.build());
+            JsonValue reply = Kar.Actors.rootCall(scheduleActor, "matchingVoyages", job.build());
             return getVoyages(reply);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
@@ -99,7 +99,7 @@ public class VoyageController {
             JsonObjectBuilder job = Json.createObjectBuilder();
             JsonObject req = jsonReader.readObject();
             job.add("startDate", req.getString("startDate")).add("endDate", req.getString("endDate"));
-            JsonValue reply = Kar.Actors.call(scheduleActor, "voyagesInRange", job.build());
+            JsonValue reply = Kar.Actors.rootCall(scheduleActor, "voyagesInRange", job.build());
 
             JsonArray ja = reply.asJsonArray();
             return getVoyages(reply);
@@ -126,7 +126,7 @@ public class VoyageController {
     @GetMapping("/voyage/active")
     public List<Voyage> getActiveVoyages() {
         try {
-            JsonValue reply = Kar.Actors.call(scheduleActor, "activeVoyages");
+            JsonValue reply = Kar.Actors.rootCall(scheduleActor, "activeVoyages");
             JsonArray ja = reply.asJsonArray();
             return ja.stream().map(v -> v.asJsonObject()).
                     map(VoyageJsonSerializer::deserialize).
@@ -142,7 +142,7 @@ public class VoyageController {
     @GetMapping("/voyage/state/{id}")
     public Voyage getVoyageState(@PathVariable("id") String id) throws VoyageNotFoundException {
         try {
-            JsonValue reply = Kar.Actors.call(scheduleActor, "voyageState");
+            JsonValue reply = Kar.Actors.rootCall(scheduleActor, "voyageState");
             return VoyageJsonSerializer.deserialize(reply.asJsonObject());
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
@@ -153,7 +153,7 @@ public class VoyageController {
     @GetMapping("/voyage/info/{id}")
     public Voyage getVoyage(@PathVariable("id") String id) throws VoyageNotFoundException {
         try {
-            JsonValue reply = Kar.Actors.call(scheduleActor, "voyage", Json.createValue(id));
+            JsonValue reply = Kar.Actors.rootCall(scheduleActor, "voyage", Json.createValue(id));
             return VoyageJsonSerializer.deserialize(reply.asJsonObject());
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
@@ -170,7 +170,7 @@ public class VoyageController {
     @GetMapping("/voyage/routes")
     public List<Route> getRoutes() {
         try {
-            JsonValue reply = Kar.Actors.call(scheduleActor, "routes");
+            JsonValue reply = Kar.Actors.rootCall(scheduleActor, "routes");
             JsonArray ja = reply.asJsonArray();
             List<Route> routes =
                     ja.stream().map(jv -> jv.asJsonObject()).map(RouteJsonSerializer::deserialize).collect(Collectors.toList());
@@ -183,7 +183,7 @@ public class VoyageController {
     }
 
     private ShippingSchedule shippingSchedule() {
-        JsonValue reply = Kar.Actors.call(scheduleActor, "activeSchedule");
+        JsonValue reply = Kar.Actors.rootCall(scheduleActor, "activeSchedule");
         String currentDate = reply.asJsonObject().getString(Constants.CURRENT_DATE_KEY);
 
         JsonArray ja = reply.asJsonObject().getJsonArray(Constants.ACTIVE_VOYAGES_KEY);

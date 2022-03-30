@@ -54,7 +54,7 @@ public class AnomalyManagerActor extends BaseActor {
       long t1 = System.currentTimeMillis();
       try {
          ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-         JsonValue reply = Kar.Actors.call(scheduleActor, "getVessels");
+         JsonValue reply = Kar.Actors.call(this, scheduleActor, "getVessels");
          if (reply != null && reply != JsonValue.NULL) {
             // assign enum value to each ship
             int enumValue = 1;

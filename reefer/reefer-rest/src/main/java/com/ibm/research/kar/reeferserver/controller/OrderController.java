@@ -95,7 +95,7 @@ public class OrderController {
 
    private Voyage getVoyage(String voyageId) {
       ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
-      JsonValue reply = Kar.Actors.call(scheduleActor, "voyage", Json.createValue(voyageId));
+      JsonValue reply = Kar.Actors.rootCall(scheduleActor, "voyage", Json.createValue(voyageId));
       return VoyageJsonSerializer.deserialize(reply.asJsonObject());
    }
 
@@ -215,7 +215,7 @@ public class OrderController {
     */
    @GetMapping("/orders/list/active")
    public List<Order> getActiveOrderList() {
-      JsonValue reply = Kar.Actors.call(orderMgrActor, "ordersInTransit");
+      JsonValue reply = Kar.Actors.rootCall(orderMgrActor, "ordersInTransit");
       return reply.asJsonArray().stream().map(Order::new).collect(Collectors.toList());
    }
 
@@ -226,7 +226,7 @@ public class OrderController {
     */
    @GetMapping("/orders/list/booked")
    public List<Order> getBookedOrderList() {
-      JsonValue reply = Kar.Actors.call(orderMgrActor, "ordersBooked");
+      JsonValue reply = Kar.Actors.rootCall(orderMgrActor, "ordersBooked");
       return reply.asJsonArray().stream().map(Order::new).collect(Collectors.toList());
    }
 
@@ -237,7 +237,7 @@ public class OrderController {
     */
    @GetMapping("/orders/list/spoilt")
    public List<Order> getSpoiltOrderList() {
-      JsonValue reply = Kar.Actors.call(orderMgrActor, "ordersSpoilt");
+      JsonValue reply = Kar.Actors.rootCall(orderMgrActor, "ordersSpoilt");
       return reply.asJsonArray().stream().map(Order::new).collect(Collectors.toList());
    }
 

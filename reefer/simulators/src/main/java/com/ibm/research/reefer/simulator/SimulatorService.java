@@ -68,41 +68,35 @@ public class SimulatorService {
   public static OrderStats os = new OrderStats(0);
   // Class to maintain status of outstanding async orders
   public static class OutstandingOrder{
-    String corrId;
+    AtomicReference<String> corrId = new AtomicReference<String>();
     long startTime;
-    String status;
-    String voyage;
+    AtomicReference<String> status = new AtomicReference<String>();
+    AtomicReference<String> voyage = new AtomicReference<String>();
     public final String persistKey = "nextOrderSeq";
     public final String pending = "pending";
     public final String accepted = "accepted";
     public final String booked = "booked";
     public final String failed = "failed";
     void setOO(String cId, long st, String stat, String voyage) {
-      this.corrId = cId;
+      this.corrId.set(cId);
       this.startTime = st;
-      this.status = stat;
-      this.voyage = voyage;
-    }
-    void setOOCorrId(String cId) {
-      this.corrId = cId;
-    }
-    void setOOStartTime(long time) {
-      this.startTime = time;
+      this.status.set(stat);
+      this.voyage.set(voyage);
     }
     void setOOStatus(String status) {
-      this.status = status;
+        this.status.set(status);
     }
     String getOOCorrId() {
-      return this.corrId;
+        return this.corrId.get();
     }
     long getOOStartTime() {
       return this.startTime;
     }
     String getOOStatus() {
-      return this.status;
+      return this.status.get();
     }
     String getOOVoyage() {
-      return this.voyage;
+      return this.voyage.get();
     }
   }
   public final static OutstandingOrder OO_1 = new OutstandingOrder();
@@ -502,7 +496,8 @@ public class SimulatorService {
         if (SimulatorService.os.addSuccessful(otime)) {
         // orderstats indicates an outlier
           String voyage = OO.getOOVoyage();
-          logger.warning(String.format("simulator: order latency outlier voyage=%s orderId=%s ===> %d",voyage, orderId, otime));
+          String corrID = OO.getOOCorrId();
+          logger.warning(String.format("simulator: order latency outlier orderId=%s corrId=%s ===> %d",orderId, corrId, otime));
         }
         logger.fine(String.format("simulator: order %s / %s booked", orderId, corrId));
         logger.fine("simulator: order "+corrId+" booked");

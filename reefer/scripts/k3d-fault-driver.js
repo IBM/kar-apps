@@ -82,7 +82,7 @@ async function doit(sleep) {
       // schedule restart in 30 second
       timeout = setTimeout(stopWaiting, 30*1000);
     } else {
-      timeout = setTimeout(stopWaiting, 120*1000);
+      timeout = setTimeout(stopWaiting, 90*1000);
     }
   }
 
@@ -178,21 +178,37 @@ function processMessage(message) {
 }
 
 async function main () {
-  //TODO if any nodes are stopped ...
-  // ... exit with message that all nodes need to be up
 
   action = 'stop';
   enable = false;
   pairkill = false;
   singlenode = false;
 
+  if ( process.env.SINGLENODE_FAULTS ) {
+    singlenode=true
+  }
+  if ( process.env.PAIRKILL_FAULTS ) {
+    pairkill=true
+  }
+  if ( singlenode && pairkill ) {
+    console.error('enable singlenode OR pairkill OR neither')
+    process.exit(1)
+  }
+
   nodes = ['k3d-workernode-1-0','k3d-workernode-2-0'];
   if ( singlenode ) {
     nodes = ['k3d-workernode-1-0'];
-  }
-  if ( pairkill ) {
+    console.log('running singlenode mode ...');
+  } else if ( pairkill ) {
     nodes = ['k3d-workernode-1-0','k3d-workernode-2-0','k3d-workernode-3-0'];
+    console.log('running pairkill mode ...');
+  } else {
+    console.log('running normal mode ...');
   }
+  console.log('... assuming K3D cluster has {rest,actor,singleton} pods only running on following nodes: '+nodes);
+  console.log('    Confirm using "kubectl get po -o wide"');
+
+  //TODO check if expected number of nodes are running
 
   // fork child parser
   forkChild();

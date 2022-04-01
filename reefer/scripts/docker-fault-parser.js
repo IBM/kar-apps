@@ -65,8 +65,8 @@ async function main() {
     child = require('child_process').spawn(docker,['logs', '-f', simC]);
   }
 
-  // NOTE: when wrapped in kar the app output come from stderr!
-  const rl = require('readline').createInterface({ input: child.stderr });
+  // stream simulator output to readline
+  const rl = require('readline').createInterface({ input: child.stdout });
 
   const greplatency = new RegExp("^.*order latency outlier", "m");
   const grepsevere = new RegExp("^.*\(SEVERE|ERROR\)", "m");

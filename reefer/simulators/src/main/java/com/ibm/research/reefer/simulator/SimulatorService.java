@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -69,7 +70,7 @@ public class SimulatorService {
   // Class to maintain status of outstanding async orders
   public static class OutstandingOrder{
     AtomicReference<String> corrId = new AtomicReference<String>();
-    long startTime;
+    AtomicLong startTime = new AtomicLong();
     AtomicReference<String> status = new AtomicReference<String>();
     AtomicReference<String> voyage = new AtomicReference<String>();
     public final String persistKey = "nextOrderSeq";
@@ -79,18 +80,18 @@ public class SimulatorService {
     public final String failed = "failed";
     void setOO(String cId, long st, String stat, String voyage) {
       this.corrId.set(cId);
-      this.startTime = st;
+      this.startTime.set(st);
       this.status.set(stat);
       this.voyage.set(voyage);
     }
     void setOOStatus(String status) {
-        this.status.set(status);
+      this.status.set(status);
     }
     String getOOCorrId() {
-        return this.corrId.get();
+      return this.corrId.get();
     }
     long getOOStartTime() {
-      return this.startTime;
+      return this.startTime.get();
     }
     String getOOStatus() {
       return this.status.get();
@@ -451,17 +452,19 @@ public class SimulatorService {
               OO.getOOCorrId(),OO.getOOStatus(),OO.accepted, corrId));
     }
   }
-  private void updateBooked(OutstandingOrder OO, String corrId) {
+  private boolean updateBooked(OutstandingOrder OO, String corrId) {
     if (OO.getOOCorrId().equals(corrId) && OO.getOOStatus().equals(OO.accepted)) {
       OO.setOOStatus(OO.booked);
       // notify ordersubthread that order completed 
       synchronized (OO) {
         OO.notify();
       }
+      return true;
     }
     else {
       logger.warning(String.format("simulator updateBooked(): invalid update for %s,%s with value=%s corrId=%s",
               OO.getOOCorrId(),OO.getOOStatus(),OO.booked, corrId));
+      return false;
     }
   }
   private void updateFailed(OutstandingOrder OO, String corrId, String status) {
@@ -493,15 +496,16 @@ public class SimulatorService {
       } else if (status.equalsIgnoreCase("booked")) {
         String orderId = ((JsonObject) reply).getString("orderId");
         int otime = (int) ((System.nanoTime() - OO.getOOStartTime()) / 1000000);
-        if (SimulatorService.os.addSuccessful(otime)) {
-        // orderstats indicates an outlier
-          String voyage = OO.getOOVoyage();
-          String corrID = OO.getOOCorrId();
-          logger.warning(String.format("simulator: order latency outlier orderId=%s corrId=%s ===> %d",orderId, corrId, otime));
+        if (updateBooked(OO, corrId)) {
+          if (SimulatorService.os.addSuccessful(otime)) {
+            // orderstats indicates an outlier
+            String voyage = OO.getOOVoyage();
+            String corrID = OO.getOOCorrId();
+            logger.warning(String.format("simulator: order latency outlier orderId=%s corrId=%s ===> %d",orderId, corrId, otime));
+          }
+          logger.fine(String.format("simulator: order %s / %s booked", orderId, corrId));
+          logger.fine("simulator: order "+corrId+" booked");
         }
-        logger.fine(String.format("simulator: order %s / %s booked", orderId, corrId));
-        logger.fine("simulator: order "+corrId+" booked");
-        updateBooked(OO, corrId);
       } else if (status.equalsIgnoreCase("failed")) {
         SimulatorService.os.addFailed();
         logger.severe("simulator: order "+corrId+" failed because: "+((JsonObject) reply).getString("reason"));

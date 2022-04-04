@@ -180,7 +180,11 @@ public class OrderManagerActor extends BaseActor {
             logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - Invalid state - order instance invalid (null)");
             return;
          }
-         Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
+         int count = Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
+         if ( count == 0 ) {
+            // no reminders found for a given correlation id
+            logger.log(Level.WARNING, "OrderManagerActor.orderBooked() - reminder with correlation id:"+order.getCorrelationId()+" does not exist - not able to cancel");
+         }
       }
    }
 

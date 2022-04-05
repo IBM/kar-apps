@@ -160,6 +160,8 @@ public class VoyageActor extends BaseActor {
          voyage.setReeferCount(voyage.getReeferCount() - reply.getReeferCount());
          voyage.updateFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity() + reply.getReeferCount());
          save(reply, orders.get(order.getId()));
+         Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
+                 method("updateVoyage").arg(VoyageJsonSerializer.serialize(voyage)).tell();
          orders.remove(order.getId());
          logger.warning("VoyageActor.rollbackOrder() voyageId:" + getId() + " - order:" + order.getId()+" rolled back" );
 

@@ -507,9 +507,17 @@ public class SimulatorService {
           logger.fine("simulator: order "+corrId+" booked");
         }
       } else if (status.equalsIgnoreCase("failed")) {
-        SimulatorService.os.addFailed();
-        logger.severe("simulator: order "+corrId+" failed because: "+((JsonObject) reply).getString("reason"));
-        updateFailed(OO, corrId, status);
+        // check if corrId is for older order that was successfully processed order
+        int currseq = ((JsonNumber)get(Json.createValue(OO.persistKey))).intValue();
+        String orderseq = corrId.substring(1);
+        if ( Integer.parseInt(orderseq) < currseq - 3 ) {
+          logger.warning("simulator: spurious order failure reported for "+corrId);
+        }
+        else {
+          SimulatorService.os.addFailed();
+          logger.severe("simulator: order "+corrId+" failed because: "+((JsonObject) reply).getString("reason"));
+          updateFailed(OO, corrId, status);
+        }
       } else {
         // got unexpected status value
         SimulatorService.os.addFailed();
@@ -518,7 +526,8 @@ public class SimulatorService {
       }
     }
     catch (Exception e) {
-      logger.severe("simulator: orderStatus invalid arguments=" + ((JsonObject) reply).toString());
+      logger.log(Level.SEVERE, e.getMessage(), e);
+      e.printStackTrace();
     }
   }
 

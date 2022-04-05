@@ -90,6 +90,11 @@ public class OrderManagerActor extends BaseActor {
       Order order = null;
       try {
          order = new Order(message);
+         // ignore rollback if order has been previously booked successfully
+         if ( order != null && order.getStatus().equals( Order.OrderStatus.BOOKED.name()) ) {
+            logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " has already been booked - rollback is not possible - ignoring");
+            return;
+         }
          if (!activeOrders.containsKey(order.getId())) {
             logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " not in activeMap - probably duplicate order - ignoring rollback");
          } else {

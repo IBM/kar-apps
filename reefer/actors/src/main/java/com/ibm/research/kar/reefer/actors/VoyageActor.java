@@ -157,9 +157,11 @@ public class VoyageActor extends BaseActor {
                  method("rollbackOrder").arg(order.getAsJsonObject()).tell();
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                  method("cancel").arg().tell();
+         // reduce voyage reefer count by amount allocated to the order being rolled back
          voyage.setReeferCount(voyage.getReeferCount() - reply.getReeferCount());
-         voyage.updateFreeCapacity(voyage.getRoute().getVessel().getFreeCapacity() + reply.getReeferCount());
-         save(reply, orders.get(order.getId()));
+         voyage.incrementFreeCapacity(reply.getReeferCount());
+         // update voyage state and remove order from persistent map
+         updateState(reply);
          Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                  method("updateVoyage").arg(VoyageJsonSerializer.serialize(voyage)).tell();
          orders.remove(order.getId());
@@ -460,7 +462,21 @@ public class VoyageActor extends BaseActor {
          logSevereError("save", e);
       }
    }
-
+   private void updateState(DepotReply booking) {
+      try {
+         Map<String, JsonValue> actorStateMap = new HashMap<>();
+         actorStateMap.put(Constants.VOYAGE_STATUS_KEY, voyageStatus);
+         actorStateMap.put(Constants.VOYAGE_INFO_KEY, VoyageJsonSerializer.serialize(voyage));
+         Map<String, List<String> > subMapUpdates = new HashMap<>();
+         List<String> orders2Remove = new ArrayList<>();
+         orders2Remove.add(booking.getOrderId());
+         subMapUpdates.put(Constants.VOYAGE_ORDERS_KEY, orders2Remove);
+         Kar.Actors.State.update(this, Collections.emptyList(), subMapUpdates, actorStateMap, Collections.emptyMap());
+      } catch( Exception e) {
+         logger.severe("VoyageActor.save() - Error - booking: "+booking);
+         logSevereError("save", e);
+      }
+   }
    private JsonObject buildResponse(final JsonObject order, final int freeCapacity) {
       return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
               .add(JsonOrder.OrderKey, order)

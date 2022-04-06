@@ -90,28 +90,29 @@ public class OrderManagerActor extends BaseActor {
       Order order = null;
       try {
          order = new Order(message);
-         // ignore rollback if order has been previously booked successfully
-         if ( order != null && order.getStatus().equals( Order.OrderStatus.BOOKED.name()) ) {
-            logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " has already been booked - rollback is not possible - ignoring");
-            return;
-         }
-         if (!activeOrders.containsKey(order.getId())) {
-            logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " not in activeMap - probably duplicate order - ignoring rollback");
-         } else {
-            Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
-                    method("rollbackOrder").arg(order.getAsJsonObject()).tell();
-            activeOrders.remove(order.getId());
-            order.setStatus(Constants.FAILED);
-            order.setMsg("OrderManager - Order booking request timed out");
-            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
-         }
-      } catch( Exception e) {
-         logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
-      } finally {
          if ( order == null ) {
             logger.log(Level.SEVERE, "OrderManagerActor.orderRollback() - Invalid state - order instance invalid (null)");
             return;
          }
+         if (!activeOrders.containsKey(order.getId())) {
+            logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " not in activeMap - probably duplicate order - ignoring rollback");
+            return;
+         }
+         Order activeOrder = new Order(activeOrders.get(order.getId()));
+         // ignore rollback if order has been previously booked successfully
+         if ( activeOrder.getStatus().equals( Order.OrderStatus.BOOKED.name()) ) {
+            logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " has already been booked - rollback is not possible - ignoring");
+            return;
+         }
+         Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+                    method("rollbackOrder").arg(order.getAsJsonObject()).tell();
+         activeOrders.remove(order.getId());
+         order.setStatus(Constants.FAILED);
+         order.setMsg("OrderManager - Order booking request timed out");
+         Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
+      } catch( Exception e) {
+         logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
+      } finally {
          Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
       }
 

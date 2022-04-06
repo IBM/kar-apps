@@ -90,10 +90,6 @@ public class OrderManagerActor extends BaseActor {
       Order order = null;
       try {
          order = new Order(message);
-         if ( order == null ) {
-            logger.log(Level.SEVERE, "OrderManagerActor.orderRollback() - Invalid state - order instance invalid (null)");
-            return;
-         }
          if (!activeOrders.containsKey(order.getId())) {
             logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " not in activeMap - probably duplicate order - ignoring rollback");
             return;

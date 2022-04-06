@@ -25,7 +25,6 @@
 
 let action = 'kill';
 let enable = false;
-let targets = ['reefer_rest_1','reefer_actors_1','reefer_singletons_1'];
 let target;
 let path = require('path');
 let fork = require('child_process').fork;
@@ -110,7 +109,7 @@ function forkChild() {
 
 // process alerts from child
 function processMessage(message) {
-  const grepsevere = new RegExp("^.*SEVERE", "m");
+  const grepsevere = new RegExp("^.*\(SEVERE|ERROR\)", "m");
   var match = grepsevere.exec(message);
   if (match) {
     console.log('special child message:', message);
@@ -146,6 +145,20 @@ function processMessage(message) {
 async function main () {
   //TODO if any containers are stopped ...
   // ... exit with message that all containers need to be up
+
+  // check if running podman play kube
+  var grepsim = new RegExp("^.*simulators.*$", "m");
+  const { execSync } = require('child_process');
+  var stdout = execSync(docker + " ps");
+  var match = grepsim.exec(stdout.toString());
+  var words = match[0].split(" ");
+  simC = words[words.length - 1];
+  if (simC.endsWith('_1')) {
+    targets = ['reefer_rest_1','reefer_actors_1','reefer_singletons_1'];
+  }
+  else {
+    targets = ['reefer-rest','reefer-actors','reefer-singletons'];
+  }
 
   // fork child parser
   forkChild();

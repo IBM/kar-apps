@@ -496,20 +496,32 @@ public class DepotActor extends BaseActor {
      * @return
      */
     @Remote
-    public void bookReefers(JsonObject bookingRequest) {
+    public Kar.Actors.TailCall bookReefers(JsonObject bookingRequest) {
         Order order = null;
         List<ReeferDTO> orderReefers = null;
         try {
             // wrap Json with POJO
             order = new Order(bookingRequest);
             // idempotence check.
-            if ( !checkAndContinue(order)) {
-                return;
+            //if ( checkAndContinue(order)) {
+             //   return;
+            //}
+            // idempotence check.
+            if (order2ReeferMap.containsKey(order.getId())) {
+                logger.info("DepotActor.checkAndContinue - "+getId()+" voyage:"+order.getVoyageId() +" Idempotance Triggered for order Id:"+order.getId());
+                Set<String> rids = order2ReeferMap.get(order.getId());
+                if (!rids.isEmpty()) {
+                    JsonObject reply = createReply(rids, order.getAsJsonObject());
+                  //  Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+                  //          method("reefersBooked").arg(reply).tell();
+                  return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()), "reefersBooked", reply);
+                }
             }
             // allocate reefers to the order. If allocation fails, the method notifies Voyage of failure
             ReeferAllocationStatus reeferAllocation = allocateReefers(order);
             if ( reeferAllocation.failed() ){
-                return;
+                order.setMsg("Depot:"+getId()+" reefer allocation failed for order:"+order.getId());
+                return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()), "reeferBookingFailed", order.getAsJsonObject());
             }
             orderReefers = reeferAllocation.getOrderReefersList();
             // create order to reefers mapping for in-memory cache to reduce latency
@@ -527,7 +539,9 @@ public class DepotActor extends BaseActor {
             updateStore(Collections.emptyMap(), reeferMap(orderReefers));
             order.setDepot(this.getId());
             JsonObject reply = createReply(rids, order.getAsJsonObject());
-            new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()), "reefersBooked", reply);
+            Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
+               method("reefersBooked").arg(reply).tell();
+             return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()), "reefersBooked", reply);
         } catch (Throwable e) {
             // undo reefer allocation
             if ( orderReefers != null && !orderReefers.isEmpty() ) {
@@ -553,6 +567,7 @@ public class DepotActor extends BaseActor {
             order.setDepot(this.getId());
             Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
                     method("reeferBookingFailed").arg(order.getAsJsonObject()).tell();
+            throw new RuntimeException(e);
         }
     }
     private ReeferAllocationStatus allocateReefers(Order order ) {

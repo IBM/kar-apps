@@ -59,15 +59,17 @@ public class OrderActor extends BaseActor {
       }
    }
    @Remote
-   public void orderBooked(JsonObject voyageBookingResult) {
+   public Kar.Actors.TailCall orderBooked(JsonObject voyageBookingResult) {
       try {
          order = new Order(voyageBookingResult.getJsonObject(Constants.ORDER_KEY));
          saveOrderStatusChange(OrderStatus.BOOKED);
-         new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId), "orderBooked", order.getAsJsonObject());
+        // Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
+        //            method("orderBooked").arg(order.getAsJsonObject()).tell();
+         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId), "orderBooked", order.getAsJsonObject());
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
          logger.log(Level.SEVERE,"OrderActor.orderBooked() - Error - orderId " + getId()+" Error: " +stacktrace);
-
+         throw new RuntimeException(e);
       }
    }
 

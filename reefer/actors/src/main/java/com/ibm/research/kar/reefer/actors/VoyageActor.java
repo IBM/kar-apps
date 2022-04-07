@@ -300,7 +300,7 @@ public class VoyageActor extends BaseActor {
       }
    }
    @Remote
-   public void reefersBooked(JsonObject message) {
+   public Kar.Actors.TailCall reefersBooked(JsonObject message) {
       try {
             // convenience wrapper for DepotActor json reply
             DepotReply reply = new DepotReply(message);
@@ -320,12 +320,15 @@ public class VoyageActor extends BaseActor {
             save(reply, message);
             Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                     method("updateVoyage").arg(VoyageJsonSerializer.serialize(voyage)).tell();
+             //// SUCCESS
             JsonObject booking = buildResponse(reply.getOrder(), voyage.getRoute().getVessel().getFreeCapacity());
-            new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "orderBooked", booking);
+           // Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, reply.getOrderId()).
+            //        method("orderBooked").arg(booking).tell();
+           return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "orderBooked", booking);
       } catch( Exception e) {
          logSevereError("VoyageActor.reefersBooked()", e);
+         throw new RuntimeException(e);
       }
-
    }
    @Remote
    public void reeferBookingFailed(JsonObject message) {

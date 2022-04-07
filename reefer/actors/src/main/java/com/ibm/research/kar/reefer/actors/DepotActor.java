@@ -162,13 +162,8 @@ public class DepotActor extends BaseActor {
 
     private void restoreOrderToReefersMap() {
         long t = System.currentTimeMillis();
-        // restore in-memory cache which manages order-reefers association. This cache provides performance
-        // optimization which reduces latency of voyage arrival processing and idempotence check when booking
-        // reefers to order.
-        // (1) on voyage arrival, code does not need to scan reefer inventory for reefers associated with
-        //     orders in a voyage. The cache contains all reefer ids for each order which can be used to
-        //     remove them from persistent store as a batch
-        // (2) with the cache its fast to check for idempotence when processing reefer booking for an order
+        // restore in-memory cache which manages order-reefers association.
+        // with the cache its fast to check for idempotence when handling reefer booking
         //
         order2ReeferMap = Arrays.stream(reeferMasterInventory).filter(Objects::nonNull).
                 collect(Collectors.groupingBy(ReeferDTO::getOrderId, Collectors.mapping(r -> String.valueOf(r.getId()), Collectors.toSet())));

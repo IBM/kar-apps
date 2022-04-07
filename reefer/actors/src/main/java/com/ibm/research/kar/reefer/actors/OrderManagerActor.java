@@ -113,7 +113,6 @@ public class OrderManagerActor extends BaseActor {
       }
 
    }
-
    @Remote
    public void bookOrder(JsonObject message) {
       Order order = null;
@@ -125,8 +124,8 @@ public class OrderManagerActor extends BaseActor {
          } else {
             // generate unique order id
             order.generateOrderId();
-            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
             Kar.Actors.Reminders.schedule(this, "orderRollback", order.getCorrelationId(), Instant.now().plus(Constants.ORDER_TIMEOUT_SECS, ChronoUnit.SECONDS), Duration.ofMillis(1000), order.getAsJsonObject());
+            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
          }
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
                  method("createOrder").arg(order.getAsJsonObject()).tell();

@@ -63,8 +63,7 @@ public class OrderActor extends BaseActor {
       try {
          order = new Order(voyageBookingResult.getJsonObject(Constants.ORDER_KEY));
          saveOrderStatusChange(OrderStatus.BOOKED);
-         Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
-                    method("orderBooked").arg(order.getAsJsonObject()).tell();
+         new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId), "orderBooked", order.getAsJsonObject());
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
          logger.log(Level.SEVERE,"OrderActor.orderBooked() - Error - orderId " + getId()+" Error: " +stacktrace);

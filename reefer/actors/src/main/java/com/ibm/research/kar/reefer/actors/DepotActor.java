@@ -527,8 +527,7 @@ public class DepotActor extends BaseActor {
             updateStore(Collections.emptyMap(), reeferMap(orderReefers));
             order.setDepot(this.getId());
             JsonObject reply = createReply(rids, order.getAsJsonObject());
-            Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
-                    method("reefersBooked").arg(reply).tell();
+            new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()), "reefersBooked", reply);
         } catch (Throwable e) {
             // undo reefer allocation
             if ( orderReefers != null && !orderReefers.isEmpty() ) {

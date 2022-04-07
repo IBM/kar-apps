@@ -67,7 +67,8 @@ async function doit(sleep) {
       while ( node2 == node ) {
         node2 = rndnode();
       }
-      await new Promise(resolve => setTimeout(resolve, (13 * 1000)));
+      pairTime = 10 + Math.trunc(10 * Math.random());
+      await new Promise(resolve => setTimeout(resolve, (pairTime * 1000)));
       timestamp = new Date().toLocaleString('en-US', { hour12: false });
       console.log(timestamp+' k3d node '+action+' '+node2);
       doitx = spawnSync('/usr/local/bin/k3d',['node',action,node2]);

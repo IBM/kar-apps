@@ -149,8 +149,9 @@ public class OrderManagerActor extends BaseActor {
    @Remote
    public void orderBooked(JsonObject message) {
       Order order = null;
+      JsonObject activeOrder=null;
       try {
-         JsonObject activeOrder;
+
          order = new Order(message);
          if (!activeOrders.containsKey(order.getId())) {
             logger.log(Level.WARNING, "OrderManagerActor.orderBooked() - order:" + order.getId() + " not found in activeOrders Map");
@@ -166,7 +167,7 @@ public class OrderManagerActor extends BaseActor {
             updateMap.put(order.getId(), order.getAsJsonObject());
             updateStore(Collections.emptyMap(), updateMap);
             Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", order.getAsJsonObject());
-         } else if ( Order.booked( activeOrder) ) {
+         } else if ( Order.bookedOrInTransit( activeOrder) ) {
             logger.log(Level.INFO, "OrderManagerActor.orderBooked() - sending reply to REST - idempotance path");
             // idempotence check - returned previously saved booking
             Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", activeOrder);
@@ -178,14 +179,18 @@ public class OrderManagerActor extends BaseActor {
          logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - error ", ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
          throw e;
       } finally {
-         if (order == null) {
-            logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - Invalid state - order instance invalid (null)");
+         if (order == null || activeOrder == null) {
+            logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - Invalid state - order instance invalid - order "+
+                    (order == null ? "is null" : "not null")+ " activeOrder "+
+                    (activeOrder == null ?"is null" : "not null"));
             return;
          }
          int count = Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
-         if ( count == 0 ) {
+         if ( count == 0 && !Order.bookedOrInTransit(activeOrder)) {
             // no reminders found for a given correlation id
-            logger.log(Level.WARNING, "OrderManagerActor.orderBooked() - reminder with correlation id:"+order.getCorrelationId()+" does not exist - not able to cancel");
+            logger.log(Level.WARNING, "OrderManagerActor.orderBooked() - reminder with correlation id:"+
+                    order.getCorrelationId()+" does not exist - not able to cancel - order status:"+
+                    activeOrder.getString(Constants.ORDER_STATUS_KEY));
          }
       }
    }

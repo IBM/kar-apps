@@ -76,8 +76,12 @@ public class Order {
         this.productQty = jo.getInt(Constants.ORDER_PRODUCT_QTY_KEY);
         this.voyageId = jo.getString(Constants.VOYAGE_ID_KEY);
         this.status = jo.getString(Constants.ORDER_STATUS_KEY);
-        this.date = jo.getString(Constants.ORDER_DATE_KEY);
-        this.spoilt = jo.getBoolean(Constants.ORDER_SPOILT_KEY);
+        if ( jo.containsKey(Constants.ORDER_DATE_KEY)) {
+            this.date = jo.getString(Constants.ORDER_DATE_KEY);
+        }
+        if ( jo.containsKey(Constants.ORDER_SPOILT_KEY)) {
+            this.spoilt = jo.getBoolean(Constants.ORDER_SPOILT_KEY);
+        }
         if ( jo.containsKey(Constants.DEPOT_KEY)) {
             this.depot = jo.getString(Constants.DEPOT_KEY);
         }
@@ -228,6 +232,9 @@ public class Order {
     }
     public static boolean booked(JsonObject jo) {
         return jo.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name());
+    }
+    public static boolean bookedOrInTransit(JsonObject jo) {
+        return jo.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.BOOKED.name()) || jo.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.INTRANSIT.name());
     }
     public static boolean pending(JsonObject jo) {
         return jo.getString(Constants.ORDER_STATUS_KEY).equals(OrderStatus.PENDING.name());

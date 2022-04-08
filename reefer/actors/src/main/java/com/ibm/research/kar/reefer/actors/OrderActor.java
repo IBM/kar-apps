@@ -89,28 +89,24 @@ public class OrderActor extends BaseActor {
     * @return
     */
    @Remote
-   public void createOrder(JsonObject message) {
-      // Idempotence test. Check if this order has already been booked.
-      if (order != null && OrderStatus.BOOKED.name().equals(order.getStatus())) {
-         JsonObjectBuilder bookingStatus =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
-                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId()));
-         Kar.Services.post(Constants.REEFERSERVICE, "/orders/booking/success", bookingStatus.build());
-      }
-      try {
+   public Kar.Actors.TailCall createOrder(JsonObject message) {
+       try {
          logger.log(Level.INFO, "OrderActor.createOrder() - orderId:" +getId() + " message:", message);
          // Java wrapper around Json payload
          order = new Order(message);
          // Call Voyage actor to book the voyage for this order. This call also
          // reserves reefers
-         Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
-                 method("reserve").arg(order.getAsJsonObject()).tell();
          saveOrderStatusChange(OrderStatus.PENDING);
+         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
+                                         "reserve", order.getAsJsonObject());
        } catch (Exception e) {
          logger.log(Level.WARNING, "OrderActor.createOrder() - Error - orderId " + getId() + " ", e);
          order.setMsg(e.getMessage());
          bookingFailed(order.getAsJsonObject());
-      }
+         return null;
+       }
    }
+    
    @Remote
    public void replaceReefer(JsonObject message) {
       if ( order == null ) {

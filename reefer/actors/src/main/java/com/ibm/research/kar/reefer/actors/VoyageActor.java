@@ -322,8 +322,6 @@ public class VoyageActor extends BaseActor {
                     method("updateVoyage").arg(VoyageJsonSerializer.serialize(voyage)).tell();
              //// SUCCESS
             JsonObject booking = buildResponse(reply.getOrder(), voyage.getRoute().getVessel().getFreeCapacity());
-           // Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, reply.getOrderId()).
-            //        method("orderBooked").arg(booking).tell();
            return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "orderBooked", booking);
       } catch( Exception e) {
          logSevereError("VoyageActor.reefersBooked()", e);
@@ -426,25 +424,24 @@ public class VoyageActor extends BaseActor {
     * @return - result of reefer booking
     */
    @Remote
-   public void reserve(JsonObject message) {
+   public Kar.Actors.TailCall reserve(JsonObject message) {
       // wrapper around Json
       Order order = new Order(message);
       logger.info("VoyageActor.reserve() - voyageId:"+getId()+" - message:"+message);
 
       try {
          if ( !validateAndContinue(order, message)) {
-            return;
+            return null;
          }
-         Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())).
-                 method("bookReefers").arg(message).tell();
+         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())),
+                                         "bookReefers", message);
       } catch (Exception e) {
          logSevereError("reserve()", e);
          order.setMsg("Voyage "+getId()+" order booking: "+order.getId()+" failed - reason: "+e.getMessage());
          JsonObjectBuilder job = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
                  .add(Constants.ORDER_KEY, order.getAsJsonObject())
                  .add(Constants.ORDER_ID_KEY, this.getId());
-        Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                 method("bookingFailed").arg(job.build()).tell();
+        return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, order.getId()),"bookingFailed", job.build());
       }
    }
 

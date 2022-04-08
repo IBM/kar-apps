@@ -157,7 +157,9 @@ public class OrderManagerActor extends BaseActor {
             return;
          }
          activeOrder = activeOrders.get(order.getId()).asJsonObject();
-         if ( Order.pending(activeOrder) ) {
+         if ( Order.bookedOrInTransit( activeOrder) ) {
+             logger.log(Level.WARNING, "OrderManagerActor.orderBooked() - duplicate booked message received for corrId="+order.getCorrelationId());
+         } else if ( Order.pending(activeOrder) ) {
             order.setStatus(Order.OrderStatus.BOOKED.name());
             activeOrders.put(order.getId(), order.getAsJsonObject());
             bookedOrderList.add(order);
@@ -166,10 +168,6 @@ public class OrderManagerActor extends BaseActor {
             updateMap.put(order.getId(), order.getAsJsonObject());
             updateStore(Collections.emptyMap(), updateMap);
             Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", order.getAsJsonObject());
-         } else if ( Order.bookedOrInTransit( activeOrder) ) {
-            logger.log(Level.INFO, "OrderManagerActor.orderBooked() - sending reply to REST - idempotance path");
-            // idempotence check - returned previously saved booking
-            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/success", activeOrder);
          } else {
             logger.log(Level.SEVERE, "OrderManagerActor.orderBooked() - error Unexpected Order State:" + activeOrder);
          }

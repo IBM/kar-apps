@@ -61,11 +61,12 @@ public class OrderActor extends BaseActor {
    @Remote
    public Kar.Actors.TailCall orderBooked(JsonObject voyageBookingResult) {
       try {
-         order = new Order(voyageBookingResult.getJsonObject(Constants.ORDER_KEY));
-         saveOrderStatusChange(OrderStatus.BOOKED);
-        // Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
-        //            method("orderBooked").arg(order.getAsJsonObject()).tell();
-         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId), "orderBooked", order.getAsJsonObject());
+         if ( order.getStatus().equals(OrderStatus.BOOKED.name()) || order.getStatus().equals(OrderStatus.INTRANSIT.name()) ) {
+            logger.log(Level.WARNING, "OrderActor.orderBooked() - duplicate booked message received for corrId="+order.getCorrelationId());
+            return null;
+         }
+         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId),
+                                         "orderBooked", saveOrderStatusChange(OrderStatus.BOOKED));
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
          logger.log(Level.SEVERE,"OrderActor.orderBooked() - Error - orderId " + getId()+" Error: " +stacktrace);
@@ -150,8 +151,9 @@ public class OrderActor extends BaseActor {
               .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
    }
 
-   private void saveOrderStatusChange(OrderStatus state) {
+   private JsonObject saveOrderStatusChange(OrderStatus state) {
       order.setStatus(state.name());
       Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
+      return order.getAsJsonObject();
    }
 }

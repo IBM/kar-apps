@@ -16,6 +16,7 @@
 
 package com.ibm.research.kar.reefer.common.json;
 
+import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reefer.model.Route;
 import com.ibm.research.kar.reefer.model.Ship;
@@ -66,6 +67,14 @@ public class JsonUtils {
             e.printStackTrace();
         }
         return 0;
+    }
+    public static Order deserializeOrder(String message) {
+        try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
+            return new Order(jsonReader.readObject());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        throw new IllegalArgumentException("Unable to deserialize Order from a given json");
     }
 
     public static String getString(JsonValue value, String key) {

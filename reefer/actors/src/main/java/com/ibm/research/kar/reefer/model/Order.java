@@ -58,6 +58,7 @@ public class Order {
     boolean spoilt;
     String depot;
     String msg;
+    boolean bookingFailed;
 
     public Order(OrderProperties orderProperties) {
         this(orderProperties.getCorrelationId(),orderProperties.getCustomerId(),orderProperties.getProduct(),
@@ -78,6 +79,9 @@ public class Order {
         this.status = jo.getString(Constants.ORDER_STATUS_KEY);
         if ( jo.containsKey(Constants.ORDER_DATE_KEY)) {
             this.date = jo.getString(Constants.ORDER_DATE_KEY);
+        }
+        if ( jo.containsKey(Constants.BOOKING_STATUS_KEY)) {
+            this.bookingFailed = jo.getBoolean(Constants.BOOKING_STATUS_KEY);
         }
         if ( jo.containsKey(Constants.ORDER_SPOILT_KEY)) {
             this.spoilt = jo.getBoolean(Constants.ORDER_SPOILT_KEY);
@@ -133,7 +137,12 @@ public class Order {
     public int hashCode() {
         return Objects.hash(id, voyageId);
     }
-
+    public boolean isBookingFailed() {
+        return bookingFailed;
+    }
+    public void setBookingFailed() {
+        bookingFailed = true;
+    }
     public String getDepot() {
         return  depot;
     }

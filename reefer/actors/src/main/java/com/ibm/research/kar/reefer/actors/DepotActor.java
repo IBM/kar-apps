@@ -493,104 +493,91 @@ public class DepotActor extends BaseActor {
     @Remote
     public Kar.Actors.TailCall bookReefers(JsonObject bookingRequest) {
         Order order = null;
+        Set<String> rids;
         List<ReeferDTO> orderReefers = null;
         try {
             // wrap Json with POJO
             order = new Order(bookingRequest);
-            // idempotence check.
-          //  if ( !checkAndContinue(order)) {
-         ////       return;
-          //  }
+            order.setDepot(this.getId());
             // idempotence check.
             if (order2ReeferMap.containsKey(order.getId())) {
-                logger.info("DepotActor.checkAndContinue - "+getId()+" voyage:"+order.getVoyageId() +" Idempotance Triggered for order Id:"+order.getId());
-                Set<String> rids = order2ReeferMap.get(order.getId());
-                if (!rids.isEmpty()) {
-                    JsonObject reply = createReply(rids, order.getAsJsonObject());
-                  //  Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
-                  //          method("reefersBooked").arg(reply).tell();
-                  return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()), "reefersBooked", reply);
-                }
+                logger.info("DepotActor.bookReefers - "+getId()+" voyage:"+order.getVoyageId() +" idempotence check triggered for order Id:"+order.getId());
+                return null;
             }
-            // allocate reefers to the order. If allocation fails, the method notifies Voyage of failure
+            // allocate reefers to the order.
             ReeferAllocationStatus reeferAllocation = allocateReefers(order);
-            if ( reeferAllocation.failed() ){
-                order.setMsg("Depot:"+getId()+" reefer allocation failed for order:"+order.getId());
-                return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()), "reeferBookingFailed", order.getAsJsonObject());
+            if ( reeferAllocation.failed() ) {
+                order.setMsg("Failed to allocate reefers to order");
+                order.setBookingFailed();
+                rids = Collections.emptySet();
+                orderReefers = Collections.emptyList();
+             } else {
+                orderReefers = reeferAllocation.getOrderReefersList();
+                // create a set of reefer ids. It will be included in a reply to Voyage actor
+                rids = orderReefers.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
+                // create order to reefers mapping for in-memory cache to reduce latency
+                order2ReeferMap.put(order.getId().trim(), rids);
+                Inventory inventory = getReeferInventoryCounts();
+                currentInventorySize = Json.createValue(inventory.getTotal());
+                bookedTotalCount = inventory.getBooked();
             }
-            orderReefers = reeferAllocation.getOrderReefersList();
-            // create order to reefers mapping for in-memory cache to reduce latency
-            Set<String> rids = orderReefers.
-                    stream().
-                    map(ReeferDTO::getId).
-                    map(String::valueOf).
-                    collect(Collectors.toSet());
-            order2ReeferMap.put(order.getId().trim(), rids);
-
-            Inventory inventory = getReeferInventoryCounts();
-            currentInventorySize = Json.createValue(inventory.getTotal());
-            bookedTotalCount = inventory.getBooked();
-            // persists allocated reefers
-            updateStore(Collections.emptyMap(), reeferMap(orderReefers));
-            order.setDepot(this.getId());
-            JsonObject reply = createReply(rids, order.getAsJsonObject());
-            //Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
-            //   method("reefersBooked").arg(reply).tell();
-            return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()), "reefersBooked", reply);
-        } catch (Throwable e) {
+            return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
+                    "processReefersBookingResult",  updateStore(Collections.emptyMap(), reeferMap(orderReefers), createReply(rids, order.getAsJsonObject())));
+        } catch (Exception e) {
             // undo reefer allocation
             if ( orderReefers != null && !orderReefers.isEmpty() ) {
                 rollbackOrder(bookingRequest);
             }
-            int actual = 0, bad = 0;
-            for (ReeferDTO reeferDTO : reeferMasterInventory) {
-                if (reeferDTO != null) {
-                    if (reeferDTO.getState().equals(ReeferState.State.UNALLOCATED)) {
-                        actual++;
-                    } else if (reeferDTO.getState().equals(ReeferState.State.MAINTENANCE)) {
-                        bad++;
-                    }
+            logFailure(order, e);
+            return null;
+        }
+    }
+    private void logFailure(Order order, Exception e) {
+        int actual = 0, bad = 0;
+        for (ReeferDTO reeferDTO : reeferMasterInventory) {
+            if (reeferDTO != null) {
+                if (reeferDTO.getState().equals(ReeferState.State.UNALLOCATED)) {
+                    actual++;
+                } else if (reeferDTO.getState().equals(ReeferState.State.MAINTENANCE)) {
+                    bad++;
                 }
             }
-            logger.log(Level.SEVERE, "DepotActor.bookReefers() FAILED !!!!!!!!!!!!!!! - Depot:" + getId() +
-                    " current Inventory:" + ((JsonNumber) currentInventorySize).intValue() +
-                    " - Actual Available Reefer Count:" + actual +
-                    " - Currently onMaintenance:" + bad +
-                    " - Total available (avail + maintenance):"+(actual+bad) +
-                    " Order reefers:" + order.getProductQty() / 1000 + " Error ", e);
-            order.setMsg(e.getMessage());
-            order.setDepot(this.getId());
-            Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
-                    method("reeferBookingFailed").arg(order.getAsJsonObject()).tell();
-            throw new RuntimeException(e);
         }
+        logger.log(Level.SEVERE, "DepotActor.bookReefers() FAILED !!!!!!!!!!!!!!! - Depot:" + getId() +
+                " current Inventory:" + ((JsonNumber) currentInventorySize).intValue() +
+                " - Actual Available Reefer Count:" + actual +
+                " - Currently onMaintenance:" + bad +
+                " - Total available (avail + maintenance):"+(actual+bad) +
+                " Order reefers:" + order.getProductQty() / 1000 + " Error ", e);
+    }
+    private JsonObject updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap, JsonObject reply) {
+        updateStore(deleteMap, updateMap);
+        return reply;
     }
     private ReeferAllocationStatus allocateReefers(Order order ) {
         List<ReeferDTO> orderReefers = null;
         int currentAvailableReeferCount = getUnallocatedReeferCount();
-
+        ReeferAllocationStatus allocationStatus;
         try {
             // allocate enough reefers to cary products in the order
             orderReefers = ReeferAllocator.allocateReefers(reeferMasterInventory, order.getProductQty(),
-                    order.getId(), order.getVoyageId(), currentAvailableReeferCount); //((JsonNumber) currentInventorySize).intValue());
+                    order.getId(), order.getVoyageId(), currentAvailableReeferCount);
+            if ( orderReefers == null || orderReefers.isEmpty() ) {
+                logger.warning("DepotActor.bookReefers - "+getId()+
+                        " voyage:"+order.getVoyageId() +
+                        " unable to allocate reefers to order - current inventory size:"+
+                        currentAvailableReeferCount);
+                allocationStatus = new ReeferAllocationStatus();  // ctor sets internal allocation failure flag
+            } else {
+                allocationStatus = new ReeferAllocationStatus(orderReefers);
+            }
         } catch( Error er) {
             logger.warning("DepotActor.bookReefers - "+getId()+" voyage:"+order.getVoyageId() +" Error while allocating reefers to order - cause:"+er.getMessage());
             order.setMsg(er.getMessage());
-            Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
-                    method("reeferBookingFailed").arg(order.getAsJsonObject()).tell();
-            return new ReeferAllocationStatus();  // allocation failed
+            order.setBookingFailed();
+            allocationStatus = new ReeferAllocationStatus();  // ctor sets internal allocation failure flag
         }
-        if ( orderReefers == null || orderReefers.isEmpty() ) {
-            logger.warning("DepotActor.bookReefers - "+getId()+
-                    " voyage:"+order.getVoyageId() +
-                    " unable to allocate reefers to order - current inventory size:"+
-                    currentAvailableReeferCount);
-            order.setMsg("Failed to allocate reefers to order");
-            Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
-                    method("reeferBookingFailed").arg(order.getAsJsonObject()).tell();
-            return new ReeferAllocationStatus();  // allocation failed
-        }
-        return new ReeferAllocationStatus(orderReefers);
+        return allocationStatus;
     }
     private boolean checkAndContinue(Order order) {
         // idempotence check if this method is being called more than once for the same order

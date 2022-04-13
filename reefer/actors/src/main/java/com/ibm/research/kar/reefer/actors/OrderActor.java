@@ -17,7 +17,6 @@
 package com.ibm.research.kar.reefer.actors;
 
 import com.ibm.research.kar.Kar;
-import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.actor.annotations.Activate;
 import com.ibm.research.kar.actor.annotations.Actor;
 import com.ibm.research.kar.actor.annotations.Remote;
@@ -30,7 +29,6 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
 import java.util.Map;
 import java.util.logging.Level;
@@ -55,31 +53,37 @@ public class OrderActor extends BaseActor {
             }
          }
       } catch (Exception e) {
-         logger.log(Level.SEVERE,"OrderActor.activate() Error ", e);
-      }
-   }
-   @Remote
-   public Kar.Actors.TailCall orderBooked(JsonObject voyageBookingResult) {
-      try {
-         if ( order.getStatus().equals(OrderStatus.BOOKED.name()) || order.getStatus().equals(OrderStatus.INTRANSIT.name()) ) {
-            logger.log(Level.WARNING, "OrderActor.orderBooked() - duplicate booked message received for corrId="+order.getCorrelationId());
-            return null;
-         }
-         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId),
-                                         "orderBooked", saveOrderStatusChange(OrderStatus.BOOKED));
-      } catch (Exception e) {
-         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
-         logger.log(Level.SEVERE,"OrderActor.orderBooked() - Error - orderId " + getId()+" Error: " +stacktrace);
-         throw new RuntimeException(e);
+         logger.log(Level.SEVERE, "OrderActor.activate() Error ", e);
       }
    }
 
    @Remote
-   public void bookingFailed(JsonObject bookingStatus) {
-      Kar.Actors.remove(this);
-      Order failedOrder = new Order(bookingStatus.getJsonObject(Constants.ORDER_KEY));
-      Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
-              method("orderFailed").arg(failedOrder.getAsJsonObject()).tell();
+   public Kar.Actors.TailCall processReeferBookingResult(JsonObject voyageBookingResult) {
+      try {
+         if (order.getStatus().equals(OrderStatus.BOOKED.name()) || order.getStatus().equals(OrderStatus.INTRANSIT.name())) {
+            logger.log(Level.WARNING, "OrderActor.processReeferBookingResult() - duplicate booked message received for corrId=" + order.getCorrelationId() + " orderId:" + order.getId() + " status:" + order.getStatus());
+            return null;
+         }
+         Order booking = new Order(voyageBookingResult);
+         OrderStatus orderStatus;
+         if (booking.isBookingFailed()) {
+            logger.log(Level.WARNING, "OrderActor.processReeferBookingResult() - failed - corrId=" + order.getCorrelationId() + " orderId:" + order.getId() + " reason:" + order.getMsg());
+            // need to pass order status to saveOrderStatusChange() below. Since we failed, dont change state but update
+            // booking status and reason for failure which will be saved in persistent store
+            orderStatus = OrderStatus.valueOf(order.getStatus());
+            order.setBookingFailed();
+            order.setMsg(booking.getMsg());
+         } else {
+            logger.log(Level.WARNING, "OrderActor.processReeferBookingResult() - success - corrId=" + order.getCorrelationId() + " orderId:" + order.getId());
+            orderStatus = OrderStatus.BOOKED;
+         }
+         return new Kar.Actors.TailCall(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId),
+                 "processReeferBookingResult", saveOrderStatusChange(orderStatus));
+      } catch (Exception e) {
+         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n", "");
+         logger.log(Level.SEVERE, "OrderActor.processReeferBookingResult() - Error - orderId " + getId() + " Error: " + stacktrace);
+         return null;
+      }
    }
 
    /**
@@ -91,26 +95,24 @@ public class OrderActor extends BaseActor {
     */
    @Remote
    public Kar.Actors.TailCall createOrder(JsonObject message) {
-       try {
-         logger.log(Level.INFO, "OrderActor.createOrder() - orderId:" +getId() + " message:", message);
+      try {
+         logger.log(Level.INFO, "OrderActor.createOrder() - orderId:" + getId() + " message:", message);
          // Java wrapper around Json payload
          order = new Order(message);
-         // Call Voyage actor to book the voyage for this order. This call also
+         // Call Voyage actor to book voyage for this order. This call also
          // reserves reefers
-         saveOrderStatusChange(OrderStatus.PENDING);
-         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
-                                         "reserve", order.getAsJsonObject());
-       } catch (Exception e) {
+         return new Kar.Actors.TailCall(Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
+                 "reserve", saveOrderStatusChange(OrderStatus.PENDING));
+      } catch (Exception e) {
          logger.log(Level.WARNING, "OrderActor.createOrder() - Error - orderId " + getId() + " ", e);
          order.setMsg(e.getMessage());
-         bookingFailed(order.getAsJsonObject());
          return null;
-       }
+      }
    }
-    
+
    @Remote
    public void replaceReefer(JsonObject message) {
-      if ( order == null ) {
+      if (order == null) {
          Kar.Actors.remove(this);
          return;
       }
@@ -127,11 +129,13 @@ public class OrderActor extends BaseActor {
    public void delivered() {
       Kar.Actors.remove(this);
    }
+
    @Remote
    public void cancel() {
       logger.warning(String.format("OrderActor.cancel() - orderId: %s - order cancelled due to rollback", getId()));
       Kar.Actors.remove(this);
    }
+
    /**
     * Called when ship departs from an origin port.
     *
@@ -139,10 +143,10 @@ public class OrderActor extends BaseActor {
     */
    @Remote
    public JsonObject departed() {
-      if ( order == null ) {
+      if (order == null) {
          Kar.Actors.remove(this);
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED)
-                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).add("ERROR","Order Already Arrived").build();
+                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).add("ERROR", "Order Already Arrived").build();
       }
       if (!OrderStatus.DELIVERED.name().equals(order.getStatus()) && !OrderStatus.INTRANSIT.name().equals(order.getStatus())) {
          saveOrderStatusChange(OrderStatus.INTRANSIT);

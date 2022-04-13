@@ -145,12 +145,13 @@ public class VoyageActor extends BaseActor {
       DepotReply reply = new DepotReply(orders.get(order.getId()).asJsonObject());
       // ship already departed?
       if ( voyage.departed() ) {
+         logger.warning("VoyageActor.rollbackOrder() voyageId:" + getId() + " already departed - unable to rollback order:" + order.getId() );
             // the order is on a ship at sea, so we can't remove it. Since OrderManager
             // does not know about this order (rollback call), let it know that
             // this order has been booked.
             JsonObject booking = buildResponse(reply.getOrder(), voyage.getRoute().getVessel().getFreeCapacity());
             Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, reply.getOrderId()).
-                    method("orderBooked").arg(booking).tell();
+                    method("processReeferBookingResult").arg(booking).tell();
       } else {
          // The ship is still at port. Tell Depot to undo reefer allocation for this order.
          Actors.Builder.instance().target(ReeferAppConfig.DepotActorType, reply.getDepot()).
@@ -300,17 +301,15 @@ public class VoyageActor extends BaseActor {
       }
    }
    @Remote
-   public Kar.Actors.TailCall reefersBooked(JsonObject message) {
+   public Kar.Actors.TailCall processReefersBookingResult(JsonObject message) {
       try {
-            // convenience wrapper for DepotActor json reply
-            DepotReply reply = new DepotReply(message);
-
+         // convenience wrapper for DepotActor json reply
+         DepotReply reply = new DepotReply(message);
+         Order order = new Order(reply.getOrder());
+         if ( !order.isBookingFailed()) {
             Set<String> orderReefers = reply.getReefers();
             for (String rid : orderReefers) {
                reefer2OrderMap.put(rid, reply.getOrderId());
-            }
-            if (orderReefers.isEmpty()) {
-               logger.warning("VoyageActor.reefersBooked() - voyageId:" + getId() + " orderId:" + reply.getOrderId() + " !!!!!!!!!!!!!!!! booking has no reefers:" + message);
             }
             voyage.setReeferCount(voyage.getReeferCount() + reply.getReeferCount());
             voyage.updateFreeCapacity(reply.getReeferCount());
@@ -320,34 +319,21 @@ public class VoyageActor extends BaseActor {
             save(reply, message);
             Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
                     method("updateVoyage").arg(VoyageJsonSerializer.serialize(voyage)).tell();
-             //// SUCCESS
-            JsonObject booking = buildResponse(reply.getOrder(), voyage.getRoute().getVessel().getFreeCapacity());
-           return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "orderBooked", booking);
+         }
+         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "processReeferBookingResult", reply.getOrder());
       } catch( Exception e) {
-         logSevereError("VoyageActor.reefersBooked()", e);
-         throw new RuntimeException(e);
-      }
-   }
-   @Remote
-   public void reeferBookingFailed(JsonObject message) {
-      try {
-         Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, message.getString(Constants.ORDER_ID_KEY)).
-                 method("bookingFailed").arg(message).tell();
-       } catch( Exception e) {
-         logSevereError("reeferBookingFailed()", e);
+         logSevereError("VoyageActor.processReefersBookingResult()", e);
+         return null;
       }
    }
    private boolean handledAlreadyArrived(Order order) {
       if ( Objects.isNull(voyageInfo)) {   // voyage arrived
          Kar.Actors.remove(this);
-         JsonObjectBuilder job = Json.createObjectBuilder();
+         logger.warning("VoyageActor.handledAlreadyArrived() - voyageId:" + getId() + " orderId:" + order.getId() + " - already arrived");
          order.setMsg("Voyage " + getId() + " already arrived - order: "+order.getId()+" rejected");
-         job.add(Constants.STATUS_KEY, "FAILED").
-                  add(Constants.ORDER_KEY, order.getAsJsonObject()).
-                 add("ERROR", " voyage " + getId() + " already arrived").
-                 add(Constants.ORDER_ID_KEY, order.getId());
+         order.setBookingFailed();
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                 method("bookingFailed").arg(job.build()).tell();
+                 method("processReeferBookingResult").arg(order.getAsJsonObject()).tell();
          return true;
       }
       return false;
@@ -355,30 +341,19 @@ public class VoyageActor extends BaseActor {
    private boolean handledAlreadyDeparted(Order order) {
       // booking may come after voyage departure
       if (VoyageStatus.DEPARTED.equals(getVoyageStatus())) {
-         logger.log(Level.WARNING, "VoyageActor.reserve() - voyageId:" + getId() + " - already departed - rejecting order booking - " + order.getId());
+         logger.log(Level.WARNING, "VoyageActor.handledAlreadyDeparted() - voyageId:" + getId() + " - already departed - rejecting order booking - " + order.getId());
          order.setMsg("Voyage " + getId() + " already departed - order: "+order.getId()+" rejected");
-         JsonObjectBuilder job = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", " voyage " + getId() + " already departed")
-                 .add(Constants.ORDER_KEY, order.getAsJsonObject())
-                 .add(Constants.ORDER_ID_KEY, this.getId());
+         order.setBookingFailed();
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                 method("bookingFailed").arg(job.build()).tell();
+                 method("processReeferBookingResult").arg(order.getAsJsonObject()).tell();
          return true;
       }
       return false;
    }
-   private boolean handledIdempotance(Order order) {
+   private boolean handledIdempotence(Order order) {
       // Idempotence check. If a given order is in this voyage order list it must have already been processed.
       if (orders.containsKey(order.getId())) {
-         JsonValue booking = orders.get(order.getId());
-         // this order has already been processed so return result
-         if (booking.asJsonObject().getString(Constants.STATUS_KEY).equals(Constants.OK)) {
-            JsonObject status = buildResponse(order.getAsJsonObject(), voyage.getRoute().getVessel().getFreeCapacity());
-           Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                    method("orderBooked").arg(status).tell();
-         } else {
-            Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                    method("bookingFailed").arg(booking).tell();
-          }
+         logger.log(Level.WARNING, "VoyageActor.handledIdempotence() - voyageId:" + getId() + " - duplicate order - " + order.getId());
          return true;
       }
       return false;
@@ -390,12 +365,10 @@ public class VoyageActor extends BaseActor {
          String msg = "Error - ship capacity exceeded - current available capacity:" + voyage.getRoute().getVessel().getFreeCapacity() * 1000 +
                  " - reduce product quantity or choose a different voyage";
          order.setMsg("Voyage "+getId()+" fully booked - order:"+order.getId()+" rejected");
-         JsonObjectBuilder job =  Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED)
-                 .add(Constants.ORDER_KEY, order.getAsJsonObject())
-                 .add("ERROR", msg);
-
+         order.setBookingFailed();
+         logger.log(Level.WARNING, "VoyageActor.handledShipFull() - voyageId:" + getId() + " - ship full - rejecting order: " + order.getId());
          Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, order.getId()).
-                 method("bookingFailed").arg(job.build()).tell();
+                 method("processReeferBookingResult").arg(order.getAsJsonObject()).tell();
          return true;
       }
       return false;
@@ -407,7 +380,7 @@ public class VoyageActor extends BaseActor {
       if ( handledAlreadyDeparted(order)) {
          return false; // dont continue with the booking
       }
-      if ( handledIdempotance(order)) {
+      if ( handledIdempotence(order)) {
          return false;  // dont continue with the booking
       }
       if ( handledShipFull(order)) {
@@ -438,10 +411,8 @@ public class VoyageActor extends BaseActor {
       } catch (Exception e) {
          logSevereError("reserve()", e);
          order.setMsg("Voyage "+getId()+" order booking: "+order.getId()+" failed - reason: "+e.getMessage());
-         JsonObjectBuilder job = Json.createObjectBuilder().add(Constants.STATUS_KEY, "FAILED").add("ERROR", e.getMessage())
-                 .add(Constants.ORDER_KEY, order.getAsJsonObject())
-                 .add(Constants.ORDER_ID_KEY, this.getId());
-        return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, order.getId()),"bookingFailed", job.build());
+         order.setBookingFailed();
+        return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, order.getId()),"processReeferBookingResult", order.getAsJsonObject());
       }
    }
 

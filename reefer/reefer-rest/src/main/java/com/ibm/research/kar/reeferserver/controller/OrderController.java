@@ -22,6 +22,7 @@ import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.actors.Actors;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
+import com.ibm.research.kar.reefer.common.json.JsonUtils;
 import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reefer.model.Order;
 import com.ibm.research.kar.reefer.model.OrderProperties;
@@ -30,7 +31,12 @@ import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.service.SimulatorService;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.json.*;
@@ -42,10 +48,12 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @RestController
+@Controller
 @CrossOrigin("*")
 public class OrderController {
 
-
+   @Autowired
+   private SimpMessagingTemplate template;
    @Autowired
    private SimulatorService simulatorService;
    @Autowired
@@ -122,6 +130,21 @@ public class OrderController {
       return Json.createValue(Constants.OK);
    }
 
+   @MessageMapping("/newOrder")
+   public void processNewOrder(@Payload String message, StompHeaderAccessor stompHeaderAccessor) {
+      System.out.println("OrderController.processNewOrder() - got new order:"+message);
+      Order order = JsonUtils.deserializeOrder(message);
+     // System.out.println("OrderController.processNewOrder() - order correlation id:"+order.getCorrelationId());
+      logger.log(Level.INFO,"OrderController.processNewOrder()",stompHeaderAccessor.getMessage());
+      JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
+      bookingStatus.add(Constants.STATUS_KEY,Json.createValue("booked")).
+              add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
+              add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
+              add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
+
+      template.convertAndSend("/topic/orders", bookingStatus.build().toString(), stompHeaderAccessor.getMessageHeaders());
+   }
+
    private JsonObject messageToJson(String message) {
       try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
          return jsonReader.readObject();
@@ -130,12 +153,43 @@ public class OrderController {
          throw e;
       }
    }
+   @PostMapping("/order/booking/result")
+   public void orderBookingResult(@RequestBody String bookingMessage) {
+      if (logger.isLoggable(Level.INFO)) {
+         logger.info("OrderController.orderBookingResult - Order Actor booking status:" + bookingMessage);
+      }
 
-   /**
-    * Returns a list of voyages that are currently at sea
-    *
-    * @return
-    */
+      try {
+         JsonObject reply = messageToJson(bookingMessage);
+         Order order = new Order(reply);
+         // HACK: the simulator currently does not support websockets and all communication
+         // with it is via REST calls. The Angular GUI on the other hand expects
+         // messages via websockets. At some point the sim needs to be updated to
+         // use websockets for uniform communication of clients.
+         if (order.isOriginSimulator()) {
+            JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
+            if ( order.isBookingFailed()) {
+               bookingStatus.add(Constants.STATUS_KEY,Json.createValue("failed")).
+                       add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
+                       add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
+                       add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
+               if ( order.getMsg() != null ) {
+                  bookingStatus.add(Constants.REASON_KEY,order.getMsg());
+               }
+            } else {
+               bookingStatus.add(Constants.STATUS_KEY,Json.createValue("booked")).
+                       add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
+                       add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
+                       add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
+            }
+            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
+         }
+      } catch (Exception e) {
+         logger.severe("OrderController.orderBookingResult - failed to process booking - received message: "+bookingMessage);
+         throw e;
+      }
+   }
+/*
    @PostMapping("/order/booking/success")
    public void orderBooked(@RequestBody String bookingMessage) {
       if (logger.isLoggable(Level.INFO)) {
@@ -192,6 +246,8 @@ public class OrderController {
          throw e;
       }
    }
+
+ */
    @PostMapping("/order/booking/accepted")
    public void orderBookingAccepted(@RequestBody String bookingMessage) {
       try {

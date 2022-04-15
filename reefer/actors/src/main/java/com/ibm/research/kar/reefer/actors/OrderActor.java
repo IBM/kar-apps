@@ -64,27 +64,25 @@ public class OrderActor extends BaseActor {
             logger.log(Level.WARNING, "OrderActor.processReeferBookingResult() - duplicate booked message received for corrId=" + order.getCorrelationId() + " orderId:" + order.getId() + " status:" + order.getStatus());
             return null;
          }
-         Order booking = new Order(voyageBookingResult);
-         OrderStatus orderStatus;
-         if (booking.isBookingFailed()) {
-            logger.log(Level.WARNING, "OrderActor.processReeferBookingResult() - failed - corrId=" + order.getCorrelationId() + " orderId:" + order.getId() + " reason:" + order.getMsg());
-            // need to pass order status to saveOrderStatusChange() below. Since we failed, dont change state but update
-            // booking status and reason for failure which will be saved in persistent store
-            orderStatus = OrderStatus.valueOf(order.getStatus());
-            order.setBookingFailed();
-            order.setMsg(booking.getMsg());
-         } else {
-            orderStatus = OrderStatus.BOOKED;
-         }
          return new Kar.Actors.TailCall(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId),
-                 "processReeferBookingResult", saveOrderStatusChange(orderStatus));
+                 "processReeferBookingResult", saveOrderStatusChange(new Order(voyageBookingResult)));
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n", "");
          logger.log(Level.SEVERE, "OrderActor.processReeferBookingResult() - Error - orderId " + getId() + " Error: " + stacktrace);
          return null;
       }
    }
-
+   private JsonObject saveOrderStatusChange(Order bookingStatus) {
+      if (bookingStatus.isBookingFailed()) {
+         logger.log(Level.WARNING, "OrderActor.saveOrderStatusChange() - failed - corrId=" + order.getCorrelationId() + " orderId:" + order.getId() + " reason:" + order.getMsg());
+         order.setBookingFailed();
+         order.setMsg(bookingStatus.getMsg());
+      } else {
+         order.setStatus(OrderStatus.BOOKED.name());
+      }
+      Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
+      return order.getAsJsonObject();
+   }
    /**
     * Called to book a new order using properties included in the message. Calls the VoyageActor
     * to allocate reefers and a ship to carry them.

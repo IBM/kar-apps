@@ -37,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This actor manages reefer inventory allocating reefers to new orders
@@ -507,22 +506,12 @@ public class DepotActor extends BaseActor {
             // allocate reefers to the order.
             ReeferAllocationStatus reeferAllocation = allocateReefers(order);
             if ( reeferAllocation.failed() ) {
-                order.setMsg("Failed to allocate reefers to order");
-                order.setBookingFailed();
-                rids = Collections.emptySet();
-                orderReefers = Collections.emptyList();
+                return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
+                        "processReefersBookingResult", handleFailedAllocationAndSaveState(order) );
              } else {
-                orderReefers = reeferAllocation.getOrderReefersList();
-                // create a set of reefer ids. It will be included in a reply to Voyage actor
-                rids = orderReefers.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
-                // create order to reefers mapping for in-memory cache to reduce latency
-                order2ReeferMap.put(order.getId().trim(), rids);
-                Inventory inventory = getReeferInventoryCounts();
-                currentInventorySize = Json.createValue(inventory.getTotal());
-                bookedTotalCount = inventory.getBooked();
+                return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
+                        "processReefersBookingResult", handleSuccessfulAllocationAndSaveState(reeferAllocation, order));
             }
-            return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
-                    "processReefersBookingResult",  updateStore(Collections.emptyMap(), reeferMap(orderReefers), createReply(rids, order.getAsJsonObject())));
         } catch (Exception e) {
             // undo reefer allocation
             if ( orderReefers != null && !orderReefers.isEmpty() ) {
@@ -531,6 +520,26 @@ public class DepotActor extends BaseActor {
             logFailure(order, e);
             return null;
         }
+    }
+    private JsonObject handleFailedAllocationAndSaveState(Order order) {
+        order.setMsg("Failed to allocate reefers to order");
+        order.setBookingFailed();
+        Set<String> rids = Collections.emptySet();
+        List<ReeferDTO> orderReefers = Collections.emptyList();
+        updateStore(Collections.emptyMap(), reeferMap(orderReefers));
+        return createReply(rids,order.getAsJsonObject());
+    }
+    private JsonObject handleSuccessfulAllocationAndSaveState(ReeferAllocationStatus reeferAllocation, Order order) {
+        List<ReeferDTO> orderReefers = reeferAllocation.getOrderReefersList();
+        // create a set of reefer ids. It will be included in a reply to Voyage actor
+        Set<String>rids = orderReefers.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
+        // create order to reefers mapping for in-memory cache to reduce latency
+        order2ReeferMap.put(order.getId().trim(), rids);
+        Inventory inventory = getReeferInventoryCounts();
+        currentInventorySize = Json.createValue(inventory.getTotal());
+        bookedTotalCount = inventory.getBooked();
+        updateStore(Collections.emptyMap(), reeferMap(orderReefers));
+        return createReply(rids,order.getAsJsonObject());
     }
     private void logFailure(Order order, Exception e) {
         int actual = 0, bad = 0;

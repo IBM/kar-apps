@@ -300,26 +300,20 @@ public class VoyageActor extends BaseActor {
          Kar.Actors.remove(this);
          return null;
       }
-
       try {
          // convenience wrapper for DepotActor json reply
          DepotReply reply = new DepotReply(message);
          Order order = new Order(reply.getOrder());
-         if ( !order.isBookingFailed()) {
-            Set<String> orderReefers = reply.getReefers();
-            for (String rid : orderReefers) {
-               reefer2OrderMap.put(rid, reply.getOrderId());
-            }
-            voyage.setReeferCount(voyage.getReeferCount() + reply.getReeferCount());
-            voyage.updateFreeCapacity(reply.getReeferCount());
-            orders.put(reply.getOrderId(), message);
-            voyage.setOrderCount(orders.size());
-            voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
-            save(reply, message);
-            Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
-                    method("updateVoyage").arg(VoyageJsonSerializer.serialize(voyage)).tell();
+
+         if ( order.isBookingFailed()) {
+            return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "processReeferBookingResult", reply.getOrder());
          }
-         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "processReeferBookingResult", reply.getOrder());
+         Set<String> orderReefers = reply.getReefers();
+         for (String rid : orderReefers) {
+            reefer2OrderMap.put(rid, reply.getOrderId());
+         }
+         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "processReeferBookingResult",  updateSchedulerAndSaveState(reply, message));
+
       } catch( Exception e) {
          logSevereError("VoyageActor.processReefersBookingResult()", e);
          return null;
@@ -414,7 +408,17 @@ public class VoyageActor extends BaseActor {
         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, order.getId()),"processReeferBookingResult", order.getAsJsonObject());
       }
    }
-
+   private JsonObject updateSchedulerAndSaveState(DepotReply booking, JsonValue bookingStatus) {
+      voyage.setReeferCount(voyage.getReeferCount() + booking.getReeferCount());
+      voyage.updateFreeCapacity(booking.getReeferCount());
+      orders.put(booking.getOrderId(), bookingStatus);
+      voyage.setOrderCount(orders.size());
+      voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
+      Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
+              method("updateVoyage").arg(VoyageJsonSerializer.serialize(voyage)).tell();
+     save(booking, bookingStatus);
+     return booking.getOrder();
+   }
    private void save(DepotReply booking, JsonValue bookingStatus) {
       try {
          Map<String, JsonValue> actorStateMap = new HashMap<>();

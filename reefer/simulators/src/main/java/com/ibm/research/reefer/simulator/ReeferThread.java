@@ -45,8 +45,12 @@ public class ReeferThread extends Thread {
     JsonValue currentDate = Json.createValue("");
 
     int updatesPerDay = 1;
+    int updatesToDo;
     int anomaliesPerUpdate;
     int anomaliesDoneToday;
+    int anomaliesExpectedYesterday;
+    long dayEndTime;
+    long timeToSleep;
     private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(ReeferThread.class.getName());
     public void run() {
 
@@ -54,6 +58,7 @@ public class ReeferThread extends Thread {
                     || 0 == SimulatorService.failuretarget.intValue()) {
                 oneshot = true;
             }
+            anomaliesExpectedYesterday = 0;
 
             Thread.currentThread().setName("reeferthread");
             SimulatorService.reeferthreadcount.incrementAndGet();
@@ -108,8 +113,11 @@ public class ReeferThread extends Thread {
                             }
                         } else {
                             reefersToBreak = (inventorySize * SimulatorService.failuretarget.get()) / 10000;
-                            if (logger.isLoggable(Level.INFO)) {
-                                logger.info("reeferthread: generating " + reefersToBreak + " anomalies for new day");
+                            if (anomaliesExpectedYesterday > 0) {
+                                if (anomaliesDoneToday < anomaliesExpectedYesterday) {
+                                    logger.warning("reeferthread: " + anomaliesDoneToday + " of " + anomaliesExpectedYesterday +
+                                                   " submitted yesterday");
+                                }
                             }
                         }
                         r2b = new int[reefersToBreak];
@@ -119,12 +127,15 @@ public class ReeferThread extends Thread {
                             r2b[i] = rand.nextInt(inventorySize);
                         }
 
-                        updatesPerDay = SimulatorService.reeferupdates.get();
+                        updatesToDo = updatesPerDay = SimulatorService.reeferupdates.get();
                         anomaliesPerUpdate = reefersToBreak / updatesPerDay;
                         if (0 == anomaliesPerUpdate && 0 < reefersToBreak) {
                             anomaliesPerUpdate = 1;
                         }
                         anomaliesDoneToday = 0;
+                        anomaliesExpectedYesterday = reefersToBreak = anomaliesPerUpdate * updatesPerDay;
+                        // day end time is 98% of unit delay
+                        dayEndTime = System.currentTimeMillis() + 980 * SimulatorService.unitdelay.intValue();
                     }
 
                     // if not done for the day, generate anomaliesPerUpdate more failures
@@ -143,18 +154,32 @@ public class ReeferThread extends Thread {
                             }
                             try {
                                 //Kar.Actors.call(reeferProvisionerActor, "reeferAnomaly", params);
-                                Kar.Actors.rootCall(anomalyManagerActor, "reeferAnomaly", params);
+                                Kar.Actors.tell(anomalyManagerActor, "reeferAnomaly", params);
                             } catch (Exception e) {
                                 logger.warning("reeferthread: error sending anomaly " + e.toString());
                             }
                         }
                     }
+                    updatesToDo--;
                 }
 
                 // sleep if not a oneshot reefer command
                 if (!oneshot) {
+                    long timeRemaining = dayEndTime - System.currentTimeMillis();
+                    if (updatesToDo <= 0) {
+                        // wait for thread interrupt
+                        timeToSleep = SimulatorService.unitdelay.intValue();
+                    }
+                    else {
+                        // assuming each anomaly takes 1ms, want (timeToSleep + anomaliesPerUpdate) * updatesToDo = timeRemaining
+                        timeToSleep = (timeRemaining / updatesToDo) - anomaliesPerUpdate;
+                    }
+                    if (timeToSleep < 10) {
+                        // give up on today and wait for interrupt
+                        timeToSleep = SimulatorService.unitdelay.intValue();
+                    }
                     try {
-                        Thread.sleep(1000 * SimulatorService.unitdelay.intValue() / updatesPerDay);
+                        Thread.sleep(timeToSleep);
                     } catch (InterruptedException e) {
                         interrupted = true;
                     }

@@ -661,8 +661,8 @@ public class DepotActor extends BaseActor {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("DepotActor.reeferAnomaly() - id:" + getId()
                         + " added reefer:" + reeferId + " to "
-                        + Constants.ON_MAINTENANCE_PROVISIONER_LIST + " Map"
-                        + " onMaintenance date:" + message.getString(Constants.DATE_KEY));
+                        + Constants.ON_MAINTENANCE_PROVISIONER_LIST + " Map");
+//                        + " onMaintenance date:" + message.getString(Constants.DATE_KEY));
             }
         }
     }

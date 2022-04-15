@@ -139,14 +139,6 @@ public class OrderManagerActor extends BaseActor {
          if (order == null) {
             logger.log(Level.SEVERE, "OrderManagerActor.bookOrder() - error - Unable to create order instance from message:" + message);
          }
-         /*
-         else {
-            order.setMsg(e.getMessage());
-            order.setStatus(Constants.FAILED);
-            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/failed", order.getAsJsonObject());
-         }
-
-          */
          return null;
       }
    }
@@ -183,7 +175,6 @@ public class OrderManagerActor extends BaseActor {
                Map<String, JsonValue> updateMap = new HashMap<>();
                updateMap.put(order.getId(), order.getAsJsonObject());
                updateStore(Collections.emptyMap(), updateMap);
-               logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() - success  corrId="+order.getCorrelationId()+" orderId:"+order.getId());
          } else {
             logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY)+" corrId="+order.getCorrelationId()+" orderId:"+order.getId());
             throw new RuntimeException("OrderManagerActor.processReeferBookingResult() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY));

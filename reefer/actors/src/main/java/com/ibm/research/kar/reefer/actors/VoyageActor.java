@@ -25,6 +25,7 @@ import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferAllocator;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
+import com.ibm.research.kar.reefer.common.error.VoyageNotFoundException;
 import com.ibm.research.kar.reefer.common.json.VoyageJsonSerializer;
 import com.ibm.research.kar.reefer.model.JsonOrder;
 import com.ibm.research.kar.reefer.model.Order;
@@ -74,10 +75,11 @@ public class VoyageActor extends BaseActor {
             voyageInfo = jv.asJsonObject();
             if ( voyageInfo == null ) {
                logger.severe("VoyageActor.activate() - voyageId:" + getId() + " voyageInfo not available - schedule manager replied with:"+jv);
+               throw new VoyageNotFoundException("Voyage:"+getId()+" not found in the schedule");
             }
             // check if voyage already arrived in which case the progress attribute would be 100. It's possible that
             // the arrived voyage would be called with an anomaly
-            if ( voyageInfo != null && voyageInfo.getJsonNumber("progress").intValue() == 100) {
+            if ( voyageInfo.getJsonNumber("progress").intValue() == 100) {
                voyageInfo = null;
                return;
             }
@@ -125,6 +127,7 @@ public class VoyageActor extends BaseActor {
          voyage = VoyageJsonSerializer.deserialize(voyageInfo);
       } catch (Exception e) {
          logSevereError("activate()", e);
+         Kar.Actors.remove(this);
       }
 
    }
@@ -133,9 +136,7 @@ public class VoyageActor extends BaseActor {
       Order order = new Order(message);
       if ( voyage == null || voyage.arrived() ) {
          logger.warning("VoyageActor.rollbackOrder() voyageId:" + getId() + " - already arrived - unable to rollback order:" + order.getId() );
-         if (voyage == null ) {
-            Kar.Actors.remove(this);
-         }
+         Kar.Actors.remove(this);
          return;
       }
       if ( !orders.containsKey(order.getId() ) ) {
@@ -180,12 +181,7 @@ public class VoyageActor extends BaseActor {
     */
    @Remote
    public JsonValue changePosition(JsonObject message) {
-      if (Objects.isNull(voyage) ) {
-         Kar.Actors.remove(this);
-         return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
-                 .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
-      }
-      if ( voyage.shipArrived() ) {
+      if ( voyage == null || voyage.shipArrived() ) {
          Kar.Actors.remove(this);
          return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.OK)
                  .add(Constants.ORDER_ID_KEY, String.valueOf(this.getId())).build();
@@ -244,16 +240,9 @@ public class VoyageActor extends BaseActor {
 
          String spoiltReeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
          // for debug
-         if ( voyage == null ) {
+         if ( voyage == null  || voyage.shipArrived() ) {
             logger.warning("VoyageActor.reeferAnomaly - voyageId:"+getId()+
                     " voyage already arrived - spoilt reefer:"+spoiltReeferId+" should be in the depot by now");
-            return;
-         }
-         // ignore anomaly if target is an empty reefer
-         if ( emptyReefersMap.containsKey(spoiltReeferId)) {
-            return;
-         }
-         if ( Objects.isNull(voyageInfo)) {   // voyage arrived?
             Kar.Actors.remove(this);
             JsonObjectBuilder job = Json.createObjectBuilder();
             // switch anomaly mgr target from voyage to depot
@@ -261,6 +250,10 @@ public class VoyageActor extends BaseActor {
                     add(Constants.TARGET_KEY, Constants.DEPOT_TARGET_TYPE);
             Actors.Builder.instance().target(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId).
                     method("reeferAnomaly").arg(job.build()).tell();
+            return;
+         }
+         // ignore anomaly if target is an empty reefer
+         if ( emptyReefersMap.containsKey(spoiltReeferId)) {
             return;
          }
          if ( !reefer2OrderMap.containsKey(spoiltReeferId)) {
@@ -302,6 +295,12 @@ public class VoyageActor extends BaseActor {
    }
    @Remote
    public Kar.Actors.TailCall processReefersBookingResult(JsonObject message) {
+      if ( voyage == null || voyage.shipArrived()) {
+         logger.warning("VoyageActor.processReefersBookingResult - voyageId:"+getId()+ " voyage already arrived");
+         Kar.Actors.remove(this);
+         return null;
+      }
+
       try {
          // convenience wrapper for DepotActor json reply
          DepotReply reply = new DepotReply(message);
@@ -327,7 +326,7 @@ public class VoyageActor extends BaseActor {
       }
    }
    private boolean handledAlreadyArrived(Order order) {
-      if ( Objects.isNull(voyageInfo)) {   // voyage arrived
+      if ( voyage == null ) {   // voyage arrived
          Kar.Actors.remove(this);
          logger.warning("VoyageActor.handledAlreadyArrived() - voyageId:" + getId() + " orderId:" + order.getId() + " - already arrived");
          order.setMsg("Voyage " + getId() + " already arrived - order: "+order.getId()+" rejected");
@@ -455,7 +454,8 @@ public class VoyageActor extends BaseActor {
 
    @Remote
    public void replaceReefer(JsonObject message) {
-      if ( Objects.isNull(voyageInfo)) {   // voyage arrived?
+      if ( voyage == null || voyage.shipArrived() ) {
+         logger.warning("VoyageActor.replaceReefer - voyageId:"+getId()+ " voyage already arrived");
          Kar.Actors.remove(this);
          return;
       }
@@ -584,6 +584,11 @@ public class VoyageActor extends BaseActor {
    }
    @Remote
    public void addEmptyReefers(JsonObject message) {
+      if ( voyage == null || voyage.shipArrived()  ) {
+         logger.warning("VoyageActor.addEmptyReefers - voyageId:"+getId()+ " voyage already arrived");
+         Kar.Actors.remove(this);
+         return;
+      }
       try {
          // the depot may return a number of empty reefers to sail on the voyage due to
          // excess reefer inventory

@@ -74,7 +74,6 @@ public class OrderActor extends BaseActor {
             order.setBookingFailed();
             order.setMsg(booking.getMsg());
          } else {
-            logger.log(Level.WARNING, "OrderActor.processReeferBookingResult() - success - corrId=" + order.getCorrelationId() + " orderId:" + order.getId());
             orderStatus = OrderStatus.BOOKED;
          }
          return new Kar.Actors.TailCall(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId),

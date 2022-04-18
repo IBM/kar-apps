@@ -44,7 +44,7 @@ public class ReeferThread extends Thread {
     int inventorySize;
     JsonValue currentDate = Json.createValue("");
 
-    int updatesPerDay = 1;
+    int updatesPerDay;
     int updatesToDo;
     int anomaliesPerUpdate;
     int anomaliesDoneToday;
@@ -101,6 +101,9 @@ public class ReeferThread extends Thread {
 
                             JsonValue is = (JsonValue) response.readEntity(JsonValue.class);
                             inventorySize = ((JsonNumber) is).intValue();
+                            if (inventorySize == 0) {
+                                logger.warning("reeferthread: inventorySize is ZERO!");
+                            }
                         } catch (Exception e) {
                             logger.warning("reeferthread: Unable to fetch reefer inventory size - cause:" + e.getMessage());
                             inventorySize = 0;
@@ -113,6 +116,10 @@ public class ReeferThread extends Thread {
                             }
                         } else {
                             reefersToBreak = (inventorySize * SimulatorService.failuretarget.get()) / 10000;
+                             // limit anomaly rate to 10/second
+                            if (reefersToBreak > 10 * SimulatorService.unitdelay.intValue()) {
+                                reefersToBreak = 10 * SimulatorService.unitdelay.intValue();
+                            }
                             if (anomaliesExpectedYesterday > 0) {
                                 if (anomaliesDoneToday < anomaliesExpectedYesterday) {
                                     logger.warning("reeferthread: " + anomaliesDoneToday + " of " + anomaliesExpectedYesterday +
@@ -120,20 +127,30 @@ public class ReeferThread extends Thread {
                                 }
                             }
                         }
-                        r2b = new int[reefersToBreak];
-                        Random rand = new Random(System.nanoTime());
-                        for (int i = 0; i < reefersToBreak; i++) {
-                            // ignore possibility that same reefer receives multiple anomalies
-                            r2b[i] = rand.nextInt(inventorySize);
-                        }
+                        if (reefersToBreak > 0) {
+                            r2b = new int[reefersToBreak];
+                            Random rand = new Random(System.nanoTime());
+                            for (int i = 0; i < reefersToBreak; i++) {
+                                // ignore possibility that same reefer receives multiple anomalies
+                                r2b[i] = rand.nextInt(inventorySize);
+                            }
 
-                        updatesToDo = updatesPerDay = SimulatorService.reeferupdates.get();
-                        anomaliesPerUpdate = reefersToBreak / updatesPerDay;
-                        if (0 == anomaliesPerUpdate && 0 < reefersToBreak) {
-                            anomaliesPerUpdate = 1;
+                            updatesPerDay = SimulatorService.reeferupdates.get();
+                            if (1 > reefersToBreak / updatesPerDay) {
+                                updatesPerDay = reefersToBreak;
+                            }
+                            anomaliesPerUpdate = reefersToBreak / updatesPerDay;
+                            if (0 == anomaliesPerUpdate && 0 < reefersToBreak) {
+                                anomaliesPerUpdate = 1;
+                            }
+                            updatesToDo = updatesPerDay;
+                            anomaliesDoneToday = 0;
                         }
-                        anomaliesDoneToday = 0;
+                        else {
+                            anomaliesPerUpdate = 0;
+                        }
                         anomaliesExpectedYesterday = reefersToBreak = anomaliesPerUpdate * updatesPerDay;
+                        logger.info("reeferthread: reefersToBreak " + reefersToBreak + " anomaliesPerUpdate "+ anomaliesPerUpdate);
                         // day end time is 98% of unit delay
                         dayEndTime = System.currentTimeMillis() + 980 * SimulatorService.unitdelay.intValue();
                     }

@@ -660,7 +660,7 @@ public class SimulatorService {
     return rt;
   }
 
-  // failure target in units of 0.01%
+  // failure target in units of per second, maximum = 10/second
   public JsonValue setFailureTarget(JsonValue value) {
     JsonNumber newval;
     if (JsonValue.ValueType.OBJECT == value.getValueType()) {
@@ -669,7 +669,7 @@ public class SimulatorService {
       newval = Json.createValue(((JsonNumber) value).intValue());
     }
     newval = newval.intValue() > 0 ? newval : (JsonNumber) Json.createValue(0);
-    newval = newval.intValue() < 500 ? newval : (JsonNumber) Json.createValue(5);
+    newval = newval.intValue() < 501 ? newval : (JsonNumber) Json.createValue(500);
     synchronized (failuretarget) {
       // if failuretarget > 0 then reefer thread is enabled
       // if running and newval == 0 then interrupt thread
@@ -722,7 +722,7 @@ public class SimulatorService {
       newval = Json.createValue(((JsonNumber) value).intValue());
     }
     newval = newval.intValue() > 1 ? newval : (JsonNumber) Json.createValue(1);
-    newval = newval.intValue() < 30 ? newval : (JsonNumber) Json.createValue(30);
+    newval = newval.intValue() < 31 ? newval : (JsonNumber) Json.createValue(30);
     reeferupdates.set(newval.intValue());
     this.set(Json.createValue("reeferupdates"), newval);
     if (logger.isLoggable(Level.INFO)) {

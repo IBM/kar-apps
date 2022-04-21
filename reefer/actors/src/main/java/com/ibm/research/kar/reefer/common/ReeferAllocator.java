@@ -58,8 +58,8 @@ public class ReeferAllocator {
         int howManyReefersNeeded = Double.valueOf(Math.ceil(productQuantity/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
 
         if ( howManyReefersNeeded > availableReeferCount ) {
-            logger.log(Level.WARNING,"ReeferAllocator.allocateReefers - not enough reefers in inventory to fill the order "+
-                    " - rejecting request - available reefers:" + availableReeferCount);
+            logger.log(Level.SEVERE,"ReeferAllocator.allocateReefers - not enough reefers in inventory to fill order "+orderId+
+                    " - rejecting request for "+howManyReefersNeeded+" reefers since only " + availableReeferCount+" are available");
             return reefers;
         }
         try {

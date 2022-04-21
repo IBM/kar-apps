@@ -22,7 +22,7 @@ public class Constants {
    public static final String TOTAL_SPOILT_KEY="totalSpoilt";
    public static final String TOTAL_INTRANSIT_KEY="totalInTransit";
    public static final String TOTAL_ONMAINTENANCE_KEY="totalOnMaintenance";
-   public static final String BOOKING_STATUS_KEY="booking-status";
+   public static final String BOOKING_FAILED_KEY="booking-failed";
    public static final String ACTIVE_ORDERS_KEY="active-orders";
    public static final String ACTIVE_VOYAGES_KEY="active-voyages";
    public static final String BOOKED_ORDERS_KEY="booked-orders";

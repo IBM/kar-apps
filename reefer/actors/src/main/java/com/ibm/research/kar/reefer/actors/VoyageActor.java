@@ -235,7 +235,7 @@ public class VoyageActor extends BaseActor {
    }
 
    @Remote
-   public void reeferAnomaly(JsonObject message) {
+   public Kar.Actors.TailCall reeferAnomaly(JsonObject message) {
       try {
 
          String spoiltReeferId = String.valueOf(message.getInt(Constants.REEFER_ID_KEY));
@@ -250,48 +250,43 @@ public class VoyageActor extends BaseActor {
                     add(Constants.TARGET_KEY, Constants.DEPOT_TARGET_TYPE);
             Actors.Builder.instance().target(ReeferAppConfig.AnomalyManagerActorType, ReeferAppConfig.AnomalyManagerId).
                     method("reeferAnomaly").arg(job.build()).tell();
-            return;
+            return null;
          }
-         // ignore anomaly if target is an empty reefer
-         if ( emptyReefersMap.containsKey(spoiltReeferId)) {
-            return;
+         if ( emptyReefersMap.containsKey(spoiltReeferId) ) {
+            return null;
          }
-         if ( !reefer2OrderMap.containsKey(spoiltReeferId)) {
-            return;
-         }
-         boolean newSpoiltOrder = false;
+
          if ( !spoiltReefersMap.containsKey(spoiltReeferId)) {
             spoiltReefersMap.put(spoiltReeferId, Json.createValue(spoiltReeferId));
-            String orderId = reefer2OrderMap.get(spoiltReeferId);
-            if ( !spoiltOrders.containsKey(orderId) ) {
-               if ( !orders.containsKey(orderId)) {
-                  StringBuilder sb = new StringBuilder();
-                  for(Map.Entry<String, JsonValue> order: orders.entrySet()) {
-                     sb.append(order.getKey()).append(",");
-                  }
-                  logger.warning("VoyageActor.reeferAnomaly - voyageId:"+getId()+" spoilt reefer:"+
-                          spoiltReeferId+" !!!!!!!!!!!!!!!!! order:"+orderId+" not found in the orders Map - orders map size:"+
-                          orders.size()+"\n"+sb.toString());
-               }
-               newSpoiltOrder = true;
-               spoiltOrders.put(orderId, Json.createValue(orderId));
-               JsonValue jv = orders.get(orderId).asJsonObject();
+            if ( reefer2OrderMap.containsKey(spoiltReeferId) && !spoiltOrders.containsKey(reefer2OrderMap.get(spoiltReeferId)) ) {
+               String orderId = reefer2OrderMap.get(spoiltReeferId);
                Order order = new Order(orders.get(orderId).asJsonObject().getJsonObject(JsonOrder.OrderKey));
+               spoiltOrders.put(orderId, Json.createValue(orderId));
                order.setSpoilt(true);
-               Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
-                       method("orderSpoilt").arg(order.getAsJsonObject()).call(this);
+               return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId),
+                       "orderSpoilt",  updateTotalSpoiltReefersAndOrders(order));
+            } else {
+               updateTotalSpoiltReefers();
             }
-
-            Map<String, JsonValue> actorStateMap = new HashMap<>();
-            actorStateMap.put(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltReefersMap.size()));
-            Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
-            subMapUpdates.put(Constants.SPOILT_REEFERS_KEY, spoiltReefersMap);
-            if ( newSpoiltOrder ) subMapUpdates.put(Constants.SPOILT_ORDERS_KEY, spoiltOrders);
-            Kar.Actors.State.update(this, Collections.emptyList(), Collections.emptyMap(), actorStateMap, subMapUpdates);
          }
       } catch( Exception e) {
          logSevereError("reeferAnomaly()", e);
       }
+      return null;
+   }
+   private JsonObject updateTotalSpoiltReefersAndOrders(Order order) {
+      Map<String, JsonValue> actorStateMap = new HashMap<>();
+      actorStateMap.put(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltReefersMap.size()));
+      Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
+      subMapUpdates.put(Constants.SPOILT_REEFERS_KEY, spoiltReefersMap);
+      subMapUpdates.put(Constants.SPOILT_ORDERS_KEY, spoiltOrders);
+      Kar.Actors.State.update(this, Collections.emptyList(), Collections.emptyMap(), actorStateMap, subMapUpdates);
+      return order.getAsJsonObject();
+   }
+   private void updateTotalSpoiltReefers() {
+      Map<String, JsonValue> actorStateMap = new HashMap<>();
+      actorStateMap.put(Constants.TOTAL_SPOILT_KEY, Json.createValue(spoiltReefersMap.size()));
+      Kar.Actors.State.update(this, Collections.emptyList(), Collections.emptyMap(), actorStateMap, Collections.emptyMap());
    }
    @Remote
    public Kar.Actors.TailCall processReefersBookingResult(JsonObject message) {
@@ -306,6 +301,7 @@ public class VoyageActor extends BaseActor {
          Order order = new Order(reply.getOrder());
 
          if ( order.isBookingFailed()) {
+            logger.warning("VoyageActor.processReefersBookingResult() - voyageId:" + getId() + " orderId:" + order.getId() + " - failed - reason: "+order.getMsg());
             return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "processReeferBookingResult", reply.getOrder());
          }
          Set<String> orderReefers = reply.getReefers();
@@ -393,7 +389,6 @@ public class VoyageActor extends BaseActor {
    public Kar.Actors.TailCall reserve(JsonObject message) {
       // wrapper around Json
       Order order = new Order(message);
-      logger.info("VoyageActor.reserve() - voyageId:"+getId()+" - message:"+message);
 
       try {
          if ( !validateAndContinue(order, message)) {

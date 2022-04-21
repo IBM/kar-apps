@@ -145,24 +145,31 @@ public class OrderManagerActor extends BaseActor {
       activeOrders.put(order.getId(), order.getAsJsonObject());
       return updateMap;
    }
-
+   private void updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap) {
+      String metrics = String.format("%d:%d:%d", bookedTotalCount, inTransitTotalCount, spoiltTotalCount);
+      Map<String, JsonValue> actorStateMap = new HashMap<>();
+      actorStateMap.put(Constants.ORDER_METRICS_KEY, Json.createValue(metrics));
+      Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
+      subMapUpdates.put(Constants.ORDERS_KEY, updateMap);
+      Kar.Actors.State.update(this, Collections.emptyList(), deleteMap, actorStateMap, subMapUpdates);
+   }
    @Remote
-   public void processReeferBookingResult(JsonObject message) {
+   public Kar.Actors.TailCall processReeferBookingResult(JsonObject message) {
       Order order = null;
       JsonObject activeOrder=null;
       try {
          order = new Order(message);
          if (!activeOrders.containsKey(order.getId())) {
             logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() - orderId:" + order.getId() + " not found in activeOrders Map");
-            return;
+            return null;
          }
          activeOrder = activeOrders.get(order.getId()).asJsonObject();
          // idempotence check
          if ( Order.bookedOrInTransit( activeOrder) ) {
             logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() - duplicate booked message received for corrId="+order.getCorrelationId()+" orderId:"+order.getId()+" status:"+activeOrder.getString(Constants.ORDER_STATUS_KEY));
-            return;
+            return null;
          }
-         Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/result", handleBooking(order,activeOrder));
+         return new Kar.Actors.TailCall( this, "handleBooking", order.getAsJsonObject(), activeOrder, Json.createValue(bookedTotalCount+1));
       } catch (Exception e) {
          logger.log(Level.SEVERE, "OrderManagerActor.processReeferBookingResult() - error ", ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
          throw e;
@@ -171,7 +178,7 @@ public class OrderManagerActor extends BaseActor {
             logger.log(Level.SEVERE, "OrderManagerActor.processReeferBookingResult() - Invalid state - order instance invalid - order "+
                     (order == null ? "is null" : "not null")+ " activeOrder "+
                     (activeOrder == null ?"is null" : "not null"));
-            return;
+            return null;
          }
          int count = Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
          if ( count == 0 && !Order.bookedOrInTransit(activeOrder)) {
@@ -182,28 +189,32 @@ public class OrderManagerActor extends BaseActor {
          }
       }
    }
-   private JsonObject handleBooking(Order order, JsonObject activeOrder) {
+   @Remote
+   public void handleBooking(JsonObject orderAsJson, JsonObject activeOrder, JsonNumber ordersBookedCount) {
+      Order order = new Order(orderAsJson);
       // check if the booking failed
       if ( order.isBookingFailed()) {
-         logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() - orderId: "+order.getId()+" failed - removing from active orders - reason:"+order.getMsg());
+         logger.log(Level.SEVERE, "OrderManagerActor.handleBooking() - orderId: "+order.getId()+" failed - removing from active orders - reason:"+order.getMsg());
          activeOrders.remove(order.getId());
          // delete failed order from persistent store
          Map<String, List<String>> deleteMap = new HashMap<>();
          deleteMap.put(Constants.ORDERS_KEY, List.of(order.getId()));
          updateStore(deleteMap, Collections.emptyMap());
       } else if ( Order.pending(activeOrder) ) {
-         bookedOrderList.add(order);
-         bookedTotalCount++;
+         if ( !bookedOrderList.contains(order) ) {
+            bookedOrderList.add(order);
+         }
+         bookedTotalCount = ordersBookedCount.intValue();
          Map<String, JsonValue> updateMap = new HashMap<>();
          order.setStatus(Order.OrderStatus.BOOKED.name());
          activeOrders.put(order.getId(), order.getAsJsonObject());
          updateMap.put(order.getId(), order.getAsJsonObject());
          updateStore(Collections.emptyMap(), updateMap);
       } else {
-         logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY)+" corrId="+order.getCorrelationId()+" orderId:"+order.getId());
-         throw new RuntimeException("OrderManagerActor.processReeferBookingResult() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY));
+         logger.log(Level.WARNING, "OrderManagerActor.handleBooking() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY)+" corrId="+order.getCorrelationId()+" orderId:"+order.getId());
+         throw new RuntimeException("OrderManagerActor.handleBooking() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY));
       }
-      return order.getAsJsonObject();
+      Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/result", order.getAsJsonObject());
    }
    @Remote
    public void orderDeparted(JsonValue message) {
@@ -351,13 +362,6 @@ public class OrderManagerActor extends BaseActor {
       return order;
    }
 
-   private void updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap) {
-      String metrics = String.format("%d:%d:%d", bookedTotalCount, inTransitTotalCount, spoiltTotalCount);
-      Map<String, JsonValue> actorStateMap = new HashMap<>();
-      actorStateMap.put(Constants.ORDER_METRICS_KEY, Json.createValue(metrics));
-      Map<String, Map<String, JsonValue>> subMapUpdates = new HashMap<>();
-      subMapUpdates.put(Constants.ORDERS_KEY, updateMap);
-      Kar.Actors.State.update(this, Collections.emptyList(), deleteMap, actorStateMap, subMapUpdates);
-   }
+
 
 }

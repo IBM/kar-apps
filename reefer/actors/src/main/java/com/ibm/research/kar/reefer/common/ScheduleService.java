@@ -112,8 +112,8 @@ public class ScheduleService {
      * @param currentDate            - today
      */
     public Instant extendSchedule(Instant baseDate, Instant currentScheduleEndDate, Instant currentDate) {
-        if (logger.isLoggable(Level.INFO)) {
-            logger.info("ScheduleService() - extendSchedule() ============================================ ");
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("ScheduleService() - extendSchedule() ============================================ ");
         }
         // add N (where N=SCHEDULE_DAYS) days to the end of the current schedule.
         Instant endDate = TimeUtils.getInstance().futureDate(currentScheduleEndDate, SCHEDULE_DAYS);
@@ -172,17 +172,19 @@ public class ScheduleService {
         List<Voyage> activeScheduleNow = getActiveSchedule(currentDate);
 
         if (!activeListsMatch(originalActiveSchedule, activeScheduleNow)) {
-            logger.log(Level.INFO, "ScheduleService.validateSchedule() - After " + lbl + " active schedule does not match pre-" + lbl + " schedule ");
-            logger.log(Level.INFO, "Before " + lbl + " Active List:");
+            logger.log(Level.FINE, "ScheduleService.validateSchedule() - After " + lbl + " active schedule does not match pre-" + lbl + " schedule ");
+            logger.log(Level.FINE, "Before " + lbl + " Active List:");
             dumpVoyages(originalActiveSchedule);
-            logger.log(Level.INFO, "After " + lbl + " Active List:");
-            dumpVoyages(activeScheduleNow);
+            logger.log(Level.FINE, "After " + lbl + " Active List:");
+            if ( logger.isLoggable(Level.FINE)) {
+                dumpVoyages(activeScheduleNow);
+            }
         }
     }
 
     private void dumpVoyages(Collection<Voyage> schedule) {
         for( Voyage v: schedule ) {
-            logger.log(Level.INFO, "Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate());
+            logger.log(Level.FINE, "Master Schedule Voyage:" + v.getId() + " departure:" + v.getSailDateObject() + " arrival:" + v.getArrivalDate());
         }
     }
 

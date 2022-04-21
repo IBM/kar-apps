@@ -93,7 +93,6 @@ public class OrderActor extends BaseActor {
    @Remote
    public Kar.Actors.TailCall createOrder(JsonObject message) {
       try {
-         logger.log(Level.INFO, "OrderActor.createOrder() - orderId:" + getId() + " message:", message);
          // Java wrapper around Json payload
          order = new Order(message);
          // Call Voyage actor to book voyage for this order. This call also

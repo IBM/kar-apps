@@ -80,8 +80,8 @@ public class Order {
         if ( jo.containsKey(Constants.ORDER_DATE_KEY)) {
             this.date = jo.getString(Constants.ORDER_DATE_KEY);
         }
-        if ( jo.containsKey(Constants.BOOKING_STATUS_KEY)) {
-            this.bookingFailed = jo.getBoolean(Constants.BOOKING_STATUS_KEY);
+        if ( jo.containsKey(Constants.BOOKING_FAILED_KEY)) {
+            this.bookingFailed = jo.getBoolean(Constants.BOOKING_FAILED_KEY);
         }
         if ( jo.containsKey(Constants.ORDER_SPOILT_KEY)) {
             this.spoilt = jo.getBoolean(Constants.ORDER_SPOILT_KEY);
@@ -221,6 +221,7 @@ public class Order {
                 add(Constants.ORDER_CUSTOMER_ID_KEY, getCustomerId()).
                 add(Constants.ORDER_STATUS_KEY, getStatus()).
                 add(Constants.ORDER_DATE_KEY, getDate()).
+                add(Constants.BOOKING_FAILED_KEY, isBookingFailed()).
                 add(Constants.ORDER_SPOILT_KEY, isSpoilt());
         if ( getDepot() != null) {
             orderBuilder.add(Constants.DEPOT_KEY, getDepot());

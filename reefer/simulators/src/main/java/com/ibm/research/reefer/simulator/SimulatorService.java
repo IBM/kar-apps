@@ -17,7 +17,9 @@
 package com.ibm.research.reefer.simulator;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -47,7 +49,7 @@ import com.ibm.research.kar.reefer.common.ScheduleService;
 public class SimulatorService {
 
   private static Map<String, JsonValue> persistentData;
-   private static ActorRef aref = Kar.Actors.ref("simhelper", "simservice");
+  private static ActorRef aref = Kar.Actors.ref("simhelper", "simservice");
   public final static AtomicInteger unitdelay = new AtomicInteger(0);
   public final static AtomicInteger shipthreadcount = new AtomicInteger(0);
   public final static AtomicBoolean reeferRestRunning = new AtomicBoolean(true);
@@ -61,6 +63,7 @@ public class SimulatorService {
   public final static AtomicInteger reeferupdates = new AtomicInteger(0);
   public final static Map<String, FutureVoyage> voyageFreeCap = new HashMap<String, FutureVoyage>();
   public final static AtomicInteger numberofroutes = new AtomicInteger(0);
+  public static Set<String> outstandingCorrids;
   private Thread shipthread;
   private Thread orderthread;
   private Thread reeferthread;
@@ -105,6 +108,7 @@ public class SimulatorService {
 
   // constructor
   public SimulatorService() {
+    outstandingCorrids = ConcurrentHashMap.newKeySet();
   }
 
   public JsonValue toggleReeferRest() {
@@ -453,23 +457,28 @@ public class SimulatorService {
     }
   }
   private boolean updateBooked(OutstandingOrder OO, String corrId) {
-    if (OO.getOOCorrId().equals(corrId) && OO.getOOStatus().equals(OO.accepted)) {
+    if (outstandingCorrids.contains(corrId)) {
+      if (!OO.getOOCorrId().equals(corrId) || !OO.getOOStatus().equals(OO.accepted)) {
+        logger.warning(String.format("simulator updateBooked(): out-of-order update for %s,%s with value=%s corrId=%s",
+                                     OO.getOOCorrId(),OO.getOOStatus(),OO.booked, corrId));
+      }
       OO.setOOStatus(OO.booked);
-      // notify ordersubthread that order completed 
+      outstandingCorrids.remove(OO.getOOCorrId());
+      // notify ordersubthread that order completed
       synchronized (OO) {
         OO.notify();
       }
       return true;
     }
     else {
-      logger.warning(String.format("simulator updateBooked(): invalid update for %s,%s with value=%s corrId=%s",
-              OO.getOOCorrId(),OO.getOOStatus(),OO.booked, corrId));
+      logger.warning(String.format("simulator updateBooked(): corrId=%s not in outstanding orders", corrId));
       return false;
     }
   }
   private void updateFailed(OutstandingOrder OO, String corrId, String status) {
     // notify ordersubthread that order is finito 
-    synchronized (OO) {
+      outstandingCorrids.remove(OO.getOOCorrId());
+      synchronized (OO) {
       OO.notify();
     }
   }
@@ -507,11 +516,10 @@ public class SimulatorService {
           logger.fine("simulator: order "+corrId+" booked");
         }
       } else if (status.equalsIgnoreCase("failed")) {
-        // check if corrId is for older order that was successfully processed order
-        int currseq = ((JsonNumber)get(Json.createValue(OO.persistKey))).intValue();
-        String orderseq = corrId.substring(1);
-        if ( Integer.parseInt(orderseq) < currseq - 3 ) {
-          logger.warning("simulator: spurious order failure reported for "+corrId);
+        // check if corrId is still outstanding
+        if (!outstandingCorrids.contains(corrId)) {
+          int currseq = ((JsonNumber)get(Json.createValue(OO.persistKey))).intValue();
+          logger.severe("simulator: possibly spurious order failure reported for "+corrId+" because: "+((JsonObject) reply).getString("reason"));
         }
         else {
           SimulatorService.os.addFailed();
@@ -660,7 +668,7 @@ public class SimulatorService {
     return rt;
   }
 
-  // failure target in units of per second, maximum = 10/second
+  // failure target in units of 0.01%
   public JsonValue setFailureTarget(JsonValue value) {
     JsonNumber newval;
     if (JsonValue.ValueType.OBJECT == value.getValueType()) {

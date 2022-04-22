@@ -82,6 +82,10 @@ public class OrderSubThread extends Thread {
       else {
         OO = SimulatorService.OO_2;
       }
+      if (logger.isLoggable(Level.FINE)) {
+        logger.info(
+                    "ordersubthread"+tnum+": started threadid=" + Thread.currentThread().getId() + " ... soft HORN");
+      }
       // day end time is 98% of unit delay
       dayEndTime = System.currentTimeMillis() + 980 * SimulatorService.unitdelay.intValue();
       List<String> keyList;
@@ -106,12 +110,11 @@ public class OrderSubThread extends Thread {
           break;
         }
         if (entry.getOrderSize() > 0) {
-          if (logger.isLoggable(Level.FINE)) {
-            logger.fine(String.format("ordersubthread%d: create order size=%d for %s", tnum ,entry.getOrderSize(), voyage));
-          }
           JsonValue sid = SimulatorService.incrAndGet(Json.createValue(OO.persistKey));
           String simSequenceID = String.format("%1d%d",tnum,((JsonNumber)sid).intValue()); //SimulatorService.incrAndGet(Json.createValue(OO.persistKey)));
-//          System.out.println("OrderSubThread ---------------- threadId:"+Thread.currentThread().getId()+" tnum:"+tnum+" simSequenceID:"+simSequenceID+" sid:"+sid+" OO.hashCode:"+OO.hashCode());
+          if (logger.isLoggable(Level.FINE)) {
+            logger.fine(String.format("ordersubthread%d: create order corrId %s for %s", tnum, simSequenceID, voyage));
+          }
           JsonObject order = Json.createObjectBuilder().add("voyageId", voyage)
                   .add("customerId", "simulator").add("product", "pseudoBanana")
                   .add("productQty", entry.getOrderSize())
@@ -119,21 +122,32 @@ public class OrderSubThread extends Thread {
                   build();
           long ordersnap = System.nanoTime();
           OO.setOO(simSequenceID, ordersnap, OO.pending, voyage);
+          boolean interrupted = false;
           try {
             Kar.Services.post(Constants.REEFERSERVICE, "orders", order);
-            // increment counts of orders submitted
+            // increment counts of orders submitted and save new order in set
             ordersDoneToday.incrementAndGet();
             threadOrdersDone++;
+            SimulatorService.outstandingCorrids.add(simSequenceID);
             // wait for order async completion message
             synchronized (OO) {
               try {
-                OO.wait(30*1000 + Constants.ORDER_TIMEOUT_SECS);
-              } catch( InterruptedException e) {}
+                OO.wait(1000 * (30 + Constants.ORDER_TIMEOUT_SECS));
+              } catch( InterruptedException e) {
+                  logger.warning("ordersubthread"+tnum+": interrupted while waiting for order "+simSequenceID+" completion");
+                  interrupted = true;
+              }
+            }
+            if (!interrupted && SimulatorService.outstandingCorrids.contains(OO.getOOCorrId())) {
+                logger.severe("ordersubthread"+tnum+": Order corrId "+OO.getOOCorrId()+" timed out");
+                SimulatorService.os.addFailed();
+                SimulatorService.outstandingCorrids.remove(OO.getOOCorrId());
             }
             int otime = (int) ((System.nanoTime() - ordersnap) / 1000000);
             totalOrderTime += otime;
           } catch (Exception e) {
-            logger.severe(String.format("ordersubthread%d: error posting order %s correlationId", tnum, e.toString(), simSequenceID));
+            logger.severe(String.format("ordersubthread%d: error posting order %s correlationId %s", tnum, e.toString(), simSequenceID));
+            e.printStackTrace();
             ordersDoneToday.incrementAndGet();
             threadOrdersDone++;
           }
@@ -167,8 +181,13 @@ public class OrderSubThread extends Thread {
         }
       }
      }
-    } catch (Throwable e) {
+    }
+    catch (InterruptedException e) {
       // expected ... terminate subthread when it is interrupted
+    }
+    catch (Throwable e) {
+      logger.warning("ordersubthread"+tnum+": " + e);
+      e.printStackTrace();
     }
   }
 }

@@ -112,7 +112,7 @@ public class OrderThread extends Thread {
             if (ordersDoneToday.get() < ordersExpectedToday) {
               SimulatorService.os.addMissed(ordersExpectedToday - ordersDoneToday.get());
               logger.warning("orderthread: " + ordersDoneToday.get() + " of " + ordersExpectedToday
-                      + " completed yesterday");
+                      + " submitted yesterday");
             }
             if (logger.isLoggable(Level.FINE)) {
               logger.fine("orderthread: new day = " + date.toString());

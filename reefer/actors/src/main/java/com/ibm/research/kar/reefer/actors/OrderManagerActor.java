@@ -98,9 +98,10 @@ public class OrderManagerActor extends BaseActor {
          Order activeOrder = new Order(activeOrders.get(order.getId()));
          // ignore rollback if order has been previously booked successfully
          if ( activeOrder.getStatus().equals( Order.OrderStatus.BOOKED.name()) || activeOrder.getStatus().equals( Order.OrderStatus.INTRANSIT.name())) {
-            logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " has already been booked - rollback is not possible - ignoring");
+            logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " has already been booked or is in transit- rollback is not possible - ignoring - status:"+activeOrder.getStatus());
             return;
          }
+         logger.warning("OrderManagerActor.orderRollback - Order: " + order.getId() + " corrId: "+order.getCorrelationId()+" timed out -- initiating rollback");
          Actors.Builder.instance().target(ReeferAppConfig.VoyageActorType, order.getVoyageId()).
                     method("rollbackOrder").arg(order.getAsJsonObject()).tell();
          activeOrders.remove(order.getId());

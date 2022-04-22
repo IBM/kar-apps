@@ -136,10 +136,15 @@ public class ReeferThread extends Thread {
                             }
 
                             updatesPerDay = SimulatorService.reeferupdates.get();
+                            // handle edge case
                             if (1 > reefersToBreak / updatesPerDay) {
                                 updatesPerDay = reefersToBreak;
                             }
                             anomaliesPerUpdate = reefersToBreak / updatesPerDay;
+                            // limit anomalies per update
+                            if (anomaliesPerUpdate > 10) {
+                                anomaliesPerUpdate = 10;
+                            }
                             if (0 == anomaliesPerUpdate && 0 < reefersToBreak) {
                                 anomaliesPerUpdate = 1;
                             }
@@ -185,7 +190,7 @@ public class ReeferThread extends Thread {
                     long timeRemaining = dayEndTime - System.currentTimeMillis();
                     if (updatesToDo <= 0) {
                         // wait for thread interrupt
-                        timeToSleep = SimulatorService.unitdelay.intValue();
+                        timeToSleep = SimulatorService.unitdelay.intValue()*1000;
                     }
                     else {
                         // assuming each anomaly takes 1ms, want (timeToSleep + anomaliesPerUpdate) * updatesToDo = timeRemaining
@@ -193,7 +198,7 @@ public class ReeferThread extends Thread {
                     }
                     if (timeToSleep < 10) {
                         // give up on today and wait for interrupt
-                        timeToSleep = SimulatorService.unitdelay.intValue();
+                        timeToSleep = SimulatorService.unitdelay.intValue()*1000;
                     }
                     try {
                         Thread.sleep(timeToSleep);

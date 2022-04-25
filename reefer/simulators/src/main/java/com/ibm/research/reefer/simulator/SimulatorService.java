@@ -17,11 +17,11 @@
 package com.ibm.research.reefer.simulator;
 
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -36,7 +36,6 @@ import javax.json.JsonValue;
 import com.ibm.research.kar.Kar;
 import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
-import com.ibm.research.kar.reefer.common.ScheduleService;
 
 
 /**
@@ -55,6 +54,7 @@ public class SimulatorService {
   public final static AtomicBoolean reeferRestRunning = new AtomicBoolean(true);
   public final static AtomicInteger ordertarget = new AtomicInteger(0);
   public final static AtomicInteger orderthreadcount = new AtomicInteger(0);
+  public final static AtomicIntegerArray suborderthreadcounts = new AtomicIntegerArray(2);
   public final static AtomicInteger orderwindow = new AtomicInteger(0);
   public final static AtomicInteger orderupdates = new AtomicInteger(0);
   public final static AtomicReference<JsonValue> currentDate = new AtomicReference<JsonValue>();
@@ -63,7 +63,8 @@ public class SimulatorService {
   public final static AtomicInteger reeferupdates = new AtomicInteger(0);
   public final static Map<String, FutureVoyage> voyageFreeCap = new HashMap<String, FutureVoyage>();
   public final static AtomicInteger numberofroutes = new AtomicInteger(0);
-  public static Set<String> outstandingCorrids;
+  public final static Map<String,Long> outstandingOrders = new ConcurrentHashMap<String,Long>();
+  public final static AtomicLong daystarttime = new AtomicLong(0);
   private Thread shipthread;
   private Thread orderthread;
   private Thread reeferthread;
@@ -108,7 +109,6 @@ public class SimulatorService {
 
   // constructor
   public SimulatorService() {
-    outstandingCorrids = ConcurrentHashMap.newKeySet();
   }
 
   public JsonValue toggleReeferRest() {
@@ -220,7 +220,7 @@ public class SimulatorService {
       startShipThread();
 
       // get persistent value of ordertarget
-      JsonNumber ot = (JsonNumber) this.getOrInit(Json.createValue("ordertarget"));
+      JsonNumber ot = (JsonNumber) getOrInit(Json.createValue("ordertarget"));
       ordertarget.set(ot.intValue());
       // if auto order enabled, start that thread too
       if (0 < ordertarget.intValue()) {
@@ -247,7 +247,7 @@ public class SimulatorService {
       if (0 == unitdelay.intValue() && 0 == shipthreadcount.get() &&
               0 == orderthreadcount.get() && 0 == reeferthreadcount.get()) {
         // get persistent value of ordertarget
-        JsonNumber ot = (JsonNumber) this.getOrInit(Json.createValue("ordertarget"));
+        JsonNumber ot = (JsonNumber) getOrInit(Json.createValue("ordertarget"));
         ordertarget.set(ot.intValue());
         startShipThread();
         if (0 < ordertarget.intValue()) {
@@ -338,7 +338,7 @@ public class SimulatorService {
   }
 
   public JsonNumber getOrderUpdates() {
-    JsonNumber ou = (JsonNumber) this.getOrInit(Json.createValue("orderupdates"));
+    JsonNumber ou = (JsonNumber) getOrInit(Json.createValue("orderupdates"));
     orderupdates.set(ou.intValue());
     return ou;
   }
@@ -353,7 +353,7 @@ public class SimulatorService {
     newval = newval.intValue() > 1 ? newval : (JsonNumber) Json.createValue(1);
     newval = newval.intValue() < 30 ? newval : (JsonNumber) Json.createValue(30);
     orderupdates.set(newval.intValue());
-    this.set(Json.createValue("orderupdates"), newval);
+    set(Json.createValue("orderupdates"), newval);
     if (logger.isLoggable(Level.INFO)) {
       logger.info("simulator: orderupdates set=" + newval.intValue());
     }
@@ -361,7 +361,7 @@ public class SimulatorService {
   }
 
   public JsonNumber getOrderWindow() {
-    JsonNumber ow = (JsonNumber) this.getOrInit(Json.createValue("orderwindow"));
+    JsonNumber ow = (JsonNumber) getOrInit(Json.createValue("orderwindow"));
     orderwindow.set(ow.intValue());
     return ow;
   }
@@ -376,7 +376,7 @@ public class SimulatorService {
     newval = newval.intValue() > 1 ? newval : (JsonNumber) Json.createValue(1);
     newval = newval.intValue() < 56 ? newval : (JsonNumber) Json.createValue(56);
     orderwindow.set(newval.intValue());
-    this.set(Json.createValue("orderwindow"), newval);
+    set(Json.createValue("orderwindow"), newval);
     if (logger.isLoggable(Level.INFO)) {
       logger.info("simulator: orderwindow set=" + newval.intValue());
     }
@@ -384,7 +384,7 @@ public class SimulatorService {
   }
 
   public JsonNumber getOrderTarget() {
-    JsonNumber ot = (JsonNumber) this.getOrInit(Json.createValue("ordertarget"));
+    JsonNumber ot = (JsonNumber) getOrInit(Json.createValue("ordertarget"));
     ordertarget.set(ot.intValue());
     return ot;
   }
@@ -409,7 +409,7 @@ public class SimulatorService {
           }
         }
         ordertarget.set(newval.intValue());
-        this.set(Json.createValue("ordertarget"), newval);
+        set(Json.createValue("ordertarget"), newval);
         if (logger.isLoggable(Level.INFO)) {
           logger.info("simulator: ordertarget set=" + newval.intValue());
         }
@@ -419,7 +419,7 @@ public class SimulatorService {
       // this is a request to start auto order mode
       // save new Target
       ordertarget.set(newval.intValue());
-      this.set(Json.createValue("ordertarget"), newval);
+      set(Json.createValue("ordertarget"), newval);
 
       // start the Order thread if no thread already running and unitdelay>0
       if (0 == orderthreadcount.get() && 0 < unitdelay.intValue()) {
@@ -452,21 +452,26 @@ public class SimulatorService {
       OO.setOOStatus(OO.accepted);
     }
     else {
-      logger.warning(String.format("simulator updateAccepted: invalid update for %s,%s with value=%s corrId=%s",
+      if (!outstandingOrders.containsKey(corrId)) {
+        logger.warning(String.format("simulator updateAccepted: invalid update for %s,%s with value=%s corrId=%s",
               OO.getOOCorrId(),OO.getOOStatus(),OO.accepted, corrId));
+      }
     }
   }
   private boolean updateBooked(OutstandingOrder OO, String corrId) {
-    if (outstandingCorrids.contains(corrId)) {
-      if (!OO.getOOCorrId().equals(corrId) || !OO.getOOStatus().equals(OO.accepted)) {
+    if (outstandingOrders.containsKey(corrId)) {
+      if (OO.getOOCorrId().equals(corrId)) {
+        // remove key so ordersubthread does not think timed out
+        outstandingOrders.remove(OO.getOOCorrId());
+        // notify ordersubthread that order completed
+        synchronized (OO) {
+          OO.notify();
+        }
+        OO.setOOStatus(OO.booked);
+      }
+      else {
         logger.warning(String.format("simulator updateBooked(): out-of-order update for %s,%s with value=%s corrId=%s",
                                      OO.getOOCorrId(),OO.getOOStatus(),OO.booked, corrId));
-      }
-      OO.setOOStatus(OO.booked);
-      outstandingCorrids.remove(OO.getOOCorrId());
-      // notify ordersubthread that order completed
-      synchronized (OO) {
-        OO.notify();
       }
       return true;
     }
@@ -477,7 +482,7 @@ public class SimulatorService {
   }
   private void updateFailed(OutstandingOrder OO, String corrId, String status) {
     // notify ordersubthread that order is finito 
-      outstandingCorrids.remove(OO.getOOCorrId());
+      outstandingOrders.remove(OO.getOOCorrId());
       synchronized (OO) {
       OO.notify();
     }
@@ -500,25 +505,26 @@ public class SimulatorService {
 
       if (status.equalsIgnoreCase("accepted")) {
         String orderId = ((JsonObject) reply).getString("orderId");
-        logger.fine(String.format("simulator: order %s / %s accepted", orderId, corrId));
+        logger.fine(String.format("simulator: order %s corrid %s accepted", orderId, corrId));
         updateAccepted(OO, corrId);
       } else if (status.equalsIgnoreCase("booked")) {
         String orderId = ((JsonObject) reply).getString("orderId");
-        int otime = (int) ((System.nanoTime() - OO.getOOStartTime()) / 1000000);
+        int otime = 0;
+        if (outstandingOrders.containsKey(corrId)) {
+          otime = (int) ((System.nanoTime() - outstandingOrders.get(corrId)) / 1000000);
+        }
         if (updateBooked(OO, corrId)) {
           if (SimulatorService.os.addSuccessful(otime)) {
             // orderstats indicates an outlier
-            String voyage = OO.getOOVoyage();
-            String corrID = OO.getOOCorrId();
+//            String voyage = OO.getOOVoyage();
             logger.warning(String.format("simulator: order latency outlier orderId=%s corrId=%s ===> %d",orderId, corrId, otime));
           }
-          logger.fine(String.format("simulator: order %s / %s booked", orderId, corrId));
-          logger.fine("simulator: order "+corrId+" booked");
+          logger.fine(String.format("simulator: order %s corrid %s booked", orderId, corrId));
         }
       } else if (status.equalsIgnoreCase("failed")) {
         // check if corrId is still outstanding
-        if (!outstandingCorrids.contains(corrId)) {
-          int currseq = ((JsonNumber)get(Json.createValue(OO.persistKey))).intValue();
+        if (!outstandingOrders.containsKey(corrId)) {
+//          int currseq = ((JsonNumber)get(Json.createValue(OO.persistKey))).intValue();
           logger.severe("simulator: possibly spurious order failure reported for "+corrId+" because: "+((JsonObject) reply).getString("reason"));
         }
         else {
@@ -545,7 +551,7 @@ public class SimulatorService {
   // wake up order and reefer threads if sleeping
   public void newDay() {
     if (null != orderthread) {
-//      orderthread.interrupt();
+      orderthread.interrupt();
     }
     if (null != reeferthread) {
       reeferthread.interrupt();
@@ -663,7 +669,7 @@ public class SimulatorService {
   }
 
   public JsonNumber getFailureTarget() {
-    JsonNumber rt = (JsonNumber) this.getOrInit(Json.createValue("failuretarget"));
+    JsonNumber rt = (JsonNumber) getOrInit(Json.createValue("failuretarget"));
     failuretarget.set(rt.intValue());
     return rt;
   }
@@ -689,7 +695,7 @@ public class SimulatorService {
           }
         }
         failuretarget.set(newval.intValue());
-        this.set(Json.createValue("failuretarget"), newval);
+        set(Json.createValue("failuretarget"), newval);
         if (logger.isLoggable(Level.INFO)) {
           logger.info("simulator: failuretarget set=" + newval.intValue());
         }
@@ -699,7 +705,7 @@ public class SimulatorService {
       // this is a request to start auto Reefer mode
       // save new Target
       failuretarget.set(newval.intValue());
-      this.set(Json.createValue("failuretarget"), newval);
+      set(Json.createValue("failuretarget"), newval);
 
       // start the reefer thread if no thread already running and unitdelay>0
       if (0 == reeferthreadcount.get() && 0 < unitdelay.intValue()) {
@@ -717,7 +723,7 @@ public class SimulatorService {
   }
 
   public JsonNumber getReeferUpdates() {
-    JsonNumber ru = (JsonNumber) this.getOrInit(Json.createValue("reeferupdates"));
+    JsonNumber ru = (JsonNumber) getOrInit(Json.createValue("reeferupdates"));
     reeferupdates.set(ru.intValue());
     return ru;
   }
@@ -732,7 +738,7 @@ public class SimulatorService {
     newval = newval.intValue() > 1 ? newval : (JsonNumber) Json.createValue(1);
     newval = newval.intValue() < 31 ? newval : (JsonNumber) Json.createValue(30);
     reeferupdates.set(newval.intValue());
-    this.set(Json.createValue("reeferupdates"), newval);
+    set(Json.createValue("reeferupdates"), newval);
     if (logger.isLoggable(Level.INFO)) {
       logger.info("simulator: reeferupdates set=" + newval.intValue());
     }

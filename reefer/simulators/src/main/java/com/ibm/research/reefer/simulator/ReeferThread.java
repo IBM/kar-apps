@@ -157,7 +157,7 @@ public class ReeferThread extends Thread {
                         anomaliesExpectedYesterday = reefersToBreak = anomaliesPerUpdate * updatesPerDay;
                         logger.info("reeferthread: reefersToBreak " + reefersToBreak + " anomaliesPerUpdate "+ anomaliesPerUpdate);
                         // day end time is 98% of unit delay
-                        dayEndTime = System.currentTimeMillis() + 980 * SimulatorService.unitdelay.intValue();
+                        dayEndTime = SimulatorService.daystarttime.get() + 980 * SimulatorService.unitdelay.intValue();
                     }
 
                     // if not done for the day, generate anomaliesPerUpdate more failures

@@ -133,6 +133,7 @@ public class ShipThread extends Thread {
                         logger.warning("shipthread: time advance call failed - cause:" + e.getMessage());
                     }
                     SimulatorService.currentDate.set(currentDate);
+                    SimulatorService.daystarttime.set(System.currentTimeMillis());
 
                     if (logger.isLoggable(Level.INFO)) {
                         logger.info("shipthread: New time ======> " + currentDate.toString());
@@ -228,20 +229,6 @@ public class ShipThread extends Thread {
             nextevent++;
             if (events_per_day == nextevent) {
                 nextevent = 0;
-/*
-                // tell GUI to update active voyages
-                snapshot = System.nanoTime();
-
-                try {
-                    Kar.Services.post(Constants.REEFERSERVICE, "voyage/updateGui", currentDate);
-                } catch (Exception e) {
-                    logger.warning("shipthread: updateGUI failed - cause:" + e.getMessage());
-                }
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("shipthread: updateGui took " + (System.nanoTime() - snapshot) / 1000000 + " ms");
-                }
-
- */
             }
 
             try {

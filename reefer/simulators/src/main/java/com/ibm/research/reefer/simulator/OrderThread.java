@@ -36,6 +36,7 @@ public class OrderThread extends Thread {
   boolean oneshot = false;
   int threadloops = 0;
   int ordertarget;
+  int daylength;
   JsonValue currentDate;
   JsonValue futureVoyages;
   Instant today;
@@ -47,11 +48,11 @@ public class OrderThread extends Thread {
   long dayEndTime;
   long totalOrderTime;
   boolean startup = true;
-  boolean woke_from_join = false;
   private static final AtomicInteger ordersDoneToday = new AtomicInteger();
   private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(OrderThread.class.getName());
   private Thread ordersubthread1 = null;
   private Thread ordersubthread2 = null;
+  private int threadswanted = 0;
 
 
   public void run() {
@@ -60,11 +61,28 @@ public class OrderThread extends Thread {
       oneshot = true;
     }
 
+    // check for threads leftover from a hot method replace
+    Set<Thread> threadset = Thread.getAllStackTraces().keySet();
+    for (Thread thread : threadset) {
+      if (thread.getName().equals("orderthread")) {
+        logger.warning("orderthread: killing leftover order threadid=" + thread.getId());
+        thread.interrupt();
+      }
+    }
+
     Thread.currentThread().setName("orderthread");
     SimulatorService.orderthreadcount.incrementAndGet();
     if (logger.isLoggable(Level.INFO)) {
       logger.info(
               "orderthread: started threadid=" + Thread.currentThread().getId() + " ... LOUD HORN");
+    }
+
+    // check for subthreads still running
+    if ( SimulatorService.suborderthreadcounts.get(1-1) != 0 || SimulatorService.suborderthreadcounts.get(2-1) != 0) {
+      logger.warning(String.format("orderthread: subthread counts = %d and %d",
+              SimulatorService.suborderthreadcounts.get(1-1), SimulatorService.suborderthreadcounts.get(2-1) ));
+      SimulatorService.orderthreadcount.decrementAndGet();
+      return;
     }
 
     if (SimulatorService.reeferRestRunning.get()) {
@@ -87,8 +105,8 @@ public class OrderThread extends Thread {
     }
 
     // Order thread can be called as oneshot or stay free-running
-    // if free-running it is interrupted on each new day ...
-    //   ... interrupt subthreads if still around (this should not happpen)
+    // if free-running it is interrupted on each new day
+    // one or two sub-threads do the ordering. They terminate when orders are completed or are interrupted on new day if not
     while (running) {
       try {
 
@@ -98,17 +116,17 @@ public class OrderThread extends Thread {
         } else {
 
           // If new day ...
-          // interrupt sub threads if running
           // Count any missed orders from yesterday
           // pull fresh list of voyages within the order window
           // compute the total order capacity, "ordercap" to be made today for each voyage ...
           // ... and the ordersize to use for individual orders
           // set the loop count for max number of order groups to make for each voyage, "updatesPerDay"
+          // spawn sub-threads
           JsonValue date = (JsonValue) SimulatorService.currentDate.get();
+          daylength = SimulatorService.unitdelay.intValue();
           if (startup || oneshot || !currentDate.equals(date)) {
-            dayEndTime = System.currentTimeMillis() + 1000 * SimulatorService.unitdelay.intValue();
-            logger.fine("OrderThread: newday! ordersExpectedToday:"+ordersExpectedToday+
-                    " ordersDoneToday:"+ordersDoneToday.get());
+            dayEndTime = System.currentTimeMillis() + 1000 * daylength;
+            logger.fine("OrderThread: newday! ordersExpectedToday:"+ordersExpectedToday+" ordersDoneToday:"+ordersDoneToday.get());
             if (ordersDoneToday.get() < ordersExpectedToday) {
               SimulatorService.os.addMissed(ordersExpectedToday - ordersDoneToday.get());
               logger.warning("orderthread: " + ordersDoneToday.get() + " of " + ordersExpectedToday
@@ -201,108 +219,74 @@ public class OrderThread extends Thread {
                 }
               }
             }
-            if (logger.isLoggable(Level.FINE)) {
-              logger.fine("orderthread: dumping voyageFreeCap MAP ----------");
-              SimulatorService.voyageFreeCap.forEach(
-                      (key, value) -> logger.fine("orderthread: " + key + " " + value.toString()));
-            }
-            ordersExpectedToday = orderGroupsPerDay * SimulatorService.voyageFreeCap.keySet().size();
           }
+//          if (logger.isLoggable(Level.FINE)) {
+//            logger.fine("orderthread: dumping voyageFreeCap MAP ----------");
+//            SimulatorService.voyageFreeCap.forEach(
+//                    (key, value) -> logger.fine("orderthread: " + key + " " + value.toString()));
+//          }
+          ordersExpectedToday = orderGroupsPerDay * SimulatorService.voyageFreeCap.keySet().size();
 
-          // Create orders in one or two sub threads
           // Use only one thread when doing one order for each target voyage
-          // When doing oneshots, order creation may complete before end of day and this code called again
-          if (ordersExpectedToday > ordersDoneToday.get()) {
-            try {
-              if (orderGroupsPerDay == 1) {
-                  (ordersubthread1 = new OrderSubThread(1, updatesPerDay, ordersDoneToday, oneshot)).start();
-                ordersubthread1.join();
-              }
-              else {
-                  (ordersubthread1 = new OrderSubThread(1, updatesPerDay, ordersDoneToday, oneshot)).start();
-                  (ordersubthread2 = new OrderSubThread(2, updatesPerDay, ordersDoneToday, oneshot)).start();
-                ordersubthread1.join();
-                ordersubthread2.join();
-              }
-            } catch (InterruptedException e) {
-              woke_from_join = true;
-            }
-
-            // join may have been interrupted by a new day
-            // if so, interrupt unterminated sub threads
-            if ( woke_from_join ) {
-              int threadWaiting = 0;
-              if (! "TERMINATED".equals(ordersubthread1.getState().toString())) {
-                ordersubthread1.interrupt();
-                threadWaiting = 1;
-              }
-              if (ordersubthread2 != null &&
-                  ! "TERMINATED".equals(ordersubthread2.getState().toString())) {
-                ordersubthread2.interrupt();
-                threadWaiting += 2;
-              }
-              try {
-                if (0 < (threadWaiting & 1)) {
-                  ordersubthread1.join();
-                }
-                if (0 < (threadWaiting & 2)) {
-                  ordersubthread2.join();
-                }
-              } catch (InterruptedException e) {
-                // hmmm, not sure if this should happen
-                woke_from_join = true;
-              }
-            }
-            ordersubthread1 = null;
-            ordersubthread2 = null;
+          if (orderGroupsPerDay == 1) {
+            threadswanted = 1;
+          } else {
+            threadswanted = 3;  // binary 11
           }
+        } // End of "new day" processing
+
+        // Create sub-threads if needed and if available for creation
+        if ( ((1 & threadswanted) != 0) && SimulatorService.suborderthreadcounts.get(1-1) == 0) {
+          logger.fine("orderthread: create subthread1");
+          (ordersubthread1 = new OrderSubThread(1, updatesPerDay, ordersDoneToday, oneshot)).start();
+          threadswanted ^= 1;
+        }
+        if ( ((2 & threadswanted) != 0) && SimulatorService.suborderthreadcounts.get(2-1) == 0) {
+          logger.fine("orderthread: create subthread2");
+          (ordersubthread2 = new OrderSubThread(2, updatesPerDay, ordersDoneToday, oneshot)).start();
+          threadswanted ^= 2;
         }
 
-        // sleep to get in synch with new day interrupt
-        // don't sleep if this was a oneshot order command or the thread was interrupted in join
-        // if running standalone, without rest service, sleep for a full day
-        if (!oneshot || !woke_from_join) {
-          try {
-            long timeToSleep = 10;
-            if (!SimulatorService.reeferRestRunning.get()) {
-              timeToSleep = 1000 * SimulatorService.unitdelay.intValue();
-            }
-            Thread.sleep(timeToSleep);
-          } catch (InterruptedException e) {
-            // this is expected
-          }
+        // if oneshot, return if subthread created
+        if (oneshot && threadswanted == 0) {
+          SimulatorService.orderthreadcount.decrementAndGet();
+          return;
         }
 
-        woke_from_join = false;
-        // check if auto mode should be turned off
-        synchronized (SimulatorService.ordertarget) {
-          if (0 == SimulatorService.ordertarget.intValue()
-                  || 0 == SimulatorService.unitdelay.intValue() || oneshot) {
-            if (logger.isLoggable(Level.INFO)) {
-              logger.info("orderthread: Stopping Thread " + Thread.currentThread().getId()
-                      + " LOUD HORN");
-            }
-            running = false;
+        // short sleeps if waiting to start sub-threads, else a full day waiting for ship-thread signal
+        boolean interrupted = false;
+        long timeToSleep = 1000 * daylength;
+        if ( threadswanted != 0) {
+          // short sleep
+          timeToSleep = 10;
+        }
+        try {
+          Thread.sleep(timeToSleep);
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
 
-            if (0 < SimulatorService.orderthreadcount.decrementAndGet()) {
-              logger.warning("orderthread: we have an extra ship thread running!");
-            }
-
-            // check for threads leftover from a hot method replace
-            Set<Thread> threadset = Thread.getAllStackTraces().keySet();
-            for (Thread thread : threadset) {
-              if (thread.getName().equals("orderthread")
-                      && thread.getId() != Thread.currentThread().getId()) {
-                logger.warning("orderthread: killing leftover order threadid=" + thread.getId());
-                thread.interrupt();
+        // if interrupted, check if auto mode should be turned off
+        if (interrupted) {
+          synchronized (SimulatorService.ordertarget) {
+            if (0 == SimulatorService.ordertarget.intValue()
+                    || 0 == SimulatorService.unitdelay.intValue()) {
+              if (logger.isLoggable(Level.INFO)) {
+                logger.info("orderthread: Stopping Thread " + Thread.currentThread().getId()
+                        + " LOUD HORN");
               }
+              running = false;
+//              if (0 < SimulatorService.orderthreadcount.decrementAndGet()) {
+//                logger.warning("orderthread: we have an extra order thread running!");
+//              }
             }
           }
         }
       } catch (Throwable e) {
-        logger.warning("orderthread: " + e);
+        logger.severe("orderthread: " + e);
         e.printStackTrace();
       }
     }
+    SimulatorService.orderthreadcount.decrementAndGet();
   }
 }

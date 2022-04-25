@@ -339,7 +339,7 @@ public class DepotActor extends BaseActor {
             // with orders.
             int reefersNeeded = ReeferAppConfig.ReeferMaxCapacityValue * emptiesNeeded;
             empties = ReeferAllocator.allocateReefers(reeferMasterInventory, reefersNeeded,
-                    "", voyageId, inventory.available);
+                    "", voyageId, inventory.available,  getId());
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("DepotActor.getEmptyReefersOnExcessInventory()- "+getId()+" Available:"+inventory.available+" ReeferAllocator allocated empties:"+empties.size());
             }
@@ -499,11 +499,13 @@ public class DepotActor extends BaseActor {
             // allocate reefers to the order.
             ReeferAllocationStatus reeferAllocation = allocateReefers(order);
             if ( reeferAllocation.failed() ) {
-                return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
-                        "processReefersBookingResult", handleFailedAllocationAndSaveState(order) );
+                return new Kar.Actors.TailCall( this,
+                        "handleFailedAllocationAndSaveState", order.getAsJsonObject());
              } else {
-                return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
-                        "processReefersBookingResult", handleSuccessfulAllocationAndSaveState(reeferAllocation, order));
+                Inventory inventory = getReeferInventoryCounts();
+                return new Kar.Actors.TailCall( this,
+                        "handleSuccessfulAllocationAndSaveState", reeferAllocation.reefersToJsonArray(),
+                        order.getAsJsonObject(), Json.createValue(inventory.getTotal()), Json.createValue(inventory.getBooked()));
             }
         } catch (Exception e) {
             // undo reefer allocation
@@ -514,25 +516,35 @@ public class DepotActor extends BaseActor {
             return null;
         }
     }
-    private JsonObject handleFailedAllocationAndSaveState(Order order) {
+    @Remote
+    public Kar.Actors.TailCall handleFailedAllocationAndSaveState(JsonObject orderAsJson) {
+        Order order = new Order(orderAsJson);
         order.setMsg("Failed to allocate reefers to order");
         order.setBookingFailed();
-        Set<String> rids = Collections.emptySet();
-        List<ReeferDTO> orderReefers = Collections.emptyList();
-        updateStore(Collections.emptyMap(), reeferMap(orderReefers));
-        return createReply(rids,order.getAsJsonObject(), Constants.FAILED);
+        updateStore(Collections.emptyMap(), reeferMap(Collections.emptyList()));
+        JsonObject reply = createReply(Collections.emptySet(),order.getAsJsonObject(), Constants.FAILED);
+        return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
+                "processReefersBookingResult", reply );
+
     }
-    private JsonObject handleSuccessfulAllocationAndSaveState(ReeferAllocationStatus reeferAllocation, Order order) {
-        List<ReeferDTO> orderReefers = reeferAllocation.getOrderReefersList();
-        // create a set of reefer ids. It will be included in a reply to Voyage actor
-        Set<String>rids = orderReefers.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
+    @Remote
+    public Kar.Actors.TailCall handleSuccessfulAllocationAndSaveState(JsonArray reefers, JsonObject orderAsJson, JsonNumber invSize, JsonNumber bookedCount) {
+        Order order = new Order(orderAsJson);
+        List<ReeferDTO> orderReefers = new LinkedList<>();
+        Set<String> rids = new LinkedHashSet<>();
+        for( JsonValue reeferJson : reefers ) {
+            ReeferDTO reefer = jsonObjectToReeferDTO(reeferJson.asJsonObject());
+            orderReefers.add(reefer);
+            rids.add(String.valueOf(reefer.getId()));
+        }
         // create order to reefers mapping for in-memory cache to reduce latency
         order2ReeferMap.put(order.getId().trim(), rids);
-        Inventory inventory = getReeferInventoryCounts();
-        currentInventorySize = Json.createValue(inventory.getTotal());
-        bookedTotalCount = inventory.getBooked();
+        currentInventorySize = invSize;
+        bookedTotalCount = bookedCount.intValue();
         updateStore(Collections.emptyMap(), reeferMap(orderReefers));
-        return createReply(rids,order.getAsJsonObject(), Constants.OK);
+        JsonObject reply = createReply(rids,order.getAsJsonObject(), Constants.OK);
+        return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
+                "processReefersBookingResult", reply);
     }
     private void logFailure(Order order, Exception e) {
         int actual = 0, bad = 0;
@@ -563,7 +575,7 @@ public class DepotActor extends BaseActor {
         try {
             // allocate enough reefers to cary products in the order
             orderReefers = ReeferAllocator.allocateReefers(reeferMasterInventory, order.getProductQty(),
-                    order.getId(), order.getVoyageId(), currentAvailableReeferCount);
+                    order.getId(), order.getVoyageId(), currentAvailableReeferCount, getId());
             if ( orderReefers == null || orderReefers.isEmpty() ) {
                  allocationStatus = new ReeferAllocationStatus();  // ctor sets internal allocation failure flag
             } else {
@@ -671,7 +683,7 @@ public class DepotActor extends BaseActor {
            }
            ReeferDTO reefer = reeferMasterInventory[reeferId];
            List<ReeferDTO> replacementReeferList = ReeferAllocator.allocateReefers(reeferMasterInventory,
-                   Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId(), getUnallocatedReeferCount());
+                   Constants.REEFER_CAPACITY, reefer.getOrderId(), reefer.getVoyageId(), getUnallocatedReeferCount(), getId());
            if (replacementReeferList.isEmpty()) {
                logger.log(Level.WARNING, "DepotActor.reeferReplace() - depot:"+getId()+" Unable to allocate replacement reefer for " + reeferId);
                return Json.createObjectBuilder().add(Constants.STATUS_KEY, Constants.FAILED).add(Constants.ERROR,"Unable to allocate replacement reefer for " + reeferId).build();
@@ -960,6 +972,17 @@ public class DepotActor extends BaseActor {
         }
         public void setFailed() {
             failed = true;
+        }
+
+        public JsonArray reefersToJsonArray() {
+            if ( !failed ) {
+                JsonArrayBuilder jab = Json.createArrayBuilder();
+                for( ReeferDTO reefer: orderReefersList ) {
+                   jab.add(reeferToJsonObject(reefer));
+                }
+                return jab.build();
+            }
+            return Json.createArrayBuilder().build();
         }
     }
 }

@@ -52,14 +52,14 @@ public class ReeferAllocator {
         return reefers;
     }
 
-    public static List<ReeferDTO> allocateReefers( ReeferDTO[] reeferInventory, int productQuantity, String orderId, String voyageId, int availableReeferCount) {
+    public static List<ReeferDTO> allocateReefers( ReeferDTO[] reeferInventory, int productQuantity, String orderId, String voyageId, int availableReeferCount, String depotId) {
         List<ReeferDTO>  reefers = new ArrayList<>();
         // simple calculation for how many reefers are needed for the order. 
         int howManyReefersNeeded = Double.valueOf(Math.ceil(productQuantity/(double)ReeferAppConfig.ReeferMaxCapacityValue)).intValue();
 
         if ( howManyReefersNeeded > availableReeferCount ) {
-            logger.log(Level.SEVERE,"ReeferAllocator.allocateReefers - not enough reefers in inventory to fill order "+orderId+
-                    " - rejecting request for "+howManyReefersNeeded+" reefers since only " + availableReeferCount+" are available");
+            logger.log(Level.SEVERE,"ReeferAllocator.allocateReefers - not enough reefers in "+depotId+" inventory to fill order "+orderId+
+                    " voyage: "+voyageId+" - rejecting request for "+howManyReefersNeeded+" reefers since only " + availableReeferCount+" are available");
             return reefers;
         }
         try {

@@ -191,32 +191,35 @@ public class OrderManagerActor extends BaseActor {
       }
    }
    @Remote
-   public void handleBooking(JsonObject orderAsJson, JsonObject activeOrder, JsonNumber ordersBookedCount) {
+   public Kar.Actors.TailCall handleBooking(JsonObject orderAsJson, JsonObject activeOrder, JsonNumber ordersBookedCount) {
       Order order = new Order(orderAsJson);
+      Map<String, List<String>> deleteMap = new HashMap<>();
+      Map<String, JsonValue> updateMap = new HashMap<>();
       // check if the booking failed
       if ( order.isBookingFailed()) {
          logger.log(Level.SEVERE, "OrderManagerActor.handleBooking() - orderId: "+order.getId()+" failed - removing from active orders - reason:"+order.getMsg());
          activeOrders.remove(order.getId());
          // delete failed order from persistent store
-         Map<String, List<String>> deleteMap = new HashMap<>();
          deleteMap.put(Constants.ORDERS_KEY, List.of(order.getId()));
-         updateStore(deleteMap, Collections.emptyMap());
       } else if ( Order.pending(activeOrder) ) {
          if ( !bookedOrderList.contains(order) ) {
             bookedOrderList.add(order);
          }
          bookedTotalCount = ordersBookedCount.intValue();
-         Map<String, JsonValue> updateMap = new HashMap<>();
          order.setStatus(Order.OrderStatus.BOOKED.name());
          activeOrders.put(order.getId(), order.getAsJsonObject());
          updateMap.put(order.getId(), order.getAsJsonObject());
-         updateStore(Collections.emptyMap(), updateMap);
       } else {
          logger.log(Level.WARNING, "OrderManagerActor.handleBooking() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY)+" corrId="+order.getCorrelationId()+" orderId:"+order.getId());
          throw new RuntimeException("OrderManagerActor.handleBooking() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY));
       }
-      Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/result", order.getAsJsonObject());
+      return new Kar.Actors.TailCall(Constants.REEFERSERVICE, "/order/booking/result", updateStore(deleteMap, updateMap, order));
    }
+   private JsonObject updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap, Order order) {
+      updateStore(deleteMap, updateMap);
+      return order.getAsJsonObject();
+   }
+
    @Remote
    public void orderDeparted(JsonValue message) {
       try {

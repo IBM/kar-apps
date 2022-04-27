@@ -23,7 +23,7 @@ The Reefer application runtime consists of four separately deployable components
 1. UI server running in OpenLiberty.
 This server hosts an HTTP service to deliver the Angular based Reefer application packaged in multiple javascript bundles.
 
-2. SpringBoot WebAPI server running in OpenLiberty.
+2. SpringBoot WebAPI (REST) server running in OpenLiberty.
 This server hosts a stateless service that processes HTTP requests from clients and pushes GUI state changes to any connected angular front end via Websockets. Its clients are browsers, KAR actors, and Reefer simulators. The REST server can be replicated for fault tolerance and throughput.
 
 3. Actor server running in OpenLiberty.
@@ -149,12 +149,13 @@ When the anomaly generation is disabled, the manual **Create Anomaly** button ca
 - start the reefer application using `IMAGE_PREFIX=quay.io/ibm [kar-apps-install-dir]/reefer/scripts/reefer-compose-start.sh`
 - when the application is ready, point browser at the URL listed for the reefer GUI
 - stop the reefer application using `[kar-apps-install-dir]/reefer/scripts/reefer-compose-stop.sh`
+- stor the KAR runtime using `[kar-install-dir]/scripts/docker-compose-stop.sh`
 
-## Deploying Reefer using rootless podman from the latest reefer release
-- if KAR was previously launched using docker-compose, stop KAR by running `[kar-install-dir]/scripts/docker-compose-stop.sh`
+## Deploying Reefer using rootless podman play kube from the latest reefer release
+- stop the KAR runtime if it is running using `[kar-install-dir]/scripts/docker-compose-stop.sh`
 - start the kar runtime and reefer application using `IMAGE_PREFIX=quay.io/ibm [kar-apps-install-dir]/reefer/scripts/reefer-play-start.sh`
 - when the application is ready, point browser at the URL listed for the reefer GUI
-- stop KAR and the reefer application using `[kar-apps-install-dir]/reefer/scripts/reefer-play-stop.sh`
+- stop KAR runtime and the reefer application using `[kar-apps-install-dir]/reefer/scripts/reefer-play-stop.sh`
 
 ## Deploying Reefer using kind, k3d or docker desktop from latest reefer release
 - See [KAR Deployment Options](https://github.com/IBM/kar/blob/main/docs/kar-deployments.md) for instructions on installing these
@@ -169,13 +170,13 @@ Development can be done with native compilation or docker images.
 Dev images are served via a local image repository. Start one using:
   `[kar-install-dir]/scripts/start-local-registry.sh`
 
-Build the reefer dev images and push them into a local registry:
+Build the reefer dev images and push them into the local registry:
 ```
 cd [kar-apps-install-dir]/reefer
 make reeferImages
 make pushReeferImages
 ```
-Start the application using docker-compose, podman, k3d, docker desktop or kind following the directions above but
+Start the application using docker-compose, podman play kube, k3d, docker desktop or kind following the directions above but
 **without overriding the IMAGE_PREFIX**
 
 ### Native development
@@ -190,10 +191,6 @@ Build java application:
 ```
 cd [kar-apps-install-dir]/reefer
 mvn clean install
-```
-Build actors singleton Docker image:
-```
-KAR_IMAGE_PREFIX=localhost:5000/kar/ make reeferImages
 ```
 
 Start the KAR runtime: `[kar-install-dir]/scripts/docker-compose-start.sh`

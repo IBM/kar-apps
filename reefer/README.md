@@ -16,18 +16,18 @@
 
 # Reefer Application Overview
 
-The application models simplified business processes involved in shipping perishable goods on a ship from origin port to destination port. A broker places an order for a shipment of goods which requires one or more refrigerated (reefer) containers to be on a specific voyage. Land transportation, container loading/unloading, as well as Customs clearance are not considered. To facilitate the transit of goods, the application uses a fleet of ships covering Atlantic and Pacific oceans. Each ship has a different tonnage (reefer cargo capacity) and is assigned to a shipping schedule serving a route between two ports. The itinerary includes departure dates from origin port and arrival dates at the destination port. All reefers have identical physical dimensions and have a maximum holding capacity in terms of product units.
+The application models a simplified business processes involved in shipping perishable goods on a ship from origin port to destination port. The application supports a client broker placing an order for a shipment of goods which requires one or more refrigerated (reefer) containers to be on a specific voyage. Land transportation, container loading/unloading, as well as Customs clearance are not considered. To facilitate the transit of goods, the application uses a fleet of ships covering Atlantic and Pacific oceans. Each ship has a different tonnage (reefer cargo capacity) and is assigned to a shipping schedule serving a route between two ports. The itinerary includes departure dates from origin port and arrival dates at the destination port. All reefers have identical physical dimensions and have a maximum holding capacity in terms of product units.
 
 The Reefer application runtime consists of four separately deployable components.  
 
 1. UI server running in OpenLiberty.
 This server hosts an HTTP service to deliver the Angular based Reefer application packaged in multiple javascript bundles.
 
-2. SpringBoot REST server running in OpenLiberty.
-This server hosts a stateless WebAPI service that processes HTTP requests from clients and pushes GUI state changes to any connected angular front end. Its clients are browsers, KAR actors, and Reefer simulators. The REST server can be replicated for fault tolerance and throughput.
+2. SpringBoot WebAPI server running in OpenLiberty.
+This server hosts a stateless service that processes HTTP requests from clients and pushes GUI state changes to any connected angular front end via Websockets. Its clients are browsers, KAR actors, and Reefer simulators. The REST server can be replicated for fault tolerance and throughput.
 
 3. Actor server running in OpenLiberty.
-This server hosts actor services that implement the Reefer application business logic. For development all actor instances can run in a single actor service. For production actor types can be segregated into different actor services and replicated.
+This server hosts actors that implement the Reefer application business logic. For development all actor instances can run in a single actor service. For production actor types are segregated into two different actor services and replicated.
 
 4. Simulator server running in OpenLiberty.
 This server hosts a single service that implements all simulator drivers.
@@ -49,51 +49,54 @@ improve user experience. The application offers four distinct views
 4. Active Voyage View
 - Shows active voyages with progress updated in real time. Configures and starts/stops the Ship Simulator
 
-### REST Service
+### WebAPI Service
 This Spring Framework service provides an HTTP based, RESTful API to external application clients, internal actor components and simulators.
-Simulators call REST to advance time, fetch current reefer inventory, fetch ship schedule and to get a list of active voyages. 
-REST receives updates from KAR actors and pushes these changes in real time to the GUI using Websockets to
-move ships and change reefer and order counts and totals.
+Simulators call WebAPI to advance time, fetch current reefer inventory, fetch ship schedule, get a list of active voyages, and create new orders.
+WebAPI receives state updates from KAR actors and pushes these changes in real time to the GUI using Websockets to
+move ships and change reefer and order counts.
 Each voyage travels between origin and destination ports in a fixed number of days, remaining at each port for two days to unload/reload reefers.
-The voyage schedules are dynamically extended when necessary to allow the simulator to run for unlimited time.  
+The voyage schedules are dynamically extended as necessary to allow the simulator to run for unlimited time.  
 
 ### KAR Actors
-KAR actors implement the business logic of the Reefer Application. 
+KAR actors implement the business logic of the Reefer Application. There are individual actors for each order and voyage, and there are singleton actors for each reefer depot (one per port) and one manager actor for orders, voyages, depots, and reefer locations.
+In order to support order generation timeout, order generation flow utilizes async messages between actors.
 
 #### Order Actor
-Represents an order entity in the application. In response to a new order request, REST creates a new orderId and calls the createOrder method of the order actor with that Id. This action implicitly creates the new actor instance.
-createOrder calls the specified *Voyage Actor* to reserve space for its products and reserve the required containers.
+Represents an order entity in the application. In response to a new order request, the order manager creates a new orderId and calls the createOrder method of the order actor with that Id. This action implicitly creates the new actor instance.
+The order actor calls the specified *Voyage Actor* to reserve space for its products and reserve the required containers.
+If product counts in an order exceed capacity of a single reefer container, multiple containers are allocated to the order. 
 If successful, the order state becomes *booked* until the ship departs a port at which time the state changes
 to *in-transit*.
-Order actors are notified if an anomaly is detected for one of its reserved reefers. If before departure the reefer is replaced, else it and the order are marked spoilt.
 On arrival at destination the actor removes itself from active actors.
 
 #### Voyage Actor
-Represents a voyage entity in the application. A voyage includes a ship, a departure date, and a route between origin and destination ports. 
+Represents a voyage entity in the application. A voyage represents a ship with specific departure and arrival dates between origin and destination ports. 
 Its state also includes Ids of *Order Actors* that have booked space and their reefers.
 The *Ship Simulator* calls this actor at some point each "day" with the new date.
 If the date matches departure date, the voyage actor notifies the departure depot of all containers that are no longer there, and notifies all on-board *Order Actors* of their departure.
 If the date matches arrival date, the voyage actor first notifies the arrival depot of all containers that have been added, notifies all its *Order Actors* of arrival, and finally removes itself from active actors.
 
 #### Depot Actor
-Manages reefer inventory for a specific port, allocating reefers to new orders, removing reefers from inventory on voyage departures and adding reefers to inventory when a voyage arrives. 
-If products in an order exceed capacity of a single reefer container, multiple containers are allocated to the order. 
-This actor also maintains statistics on the number of reefers booked, in-transit, spoilt and on maintenance which it 
+Manages reefer inventory for a specific port, allocating reefers to new orders, removing reefers from its inventory on voyage departures and adding reefers to its inventory when a voyage arrives. 
+This actor also maintains statistics on the number of reefers booked, spoilt and on maintenance which it 
 sends to the Depot Manager when there are changes.
-When notified that a reefer has gone bad, the provisioner simply tags empty reefers as *On Maintenance* where it remains unavailable for booking for two days, or if booked it calls the associated Order actor with a replacement reefer.
-When arrives, any of its reefers marked spoilt are tagged as on maintenance.
+When notified that a reefer has gone bad, the reefer is marked as *On Maintenance* and it remains unavailable for booking for two days. If the reefer is assigned to an order, the associated Order actor is called with a replacement reefer.
+Spoilt reefers on arriving voyages are tagged as on maintenance.
+If the inventory size for a depot exceeds a threshold, some empty reefers are added to departing voyages to be delivered to the destination port depots. 
 
-#### Anomaly Router Actor
-Maintains current location for all reefer containers: in a specific depot or in-transit on a specific voyage. Routes new anomaly events to the actor that represents the current location.
+#### Anomaly Manager Actor
+Maintains current location for all reefer containers: in a specific depot or in-transit on a specific voyage. New anomaly events are forwarded to the depot or voyage actor currently containing the reefer.
 
 #### Order Manager Actor
-Maintains global state for all active orders: booked or in-transit. Makes state change available to REST to be pushed to connected GUIs.
+New order requests are initially sent to the Order Manager. Order requests must contain IDs unique for each client that enable clients to submit multiple orders concurrently. Order Manager creates a globally unique order ID and sends async accept messages with the order ID back to the client. Order manager then calls createOrder of that actor and starts a timer that will cancel the order if it takes too long to complete creation. Clients receive async booked or failed messages when order processing is complete. 
+Order manager also maintains global state (booked, spoilt and in-transit) for all active orders and makes state changes available to WebAPI to be pushed to connected GUIs.
 
 #### Voyage Manager Actor
-Maintains global state for all active voyages: those with booked orders or in-transit. Makes state change available to REST to be pushed to connected GUIs.
+Maintains global state for all active voyages: those with booked orders or in-transit. Makes state change available to WebAPI to be pushed to connected GUIs. Voyage Manager also maintains fleet schedules for current and future voyages.
 
 #### Depot Manager Actor
-Maintains global state for all reefer containers. Makes state change available to REST to be pushed to connected GUIs.
+Maintains global state for all reefer containers. Makes state change available to WebAPI to be pushed to connected GUIs.
+Depot Manager creates individual depot actors, populates them with empty reefers, and informs Anomaly Manager of these reefers.
 
 
 ### Simulators
@@ -106,7 +109,7 @@ to a destination port. To start the Ship Simulator, navigate to the Active Voyag
 change the value in a field directly under the **Simulated Delay** label. This value represents
 the desired time compression (in secs). For example, the value of 10 means that 
 each day is 10 secs long, 20 makes a day 20 secs, etc. A value of 0 disables automatically advancing time.
-When the simulator starts the simulated delay is set to 0. 
+When simulator starts the simulated delay is set to 0. 
 The operational value is modified by changing the value and hitting the **Update** button.
 If the operational value is 0, the **Click to Advance Time** button can be used to manually request an advance.
 Requests done while still processing a previous advance are ignored.  
@@ -114,20 +117,21 @@ Requests done while still processing a previous advance are ignored.
 #### Order Simulator  
 The order simulator creates orders for upcoming voyages. Its operational parameters are:  
    * **Order Target** - the percent of a voyage capacity to be filled when it departs.  
-   * **Future Time Window** - the number of days before departure that orders are generated for each voyage.  
+   * **Future Time Window** - the number of days before departure that orders are generated for each voyage.    
    * **Order Updates per day** - the requested number of daily orders to generate for each voyage.  
 
 After choosing the values, press the **Update** button to make them operational.
-An order target of 0 disabled automatic order generation when the ship simulator is active.
-When the order generation is disabled, the manual **Create Orders** button can be used.  
+An order target of 0 disables automatic order generation when the ship simulator is active.
+When automatic order generation is disabled, the manual **Create Orders** button can be used.  
 
 #### Reefer Anomaly Simulator  
 The reefer simulator generate anomalies randomly across the entire reefer inventory. Its operational parameters are:  
-   * **Failure Target** - 100x the percent of inventory to pick each day. For example, 4 means that anomalies will be generated for approximately 0.04% of the Total Reefer count each day.  
+   * **Failure Target** - 100x the percent of inventory to pick each day. For example, 4 means that anomalies will be generated for approximately 0.04% of the global Total Reefer count each day.  
    * **Anomaly Updates per day** - the number of times anomalies will be generated each day.  
+In order to support very short simulated delay values, anomaly generation rate is limited to 10 per second.
 
 After choosing the values, press the **Update** button to make them operational.
-An order target of 0 disabled automatic anomaly generation when the ship simulator is active.
+An order target of 0 disables automatic anomaly generation when the ship simulator is active.
 When the anomaly generation is disabled, the manual **Create Anomaly** button can be used to generate one anomaly.  
 
 # Reefer Deployment and Development

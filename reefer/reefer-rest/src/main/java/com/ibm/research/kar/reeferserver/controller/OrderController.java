@@ -159,10 +159,9 @@ public class OrderController {
    }
    @PostMapping("/order/booking/result")
    public void orderBookingResult(@RequestBody String bookingMessage) {
-      if (logger.isLoggable(Level.INFO)) {
-         logger.info("OrderController.orderBookingResult - Order Actor booking status:" + bookingMessage);
+      if (logger.isLoggable(Level.FINE)) {
+         logger.fine("OrderController.orderBookingResult - Order Actor booking status:" + bookingMessage);
       }
-      System.out.println("OrderController.orderBookingResult - Order Actor booking status:" + bookingMessage);
       try {
          JsonObject reply = messageToJson(bookingMessage);
          Order order = new Order(reply);

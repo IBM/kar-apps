@@ -124,18 +124,21 @@ public class OrderSubThread extends Thread {
           OO.setOO(simSequenceID, ordersnap, OO.pending, voyage);
           boolean interrupted = false;
           try {
+            // save new order in hashmap before POST to avoid race condition
+            SimulatorService.outstandingCorrids.add(simSequenceID);
             Kar.Services.post(Constants.REEFERSERVICE, "orders", order);
-            // increment counts of orders submitted and save new order in set
             ordersDoneToday.incrementAndGet();
             threadOrdersDone++;
-            SimulatorService.outstandingCorrids.add(simSequenceID);
-            // wait for order async completion message
+
+            // wait for notify in processing async order completion message
             synchronized (OO) {
               try {
                 OO.wait(1000 * (30 + Constants.ORDER_TIMEOUT_SECS));
               } catch( InterruptedException e) {
                   logger.warning("ordersubthread"+tnum+": interrupted while waiting for order "+simSequenceID+" completion");
                   interrupted = true;
+                  // stop the thread on next sleep
+                  Thread.currentThread().interrupt();
               }
             }
             if (!interrupted && SimulatorService.outstandingCorrids.contains(OO.getOOCorrId())) {
@@ -150,6 +153,7 @@ public class OrderSubThread extends Thread {
             e.printStackTrace();
             ordersDoneToday.incrementAndGet();
             threadOrdersDone++;
+            SimulatorService.outstandingCorrids.remove(OO.getOOCorrId());
           }
         }
 

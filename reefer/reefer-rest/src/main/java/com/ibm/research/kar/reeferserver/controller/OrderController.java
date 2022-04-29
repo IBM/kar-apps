@@ -121,7 +121,6 @@ public class OrderController {
    @ResponseBody
    public JsonValue bookOrder(@RequestBody String message) throws IOException {
       try {
-         System.out.println("OrderController.bookOrder() - received order:"+message);
          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                  method("bookOrder").
                  arg(jsonToOrderProperties(message).getAsJsonObject()).

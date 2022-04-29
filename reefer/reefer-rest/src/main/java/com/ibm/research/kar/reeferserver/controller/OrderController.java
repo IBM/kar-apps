@@ -94,7 +94,9 @@ public class OrderController {
          orderProperties.setVoyageId(voyageId);
          orderProperties.setOriginPort(voyage.getRoute().getOriginPort());
          orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
-
+         if ( req.containsKey(Constants.REPLY_TO_ENDPOINT_KEY)) {
+            orderProperties.setReplyTo(req.getString(Constants.REPLY_TO_ENDPOINT_KEY));
+         }
       } catch (Exception e) {
          logger.log(Level.WARNING, e.getMessage()+" error ", e);
       }
@@ -119,6 +121,7 @@ public class OrderController {
    @ResponseBody
    public JsonValue bookOrder(@RequestBody String message) throws IOException {
       try {
+         System.out.println("OrderController.bookOrder() - received order:"+message);
          Actors.Builder.instance().target(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId).
                  method("bookOrder").
                  arg(jsonToOrderProperties(message).getAsJsonObject()).
@@ -135,7 +138,8 @@ public class OrderController {
       System.out.println("OrderController.processNewOrder() - got new order:"+message);
       Order order = JsonUtils.deserializeOrder(message);
      // System.out.println("OrderController.processNewOrder() - order correlation id:"+order.getCorrelationId());
-      logger.log(Level.INFO,"OrderController.processNewOrder()",stompHeaderAccessor.getMessage());
+     // logger.log(Level.INFO,"OrderController.processNewOrder()",stompHeaderAccessor.getMessage());
+    //  System.out.println("OrderController.processNewOrder() headers:"+stompHeaderAccessor.getMessageHeaders());
       JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
       bookingStatus.add(Constants.STATUS_KEY,Json.createValue("booked")).
               add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
@@ -158,7 +162,7 @@ public class OrderController {
       if (logger.isLoggable(Level.INFO)) {
          logger.info("OrderController.orderBookingResult - Order Actor booking status:" + bookingMessage);
       }
-
+      System.out.println("OrderController.orderBookingResult - Order Actor booking status:" + bookingMessage);
       try {
          JsonObject reply = messageToJson(bookingMessage);
          Order order = new Order(reply);
@@ -166,7 +170,7 @@ public class OrderController {
          // with it is via REST calls. The Angular GUI on the other hand expects
          // messages via websockets. At some point the sim needs to be updated to
          // use websockets for uniform communication of clients.
-         if (order.isOriginSimulator()) {
+         if (order.isOriginSimulator() || order.getReplyTo() != null) {
             JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
             if ( order.isBookingFailed()) {
                bookingStatus.add(Constants.STATUS_KEY,Json.createValue("failed")).
@@ -182,81 +186,31 @@ public class OrderController {
                        add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
                        add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
             }
-            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
+            if ( order.isOriginSimulator()) {
+               Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
+            } else {
+               template.convertAndSend("/topic/"+order.getReplyTo(),bookingStatus.build().toString());
+            }
          }
       } catch (Exception e) {
          logger.severe("OrderController.orderBookingResult - failed to process booking - received message: "+bookingMessage);
          throw e;
       }
    }
-/*
-   @PostMapping("/order/booking/success")
-   public void orderBooked(@RequestBody String bookingMessage) {
-      if (logger.isLoggable(Level.INFO)) {
-         logger.info("OrderController.orderBooked - Order Actor booking status:" + bookingMessage);
-      }
 
-      try {
-         JsonObject reply = messageToJson(bookingMessage);
-         Order order = new Order(reply);
-         // HACK: the simulator currently does not support websockets and all communication
-         // with it is via REST calls. The Angular GUI on the other hand expects
-         // messages via websockets. At some point the sim needs to be updated to
-         // use websockets for uniform communication of clients.
-         if (order.isOriginSimulator()) {
-            JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
-            bookingStatus.add(Constants.STATUS_KEY,Json.createValue("booked")).
-                    add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
-                    add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
-                    add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
-            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
-         }
-      } catch (Exception e) {
-         logger.severe("OrderController.orderBooked - failed to process booking - received message: "+bookingMessage);
-         throw e;
-      }
-   }
-
-   @PostMapping("/order/booking/failed")
-   public void orderBookingFailed(@RequestBody String bookingMessage) {
-      System.out.println("OrderController.orderBookingFailed - Order Failed - booking status:" + bookingMessage);
-      try {
-         JsonObject reply = messageToJson(bookingMessage);
-         Order order = new Order(reply);
-         // HACK: the simulator currently does not support websockets and all communication
-         // with it is via REST calls. The Angular GUI on the other hand expects
-         // messages via websockets. At some point the sim needs to be updated to
-         // use websockets for uniform communication of clients.
-         if (order.isOriginSimulator()) {
-            System.out.println("OrderController.orderBookingFailed - Order Failed - reply: "+bookingMessage);
-            JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
-            bookingStatus.add(Constants.STATUS_KEY,Json.createValue("failed")).
-                    add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
-                    add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
-                    add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
-            if ( order.getMsg() != null ) {
-               bookingStatus.add(Constants.REASON_KEY,order.getMsg());
-            }
-            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
-         } else {
-            logger.severe("OrderController.orderBookingFailed - unknown target for failed order booking - reply: "+bookingMessage);
-         }
-      } catch (Exception e) {
-         logger.severe("OrderController.orderBookingFailed - failed to process booking - received message: "+bookingMessage);
-         throw e;
-      }
-   }
-
- */
    @PostMapping("/order/booking/accepted")
    public void orderBookingAccepted(@RequestBody String bookingMessage) {
       try {
          Order order = new Order(messageToJson(bookingMessage));
-         if (order.isOriginSimulator()) {
+         if (order.isOriginSimulator() || order.getReplyTo() != null ) {
             JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
             bookingStatus.add(Constants.STATUS_KEY, Json.createValue("accepted")).
                     add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId())).add(Constants.ORDER_ID_KEY, order.getId());
-            Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build()); //messageToJson(bookingMessage));
+            if ( order.isOriginSimulator()) {
+               Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
+            } else {
+               template.convertAndSend("/topic/"+order.getReplyTo(),bookingStatus.build().toString());
+            }
          }
       } catch (Exception e) {
          logger.severe("OrderController.orderBookingAccepted - failed to process booking - received message: "+bookingMessage);

@@ -126,9 +126,8 @@ public class OrderManagerActor extends BaseActor {
          } else {
             // generate unique order id
             order.generateOrderId();
-            Kar.Actors.Reminders.schedule(this, "orderRollback", order.getCorrelationId(),
-                    Instant.now().plus(Constants.ORDER_TIMEOUT_SECS, ChronoUnit.SECONDS), Duration.ofMillis(1000), order.getAsJsonObject());
-            Kar.Services.tell(Constants.REEFERSERVICE, "/order/booking/accepted", order.getAsJsonObject());
+            Kar.Actors.call(this, this, "scheduleReminderAndDispatchAccept", order.getAsJsonObject(),
+                    Json.createValue(order.getCorrelationId()));
          }
          return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType,  order.getId()),
                  "createOrder", updateStore(Collections.emptyMap(), updateActiveOrdersAndGetUpdateMap(order), order.getAsJsonObject()));
@@ -140,6 +139,18 @@ public class OrderManagerActor extends BaseActor {
          return null;
       }
    }
+   @Remote
+   public Kar.Actors.TailCall scheduleReminderAndDispatchAccept(JsonObject orderAsJson, JsonString correlationId) {
+      Kar.Actors.Reminders.schedule(this, "orderRollback", correlationId.getString(),
+              Instant.now().plus(Constants.ORDER_TIMEOUT_SECS, ChronoUnit.SECONDS), Duration.ofMillis(1000), orderAsJson);
+      return new Kar.Actors.TailCall(this, "dispatchAccept", orderAsJson);
+   }
+
+   @Remote
+   public Kar.Actors.TailCall dispatchAccept(JsonObject orderAsJson){
+      return new Kar.Actors.TailCall(Constants.REEFERSERVICE, "/order/booking/accepted", orderAsJson);
+   }
+
    private Map<String, JsonValue> updateActiveOrdersAndGetUpdateMap(Order order) {
       Map<String, JsonValue> updateMap = new HashMap<>();
       updateMap.put(order.getId(), order.getAsJsonObject());
@@ -213,11 +224,8 @@ public class OrderManagerActor extends BaseActor {
          logger.log(Level.WARNING, "OrderManagerActor.handleBooking() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY)+" corrId="+order.getCorrelationId()+" orderId:"+order.getId());
          throw new RuntimeException("OrderManagerActor.handleBooking() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY));
       }
-      return new Kar.Actors.TailCall(Constants.REEFERSERVICE, "/order/booking/result", updateStore(deleteMap, updateMap, order));
-   }
-   private JsonObject updateStore(Map<String, List<String>> deleteMap, Map<String, JsonValue> updateMap, Order order) {
       updateStore(deleteMap, updateMap);
-      return order.getAsJsonObject();
+      return new Kar.Actors.TailCall(Constants.REEFERSERVICE, "/order/booking/result", order.getAsJsonObject());
    }
 
    @Remote

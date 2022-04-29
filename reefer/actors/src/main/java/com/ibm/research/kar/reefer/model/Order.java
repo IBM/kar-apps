@@ -59,12 +59,14 @@ public class Order {
     String depot;
     String msg;
     boolean bookingFailed;
+    String clientReplyEndpoint;
 
     public Order(OrderProperties orderProperties) {
         this(orderProperties.getCorrelationId(),orderProperties.getCustomerId(),orderProperties.getProduct(),
             orderProperties.getProductQty(),orderProperties.getVoyageId(),
-            OrderStatus.PENDING.getLabel(),new ArrayList<>());
+            OrderStatus.PENDING.getLabel(),new ArrayList<>(), orderProperties.getReplyTo());
     }
+
 
     public Order(JsonValue jo ) {
         this(jo.asJsonObject());
@@ -92,9 +94,12 @@ public class Order {
         if ( jo.containsKey(Constants.ORDER_MESSAGE_KEY)) {
             this.msg = jo.getString(Constants.ORDER_MESSAGE_KEY);
         }
+        if ( jo.containsKey(Constants.REPLY_TO_ENDPOINT_KEY)) {
+            this.clientReplyEndpoint = jo.getString(Constants.REPLY_TO_ENDPOINT_KEY);
+        }
     }
 
-    public Order( String correlationId, String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds) {
+    public Order( String correlationId, String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds, String replyTo) {
         this.correlationId = correlationId;
         this.customerId = customerId;
         this.product = product;
@@ -105,6 +110,7 @@ public class Order {
         // date one day at a time and we need millis resolution
         this.date = Instant.now().toString();
         this.spoilt = false;
+        this.clientReplyEndpoint = replyTo;
     }
 
     public String generateOrderId() {
@@ -124,6 +130,9 @@ public class Order {
     }
     public String getCorrelationId() {
         return this.correlationId;
+    }
+    public String getReplyTo() {
+        return this.clientReplyEndpoint;
     }
     @Override
     public boolean equals(Object o) {
@@ -231,6 +240,9 @@ public class Order {
         }
         if ( msg != null) {
             orderBuilder.add(Constants.ORDER_MESSAGE_KEY, msg);
+        }
+        if ( clientReplyEndpoint != null ) {
+            orderBuilder.add(Constants.REPLY_TO_ENDPOINT_KEY, clientReplyEndpoint );
         }
         return orderBuilder.build();
     }

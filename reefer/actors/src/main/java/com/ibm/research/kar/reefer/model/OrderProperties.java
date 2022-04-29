@@ -34,7 +34,7 @@ public class OrderProperties {
     String bookingStatus;
     String msg;
     int productQty;
-
+    String replyTo;
    public OrderProperties() {
    }
 
@@ -51,6 +51,9 @@ public class OrderProperties {
          //this.date = jo.getString(Constants.ORDER_DATE_KEY);
          this.originPort = jo.getString(Constants.ORDER_ORIGIN_KEY);
          this.destinationPort = jo.getString(Constants.ORDER_DESTINATION_KEY);
+         if ( jo.containsKey(Constants.REPLY_TO_ENDPOINT_KEY) ) {
+            this.replyTo = jo.getString(Constants.REPLY_TO_ENDPOINT_KEY);
+         }
       } catch( Exception e) {
 
          System.out.println("OrderProperties CTOR Failed");
@@ -68,7 +71,16 @@ public class OrderProperties {
                 add(Constants.ORDER_CUSTOMER_ID_KEY, getCustomerId()).
                 add(Constants.ORDER_ORIGIN_KEY, getOriginPort()).
                 add(Constants.ORDER_DESTINATION_KEY, getDestinationPort());
+        if ( replyTo != null ) {
+           orderPropertiesBuilder.add(Constants.REPLY_TO_ENDPOINT_KEY, replyTo);
+        }
         return orderPropertiesBuilder.build();
+    }
+    public String getReplyTo() {
+      return replyTo;
+    }
+    public void setReplyTo(String replyTo) {
+      this.replyTo = replyTo;
     }
     public String getProduct() {
         return product;

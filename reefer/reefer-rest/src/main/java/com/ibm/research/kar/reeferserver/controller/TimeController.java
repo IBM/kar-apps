@@ -21,10 +21,15 @@ import com.ibm.research.kar.actor.ActorRef;
 import com.ibm.research.kar.reefer.ReeferAppConfig;
 import com.ibm.research.kar.reefer.common.Constants;
 import com.ibm.research.kar.reefer.common.ReeferLoggerFormatter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.json.Json;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.ws.rs.core.Response;
@@ -35,7 +40,8 @@ import java.util.logging.Logger;
 @RestController
 @CrossOrigin("*")
 public class TimeController {
-
+    @Autowired
+    private SimpMessagingTemplate template;
     private ActorRef scheduleActor = Kar.Actors.ref(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId);
     private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(TimeController.class.getName());
 
@@ -86,6 +92,7 @@ public class TimeController {
         try {
             JsonValue reply = Kar.Actors.rootCall(scheduleActor, "advanceDate");
             today = Instant.parse(reply.asJsonObject().getString(Constants.CURRENT_DATE_KEY).toString());
+//            template.convertAndSend("/topic/time",today);
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
             e.printStackTrace();

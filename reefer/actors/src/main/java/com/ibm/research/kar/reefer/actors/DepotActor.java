@@ -542,9 +542,8 @@ public class DepotActor extends BaseActor {
         currentInventorySize = invSize;
         bookedTotalCount = bookedCount.intValue();
         updateStore(Collections.emptyMap(), reeferMap(orderReefers));
-        JsonObject reply = createReply(rids,order.getAsJsonObject(), Constants.OK);
         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
-                "processReefersBookingResult", reply);
+                "processReefersBookingResult", createReply(rids,order.getAsJsonObject(), Constants.OK));
     }
     private void logFailure(Order order, Exception e) {
         int actual = 0, bad = 0;

@@ -299,21 +299,46 @@ public class VoyageActor extends BaseActor {
          // convenience wrapper for DepotActor json reply
          DepotReply reply = new DepotReply(message);
          Order order = new Order(reply.getOrder());
-
          if ( order.isBookingFailed()) {
             logger.warning("VoyageActor.processReefersBookingResult() - voyageId:" + getId() + " orderId:" + order.getId() + " - failed - reason: "+order.getMsg());
             return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "processReeferBookingResult", reply.getOrder());
          }
-         Set<String> orderReefers = reply.getReefers();
-         for (String rid : orderReefers) {
-            reefer2OrderMap.put(rid, reply.getOrderId());
-         }
-         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "processReeferBookingResult",  updateSchedulerAndSaveState(reply, message));
-
+         JsonValue reeferCount = Json.createValue(voyage.getReeferCount() + reply.getReeferCount());
+         JsonValue  freeCapacity = Json.createValue(voyage.getFreeCapacity() - reply.getReeferCount());
+         return new Kar.Actors.TailCall( this, "saveStateAndNotify", message, reeferCount, freeCapacity);
       } catch( Exception e) {
          logSevereError("VoyageActor.processReefersBookingResult()", e);
          return null;
       }
+   }
+   @Remote
+   public Kar.Actors.TailCall saveStateAndNotify(JsonObject booking, JsonNumber reeferCount, JsonNumber freeCapacity) {
+      DepotReply depotReply = new DepotReply(booking);
+      Set<String> orderReefers = depotReply.getReefers();
+      for (String rid : orderReefers) {
+         // Update in-memory map
+         reefer2OrderMap.put(rid, depotReply.getOrderId());
+      }
+      voyage.setReeferCount(reeferCount.intValue());
+      voyage.setFreeCapacity(freeCapacity.intValue());
+      orders.put(depotReply.getOrderId(), booking);
+      voyage.setOrderCount(orders.size());
+      voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
+      // save voyage state and booking
+      save(depotReply, booking);
+      return new Kar.Actors.TailCall(this, "updateSchedulerAndNotifyOrder",  depotReply.getOrder());
+   }
+   @Remote
+   public Kar.Actors.TailCall updateSchedulerAndNotifyOrder(JsonObject orderAsJson) {
+      Order order = new Order(orderAsJson);
+      Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
+              method("updateVoyage").arg(VoyageJsonSerializer.serialize(voyage)).tell();
+      return new Kar.Actors.TailCall( this, "notifyOrder",  orderAsJson);
+   }
+   @Remote
+   public Kar.Actors.TailCall notifyOrder(JsonObject orderAsJson) {
+      Order order = new Order(orderAsJson);
+      return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, order.getId()), "processReeferBookingResult",  orderAsJson);
    }
    private boolean handledAlreadyArrived(Order order) {
       if ( voyage == null ) {   // voyage arrived
@@ -402,17 +427,6 @@ public class VoyageActor extends BaseActor {
          order.setBookingFailed();
         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, order.getId()),"processReeferBookingResult", order.getAsJsonObject());
       }
-   }
-   private JsonObject updateSchedulerAndSaveState(DepotReply booking, JsonValue bookingStatus) {
-      voyage.setReeferCount(voyage.getReeferCount() + booking.getReeferCount());
-      voyage.updateFreeCapacity(booking.getReeferCount());
-      orders.put(booking.getOrderId(), bookingStatus);
-      voyage.setOrderCount(orders.size());
-      voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
-      Actors.Builder.instance().target(ReeferAppConfig.ScheduleManagerActorType, ReeferAppConfig.ScheduleManagerId).
-              method("updateVoyage").arg(VoyageJsonSerializer.serialize(voyage)).tell();
-     save(booking, bookingStatus);
-     return booking.getOrder();
    }
    private void save(DepotReply booking, JsonValue bookingStatus) {
       try {

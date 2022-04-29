@@ -80,7 +80,7 @@ public class Constants {
    public static final String VOYAGE_ORDER_MAP_KEY="voyage-order-map";
    public static final String ORDER_ORIGIN_KEY="order-origin";
    public static final String ORDER_DESTINATION_KEY="order-destination";
-
+   public static final String REPLY_TO_ENDPOINT_KEY="client-reply-endpoint";
    // each reefer can hold up to 1000 product units. Simplification is that
    // each product unit has the same size.
    public static final int REEFER_CAPACITY=1000;

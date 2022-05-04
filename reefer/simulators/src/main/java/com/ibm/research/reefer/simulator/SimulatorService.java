@@ -491,46 +491,54 @@ public class SimulatorService {
       if (((JsonObject) reply).containsKey("correlationId")) {
         corrId = ((JsonObject) reply).getString("correlationId");
       }
-      OO = corrId.startsWith("1") ? OO_1 : OO_2;
 
       String status = "missing";
       if (((JsonObject) reply).containsKey("status")) {
         status = ((JsonObject) reply).getString("status");
       }
 
+      if (corrId.equals("missing") || status.equals("missing")) {
+        logger.severe("simulator: invalid orderStatus message received with order "+corrId+" and status "+status);
+        return;
+      }
+
+      OO = corrId.startsWith("1") ? OO_1 : OO_2;
+
       if (status.equalsIgnoreCase("accepted")) {
-        String orderId = ((JsonObject) reply).getString("orderId");
-        logger.fine(String.format("simulator: order %s / %s accepted", orderId, corrId));
-        updateAccepted(OO, corrId);
+        synchronized (OO) {
+          String orderId = ((JsonObject) reply).getString("orderId");
+          logger.fine(String.format("simulator: order %s / %s accepted", orderId, corrId));
+          updateAccepted(OO, corrId);
+        }
       } else if (status.equalsIgnoreCase("booked")) {
-        String orderId = ((JsonObject) reply).getString("orderId");
-        int otime = (int) ((System.nanoTime() - OO.getOOStartTime()) / 1000000);
-        if (updateBooked(OO, corrId)) {
-          if (SimulatorService.os.addSuccessful(otime)) {
-            // orderstats indicates an outlier
-            String voyage = OO.getOOVoyage();
-            String corrID = OO.getOOCorrId();
-            logger.warning(String.format("simulator: order latency outlier orderId=%s corrId=%s ===> %d",orderId, corrId, otime));
+        synchronized (OO) {
+          String orderId = ((JsonObject) reply).getString("orderId");
+          int otime = (int) ((System.nanoTime() - OO.getOOStartTime()) / 1000000);
+          if (updateBooked(OO, corrId)) {
+            if (SimulatorService.os.addSuccessful(otime)) {
+              // orderstats indicates an outlier
+              logger.warning(String.format("simulator: order latency outlier orderId=%s corrId=%s ===> %d",orderId, corrId, otime));
+            }
+            logger.fine(String.format("simulator: order %s / %s booked", orderId, corrId));
+            logger.fine("simulator: order "+corrId+" booked");
           }
-          logger.fine(String.format("simulator: order %s / %s booked", orderId, corrId));
-          logger.fine("simulator: order "+corrId+" booked");
         }
       } else if (status.equalsIgnoreCase("failed")) {
-        // check if corrId is still outstanding
-        if (!outstandingCorrids.contains(corrId)) {
-          int currseq = ((JsonNumber)get(Json.createValue(OO.persistKey))).intValue();
-          logger.severe("simulator: possibly spurious order failure reported for "+corrId+" because: "+((JsonObject) reply).getString("reason"));
-        }
-        else {
-          SimulatorService.os.addFailed();
-          logger.severe("simulator: order "+corrId+" failed because: "+((JsonObject) reply).getString("reason"));
-          updateFailed(OO, corrId, status);
+        synchronized (OO) {
+          // check if corrId is still outstanding
+          if (!outstandingCorrids.contains(corrId)) {
+            logger.severe("simulator: possibly spurious order failure reported for "+corrId+" because: "+((JsonObject) reply).getString("reason"));
+          }
+          else {
+            SimulatorService.os.addFailed();
+            logger.severe("simulator: order "+corrId+" failed because: "+((JsonObject) reply).getString("reason"));
+            updateFailed(OO, corrId, status);
+          }
         }
       } else {
         // got unexpected status value
-        SimulatorService.os.addFailed();
         logger.severe("simulator: invalid reply message received with order "+corrId+" and status "+status);
-        updateFailed(OO, corrId, status);
+        return;
       }
     }
     catch (Exception e) {

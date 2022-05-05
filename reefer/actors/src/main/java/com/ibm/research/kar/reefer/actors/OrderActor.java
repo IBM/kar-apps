@@ -58,47 +58,51 @@ public class OrderActor extends BaseActor {
    }
 
    @Remote
-   public Kar.Actors.TailCall processReeferBookingResult(JsonObject voyageBookingResult) {
+   public Kar.Actors.TailCall processReeferBookingResult(JsonObject orderAsJson) {
       try {
          if (order.getStatus().equals(OrderStatus.BOOKED.name()) || order.getStatus().equals(OrderStatus.INTRANSIT.name())) {
             logger.log(Level.WARNING, "OrderActor.processReeferBookingResult() - duplicate booked message received for corrId=" + order.getCorrelationId() + " orderId:" + order.getId() + " status:" + order.getStatus());
             return null;
          }
-         return new Kar.Actors.TailCall(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId),
-                 "processReeferBookingResult", saveOrderStatusChange(new Order(voyageBookingResult)));
+         return new Kar.Actors.TailCall(this, "saveOrderStateChangeAndNotify", orderAsJson);
       } catch (Exception e) {
          String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n", "");
          logger.log(Level.SEVERE, "OrderActor.processReeferBookingResult() - Error - orderId " + getId() + " Error: " + stacktrace);
          return null;
       }
    }
-   private JsonObject saveOrderStatusChange(Order bookingStatus) {
-      if (bookingStatus.isBookingFailed()) {
-         logger.log(Level.WARNING, "OrderActor.saveOrderStatusChange() - failed - corrId=" + order.getCorrelationId() + " orderId:" + order.getId() + " reason:" + order.getMsg());
-         order.setBookingFailed();
-         order.setMsg(bookingStatus.getMsg());
-      } else {
-         order.setStatus(OrderStatus.BOOKED.name());
-      }
-      Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
-      return order.getAsJsonObject();
+
+   @Remote
+   public Kar.Actors.TailCall saveOrderStateChangeAndNotify(JsonObject orderAsJson) {
+     Order booking = new Order(orderAsJson);
+     if (booking.isBookingFailed()) {
+        logger.log(Level.SEVERE, "OrderActor.saveOrderStateChangeAndNotify() - failed - corrId: " + booking.getCorrelationId() + " orderId: " + booking.getId() + " reason: " + booking.getMsg());
+        order.setBookingFailed();
+        order.setMsg(booking.getMsg());
+     } else {
+        order.setStatus(OrderStatus.BOOKED.name());
+     }
+     Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
+     logger.log(Level.FINE, "OrderActor.saveOrderStateChangeAndNotify() - notifying OrderManager - order: "+getId() +" corrId: "+order.getCorrelationId() );
+     return new Kar.Actors.TailCall(Kar.Actors.ref(ReeferAppConfig.OrderManagerActorType, ReeferAppConfig.OrderManagerId),
+           "processReeferBookingResult", orderAsJson);
    }
+
    /**
     * Called to book a new order using properties included in the message. Calls the VoyageActor
     * to allocate reefers and a ship to carry them.
     *
-    * @param message Order properties
     * @return
     */
    @Remote
-   public Kar.Actors.TailCall createOrder(JsonObject message) {
+   public Kar.Actors.TailCall createOrder(JsonObject orderAsJson) {
       try {
          // Java wrapper around Json payload
-         order = new Order(message);
-         // Call Voyage actor to book voyage for this order. This call also
-         // reserves reefers
+         order = new Order(orderAsJson);
+         order.setStatus(OrderStatus.PENDING.name());
+         Kar.Actors.State.set(this, Constants.ORDER_KEY, order.getAsJsonObject());
          return new Kar.Actors.TailCall(Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
-                 "reserve", saveOrderStatusChange(OrderStatus.PENDING));
+                 "reserve", order.getAsJsonObject());
       } catch (Exception e) {
          logger.log(Level.WARNING, "OrderActor.createOrder() - Error - orderId " + getId() + " ", e);
          order.setMsg(e.getMessage());

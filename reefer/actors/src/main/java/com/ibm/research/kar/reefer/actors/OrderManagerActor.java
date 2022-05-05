@@ -172,13 +172,14 @@ public class OrderManagerActor extends BaseActor {
       try {
          order = new Order(message);
          if (!activeOrders.containsKey(order.getId())) {
-            logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() - orderId:" + order.getId() + " not found in activeOrders Map");
+            logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() - orderId: " + order.getId() + " corrId: "+order.getCorrelationId()+" not found in activeOrders Map");
             return null;
          }
+
          activeOrder = activeOrders.get(order.getId()).asJsonObject();
          // idempotence check
          if ( Order.bookedOrInTransit( activeOrder) ) {
-            logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() - duplicate booked message received for corrId="+order.getCorrelationId()+" orderId:"+order.getId()+" status:"+activeOrder.getString(Constants.ORDER_STATUS_KEY));
+            logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() - duplicate booked message received for corrId: "+order.getCorrelationId()+" orderId: "+order.getId()+" status:"+activeOrder.getString(Constants.ORDER_STATUS_KEY));
             return null;
          }
          return new Kar.Actors.TailCall( this, "handleBooking", order.getAsJsonObject(), activeOrder, Json.createValue(bookedTotalCount+1));
@@ -212,6 +213,7 @@ public class OrderManagerActor extends BaseActor {
          activeOrders.remove(order.getId());
          // delete failed order from persistent store
          deleteMap.put(Constants.ORDERS_KEY, List.of(order.getId()));
+         Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
       } else if ( Order.pending(activeOrder) ) {
          if ( !bookedOrderList.contains(order) ) {
             bookedOrderList.add(order);
@@ -221,7 +223,8 @@ public class OrderManagerActor extends BaseActor {
          activeOrders.put(order.getId(), order.getAsJsonObject());
          updateMap.put(order.getId(), order.getAsJsonObject());
       } else {
-         logger.log(Level.WARNING, "OrderManagerActor.handleBooking() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY)+" corrId="+order.getCorrelationId()+" orderId:"+order.getId());
+         logger.log(Level.SEVERE, "OrderManagerActor.handleBooking() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY)+" corrId="+order.getCorrelationId()+" orderId:"+order.getId());
+         Kar.Actors.Reminders.cancel(this, order.getCorrelationId());
          throw new RuntimeException("OrderManagerActor.handleBooking() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY));
       }
       updateStore(deleteMap, updateMap);

@@ -9,7 +9,7 @@ A release of the Reefer application requires two artifacts:
 
 ## Release Procedures
 
-Locally create a branch "release-prep"
+Locally create a branch "release-prep": ```git checkout -b release-prep```
 
 ### Update CHANGELOG.md
 

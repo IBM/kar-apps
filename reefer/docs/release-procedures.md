@@ -23,7 +23,8 @@ Locally create a new local branch "release-prep": ```git checkout -b release-pre
 1. Bump version `mvn versions:set -DnewVersion=x.y.z`   
 2. Bump version in reefer-rest/src/main/liberty/config/server.xml
     + `location="thin-reefer-kar-rest-server-x.y.z.jar"`
-3. Commit version bump changes to release-prep
+3. Bump version in chart/values.yaml
+4. Commit version bump changes to release-prep
 
 #### Build Images and push to quay
 
@@ -47,8 +48,8 @@ Locally create a new local branch "release-prep": ```git checkout -b release-pre
 
 ### Tag repository
 
-1. `git tag -s x.y.z`
-2. `git push --tags upstream`
+1. `git tag -s vx.y.z`
+2. `git push --tags`
 3. make a github release with source (via github actions)
 4. Update the git release with the CHANGELOG
 

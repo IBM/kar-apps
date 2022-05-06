@@ -31,22 +31,25 @@ Reefer includes an automated fault driver that randomly kills and restarts k3d a
    * if deploying locally built reefer images, push them to a repo running at localhost:5000 and leave out the override of kar.imagePrefix 
  * Deploy the KAR Runtime System to the kar-system namespace: `[kar-install-dir]/scripts/kar-k8s-deploy.sh`  
    * If using k3d: ```[kar-install-dir]/scripts/kar-k8s-deploy.sh --set global.affinity=true```
+ * Sources for Kar and Reefer images each have defaults:
+   * Kar image source depends on the results of ```kar version```. A specific version will be pulled from quay.io. Version="unofficial" will pull from localhost:5000
+   * Reefer image source defaults to settings in reefer/chart/values.yaml. Reefer distribution will point to a specific version in quay.io. To change these to locally built images pushed into localhost:5000, add the following args to the helm install command: ```--set reefer.imagePrefix=registry:5000/kar``` and ```--set reefer.version=latest```
 
 ## Deploy reefer using helm from directory: ```[kar-apps-install-dir]/reefer```
 
 ### To deploy on `Docker Desktop`
 ```shell
-helm install reefer chart --set kar.imagePrefix=quay.io/ibm
+helm install reefer chart
 ```
 
 ### To deploy on `kind`
 ```shell
-helm install reefer chart --set kar.imagePrefix=quay.io/ibm --set ingress.pathBased=true
+helm install reefer chart --set ingress.pathBased=true
 ```
 
 ### To deploy on `k3d`
 ```shell
-helm install reefer chart --set kar.imagePrefix=quay.io/ibm --set ingress.pathBased=true --set global.affinity=true
+helm install reefer chart  --set ingress.pathBased=true --set global.affinity=true
 ```
 
 ## To deploy on `IBM Cloud Kubernetes Service`
@@ -65,7 +68,7 @@ Ingress Secret:                 your-ingress-secret
 from `[kar-apps-install-dir]/reefer`, substituting in
 the actual values for `your-ingress-subdomain` and `your-ingress-secret`
 ```shell
-helm install reefer chart --set ingress.hostBased=true --set kar.imagePrefix=quay.io/ibm --set ingress.subdomain=your-ingress-subdomain --set ingress.secret=your-ingress-secret
+helm install reefer chart --set ingress.hostBased=true --set ingress.subdomain=your-ingress-subdomain --set ingress.secret=your-ingress-secret
 ```
 ## To deploy on `Red Hat OpenShift on IBM Cloud`
  * First use `ibmcloud` to determine the `Ingress Subdomain` for your cluster:
@@ -82,7 +85,7 @@ Ingress Subdomain:              your-ingress-subdomain
 from `[kar-apps-install-dir]/reefer`, substituting in
 the actual value for `your-ingress-subdomain`
 ```shell
-helm install reefer chart --set ingress.hostBased=true --set kar.imagePrefix=quay.io/ibm --set ingress.subdomain=your-ingress-subdomain
+helm install reefer chart --set ingress.hostBased=true --set ingress.subdomain=your-ingress-subdomain
 ```
 
 This will expose the Reefer application using http.  If you want to
@@ -100,4 +103,5 @@ to access the Reefer Web Application.
 ## To undeploy the application from any type of cluster
 ```shell
 helm uninstall reefer
+[kar-install-dir]/scripts/kar-k8s-undeploy.sh
 ```

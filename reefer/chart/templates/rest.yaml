@@ -85,7 +85,7 @@ spec:
          - name: {{ .Values.kar.imagePullSecret }}
       containers:
       - name: app
-        image: {{ .Values.kar.imagePrefix }}/{{ .Values.reefer.rest.imageName }}
+        image: {{ .Values.reefer.imagePrefix }}/{{ .Values.reefer.rest.imageName }}:{{ .Values.reefer.version }}
         ports:
         - name: app
           containerPort: {{ .Values.reefer.rest.port }}

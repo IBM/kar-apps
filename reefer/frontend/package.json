@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --prod --base-href ./",
+    "build": "ng build --configuration production --base-href ./",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
@@ -48,7 +48,7 @@
     "dotenv": "^14.3.0",
     "jasmine-core": "~4.0.0",
     "jasmine-spec-reporter": "~7.0.0",
-    "karma": "^6.3.12",
+    "karma": "^6.3.19",
     "karma-chrome-launcher": "~3.1.0",
     "karma-coverage-istanbul-reporter": "~3.0.3",
     "karma-jasmine": "~4.0.1",

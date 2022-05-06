@@ -16,6 +16,14 @@
 
 # KAR-APPS: Applications based on the KAR Runtime
 
+# KAR-APPS 1.2.0 - 2022-05-06
++ Reefer
+   + Convert order creation to use async message flow in order to implement a timeout
+   + Use TailCalls to eliminate replicated messages during fault testing and reduce idempotence checks required
+   + Fixes to incorrect reporting of global reefer counts that occur during fault testing
+   + Make progress toward metric and log stacks for kubernetes deployments
+   + Add fault driver support for podman play kube deployment
+
 # KAR-APPS 1.1.0 - 2022-02-02
 + Reefer
    + Made Rest Service stateless by moving state to singleton actors

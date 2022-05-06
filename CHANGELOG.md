@@ -16,10 +16,10 @@
 
 # KAR-APPS: Applications based on the KAR Runtime
 
-# KAR-APPS 1.2.0 - 2022-05-05
+# KAR-APPS 1.2.0 - 2022-05-06
 + Reefer
-   + Convert actor-to-actor flow for order creation to async in order to implement timeout on new order creation
-   + Use TailCalls to eliminate replicated messages during fault testing and eliminate need for idempotence checks
+   + Convert order creation to use async message flow in order to implement a timeout
+   + Use TailCalls to eliminate replicated messages during fault testing and reduce idempotence checks required
    + Fixes to incorrect reporting of global reefer counts that occur during fault testing
    + Make progress toward metric and log stacks for kubernetes deployments
    + Add fault driver support for podman play kube deployment

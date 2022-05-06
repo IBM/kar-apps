@@ -97,7 +97,7 @@ if [[ localhost:5000/kar == "$IMAGE_PREFIX" ]]; then
     fi
 fi
 
-echo Deploying ${IMAGE_PREFIX} images with podman play
+echo Deploying latest ${IMAGE_PREFIX} images with podman play
 
 # set default envs and pick up any external overrides
 export ORDERSTATS_DELAY="${ORDERSTATS_DELAY:-60}"

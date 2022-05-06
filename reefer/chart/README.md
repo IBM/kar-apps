@@ -32,8 +32,8 @@ Reefer includes an automated fault driver that randomly kills and restarts k3d a
  * Deploy the KAR Runtime System to the kar-system namespace: `[kar-install-dir]/scripts/kar-k8s-deploy.sh`  
    * If using k3d: ```[kar-install-dir]/scripts/kar-k8s-deploy.sh --set global.affinity=true```
  * Sources for Kar and Reefer images each have defaults:
-   * Kar image source depends on the results of ```kar version```. A specific version will be pulled from quay.io. Version="unofficial" will pull from localhost:5000/kar
-   * Reefer image source defaults to settings in reefer/chart/values.yaml. Reefer distribion will point to a specific version in quay.io. To change these to locally built images pushed into localhost:5000, add the following args to the helm install command: ```--set reefer.imagePrefix=registry:5000/kar``` and ```--set reefer.version=latest```
+   * Kar image source depends on the results of ```kar version```. A specific version will be pulled from quay.io. Version="unofficial" will pull from localhost:5000
+   * Reefer image source defaults to settings in reefer/chart/values.yaml. Reefer distribution will point to a specific version in quay.io. To change these to locally built images pushed into localhost:5000, add the following args to the helm install command: ```--set reefer.imagePrefix=registry:5000/kar``` and ```--set reefer.version=latest```
 
 ## Deploy reefer using helm from directory: ```[kar-apps-install-dir]/reefer```
 
@@ -103,4 +103,5 @@ to access the Reefer Web Application.
 ## To undeploy the application from any type of cluster
 ```shell
 helm uninstall reefer
+[kar-install-dir]/scripts/kar-k8s-undeploy.sh
 ```

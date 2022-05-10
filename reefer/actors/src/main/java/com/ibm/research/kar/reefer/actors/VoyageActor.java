@@ -290,6 +290,7 @@ public class VoyageActor extends BaseActor {
    }
    @Remote
    public Kar.Actors.TailCall processReefersBookingResult(JsonObject message) {
+
       if ( voyage == null || voyage.shipArrived()) {
          logger.warning("VoyageActor.processReefersBookingResult - voyageId:"+getId()+ " voyage already arrived");
          Kar.Actors.remove(this);
@@ -299,6 +300,7 @@ public class VoyageActor extends BaseActor {
          // convenience wrapper for DepotActor json reply
          DepotReply reply = new DepotReply(message);
          Order order = new Order(reply.getOrder());
+         logger.warning("VoyageActor.processReefersBookingResult() - voyageId:" + getId() + " orderId:" + order.getId() +" corrId: "+order.getCorrelationId());
          if ( order.isBookingFailed()) {
             logger.warning("VoyageActor.processReefersBookingResult() - voyageId:" + getId() + " orderId:" + order.getId() + " - failed - reason: "+order.getMsg());
             return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, reply.getOrderId()), "processReeferBookingResult", reply.getOrder());
@@ -307,7 +309,8 @@ public class VoyageActor extends BaseActor {
          JsonValue  freeCapacity = Json.createValue(voyage.getFreeCapacity() - reply.getReeferCount());
          return new Kar.Actors.TailCall( this, "saveStateAndNotify", message, reeferCount, freeCapacity);
       } catch( Exception e) {
-         logSevereError("VoyageActor.processReefersBookingResult()", e);
+         e.printStackTrace();
+         logSevereError("VoyageActor.processReefersBookingResult() ", e);
          return null;
       }
    }
@@ -326,6 +329,9 @@ public class VoyageActor extends BaseActor {
       voyageStatus = Json.createValue(VoyageStatus.PENDING.name());
       // save voyage state and booking
       save(depotReply, booking);
+      DepotReply reply = new DepotReply(booking);
+      Order order = new Order(reply.getOrder());
+      logger.warning("VoyageActor.saveStateAndNotify() - voyageId:" + getId() + " orderId:" + order.getId() +" corrId: "+order.getCorrelationId());
       return new Kar.Actors.TailCall(this, "updateSchedulerAndNotifyOrder",  depotReply.getOrder());
    }
    @Remote
@@ -338,6 +344,7 @@ public class VoyageActor extends BaseActor {
    @Remote
    public Kar.Actors.TailCall notifyOrder(JsonObject orderAsJson) {
       Order order = new Order(orderAsJson);
+      logger.warning("VoyageActor.notifyOrder() - voyageId:" + getId() + " orderId:" + order.getId() + " corrId: "+order.getCorrelationId());
       return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, order.getId()), "processReeferBookingResult",  orderAsJson);
    }
    private boolean handledAlreadyArrived(Order order) {
@@ -557,7 +564,9 @@ public class VoyageActor extends BaseActor {
                reeferIds.append(orderReeferIds).append(",");
             }
          });
-
+         logger.info("VoyageActor.processArrivedVoyage() - voyageId:"+getId()+
+                 " Arrival at "+voyage.getRoute().getDestinationPort() +" reefer count:"+
+                 voyage.getReeferCount());
          StringBuilder spoiltReeferIds = new StringBuilder();
          spoiltReefersMap.keySet().forEach(spoiltReefer -> {
             spoiltReeferIds.append(spoiltReefer).append(",");
@@ -634,6 +643,7 @@ public class VoyageActor extends BaseActor {
    private void processDepartingVoyage(final Voyage voyage) {
       try {
          JsonObject params = Json.createObjectBuilder().add(Constants.VOYAGE_ID_KEY, getId()).
+                 add(Constants.ORDER_DESTINATION_KEY, Json.createValue(voyage.getRoute().getDestinationPort())).
                  add(Constants.VOYAGE_REEFERS_KEY, Json.createValue(voyage.getReeferCount())).
                  add(Constants.VOYAGE_FREE_CAPACITY_KEY, Json.createValue(voyage.getRoute().getVessel().getFreeCapacity())).
                  build();

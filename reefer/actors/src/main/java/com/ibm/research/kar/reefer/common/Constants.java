@@ -73,6 +73,7 @@ public class Constants {
    public static final String ORDER_PRODUCT_KEY="product";
    public static final String ORDER_PRODUCT_QTY_KEY="productQty";
    public static final String ORDER_CUSTOMER_ID_KEY="customerId";
+   public static final String ORDER_TIME_KEY="order-time";
    public static final String CURRENT_DATE_KEY="current-date";
    public static final String SCHEDULE_BASE_DATE_KEY="schedule-base-date";
    public static final String SCHEDULE_END_DATE_KEY="schedule-end-date";
@@ -108,4 +109,9 @@ public class Constants {
    public static final String REEFERSERVICE="reeferservice";
    public static final String CLIENT_TYPE="client-type";
    public static final String REEFER_DEPOT_SUFFIX="ReeferDepot";
+
+   public static final String ROUTE_ORIGIN="route-origin";
+   public static final String ROUTE_DESTINATION="route-destination";
+   public static final String ROUTE="route";
+   public static final String ROUTES="routes";
 }

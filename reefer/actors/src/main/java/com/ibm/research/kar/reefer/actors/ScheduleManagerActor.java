@@ -431,7 +431,34 @@ public class ScheduleManagerActor extends BaseActor {
         routes.forEach(route -> jab.add(RouteJsonSerializer.serialize(route)));
         return jab.build();
     }
-
+    private boolean valid(List<Route> routes, String origin, String destination) {
+        List<Route> matchingRoute =
+                routes.stream().filter(r -> r.getOriginPort().equals(origin) && r.getDestinationPort().equals(destination)).collect(Collectors.toList());
+        return matchingRoute.isEmpty() ? false : true;
+    }
+    @Remote
+    public JsonValue voyagesInRoutes(JsonObject routesAsJson) {
+        List<Route> routes = schedule.getRoutes();
+        List<Voyage> voyages = new LinkedList<>();
+        try {
+            routesAsJson.getJsonArray(Constants.ROUTES).forEach( route -> {
+                //JsonObject routeAsJson = routesAsJson.getJsonObject(Constants.ROUTE);
+                String origin = route.asJsonObject().getString(Constants.ROUTE_ORIGIN);
+                String destination = route.asJsonObject().getString(Constants.ROUTE_DESTINATION);
+                if ( valid(routes, origin, destination)) {
+                    voyages.addAll(schedule.getMatchingSchedule(origin, destination));
+                } else {
+                    logger.log(Level.WARNING,"ScheduleManagerActor.voyagesInRoutes() - invalid route: origin: "+origin+" destination: "+destination);
+                }
+            });
+            // sort based on departure date
+            Collections.sort(voyages);
+        } catch ( Exception e) {
+            logger.log(Level.SEVERE, "ScheduleManagerActor.voyagesInRoutes() - Error: "+e);
+        }
+        JsonArray matchingVoyages = voyageListToJsonArray(voyages);
+        return matchingVoyages;
+    }
     private void logSevereError(String methdodName, Exception e) {
         String stacktrace = ExceptionUtils.getStackTrace(e).replaceAll("\n","");
         logger.log(Level.SEVERE,"ScheduleManagerActor." +methdodName+ " Error:" +stacktrace);

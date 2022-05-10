@@ -60,11 +60,12 @@ public class Order {
     String msg;
     boolean bookingFailed;
     String clientReplyEndpoint;
+    String orderTime;
 
     public Order(OrderProperties orderProperties) {
         this(orderProperties.getCorrelationId(),orderProperties.getCustomerId(),orderProperties.getProduct(),
             orderProperties.getProductQty(),orderProperties.getVoyageId(),
-            OrderStatus.PENDING.getLabel(),new ArrayList<>(), orderProperties.getReplyTo());
+            OrderStatus.PENDING.getLabel(),new ArrayList<>(), orderProperties.getReplyTo(), orderProperties.getOrderTime());
     }
 
 
@@ -97,9 +98,12 @@ public class Order {
         if ( jo.containsKey(Constants.REPLY_TO_ENDPOINT_KEY)) {
             this.clientReplyEndpoint = jo.getString(Constants.REPLY_TO_ENDPOINT_KEY);
         }
+        if ( jo.containsKey(Constants.ORDER_TIME_KEY)) {
+            this.orderTime = jo.getString(Constants.ORDER_TIME_KEY);
+        }
     }
 
-    public Order( String correlationId, String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds, String replyTo) {
+    public Order( String correlationId, String customerId, String product, int productQty, String voyageId, String status, List<String> reeferIds, String replyTo, String orderTime) {
         this.correlationId = correlationId;
         this.customerId = customerId;
         this.product = product;
@@ -111,6 +115,7 @@ public class Order {
         this.date = Instant.now().toString();
         this.spoilt = false;
         this.clientReplyEndpoint = replyTo;
+        this.orderTime = orderTime;
     }
 
     public String generateOrderId() {
@@ -133,6 +138,9 @@ public class Order {
     }
     public String getReplyTo() {
         return this.clientReplyEndpoint;
+    }
+    public String getOrderTime() {
+        return orderTime;
     }
     @Override
     public boolean equals(Object o) {
@@ -243,6 +251,9 @@ public class Order {
         }
         if ( clientReplyEndpoint != null ) {
             orderBuilder.add(Constants.REPLY_TO_ENDPOINT_KEY, clientReplyEndpoint );
+        }
+        if ( orderTime != null ) {
+            orderBuilder.add(Constants.ORDER_TIME_KEY, orderTime);
         }
         return orderBuilder.build();
     }

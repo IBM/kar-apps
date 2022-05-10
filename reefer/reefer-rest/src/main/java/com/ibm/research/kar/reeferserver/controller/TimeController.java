@@ -92,7 +92,7 @@ public class TimeController {
         try {
             JsonValue reply = Kar.Actors.rootCall(scheduleActor, "advanceDate");
             today = Instant.parse(reply.asJsonObject().getString(Constants.CURRENT_DATE_KEY).toString());
-//            template.convertAndSend("/topic/time",today);
+            template.convertAndSend("/topic/time",today.toString());
         } catch (Exception e) {
             logger.log(Level.WARNING, "", e);
             e.printStackTrace();

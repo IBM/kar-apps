@@ -30,6 +30,7 @@ import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.service.SimulatorService;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.tomcat.util.bcel.Const;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -96,6 +97,9 @@ public class OrderController {
          orderProperties.setDestinationPort(voyage.getRoute().getDestinationPort());
          if ( req.containsKey(Constants.REPLY_TO_ENDPOINT_KEY)) {
             orderProperties.setReplyTo(req.getString(Constants.REPLY_TO_ENDPOINT_KEY));
+         }
+         if ( req.containsKey(Constants.ORDER_TIME_KEY)) {
+            orderProperties.setOrderTime(req.getString(Constants.ORDER_TIME_KEY));
          }
       } catch (Exception e) {
          logger.log(Level.WARNING, e.getMessage()+" error ", e);
@@ -175,6 +179,10 @@ public class OrderController {
                        add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
                        add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
                        add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
+               if ( order.getOrderTime() != null) {
+                  bookingStatus.add(Constants.ORDER_TIME_KEY, Json.createValue(order.getOrderTime()));
+               }
+
                if ( order.getMsg() != null ) {
                   bookingStatus.add(Constants.REASON_KEY,order.getMsg());
                }
@@ -183,11 +191,15 @@ public class OrderController {
                        add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
                        add(Constants.ORDER_CUSTOMER_ID_KEY,Json.createValue(order.getCustomerId())).
                        add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId()));
+               if ( order.getOrderTime() != null) {
+                  bookingStatus.add(Constants.ORDER_TIME_KEY, Json.createValue(order.getOrderTime()));
+               }
             }
             if ( order.isOriginSimulator()) {
                Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
             } else {
-               template.convertAndSend("/topic/"+order.getReplyTo(),bookingStatus.build().toString());
+               logger.warning("OrderController.orderBookingResult - replying to endpoint:" + order.getReplyTo() );
+               template.convertAndSend(order.getReplyTo(),bookingStatus.build().toString());
             }
          }
       } catch (Exception e) {
@@ -203,11 +215,16 @@ public class OrderController {
          if (order.isOriginSimulator() || order.getReplyTo() != null ) {
             JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
             bookingStatus.add(Constants.STATUS_KEY, Json.createValue("accepted")).
-                    add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId())).add(Constants.ORDER_ID_KEY, order.getId());
+                    add(Constants.CORRELATION_ID_KEY, Json.createValue(order.getCorrelationId())).
+                    add(Constants.ORDER_ID_KEY, order.getId());
+            if ( order.getOrderTime() != null ) {
+               bookingStatus.add(Constants.ORDER_TIME_KEY, order.getOrderTime());
+            }
             if ( order.isOriginSimulator()) {
                Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
             } else {
-               template.convertAndSend("/topic/"+order.getReplyTo(),bookingStatus.build().toString());
+               logger.warning("OrderController.orderBookingAccepted - replying to endpoint:" + order.getReplyTo() );
+               template.convertAndSend(order.getReplyTo(),bookingStatus.build().toString());
             }
          }
       } catch (Exception e) {

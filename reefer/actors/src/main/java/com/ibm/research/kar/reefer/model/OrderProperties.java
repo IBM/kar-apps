@@ -35,6 +35,7 @@ public class OrderProperties {
     String msg;
     int productQty;
     String replyTo;
+    String orderTime;
    public OrderProperties() {
    }
 
@@ -53,6 +54,9 @@ public class OrderProperties {
          this.destinationPort = jo.getString(Constants.ORDER_DESTINATION_KEY);
          if ( jo.containsKey(Constants.REPLY_TO_ENDPOINT_KEY) ) {
             this.replyTo = jo.getString(Constants.REPLY_TO_ENDPOINT_KEY);
+         }
+         if ( jo.containsKey(Constants.ORDER_TIME_KEY) ) {
+            this.orderTime = jo.getString(Constants.ORDER_TIME_KEY);
          }
       } catch( Exception e) {
 
@@ -74,6 +78,9 @@ public class OrderProperties {
         if ( replyTo != null ) {
            orderPropertiesBuilder.add(Constants.REPLY_TO_ENDPOINT_KEY, replyTo);
         }
+        if ( orderTime != null ) {
+           orderPropertiesBuilder.add(Constants.ORDER_TIME_KEY, orderTime);
+        }
         return orderPropertiesBuilder.build();
     }
     public String getReplyTo() {
@@ -86,6 +93,12 @@ public class OrderProperties {
         return product;
     }
 
+    public String getOrderTime() {
+      return orderTime;
+    }
+    public void setOrderTime(String orderTime) {
+      this.orderTime = orderTime;
+    }
     public void setProduct(String product) {
         this.product = product;
     }

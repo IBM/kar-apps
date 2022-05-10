@@ -110,7 +110,19 @@ public class VoyageController {
 
     }
 
-
+    @PostMapping("/voyage/list")
+    public List<Voyage> getVoyagesInRoutes(@RequestBody String message) {
+        try (JsonReader jsonReader = Json.createReader(new StringReader(message))) {
+            JsonObjectBuilder job = Json.createObjectBuilder();
+            JsonObject req = jsonReader.readObject();
+            JsonValue reply = Kar.Actors.rootCall(scheduleActor, "voyagesInRoutes", req);
+            JsonArray ja = reply.asJsonArray();
+            return getVoyages(reply);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, e.getMessage(), e);
+            return new ArrayList<Voyage>();
+        }
+    }
     private List<Voyage> getVoyages(JsonValue jv) {
         JsonArray ja = jv.asJsonArray();
         return ja.stream().map(v -> v.asJsonObject()).

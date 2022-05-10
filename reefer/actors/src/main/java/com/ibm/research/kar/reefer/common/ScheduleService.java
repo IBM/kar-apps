@@ -225,7 +225,23 @@ public class ScheduleService {
                         && voyage.getRoute().getDestinationPort().equals(destination)).
                 collect(Collectors.toList());
     }
-
+    public List<Voyage> getMatchingSchedule(String origin, String destination) {
+        List<Voyage> voyages = new LinkedList<>();
+        Instant today = TimeUtils.getInstance().getCurrentDate();
+        for( Voyage voyage : masterSchedule ) {
+            Instant departureDate = voyage.getSailDateObject();
+            if ( departureDate.isBefore(today)) {
+                continue; // skip already departed
+            }
+            if ( voyage.getRoute().getOriginPort().equals(origin)
+                    && voyage.getRoute().getDestinationPort().equals(destination) ||
+                  voyage.getRoute().getOriginPort().equals(destination)
+                    && voyage.getRoute().getDestinationPort().equals(origin)) {
+                voyages.add(voyage);
+            }
+        }
+        return voyages;
+    }
     /*
      * Returns voyages with ships currently are active which means voyages that left before current date
      * and have not yet arrived or have arrived and are being unloaded

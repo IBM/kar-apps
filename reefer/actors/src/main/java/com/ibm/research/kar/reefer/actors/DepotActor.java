@@ -249,6 +249,7 @@ public class DepotActor extends BaseActor {
     public void voyageReefersDeparted(JsonObject message) {
         try {
             String voyageId = message.getString(Constants.VOYAGE_ID_KEY);
+            String destination = message.getString(Constants.ORDER_DESTINATION_KEY);
             List<ReeferDTO> voyageReefers = voyageAllocatedReefers(voyageId);
 
             Set<String> depotOrders = new HashSet<>();
@@ -272,9 +273,6 @@ public class DepotActor extends BaseActor {
                     reeferMasterInventory[reefer.getId()] = null;
                     builder.append(reefer.getId()).append(",");
                 }
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info("DepotActor.voyageReefersDeparted() >>>> Depot:"+getId()+" Voyage:"+voyageId+" reefer count:"+orderCount+" empties:"+empties.size());
-                }
                 Inventory inventory = getReeferInventoryCounts();
                 bookedTotalCount = inventory.getBooked();
                 currentInventorySize = Json.createValue(inventory.getTotal());
@@ -285,8 +283,8 @@ public class DepotActor extends BaseActor {
                 // remove reefers in combined list from this depot inventory
                 updateStore(deleteMap(combinedList), Collections.emptyMap());
                 if (logger.isLoggable(Level.INFO)) {
-                    logger.info(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tVoyage:%20s \tDeparted:%7d \t%s \tempties:%7d",
-                            getId(),voyageId,voyageReefers.size(),inventory.toString(), empties.size()) );
+                    logger.info(String.format("DepotActor.voyageReefersDeparted() >>>> \t%25s \tVoyage:%20s \tDestination:\t%25s\tDeparted:%7d \t%s \tempties:%7d\torders:\t%s",
+                            getId(),voyageId,destination,voyageReefers.size(),inventory.toString(), empties.size(), orderCount) );
                 }
                 Set<String> rids = empties.stream().map(ReeferDTO::getId).map(String::valueOf).collect(Collectors.toSet());
                 if (logger.isLoggable(Level.INFO)) {
@@ -490,10 +488,12 @@ public class DepotActor extends BaseActor {
         try {
             // wrap Json with POJO
             order = new Order(bookingRequest);
+            logger.info("DepotActor.bookReefers - "+getId()+" voyage:"+order.getVoyageId() +" corrId: "+order.getCorrelationId());
+
             order.setDepot(this.getId());
             // idempotence check.
             if (order2ReeferMap.containsKey(order.getId())) {
-                logger.info("DepotActor.bookReefers - "+getId()+" voyage:"+order.getVoyageId() +" idempotence check triggered for order Id:"+order.getId());
+                logger.info("DepotActor.bookReefers - "+getId()+" voyage:"+order.getVoyageId() +" idempotence check triggered for order Id:"+order.getId()+" corrId: "+order.getCorrelationId());
                 return null;
             }
             // allocate reefers to the order.
@@ -521,6 +521,8 @@ public class DepotActor extends BaseActor {
         Order order = new Order(orderAsJson);
         order.setMsg("Failed to allocate reefers to order");
         order.setBookingFailed();
+        logger.info("DepotActor.handleFailedAllocationAndSaveState - "+getId()+" voyage:"+order.getVoyageId() +" corrId: "+order.getCorrelationId());
+
         updateStore(Collections.emptyMap(), reeferMap(Collections.emptyList()));
         JsonObject reply = createReply(Collections.emptySet(),order.getAsJsonObject(), Constants.FAILED);
         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
@@ -542,6 +544,8 @@ public class DepotActor extends BaseActor {
         currentInventorySize = invSize;
         bookedTotalCount = bookedCount.intValue();
         updateStore(Collections.emptyMap(), reeferMap(orderReefers));
+        logger.info("DepotActor.handleSuccessfulAllocationAndSaveState - "+getId()+" voyage:"+order.getVoyageId() +" corrId: "+order.getCorrelationId());
+
         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
                 "processReefersBookingResult", createReply(rids,order.getAsJsonObject(), Constants.OK));
     }

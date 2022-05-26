@@ -17,7 +17,6 @@
 kar:
   verbose: info
   imagePullSecret: kar.ibm.com.image-pull
-  imagePrefix: registry:5000/kar
 
 ingress:
   pathBased: false
@@ -30,6 +29,8 @@ global:
   karargs: "-placement_cache=false"
 
 reefer:
+  version: 1.2.0
+  imagePrefix: quay.io/ibm
   frontend:
     imageName: kar-app-reefer-frontend
     port: 9088

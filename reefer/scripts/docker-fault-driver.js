@@ -40,7 +40,7 @@ function rndTarget() {
 
 function rndsleep() {
   rsleep = 30 * Math.random();
-  return 30 + Math.trunc(rsleep);
+  return 60 + Math.trunc(rsleep);
 }
 
 // support testing from simulators console file

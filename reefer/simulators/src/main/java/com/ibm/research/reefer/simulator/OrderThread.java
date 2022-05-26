@@ -201,11 +201,11 @@ public class OrderThread extends Thread {
                 }
               }
             }
-            if (logger.isLoggable(Level.FINE)) {
-              logger.fine("orderthread: dumping voyageFreeCap MAP ----------");
-              SimulatorService.voyageFreeCap.forEach(
-                      (key, value) -> logger.fine("orderthread: " + key + " " + value.toString()));
-            }
+//            if (logger.isLoggable(Level.FINE)) {
+//              logger.fine("orderthread: dumping voyageFreeCap MAP ----------");
+//              SimulatorService.voyageFreeCap.forEach(
+//                      (key, value) -> logger.fine("orderthread: " + key + " " + value.toString()));
+//            }
             ordersExpectedToday = orderGroupsPerDay * SimulatorService.voyageFreeCap.keySet().size();
           }
 

@@ -271,11 +271,11 @@ public class OrderManagerActor extends BaseActor {
       try {
          String voyageId = message.asJsonObject().getString(Constants.VOYAGE_ID_KEY);
          JsonArray orders = message.asJsonObject().getJsonArray(Constants.ORDERS_KEY);
+         Map<String, JsonValue> updateMap = new HashMap<>();
          orders.forEach(oId -> {
             String orderId = ((JsonString) oId).getString();
             if (activeOrders.containsKey(orderId)) {
                Order activeOrder = new Order(activeOrders.get(orderId));
-               Map<String, JsonValue> updateMap = new HashMap<>();
                // idempotence check
                if (!Order.OrderStatus.INTRANSIT.name().equals(activeOrder.getStatus())) {
                   activeOrder.setStatus(Order.OrderStatus.INTRANSIT.name());
@@ -286,13 +286,13 @@ public class OrderManagerActor extends BaseActor {
                   activeOrders.put(activeOrder.getId(), activeOrder.getAsJsonObject());
                   updateMap.put(activeOrder.getId(), activeOrder.getAsJsonObject());
                }
-               if (!updateMap.isEmpty()) {
-                  updateStore(Collections.emptyMap(), updateMap);
-               }
-            }  else {
+             }  else {
                logger.log(Level.SEVERE, "OrderManagerActor.ordersDeparted() "+" order: " +orderId+" not in active orders map - message:"+message);
             }
          });
+         if (!updateMap.isEmpty()) {
+            updateStore(Collections.emptyMap(), updateMap);
+         }
       } catch (Exception e) {
          logger.log(Level.SEVERE, "OrderManagerActor.ordersDeparted() - error ", ExceptionUtils.getStackTrace(e).replaceAll("\n", ""));
          throw e;

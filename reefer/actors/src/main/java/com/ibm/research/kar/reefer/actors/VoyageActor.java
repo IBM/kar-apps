@@ -677,7 +677,7 @@ public class VoyageActor extends BaseActor {
       if (!orderStatus.name().equals(order.getStatus())) {
          try {
             Actors.Builder.instance().target(ReeferAppConfig.OrderActorType, orderId).
-                    method(methodName).arg().call(this);
+                    method(methodName).arg().tell();
          } catch (Exception orderActorException) {
             // KAR sometimes fails to locate order actor instance even though it exists in REDIS. This can happen
             // after process restart

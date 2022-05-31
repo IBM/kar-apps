@@ -15,10 +15,16 @@
  */
 package com.ibm.research.kar.reefer.client.orderdriver;
 
+import com.ibm.research.kar.reefer.client.orderdriver.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.client.orderdriver.model.FromToRoute;
 import com.ibm.research.kar.reefer.client.orderdriver.model.FutureVoyage;
+import com.ibm.research.kar.reefer.client.orderdriver.model.Route;
 
+import javax.json.Json;
+import javax.json.JsonReader;
+import javax.json.JsonValue;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.http.HttpResponse;
 import java.time.Instant;
@@ -57,9 +63,60 @@ public class OrderDriver implements DayChangeHandler{
       this.url = url;
       reefer = new ReeferWebApi(url);
    }
-   public OrderDriver addRoute(String routesArg) {
-      routes.add(FromToRoute.parse(routesArg));
+   private boolean invalidNumber(String val, int maxAllowedSize) {
+      if ( !isNumeric(val) || Integer.parseInt(val) < 0 || Integer.parseInt(val) > maxAllowedSize) {
+        return true;
+      }
+      return false;
+   }
+   public OrderDriver addRoute(String routesArg) throws IOException, InterruptedException, URISyntaxException, IllegalArgumentException{
+      String[] range;
+      List<Route> allRoutes = getRoutes();
+      if ( routesArg.indexOf("-") > 0 ) {
+         // got range of routes
+         range = routesArg.split("-");
+         if ( invalidNumber(range[0].trim(), allRoutes.size()-1 ) ) {
+            throw new IllegalArgumentException("Invalid lower route range provided  - must be a number between 0 and "+(allRoutes.size()-1));
+         }
+         if ( invalidNumber(range[1].trim(), allRoutes.size()-1 ) ) {
+            throw new IllegalArgumentException("Invalid upper route range provided - must be a number between 0 and "+(allRoutes.size()-1));
+         }
+         int lowerRange = Integer.parseInt(range[0].trim());
+         int upperRange = Integer.parseInt(range[1].trim());
+
+         for( ; lowerRange <= upperRange; lowerRange++) {
+            /*
+            Route r = allRoutes.get(lowerRange);
+            FromToRoute route = new FromToRoute(r.getOriginPort(), r.getDestinationPort());
+            routes.add(route);
+            System.out.println("adding route:"+route.toString());
+
+             */
+            addRoute(allRoutes, lowerRange);
+         }
+      } else {
+         // no range
+         /*
+         Route r = allRoutes.get(Integer.parseInt(routesArg.trim()));
+         FromToRoute route = new FromToRoute(r.getOriginPort(), r.getDestinationPort());
+         routes.add(route);
+         System.out.println("adding route:"+route.toString());
+
+
+
+          */
+         if ( invalidNumber(routesArg.trim(), allRoutes.size() )) {
+            throw new IllegalArgumentException("Invalid route index provided - must be a number between 0 and "+(allRoutes.size()-1));
+         }
+         addRoute(allRoutes, Integer.parseInt(routesArg.trim()));
+      }
       return this;
+   }
+   private void addRoute( List<Route> allRoutes, int inx) {
+      Route r = allRoutes.get(inx);
+      FromToRoute route = new FromToRoute(r.getOriginPort(), r.getDestinationPort());
+      routes.add(route);
+      System.out.println("adding route:"+route.toString());
    }
    public OrderDriver updatesPerDay( String updatesPerDay ) {
       if ( !isNumeric(updatesPerDay)) {
@@ -81,6 +138,27 @@ public class OrderDriver implements DayChangeHandler{
       }
       this.timeoutMillis = Long.valueOf(orderTimeout);
       return this;
+   }
+   public List<Route> getRoutes() throws IOException, InterruptedException, URISyntaxException {
+
+         // Get unit delay from WebAPI
+         HttpResponse<String> response = reefer.get("/routes");
+         List<Route> routes = new LinkedList<>();
+         try (JsonReader jsonReader = Json.createReader(new StringReader(response.body()))) {
+            int i=0;
+            for (JsonValue routeAsJson : jsonReader.readArray()) {
+               routes.add(RouteJsonSerializer.deserialize(routeAsJson.asJsonObject()));
+               /*
+               Route r = RouteJsonSerializer.deserialize(routeAsJson.asJsonObject());
+               System.out.println("["+i+"] "+r.getOriginPort()+"-"+r.getDestinationPort());
+               i++;
+
+                */
+            }
+         } catch( Exception e) {
+            e.printStackTrace();
+         }
+      return routes;
    }
    public void start() {
       int unitDelay = 0;
@@ -109,6 +187,9 @@ public class OrderDriver implements DayChangeHandler{
          while (running) {
             // get all voyages for a given route
             List<FutureVoyage> voyages = voyageController.getFutureVoyages(routes, newDay, orderTarget);
+            if ( 1 ==1 )
+               break;
+
             // select the first voyage from the (sorted by departure date) list. Already departed voyages
             // will not be in the list. As the voyage arrives, this code will automatically start filling
             // the next voyage on a return trip.

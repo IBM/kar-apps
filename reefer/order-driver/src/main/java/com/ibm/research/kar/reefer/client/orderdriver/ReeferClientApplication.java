@@ -15,6 +15,8 @@
  */
 package com.ibm.research.kar.reefer.client.orderdriver;
 
+import com.ibm.research.kar.reefer.client.orderdriver.json.RouteJsonSerializer;
+import com.ibm.research.kar.reefer.client.orderdriver.model.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -47,14 +49,25 @@ public class ReeferClientApplication implements ApplicationRunner {
                  " --orderTarget=<order target percentage>| OPTIONAL, default=75\n\n");
          System.exit(0);
       }
+
+      System.out.println("Target URL:" + environment.getProperty("url"));
+      OrderDriver driver = new OrderDriver(environment.getProperty("url"));
+
+      if ( args.containsOption("getRoutes")) {
+         int i=0;
+         for( Route r : driver.getRoutes() ) {
+            System.out.println("["+i+"] "+r.getOriginPort()+"-"+r.getDestinationPort());
+            i++;
+         }
+         System.exit(0);
+      }
+
       if ( !args.containsOption("route")) {
          System.out.println("Missing --route=<String>");
          System.exit(-1);
       }
-
-      System.out.println("Target URL:" + environment.getProperty("url"));
-      OrderDriver driver = new OrderDriver(environment.getProperty("url"));
       driver.addRoute(args.getOptionValues("route").get(0));
+
       if ( args.containsOption("updatesPerDay")) {
          driver.updatesPerDay(args.getOptionValues("updatesPerDay").get(0));
       }

@@ -23,7 +23,7 @@ public class FromToRoute {
    String origin;
    String destination;
 
-   private FromToRoute(String origin, String destination) {
+   public FromToRoute(String origin, String destination) {
       this.origin = origin;
       this.destination = destination;
    }
@@ -41,6 +41,15 @@ public class FromToRoute {
       System.out.println("FromToRoute: origin: "+ports[0]+" destination: "+ports[1]);
       return new FromToRoute(ports[0], ports[1]);
    }
+
+   @Override
+   public String toString() {
+      return "FromToRoute{" +
+              "origin='" + origin + '\'' +
+              ", destination='" + destination + '\'' +
+              '}';
+   }
+
    public JsonObject asJson() {
       if ( origin == null || destination == null ) {
          throw new IllegalStateException("FromToRoute instance not initialized yet, call parse() first");

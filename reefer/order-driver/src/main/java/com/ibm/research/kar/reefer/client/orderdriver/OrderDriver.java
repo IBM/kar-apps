@@ -187,8 +187,6 @@ public class OrderDriver implements DayChangeHandler{
          while (running) {
             // get all voyages for a given route
             List<FutureVoyage> voyages = voyageController.getFutureVoyages(routes, newDay, orderTarget);
-            if ( 1 ==1 )
-               break;
 
             // select the first voyage from the (sorted by departure date) list. Already departed voyages
             // will not be in the list. As the voyage arrives, this code will automatically start filling

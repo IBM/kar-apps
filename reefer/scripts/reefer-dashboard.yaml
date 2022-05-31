@@ -1189,7 +1189,7 @@ data:
                   "type": "prometheus",
                   "uid": "prometheus"
                 },
-                "expr": "rate(kar_user_code_invocation_durations_histogram_seconds_sum[20m]) /rate(kar_user_code_invocation_durations_histogram_seconds_count[20m]) ",
+                "expr": "rate(kar_user_code_invocation_durations_histogram_seconds_sum[$__interval]) /rate(kar_user_code_invocation_durations_histogram_seconds_count[$__interval]) ",
                 "refId": "A"
               }
             ],

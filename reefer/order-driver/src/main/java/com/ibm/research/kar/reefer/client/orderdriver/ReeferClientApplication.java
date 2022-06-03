@@ -15,7 +15,6 @@
  */
 package com.ibm.research.kar.reefer.client.orderdriver;
 
-import com.ibm.research.kar.reefer.client.orderdriver.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.client.orderdriver.model.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -43,7 +42,8 @@ public class ReeferClientApplication implements ApplicationRunner {
    public void run(ApplicationArguments args) throws Exception {
       if ( args.containsOption("help")) {
          System.out.println("java -jar -Dserver.port=<driver port> reefer-kar-order-driver.jar <OPTIONS>");
-         System.out.println("OPTIONS:\n --route=<route>| REQUIRED, example: --route=Tanger-Med-MA:Savannah-US\n" +
+         System.out.println("OPTIONS:\n --getRoutes | OPTIONAL, list all routes \n"+
+                 " --route=<N-M>| REQUIRED, example: --route=[0-2]. First run program with --getRoutes to get indecies for routes\n" +
                  " --orderTimeout=<order timeout>| OPTIONAL, default=3 minutes\n" +
                  " --updatesPerDay=<number of orders per day>| OPTIONAL, default=3\n" +
                  " --orderTarget=<order target percentage>| OPTIONAL, default=75\n\n");
@@ -66,7 +66,7 @@ public class ReeferClientApplication implements ApplicationRunner {
          System.out.println("Missing --route=<String>");
          System.exit(-1);
       }
-      driver.addRoute(args.getOptionValues("route").get(0));
+      driver.addRoutes(args.getOptionValues("route").get(0));
 
       if ( args.containsOption("updatesPerDay")) {
          driver.updatesPerDay(args.getOptionValues("updatesPerDay").get(0));

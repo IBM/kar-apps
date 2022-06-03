@@ -17,9 +17,11 @@ package com.ibm.research.kar.reefer.client.orderdriver;
 
 import com.ibm.research.kar.reefer.client.orderdriver.model.Booking;
 import com.ibm.research.kar.reefer.client.orderdriver.model.FutureVoyage;
+import com.ibm.research.kar.reefer.client.orderdriver.model.OrderStats;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
 
@@ -28,11 +30,10 @@ public class OrderDispatcher {
    private ReeferWebApi reeferApiServer;
    private String orderDriverEndpoint;
    private String hostIP;
-   private long totalLatency;
-   private long totalOrdersDispatched;
-   private long totalOrdersDone;
+   private long todayOrderLatency;
    private int updatesPerDay = 3;  // default
    private long orderCounter = 1;
+   private OrderStats orderStats;
    ReplyProcessor replyProcessor;
    long timeoutMillis=0;
 
@@ -60,61 +61,71 @@ public class OrderDispatcher {
       this.timeoutMillis = timeoutMillis;
       return this;
    }
-   public void dispatchTodayOrders(FutureVoyage futureVoyage, int unitDelay) {
+   public OrderDispatcher withOrderStats( OrderStats orderStats) {
+      this.orderStats = orderStats;
+      return this;
+   }
+   public void dispatchTodayOrders(List<FutureVoyage> voyages, int unitDelay) {
       // day end time is 98% of unit delay
       long dayEndTime = System.currentTimeMillis() + 980 * unitDelay;
-      long expectedOrders = updatesPerDay;
+      long expectedOrders = voyages.size() * updatesPerDay;
+      // each day reset
+      long ordersDoneToday=0;
+      todayOrderLatency = 0;
       for (int u = 0; u < updatesPerDay; u++) {
-         if (futureVoyage.getOrderSize() > 0) {
-            JsonObject order = createOrder(futureVoyage);
-            Booking booking = Booking.of(order);
-            // start a timer task for each booking to support timeouts
-            booking.startTimer(timeoutMillis, replyProcessor);
-            // add booking to outstanding map so that we can match replies
-            replyProcessor.addPendingOrder(booking);
-            try {
-               reeferApiServer.post("/orders", order);
-               logger.info("OrderDriver - dispatched order: " + booking.getCorrelationId());
-            } catch (Exception e) {
-               throw new RuntimeException(e);
-            }
-            totalOrdersDispatched++;
-            long timeRemaining = dayEndTime - System.currentTimeMillis();
-            // stop processing if less than 10ms left in day
-            if (timeRemaining < 10) {
-               return;
-            }
-/*
-            try {
-               sleepBetweenOrders(timeRemaining, expectedOrders);
-            } catch (InterruptedException e) {
-               e.printStackTrace();
-            }
+         for( FutureVoyage futureVoyage : voyages) {
+            if (futureVoyage.getOrderSize() > 0) {
+               ordersDoneToday++;
+               JsonObject order = createOrder(futureVoyage);
+               Booking booking = Booking.of(order);
+               // start a timer task for each booking to support timeouts
+               booking.startTimer(timeoutMillis, replyProcessor);
+               // add booking to outstanding map so that we can match replies
+               replyProcessor.addPendingOrder(booking);
+               try {
+                  reeferApiServer.post("/orders", order);
+                  orderStats.incrementDispatched();
+                //  logger.info("OrderDriver - dispatched order: " + booking.getCorrelationId()+" voyage:"+futureVoyage.getId());
+               } catch (Exception e) {
+                  throw new RuntimeException(e);
+               }
+               //ordersDispatchedToday++;
+               long timeRemaining = dayEndTime - System.currentTimeMillis();
+               // stop processing if less than 10ms left in day
+               if (timeRemaining < 10) {
+                  return;
+               }
 
- */
-
+               try {
+                  sleepBetweenOrders(timeRemaining, expectedOrders, ordersDoneToday);
+               } catch (InterruptedException e) {
+                 logger.severe("Failed while sleeping between orders - cause:"+e);
+               }
+            }
          }
 
       }
 
    }
-
-   private void sleepBetweenOrders(long timeRemaining, long expectedOrders) throws InterruptedException {
-      if (expectedOrders > totalOrdersDispatched) {
+   public void incrementTotalLatency(long latency) {
+      todayOrderLatency += latency;
+      orderStats.incrementLatency(latency);
+   }
+   private void sleepBetweenOrders(long timeRemaining, long expectedOrders, long ordersDispatchedToday) throws InterruptedException {
+      if (ordersDispatchedToday > 0 && expectedOrders > ordersDispatchedToday) {
          long timeToSleep = 10;
-         long orderTimeRemaining = (totalLatency / totalOrdersDone)
-                 * (expectedOrders - totalOrdersDispatched);
+         long orderTimeRemaining = (todayOrderLatency / ordersDispatchedToday)
+                 * (expectedOrders - ordersDispatchedToday);
          long triggerRandom = 20;  // 20 millis
          if (orderTimeRemaining > 0 && timeRemaining > 0) {
-            timeToSleep = (timeRemaining - orderTimeRemaining)
-                    / (expectedOrders - totalOrdersDispatched);
+            timeToSleep = (timeRemaining - orderTimeRemaining) / (expectedOrders - ordersDispatchedToday);
             if (timeToSleep > triggerRandom) {
                timeToSleep = ThreadLocalRandom.current().nextLong(timeToSleep / 2, (timeToSleep * 3) / 2);
             }
             timeToSleep = (timeToSleep < 1) ? 1 : timeToSleep;
          }
-         System.out.println(String.format("++++++++++++++++++++++++++ timeRemaining=%d orderTimeRemaining=%d totalOrderTime=%d threadOrdersDone=%d timeToSleep=%d",
-                 timeRemaining, orderTimeRemaining, totalLatency, totalOrdersDone, timeToSleep));
+        logger.fine(String.format("++++++++++++++++++++++++++ timeRemaining=%d orderTimeRemaining=%d totalOrderTime=%d threadOrdersDone=%d timeToSleep=%d",
+                 timeRemaining, orderTimeRemaining, todayOrderLatency, ordersDispatchedToday, timeToSleep));
 
          Thread.sleep(timeToSleep);
       }
@@ -130,4 +141,6 @@ public class OrderDispatcher {
               .add("order-time", String.valueOf(System.currentTimeMillis())).
               build();
    }
+
+
 }

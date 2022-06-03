@@ -488,8 +488,6 @@ public class DepotActor extends BaseActor {
         try {
             // wrap Json with POJO
             order = new Order(bookingRequest);
-            logger.info("DepotActor.bookReefers - "+getId()+" voyage:"+order.getVoyageId() +" corrId: "+order.getCorrelationId());
-
             order.setDepot(this.getId());
             // idempotence check.
             if (order2ReeferMap.containsKey(order.getId())) {
@@ -521,8 +519,6 @@ public class DepotActor extends BaseActor {
         Order order = new Order(orderAsJson);
         order.setMsg("Failed to allocate reefers to order");
         order.setBookingFailed();
-        logger.info("DepotActor.handleFailedAllocationAndSaveState - "+getId()+" voyage:"+order.getVoyageId() +" corrId: "+order.getCorrelationId());
-
         updateStore(Collections.emptyMap(), reeferMap(Collections.emptyList()));
         JsonObject reply = createReply(Collections.emptySet(),order.getAsJsonObject(), Constants.FAILED);
         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
@@ -544,8 +540,6 @@ public class DepotActor extends BaseActor {
         currentInventorySize = invSize;
         bookedTotalCount = bookedCount.intValue();
         updateStore(Collections.emptyMap(), reeferMap(orderReefers));
-        logger.info("DepotActor.handleSuccessfulAllocationAndSaveState - "+getId()+" voyage:"+order.getVoyageId() +" corrId: "+order.getCorrelationId());
-
         return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.VoyageActorType, order.getVoyageId()),
                 "processReefersBookingResult", createReply(rids,order.getAsJsonObject(), Constants.OK));
     }

@@ -21,6 +21,7 @@ import com.ibm.research.kar.reefer.client.orderdriver.model.FutureVoyage;
 import com.ibm.research.kar.reefer.client.orderdriver.model.Voyage;
 
 import javax.json.*;
+import javax.ws.rs.core.Response;
 import java.io.StringReader;
 import java.net.http.HttpResponse;
 import java.time.Instant;
@@ -38,7 +39,7 @@ public class VoyageController {
       this.reeferApiServer = reeferApiServer;
    }
 
-   public List<FutureVoyage> getFutureVoyages(List<FromToRoute> routes, Instant today, int orderTarget ) {
+   public List<FutureVoyage> getFutureVoyages(List<FromToRoute> routes, Instant today, int orderTarget, int updatesPerDay ) {
       List<Voyage> voyages = new LinkedList<>();
       List<FutureVoyage> futureVoyages = new LinkedList<>();
       HttpResponse<String> jsonVoyages;
@@ -53,12 +54,15 @@ public class VoyageController {
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
+
       try (JsonReader jsonReader = Json.createReader(new StringReader(jsonVoyages.body()))) {
-         for (JsonValue voyageAsJson : jsonReader.readArray()) {
+         JsonArray ja = jsonReader.readArray();
+         for (JsonValue voyageAsJson : ja) { //jsonReader.readArray()) {
             Voyage voyage = VoyageJsonSerializer.deserialize(voyageAsJson.asJsonObject());
             Instant sailDate = voyage.getSailDateObject();
-            voyages.add(voyage);
             int daysBeforeDeparture = (int) ChronoUnit.DAYS.between(today, sailDate);
+
+            voyages.add(voyage);
             int maxCapacity = voyage.getRoute().getVessel().getMaxCapacity();
             int freeCapacity = voyage.getRoute().getVessel().getFreeCapacity();
             int utilization = (maxCapacity - freeCapacity) * 100 / maxCapacity;
@@ -67,12 +71,14 @@ public class VoyageController {
             int orderSize = 0;
             if (daysBeforeDeparture > 0) {
                dayOrderCap = (orderTarget * maxCapacity / 100.0 - (maxCapacity - freeCapacity)) / daysBeforeDeparture;
-               orderCapacity = (int) Math.ceil(dayOrderCap);
-               orderSize = (orderCapacity * 1000);
+               if ( dayOrderCap > 0 ) {
+                  orderCapacity = (int) Math.ceil(dayOrderCap);
+                  orderSize = (orderCapacity * 1000)/ updatesPerDay;
+               }
             }
             FutureVoyage futureVoyage = new FutureVoyage(voyage.getId(), daysBeforeDeparture, maxCapacity, freeCapacity, orderSize, utilization);
             futureVoyages.add(futureVoyage);
-            logger.info("Voyage:" + voyage.getId() + " daysBeforeDeparture:"+daysBeforeDeparture+" maxCapacity: " + maxCapacity + " freeCapacity: " +
+            logger.fine("Voyage:" + voyage.getId() + " daysBeforeDeparture:"+daysBeforeDeparture+" maxCapacity: " + maxCapacity + " freeCapacity: " +
                     freeCapacity + " orderSize: " + orderSize + " utilization: " + utilization);
          }
       }

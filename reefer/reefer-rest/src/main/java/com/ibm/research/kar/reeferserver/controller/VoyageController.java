@@ -36,6 +36,7 @@ import java.io.StringReader;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -116,8 +117,7 @@ public class VoyageController {
             JsonObjectBuilder job = Json.createObjectBuilder();
             JsonObject req = jsonReader.readObject();
             JsonValue reply = Kar.Actors.rootCall(scheduleActor, "voyagesInRoutes", req);
-            JsonArray ja = reply.asJsonArray();
-            return getVoyages(reply);
+            return getVoyages(reply, req);
         } catch (Exception e) {
             logger.log(Level.WARNING, e.getMessage(), e);
             return new ArrayList<Voyage>();
@@ -128,6 +128,24 @@ public class VoyageController {
         return ja.stream().map(v -> v.asJsonObject()).
                 map(VoyageJsonSerializer::deserialize).
                 collect(Collectors.toList());
+    }
+    private List<Voyage> getVoyages(JsonValue scheduleAsJson, JsonObject routesAsJson) {
+        List<Voyage> voyages = new LinkedList<>();
+        routesAsJson.getJsonArray(Constants.ROUTES).forEach( route -> {
+            String origin = route.asJsonObject().getString(Constants.ROUTE_ORIGIN);
+            String destination = route.asJsonObject().getString(Constants.ROUTE_DESTINATION);
+            // find the first voyage that matches current route.
+            for( JsonValue v : scheduleAsJson.asJsonArray() ) {
+                Voyage voyage = VoyageJsonSerializer.deserialize(v.asJsonObject());
+                // the following also tests for a return trip
+                if (  (voyage.getRoute().getOriginPort().equals(origin) && voyage.getRoute().getDestinationPort().equals(destination) ) ||
+                        (voyage.getRoute().getOriginPort().equals(destination) && voyage.getRoute().getDestinationPort().equals(origin) ) ) {
+                    voyages.add(voyage);
+                    break;
+                }
+            }
+        });
+        return voyages;
     }
 
     /**

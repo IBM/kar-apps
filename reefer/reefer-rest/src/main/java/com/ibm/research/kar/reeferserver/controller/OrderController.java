@@ -30,7 +30,6 @@ import com.ibm.research.kar.reefer.model.OrderStats;
 import com.ibm.research.kar.reefer.model.Voyage;
 import com.ibm.research.kar.reeferserver.service.SimulatorService;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.tomcat.util.bcel.Const;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -140,9 +139,6 @@ public class OrderController {
    public void processNewOrder(@Payload String message, StompHeaderAccessor stompHeaderAccessor) {
       System.out.println("OrderController.processNewOrder() - got new order:"+message);
       Order order = JsonUtils.deserializeOrder(message);
-     // System.out.println("OrderController.processNewOrder() - order correlation id:"+order.getCorrelationId());
-     // logger.log(Level.INFO,"OrderController.processNewOrder()",stompHeaderAccessor.getMessage());
-    //  System.out.println("OrderController.processNewOrder() headers:"+stompHeaderAccessor.getMessageHeaders());
       JsonObjectBuilder bookingStatus = Json.createObjectBuilder();
       bookingStatus.add(Constants.STATUS_KEY,Json.createValue("booked")).
               add(Constants.ORDER_ID_KEY,Json.createValue(order.getId())).
@@ -198,7 +194,6 @@ public class OrderController {
             if ( order.isOriginSimulator()) {
                Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
             } else {
-               logger.warning("OrderController.orderBookingResult - replying to endpoint:" + order.getReplyTo() );
                template.convertAndSend(order.getReplyTo(),bookingStatus.build().toString());
             }
          }
@@ -223,7 +218,6 @@ public class OrderController {
             if ( order.isOriginSimulator()) {
                Kar.Services.tell(Constants.SIMSERVICE, "simulator/orderstatus", bookingStatus.build());
             } else {
-               logger.warning("OrderController.orderBookingAccepted - replying to endpoint:" + order.getReplyTo() );
                template.convertAndSend(order.getReplyTo(),bookingStatus.build().toString());
             }
          }

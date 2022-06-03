@@ -119,9 +119,7 @@ public class OrderManagerActor extends BaseActor {
    public Kar.Actors.TailCall bookOrder(JsonObject message) {
       Order order = null;
       try {
-         logger.log(Level.WARNING, "OrderManagerActor.bookOrder() - message:"+message);
          order = new Order(new OrderProperties(message));
-         logger.log(Level.WARNING, "OrderManagerActor.bookOrder() - Booking time:"+order.getOrderTime());
          Reminder[] reminders = Kar.Actors.Reminders.get(this, order.getCorrelationId());
          if (reminders != null && reminders.length > 0) {
             order = new Order((JsonObject) (reminders[0].getArguments()[0]));
@@ -173,8 +171,6 @@ public class OrderManagerActor extends BaseActor {
       JsonObject activeOrder=null;
       try {
          order = new Order(message);
-         logger.log(Level.INFO, "OrderManagerActor.processReeferBookingResult() - corrId: "+order.getCorrelationId()+" orderId: "+order.getId());
-
          if (!activeOrders.containsKey(order.getId())) {
             logger.log(Level.WARNING, "OrderManagerActor.processReeferBookingResult() - orderId: " + order.getId() + " corrId: "+order.getCorrelationId()+" not found in activeOrders Map");
             return null;
@@ -211,7 +207,6 @@ public class OrderManagerActor extends BaseActor {
       Order order = new Order(orderAsJson);
       Map<String, List<String>> deleteMap = new HashMap<>();
       Map<String, JsonValue> updateMap = new HashMap<>();
-      logger.log(Level.INFO, "OrderManagerActor.handleBooking() - corrId: "+order.getCorrelationId()+" orderId: "+order.getId());
       // check if the booking failed
       if ( order.isBookingFailed()) {
          logger.log(Level.SEVERE, "OrderManagerActor.handleBooking() - orderId: "+order.getId()+" failed - removing from active orders - reason:"+order.getMsg());
@@ -233,7 +228,6 @@ public class OrderManagerActor extends BaseActor {
          throw new RuntimeException("OrderManagerActor.handleBooking() -invalid state:"+activeOrder.getString(Constants.ORDER_STATUS_KEY));
       }
       updateStore(deleteMap, updateMap);
-      logger.log(Level.INFO, "OrderManagerActor.handleBooking() - updated store - corrId: "+order.getCorrelationId()+" orderId: "+order.getId());
       return new Kar.Actors.TailCall(Constants.REEFERSERVICE, "/order/booking/result", order.getAsJsonObject());
    }
 

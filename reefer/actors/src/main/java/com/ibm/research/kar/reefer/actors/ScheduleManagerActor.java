@@ -442,7 +442,6 @@ public class ScheduleManagerActor extends BaseActor {
         List<Voyage> voyages = new LinkedList<>();
         try {
             routesAsJson.getJsonArray(Constants.ROUTES).forEach( route -> {
-                //JsonObject routeAsJson = routesAsJson.getJsonObject(Constants.ROUTE);
                 String origin = route.asJsonObject().getString(Constants.ROUTE_ORIGIN);
                 String destination = route.asJsonObject().getString(Constants.ROUTE_DESTINATION);
                 if ( valid(routes, origin, destination)) {

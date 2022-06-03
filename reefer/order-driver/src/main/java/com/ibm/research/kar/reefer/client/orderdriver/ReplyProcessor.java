@@ -16,6 +16,7 @@
 package com.ibm.research.kar.reefer.client.orderdriver;
 
 import com.ibm.research.kar.reefer.client.orderdriver.model.Booking;
+import com.ibm.research.kar.reefer.client.orderdriver.model.OrderStats;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,9 +28,10 @@ public class ReplyProcessor implements TimeoutHandler, OrderReplyMessageHandler 
    private static final Logger logger = Logger.getLogger(ReplyProcessor.class.getName());
    Map<String, Booking> bookingMap = new ConcurrentHashMap<>();
    Map<String, Function<Booking, String>> replyFunctorMap = new HashMap<>();
-
-   public ReplyProcessor() {
-
+   OrderDispatcher orderDispatcher;
+   OrderStats orderStats;
+   public ReplyProcessor(OrderStats orderStats) {
+      this.orderStats = orderStats;
       // register handler for each status sent by reefer in a reply
       // Handler for 'accepted'
       replyFunctorMap.put(Booking.BookingStatus.ACCEPTED.name(), new Function<Booking, String>() {
@@ -53,13 +55,16 @@ public class ReplyProcessor implements TimeoutHandler, OrderReplyMessageHandler 
          }
       });
    }
-
+   public void setOrderDispatcher(OrderDispatcher orderDispatcher ) {
+      this.orderDispatcher = orderDispatcher;
+   }
    private String handleBookingSuccess(Booking booking) {
       // NOTE: THIS METHOD IS CALLED ON A SEPARATE THREAD WHICH HANDLES REPLIES FROM REEFER (Websockets)
       // See: WebSocketController subscription
       if ( !bookingMap.containsKey(booking.getCorrelationId()) ) {
          logger.severe(">>>>>>>>>>>>>>>>>> Order Booked - But not in the outstanding map????");
       } else {
+         orderStats.incrementBooked();
          bookingMap.get(booking.getCorrelationId()).cancelTimer();
          Booking cachedBooking = bookingMap.get(booking.getCorrelationId());
          if ( cachedBooking != null ) {
@@ -68,7 +73,7 @@ public class ReplyProcessor implements TimeoutHandler, OrderReplyMessageHandler 
             }
          }
          bookingMap.remove(booking.getCorrelationId());
-         logger.info(">>>>>>>>>>>>>>>>>> Order Booked - correlationId: " + booking.getCorrelationId() + " orderId: " + booking.getOrderId() + " latency: " + booking.getLatency()+" bookingMap.size(): "+bookingMap.size());
+       //  logger.info(">>>>>>>>>>>>>>>>>> Order Booked - correlationId: " + booking.getCorrelationId() + " orderId: " + booking.getOrderId() + " latency: " + booking.getLatency()+" bookingMap.size(): "+bookingMap.size());
       }
       return "OK";
    }
@@ -79,6 +84,7 @@ public class ReplyProcessor implements TimeoutHandler, OrderReplyMessageHandler 
       if ( !bookingMap.containsKey(booking.getCorrelationId()) ) {
          logger.severe(">>>>>>>>>>>>>>>>>> Order Accepted - But not in the outstanding map - what da????");
       } else {
+         orderStats.incrementAccepted();
          Booking cachedBooking = bookingMap.get(booking.getCorrelationId());
          if ( cachedBooking != null ) {
             if ( !cachedBooking.getStatus().equals(Booking.BookingStatus.PENDING) ) {
@@ -97,6 +103,7 @@ public class ReplyProcessor implements TimeoutHandler, OrderReplyMessageHandler 
       if ( !bookingMap.containsKey(booking.getCorrelationId()) ) {
          logger.severe(">>>>>>>>>>>>>>>>>> Order Failed - But not in the outstanding map - what da???? ");
       } else {
+         orderStats.incrementFailed();
          logger.warning(">>>>>>>>>>>>>>>>>> Order Failed - correlationId: " + booking.getCorrelationId() + " orderId: " + booking.getOrderId()
                  + " latency: " + booking.getLatency()+" cause: "+booking.getErrorMsg());
          bookingMap.get(booking.getCorrelationId()).cancelTimer();
@@ -123,7 +130,10 @@ public class ReplyProcessor implements TimeoutHandler, OrderReplyMessageHandler 
    @Override
    public void onMessage(Object message) {
       Booking booking = Booking.of((String) message);
-      booking.setLatency(System.currentTimeMillis() - Long.valueOf(booking.getOrderTime()));
+      long latency = System.currentTimeMillis() - Long.valueOf(booking.getOrderTime());
+      booking.setLatency(latency);
+      System.out.println("................. latency:"+latency);
+      orderDispatcher.incrementTotalLatency(latency);
       // using order status (accepted, booked, failed) call a registered method to handle
       // the message
       if (replyFunctorMap.containsKey(booking.getStatus().name())) {
@@ -134,5 +144,6 @@ public class ReplyProcessor implements TimeoutHandler, OrderReplyMessageHandler 
    public void handleTimeout(Booking booking) {
       logger.severe("Order Timed out - corrId:"+booking.getCorrelationId());
       bookingMap.remove(booking.getCorrelationId());
+      orderStats.incrementFailed();
    }
 }

@@ -18,6 +18,7 @@ package com.ibm.research.kar.reefer.client.orderdriver;
 import com.ibm.research.kar.reefer.client.orderdriver.json.RouteJsonSerializer;
 import com.ibm.research.kar.reefer.client.orderdriver.model.FromToRoute;
 import com.ibm.research.kar.reefer.client.orderdriver.model.FutureVoyage;
+import com.ibm.research.kar.reefer.client.orderdriver.model.OrderStats;
 import com.ibm.research.kar.reefer.client.orderdriver.model.Route;
 
 import javax.json.Json;
@@ -30,26 +31,19 @@ import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-//@Component
-//@CrossOrigin("*")
 public class OrderDriver implements DayChangeHandler{
    private static final Logger logger = Logger.getLogger(OrderDriver.class.getName());
    WebSocketController webSocketDispatcher = new WebSocketController();
    ReeferWebApi reefer;
-   BlockingQueue<String> replyQueue = new ArrayBlockingQueue<>(1);
    VoyageController voyageController;
    OrderDispatcher orderDispatcher;
    ReplyProcessor replyProcessor;
-   Instant currentDate;
    Instant newDay;
-   Instant today;
    boolean running = true;
    List<FromToRoute> routes = new LinkedList<>();
    // barrier is used to await new day notification from reefer via a websocket push
@@ -63,13 +57,8 @@ public class OrderDriver implements DayChangeHandler{
       this.url = url;
       reefer = new ReeferWebApi(url);
    }
-   private boolean invalidNumber(String val, int maxAllowedSize) {
-      if ( !isNumeric(val) || Integer.parseInt(val) < 0 || Integer.parseInt(val) > maxAllowedSize) {
-        return true;
-      }
-      return false;
-   }
-   public OrderDriver addRoute(String routesArg) throws IOException, InterruptedException, URISyntaxException, IllegalArgumentException{
+
+   public OrderDriver addRoutes(String routesArg) throws IOException, InterruptedException, URISyntaxException, IllegalArgumentException{
       String[] range;
       List<Route> allRoutes = getRoutes();
       if ( routesArg.indexOf("-") > 0 ) {
@@ -85,27 +74,11 @@ public class OrderDriver implements DayChangeHandler{
          int upperRange = Integer.parseInt(range[1].trim());
 
          for( ; lowerRange <= upperRange; lowerRange++) {
-            /*
-            Route r = allRoutes.get(lowerRange);
-            FromToRoute route = new FromToRoute(r.getOriginPort(), r.getDestinationPort());
-            routes.add(route);
-            System.out.println("adding route:"+route.toString());
-
-             */
             addRoute(allRoutes, lowerRange);
          }
       } else {
          // no range
-         /*
-         Route r = allRoutes.get(Integer.parseInt(routesArg.trim()));
-         FromToRoute route = new FromToRoute(r.getOriginPort(), r.getDestinationPort());
-         routes.add(route);
-         System.out.println("adding route:"+route.toString());
-
-
-
-          */
-         if ( invalidNumber(routesArg.trim(), allRoutes.size() )) {
+         if ( invalidNumber(routesArg.trim(), allRoutes.size()-1 )) {
             throw new IllegalArgumentException("Invalid route index provided - must be a number between 0 and "+(allRoutes.size()-1));
          }
          addRoute(allRoutes, Integer.parseInt(routesArg.trim()));
@@ -140,30 +113,23 @@ public class OrderDriver implements DayChangeHandler{
       return this;
    }
    public List<Route> getRoutes() throws IOException, InterruptedException, URISyntaxException {
-
-         // Get unit delay from WebAPI
+         // Get all routes from reefer WebAPI
          HttpResponse<String> response = reefer.get("/routes");
          List<Route> routes = new LinkedList<>();
          try (JsonReader jsonReader = Json.createReader(new StringReader(response.body()))) {
-            int i=0;
             for (JsonValue routeAsJson : jsonReader.readArray()) {
                routes.add(RouteJsonSerializer.deserialize(routeAsJson.asJsonObject()));
-               /*
-               Route r = RouteJsonSerializer.deserialize(routeAsJson.asJsonObject());
-               System.out.println("["+i+"] "+r.getOriginPort()+"-"+r.getDestinationPort());
-               i++;
-
-                */
             }
          } catch( Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
          }
       return routes;
    }
    public void start() {
       int unitDelay = 0;
+      OrderStats orderStats = new OrderStats();
       voyageController = new VoyageController(reefer);
-      replyProcessor = new ReplyProcessor();
+      replyProcessor = new ReplyProcessor(orderStats);
       // connect to Reefer WebAPI server
       webSocketDispatcher.connect(this.url, replyProcessor, this);
       orderDispatcher = new OrderDispatcher().
@@ -172,37 +138,43 @@ public class OrderDriver implements DayChangeHandler{
               withDriverReplyEndpoint(webSocketDispatcher.getEndpoint()).
               withHostIp( webSocketDispatcher.getHostAndIp()).
               withUpdatesPerDay(updatesPerDay).
+              withOrderStats(orderStats).
               withOrderTimeout(timeoutMillis);
-
+      replyProcessor.setOrderDispatcher(orderDispatcher);
       try {
-
-         // Get unit delay from WebAPI
+         // Get unit delay from reefer WebAPI
          HttpResponse<String> response = reefer.post("/simulator/getdelay");
          if (isNumeric(response.body())) {
             unitDelay = Integer.parseInt(response.body());
             logger.info("OrderDriver.start() - unit delay:" + unitDelay);
+         } else {
+            throw new IllegalArgumentException("Reefer WebAPI returned invalid unitDelay:"+response.body());
          }
          HttpResponse<String> date = reefer.post("/time/currentDate");
-         newDay = today = Instant.parse(date.body().replaceAll("\"", ""));
+         newDay = Instant.parse(date.body().replaceAll("\"", ""));
          while (running) {
             // get all voyages for a given route
-            List<FutureVoyage> voyages = voyageController.getFutureVoyages(routes, newDay, orderTarget);
-
-            // select the first voyage from the (sorted by departure date) list. Already departed voyages
-            // will not be in the list. As the voyage arrives, this code will automatically start filling
-            // the next voyage on a return trip.
-            orderDispatcher.dispatchTodayOrders(voyages.get(0), unitDelay);
-            logger.info("OrderDriver - generated all orders for today - waiting for a new day ...");
+            List<FutureVoyage> voyages = voyageController.getFutureVoyages(routes, newDay, orderTarget,updatesPerDay);
+            orderDispatcher.dispatchTodayOrders(voyages, unitDelay);
+            logger.info(String.format("Generated all orders for today[%s] - dispatched:%-7d accepted:%-7d booked:%-7d failed:%-7d latency[ mean:%-5.2f std:%-5.2f ] - - waiting for a new day",
+                    newDay.toString().substring(0,10),orderStats.getDispatched(),
+                    orderStats.getAccepted(),orderStats.getBooked(), orderStats.getFailed(),
+                    orderStats.getMeanLatency(), orderStats.getStdLatency()));
             // reefer will push (via websocket) new day notification. We wait on a barrier until this
             // notification comes. See onDayAdvance() below
             barrier.await();
          }
       } catch (URISyntaxException | InterruptedException | IOException | BrokenBarrierException e) {
-         e.printStackTrace();
+         logger.severe( "Unexpected error:"+e.getMessage() +"\n Terminating order driver");
          System.exit(-1);
       }
    }
-
+   private boolean invalidNumber(String val, int maxAllowedSize) {
+      if ( !isNumeric(val) || Integer.parseInt(val) < 0 || Integer.parseInt(val) > maxAllowedSize) {
+         return true;
+      }
+      return false;
+   }
    private final Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
 
    public boolean isNumeric(String strNum) {

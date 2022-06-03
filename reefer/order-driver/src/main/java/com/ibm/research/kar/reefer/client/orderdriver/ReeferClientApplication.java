@@ -50,8 +50,8 @@ public class ReeferClientApplication implements ApplicationRunner {
          System.exit(0);
       }
 
-      System.out.println("Target URL:" + environment.getProperty("url"));
-      OrderDriver driver = new OrderDriver(environment.getProperty("url"));
+      System.out.println("Target URL:" + environment.getProperty("REEFER_URL"));
+      OrderDriver driver = new OrderDriver(environment.getProperty("REEFER_URL"));
 
       if ( args.containsOption("getRoutes")) {
          int i=0;

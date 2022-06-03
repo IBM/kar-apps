@@ -132,7 +132,6 @@ public class ReplyProcessor implements TimeoutHandler, OrderReplyMessageHandler 
       Booking booking = Booking.of((String) message);
       long latency = System.currentTimeMillis() - Long.valueOf(booking.getOrderTime());
       booking.setLatency(latency);
-      System.out.println("................. latency:"+latency);
       orderDispatcher.incrementTotalLatency(latency);
       // using order status (accepted, booked, failed) call a registered method to handle
       // the message

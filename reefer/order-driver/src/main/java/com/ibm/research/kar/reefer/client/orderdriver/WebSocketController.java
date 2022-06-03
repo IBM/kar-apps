@@ -86,6 +86,18 @@ public class WebSocketController extends StompSessionHandlerAdapter {
             dateChangeHandler.onDayAdvance(Instant.parse((String) payload));
          }
       });
+      // subscription for day delay updates
+      stompSession.subscribe("/topic/delay", new StompFrameHandler() {
+         @Override
+         public Type getPayloadType(StompHeaders headers) {
+            return String.class;
+         }
+
+         @Override
+         public void handleFrame(StompHeaders headers, Object payload) {
+            dateChangeHandler.onDelayChange((String) payload);
+         }
+      });
       // subscription for all replies
       stompSession.subscribe(getEndpoint(), new StompFrameHandler() {
          @Override

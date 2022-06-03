@@ -19,4 +19,5 @@ import java.time.Instant;
 
 public interface DayChangeHandler {
    void onDayAdvance(Instant date);
+   void onDelayChange(String payload);
 }

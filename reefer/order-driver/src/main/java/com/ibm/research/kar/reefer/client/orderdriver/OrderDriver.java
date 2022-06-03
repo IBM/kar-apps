@@ -52,6 +52,7 @@ public class OrderDriver implements DayChangeHandler{
    int orderTarget=75;
    long timeoutMillis = 60*1000*3;  // 3 minutes default timeout
    String url;
+   int unitDelay = 0;
 
    public OrderDriver(String url) {
       this.url = url;
@@ -126,7 +127,7 @@ public class OrderDriver implements DayChangeHandler{
       return routes;
    }
    public void start() {
-      int unitDelay = 0;
+
       OrderStats orderStats = new OrderStats();
       voyageController = new VoyageController(reefer);
       replyProcessor = new ReplyProcessor(orderStats);
@@ -156,8 +157,8 @@ public class OrderDriver implements DayChangeHandler{
             // get all voyages for a given route
             List<FutureVoyage> voyages = voyageController.getFutureVoyages(routes, newDay, orderTarget,updatesPerDay);
             orderDispatcher.dispatchTodayOrders(voyages, unitDelay);
-            logger.info(String.format("Generated all orders for today[%s] - dispatched:%-7d accepted:%-7d booked:%-7d failed:%-7d latency[ mean:%-5.2f std:%-5.2f ] - - waiting for a new day",
-                    newDay.toString().substring(0,10),orderStats.getDispatched(),
+            logger.info(String.format("Generated all orders for today[%s] delay:%-4d - dispatched:%-7d accepted:%-7d booked:%-7d failed:%-7d latency[ mean:%-5.2f std:%-5.2f ] - - waiting for a new day",
+                     newDay.toString().substring(0,10),unitDelay,orderStats.getDispatched(),
                     orderStats.getAccepted(),orderStats.getBooked(), orderStats.getFailed(),
                     orderStats.getMeanLatency(), orderStats.getStdLatency()));
             // reefer will push (via websocket) new day notification. We wait on a barrier until this
@@ -198,8 +199,27 @@ public class OrderDriver implements DayChangeHandler{
          // wait until new day notification is pushed
          barrier.await();
       } catch (BrokenBarrierException | InterruptedException e) {
+         logger.severe("OrderDriver.onDayAdvance() - Error: "+e.getMessage());
          e.printStackTrace();
       }
    }
-
+   /**
+    * Reefer WebAPI will asynchronously push notification every time a day is advanced.
+    *
+    * @param delay
+    */
+   @Override
+   public void onDelayChange(String delay) {
+      // NOTE: THIS METHOD IS CALLED ON A SEPARATE THREAD WHICH HANDLES REPLIES FROM REEFER (Websockets)
+      // See: WebSocketController subscription
+      try {
+         if (isNumeric(delay)) {
+            logger.info(">>>>>>>>>>>>>>>>>>> OrderDriver.onDelayChange() - old unit delay:" + unitDelay +" new unit delay:"+delay);
+            unitDelay = Integer.parseInt(delay);
+         }
+      } catch (Exception e) {
+         logger.severe("OrderDriver.onDelayChange() - Error: "+e.getMessage());
+         e.printStackTrace();
+      }
+   }
 }

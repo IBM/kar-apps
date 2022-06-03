@@ -34,6 +34,7 @@ import com.ibm.research.kar.reefer.model.ReeferSimControls;
 import com.ibm.research.kar.reeferserver.service.SimulatorService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,7 +47,8 @@ public class SimulatorController {
 
   @Autowired
   private SimulatorService simulatorService;
-
+  @Autowired
+  private SimpMessagingTemplate template;
   private static Logger logger = ReeferLoggerFormatter.getFormattedLogger(SimulatorController.class.getName());
 
   @PostMapping("/simulator/delay")
@@ -58,7 +60,7 @@ public class SimulatorController {
       delayTime = Integer.valueOf(req.getString("delay"));
       JsonObject delayArg = Json.createObjectBuilder().add("value", delayTime).build();
       Kar.Services.post(Constants.SIMSERVICE,"simulator/setunitdelay", delayArg);
-
+      template.convertAndSend("/topic/delay",req.getString("delay"));
     } catch (Exception e) {
       logger.log(Level.WARNING,"",e);
     }

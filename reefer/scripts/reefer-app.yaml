@@ -88,7 +88,7 @@ spec:
   - command:
     - /bin/bash
     - -c
-    - sleep 20 && /kar/bin/runner
+    - /kar/bin/runner
     env:
     - name: PATH
       value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -150,7 +150,7 @@ spec:
   - command:
     - /bin/bash
     - -c
-    - sleep 20 && /kar/bin/runner
+    - /kar/bin/runner
     env:
     - name: PATH
       value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -189,7 +189,7 @@ spec:
   - command:
     - /bin/sh
     - -c
-    - sleep 20 && /kar/bin/runner
+    - /kar/bin/runner
     env:
     - name: MAIN
       value: monitor.js
@@ -236,7 +236,7 @@ spec:
   - command:
     - /bin/bash
     - -c
-    - sleep 20 && /kar/bin/runner
+    - /kar/bin/runner
     env:
     - name: PATH
       value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -275,7 +275,7 @@ spec:
   - command:
     - /bin/bash
     - -c
-    - sleep 20 && /kar/bin/runner
+    - /kar/bin/runner
     env:
     - name: PATH
       value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -300,7 +300,7 @@ spec:
     - name: KAR_SIDECAR_IN_CONTAINER
       value: "true"
     - name: REEFER_FLEET_SIZE
-      value: 20
+      value: 44
     - name: HOSTNAME
     image: $IMAGE_PREFIX/kar-app-reefer-actors:latest
     name: singletons

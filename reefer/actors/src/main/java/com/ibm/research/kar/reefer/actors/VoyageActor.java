@@ -419,6 +419,13 @@ public class VoyageActor extends BaseActor {
          if ( !validateAndContinue(order, message)) {
             return null;
          }
+         // // generate an order failure
+         // int seq = Integer.parseInt(order.getCorrelationId().substring(1));
+         // if (0 == (seq & 0xfff) ) {
+         //    order.setMsg("Voyage "+getId()+" sequence number: "+seq+" failed - reason: Intentionally Generated Error");
+         //    order.setBookingFailed();
+         //    return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.OrderActorType, order.getId()),"processReeferBookingResult", order.getAsJsonObject());
+         // }
          return new Kar.Actors.TailCall( Kar.Actors.ref(ReeferAppConfig.DepotActorType, DepotManagerActor.Depot.makeId(voyage.getRoute().getOriginPort())),
                                          "bookReefers", message);
       } catch (Exception e) {

@@ -25,7 +25,7 @@ ENV OTHER=health.js
 
 # Copy dependencies first; they change rarely
 COPY package.json ./
-RUN npm install --prod
+RUN npm install --omit=dev
 
 # Copy in application source
 COPY *.js ./

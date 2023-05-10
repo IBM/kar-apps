@@ -34,7 +34,6 @@ services:
       KAFKA_VERSION:  2.7.1
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
-      REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: ${KAR_EXTRA_ARGS} -app_port 9080 -service reeferservice
   simulators:
@@ -49,7 +48,6 @@ services:
       KAFKA_VERSION:  2.7.1
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
-      REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: ${KAR_EXTRA_ARGS} -app_port 7080 -service simservice -actors simhelper
   monitor:
@@ -64,7 +62,6 @@ services:
       KAFKA_VERSION:  2.7.1
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
-      REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: ${KAR_EXTRA_ARGS} -app_port 7082
       KAR_APP_PORT:   7082
@@ -85,7 +82,6 @@ services:
       KAFKA_VERSION:  2.7.1
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
-      REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: ${KAR_EXTRA_ARGS} -actors order,voyage
   singletons:
@@ -102,7 +98,6 @@ services:
       KAFKA_VERSION:  2.7.1
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
-      REDIS_PASSWORD: act0rstate
       REDIS_USER:     karmesh
       KAR_EXTRA_ARGS: ${KAR_EXTRA_ARGS} -actors schedule-manager,reefer-depot,depot-manager,anomaly-manager,order-manager -actor_collector_interval 24h
   frontend:

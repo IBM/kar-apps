@@ -100,8 +100,6 @@ spec:
       value: "31379"
     - name: KAR_SIDECAR_IN_CONTAINER
       value: "true"
-    - name: REDIS_PASSWORD
-      value: act0rstate
     - name: REDIS_USER
       value: karmesh
     - name: REDIS_HOST
@@ -156,8 +154,6 @@ spec:
       value: /opt/ol/wlp/bin:/opt/ol/docker/:/opt/ol/helpers/build:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     - name: JAVA_HOME
       value: /opt/java/openjdk
-    - name: REDIS_PASSWORD
-      value: act0rstate
     - name: REDIS_USER
       value: karmesh
     - name: KAFKA_VERSION
@@ -195,8 +191,6 @@ spec:
       value: monitor.js
     - name: KAFKA_BROKERS
       value: localhost:31093
-    - name: REDIS_PASSWORD
-      value: act0rstate
     - name: REDIS_USER
       value: karmesh
     - name: REDIS_HOST
@@ -250,8 +244,6 @@ spec:
       value: reefer
     - name: KAFKA_BROKERS
       value: localhost:31093
-    - name: REDIS_PASSWORD
-      value: act0rstate
     - name: REDIS_USER
       value: karmesh
     - name: KAFKA_VERSION
@@ -289,8 +281,6 @@ spec:
       value: reefer
     - name: KAFKA_BROKERS
       value: localhost:31093
-    - name: REDIS_PASSWORD
-      value: act0rstate
     - name: REDIS_USER
       value: karmesh
     - name: KAFKA_VERSION

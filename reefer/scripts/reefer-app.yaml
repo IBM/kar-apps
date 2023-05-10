@@ -109,7 +109,7 @@ spec:
     - name: KAFKA_BROKERS
       value: localhost:31093
     - name: KAFKA_VERSION
-      value: 2.7.1
+      value: 3.3
     - name: HOSTNAME
     image: $IMAGE_PREFIX/kar-app-reefer-simulators:latest
     name: simulators
@@ -157,7 +157,7 @@ spec:
     - name: REDIS_USER
       value: karmesh
     - name: KAFKA_VERSION
-      value: 2.7.1
+      value: 3.3
     - name: KAR_SIDECAR_IN_CONTAINER
       value: "true"
     - name: KAFKA_BROKERS
@@ -204,7 +204,7 @@ spec:
     - name: KAR_EXTRA_ARGS
       value: -app_port 7082
     - name: KAFKA_VERSION
-      value: 2.7.1
+      value: 3.3
     - name: REDIS_PORT
       value: "31379"
     - name: ORDERSTATS_DELAY
@@ -247,7 +247,7 @@ spec:
     - name: REDIS_USER
       value: karmesh
     - name: KAFKA_VERSION
-      value: 2.7.1
+      value: 3.3
     - name: KAR_EXTRA_ARGS
       value: -app_port 8081 -actors order,voyage
     - name: KAR_SIDECAR_IN_CONTAINER
@@ -284,7 +284,7 @@ spec:
     - name: REDIS_USER
       value: karmesh
     - name: KAFKA_VERSION
-      value: 2.7.1
+      value: 3.3
     - name: KAR_EXTRA_ARGS
       value: -app_port 8082 -actors reefer-depot,depot-manager,anomaly-manager,schedule-manager,order-manager -actor_collector_interval 24h
     - name: KAR_SIDECAR_IN_CONTAINER

@@ -31,7 +31,7 @@ services:
       KAR_SIDECAR_IN_CONTAINER: "true"
       KAR_APP: reefer
       KAFKA_BROKERS:  kar_kafka:9092
-      KAFKA_VERSION:  2.7.1
+      KAFKA_VERSION:  3.3
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
       REDIS_USER:     karmesh
@@ -45,7 +45,7 @@ services:
       KAR_SIDECAR_IN_CONTAINER: "true"
       KAR_APP: reefer
       KAFKA_BROKERS:  kar_kafka:9092
-      KAFKA_VERSION:  2.7.1
+      KAFKA_VERSION:  3.3
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
       REDIS_USER:     karmesh
@@ -59,7 +59,7 @@ services:
       KAR_SIDECAR_IN_CONTAINER: "true"
       KAR_APP: reefer
       KAFKA_BROKERS:  kar_kafka:9092
-      KAFKA_VERSION:  2.7.1
+      KAFKA_VERSION:  3.3
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
       REDIS_USER:     karmesh
@@ -79,7 +79,7 @@ services:
       KAR_SIDECAR_IN_CONTAINER: "true"
       KAR_APP: reefer
       KAFKA_BROKERS:  kar_kafka:9092
-      KAFKA_VERSION:  2.7.1
+      KAFKA_VERSION:  3.3
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
       REDIS_USER:     karmesh
@@ -95,7 +95,7 @@ services:
       KAR_SIDECAR_IN_CONTAINER: "true"
       KAR_APP: reefer
       KAFKA_BROKERS:  kar_kafka:9092
-      KAFKA_VERSION:  2.7.1
+      KAFKA_VERSION:  3.3
       REDIS_HOST:     kar_redis
       REDIS_PORT:     6379
       REDIS_USER:     karmesh

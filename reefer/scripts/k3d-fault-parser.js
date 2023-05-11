@@ -20,6 +20,13 @@ async function main() {
   const args = process.argv.slice(2);
   var writeStream;
 
+  // find necessary binaries
+  const { execSync } = require('child_process');
+  var nodepath = execSync('which node');
+  nodepath = nodepath.toString().trim();
+  var kcpath = execSync('which kubectl');
+  kcpath = kcpath.toString().trim();
+
   var thresh = 5000;
   if ( args[0] != null ) {
     thresh = args[0];
@@ -28,13 +35,13 @@ async function main() {
   [date,time] = timestamp.split(" ");
 
   var child;
+  let path = require('path');
   if (process.env.FEEDFILE) {
     // test from file
     console.log('Parsing from file: '+process.env.FEEDFILE);
-    let path = require('path');
     const parser = __dirname+'/feedfile.js';
     const program = path.resolve(parser);
-    child = require('child_process').spawn('/usr/bin/node',[program, process.env.FEEDFILE, 500]);
+    child = require('child_process').spawn(nodepath,[program, process.env.FEEDFILE, 500]);
     child.stderr.on('data', (data) => {
       console.error(data.toString());
     });
@@ -46,17 +53,16 @@ async function main() {
 
     // get handle to live pod
     var grepsim = new RegExp("^.*simulators.*$", "m");
-    const { execSync } = require('child_process');
-    const stdout = execSync("/usr/bin/kubectl get po");
+    const stdout = execSync(`${kcpath} get po`);
     var match = grepsim.exec(stdout.toString());
     if (!match) {
       console.log("can't see a simulator pod running");
       process.exit();
     }
     var pods = match[0].split(" ");
-    console.log("parsing output from "+pods[0]);  
-	
-    child = require('child_process').spawn('/usr/bin/kubectl',['logs', '-f', pods[0], '-c', 'app']);
+    console.log("parsing output from "+pods[0]);
+//    console.log(`${kcpath} logs -f ${pods[0]} -c app`);
+    child = require('child_process').spawn(kcpath,['logs', '-f', pods[0], '-c', 'app']);
     child.stderr.on('data', (data) => {
       console.error('parser '+data.toString());
       process.exit(1);
@@ -107,6 +113,7 @@ async function main() {
   });
 
   child.on('close', function() {
+    console.log("kubectl stream closed");
     process.exit(0);
   });
 }

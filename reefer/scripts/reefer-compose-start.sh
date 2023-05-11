@@ -37,15 +37,9 @@ else
     resturl=$REST_URL
 fi
 
-engine=docker
-#if systemctl is-active docker | grep -q 'inactive'; then
-#    engine=podman
-#    echo Docker not active, trying podman
-#fi
+echo Deploying latest ${IMAGE_PREFIX} images with KAR_EXTRA_ARGS=${KAR_EXTRA_ARGS} docker compose ...
 
-echo Deploying latest ${IMAGE_PREFIX} images with KAR_EXTRA_ARGS=${KAR_EXTRA_ARGS} ${engine}-compose ...
-
-${engine}-compose -f reefer-compose-${engine}.yaml -p reefer up -d
+docker compose -f reefer-compose-docker.yaml -p reefer up -d
 if [ $? -ne 0 ]
 then
   exit 1

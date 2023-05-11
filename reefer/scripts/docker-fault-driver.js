@@ -154,7 +154,10 @@ async function main () {
   var words = match[0].split(" ");
   simC = words[words.length - 1];
   if (simC.endsWith('_1')) {
-    targets = ['reefer_rest_1','reefer_actors_1','reefer_singletons_1'];
+    targets = ['reefer_rest_1','reefer-actors-1','reefer-singletons-1'];
+  }
+  else if (simC.endsWith('-1')) {
+    targets = ['reefer-rest-1','reefer-actors-1','reefer-singletons-1'];
   }
   else {
     targets = ['reefer-rest','reefer-actors','reefer-singletons'];

@@ -21,5 +21,5 @@
 SCRIPTDIR=$(cd $(dirname "$0") && pwd)
 cd $SCRIPTDIR
 
-docker-compose -f reefer-compose-docker.yaml -p reefer down
+docker compose -f reefer-compose-docker.yaml -p reefer down
 

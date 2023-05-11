@@ -23,17 +23,17 @@ Except on k3d only a single instance of reefer components are started.
 k3d deployment has an option to deploy replicas of reefer components using global.affinity=true.
 When affinity is specified, the replicated reefer components are run on different nodes from
 kar system components and the reefer simulator.
-Reefer includes an automated fault driver that randomly kills and restarts k3d application nodes.
+Reefer includes an automated fault driver script that randomly kills and restarts k3d application nodes.
 
 ## Prerequisites to deployment 
  * If intending to deploy to a local kubernetes (kind, k3d or Docker Desktop)
    * first run `[kar-install-dir]/scripts/docker-compose-stop.sh` as the kar system components run in kubernetes.
-   * if deploying locally built reefer images, push them to a repo running at localhost:5000 and leave out the override of kar.imagePrefix 
  * Deploy the KAR Runtime System to the kar-system namespace: `[kar-install-dir]/scripts/kar-k8s-deploy.sh`  
    * If using k3d: ```[kar-install-dir]/scripts/kar-k8s-deploy.sh --set global.affinity=true```
- * Sources for Kar and Reefer images each have defaults:
+ * Docker image sources for Kar and Reefer images each have defaults:
    * Kar image source depends on the results of ```kar version```. A specific version will be pulled from quay.io. Version="unofficial" will pull from localhost:5000
-   * Reefer image source defaults to settings in reefer/chart/values.yaml. Reefer distribution will point to a specific version in quay.io. To change these to locally built images pushed into localhost:5000, add the following args to the helm install command: ```--set reefer.imagePrefix=registry:5000/kar``` and ```--set reefer.version=latest```
+   * Reefer image source defaults to a setting in reefer/chart/values.yaml that points to a specific version in quay.io. To use locally built images pushed into localhost:5000, add the following args to the helm install command:
+     *```--set reefer.imagePrefix=registry:5000/kar``` and ```--set reefer.version=latest```
 
 ## Deploy reefer using helm from directory: ```[kar-apps-install-dir]/reefer```
 

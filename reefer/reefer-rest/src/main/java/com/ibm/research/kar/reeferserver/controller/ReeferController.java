@@ -56,10 +56,10 @@ public class ReeferController {
     private int counter = 1;
     private ReeferStats oldStats = new ReeferStats(0, 0, 0, 0, 0);
 
-    @PostConstruct
-    public void init() {
-        getReeferStats();
-    }
+    // @PostConstruct
+    // public void init() {
+    //     getReeferStats();
+    // }
 
     @GetMapping("/reefers/stats")
     public ReeferStats getReeferStats() {
@@ -83,7 +83,7 @@ public class ReeferController {
         return reeferInventorySize;
     }
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 1000, initialDelay = 8000)
     public void scheduleGuiUpdate() {
         try {
             if (0 >= --counter) {

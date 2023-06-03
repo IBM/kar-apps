@@ -60,537 +60,6 @@ data:
               "h": 9,
               "w": 8,
               "x": 0,
-              "y": 0
-            },
-            "hiddenSeries": false,
-            "id": 4,
-            "legend": {
-              "avg": false,
-              "current": false,
-              "max": false,
-              "min": false,
-              "show": true,
-              "total": false,
-              "values": false
-            },
-            "lines": true,
-            "linewidth": 0,
-            "links": [],
-            "nullPointMode": "null as zero",
-            "options": {
-              "alertThreshold": true
-            },
-            "percentage": false,
-            "pluginVersion": "8.5.0",
-            "pointradius": 5,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": true,
-            "steppedLine": false,
-            "targets": [
-              {
-                "exemplar": true,
-                "expr": "sum(\n    node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{cluster=\"\", namespace=\"default\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"\", namespace=\"default\", workload=\"reefer-singletons\", workload_type=\"deployment\"}\n) by (pod)\n",
-                "format": "time_series",
-                "interval": "",
-                "intervalFactor": 2,
-                "legendFormat": "{{pod}}",
-                "refId": "A",
-                "step": 10
-              }
-            ],
-            "thresholds": [],
-            "timeRegions": [],
-            "title": "Reefer Singletons Pod CPU Usage",
-            "tooltip": {
-              "shared": false,
-              "sort": 0,
-              "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-              "mode": "time",
-              "show": true,
-              "values": []
-            },
-            "yaxes": [
-              {
-                "$$hashKey": "object:13323",
-                "format": "short",
-                "logBase": 1,
-                "min": 0,
-                "show": true
-              },
-              {
-                "$$hashKey": "object:13324",
-                "format": "short",
-                "logBase": 1,
-                "show": false
-              }
-            ],
-            "yaxis": {
-              "align": false
-            }
-          },
-          {
-            "aliasColors": {},
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
-            "datasource": {
-              "type": "prometheus",
-              "uid": "prometheus"
-            },
-            "fill": 10,
-            "fillGradient": 0,
-            "gridPos": {
-              "h": 9,
-              "w": 8,
-              "x": 8,
-              "y": 0
-            },
-            "hiddenSeries": false,
-            "id": 8,
-            "legend": {
-              "avg": false,
-              "current": false,
-              "max": false,
-              "min": false,
-              "show": true,
-              "total": false,
-              "values": false
-            },
-            "lines": true,
-            "linewidth": 0,
-            "links": [],
-            "nullPointMode": "null as zero",
-            "options": {
-              "alertThreshold": true
-            },
-            "percentage": false,
-            "pluginVersion": "8.5.0",
-            "pointradius": 5,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": true,
-            "steppedLine": false,
-            "targets": [
-              {
-                "exemplar": true,
-                "expr": "sum(\n    node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{cluster=\"\", namespace=\"default\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"\", namespace=\"default\", workload=\"reefer-actors\", workload_type=\"deployment\"}\n) by (pod)\n",
-                "format": "time_series",
-                "interval": "",
-                "intervalFactor": 2,
-                "legendFormat": "{{pod}}",
-                "refId": "A",
-                "step": 10
-              }
-            ],
-            "thresholds": [],
-            "timeRegions": [],
-            "title": "Reefer Actors Pod CPU Usage",
-            "tooltip": {
-              "shared": false,
-              "sort": 0,
-              "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-              "mode": "time",
-              "show": true,
-              "values": []
-            },
-            "yaxes": [
-              {
-                "$$hashKey": "object:13323",
-                "format": "short",
-                "logBase": 1,
-                "min": 0,
-                "show": true
-              },
-              {
-                "$$hashKey": "object:13324",
-                "format": "short",
-                "logBase": 1,
-                "show": false
-              }
-            ],
-            "yaxis": {
-              "align": false
-            }
-          },
-          {
-            "aliasColors": {},
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
-            "datasource": {
-              "type": "prometheus",
-              "uid": "prometheus"
-            },
-            "fill": 10,
-            "fillGradient": 0,
-            "gridPos": {
-              "h": 9,
-              "w": 8,
-              "x": 16,
-              "y": 0
-            },
-            "hiddenSeries": false,
-            "id": 10,
-            "legend": {
-              "avg": false,
-              "current": false,
-              "max": false,
-              "min": false,
-              "show": true,
-              "total": false,
-              "values": false
-            },
-            "lines": true,
-            "linewidth": 0,
-            "links": [],
-            "nullPointMode": "null as zero",
-            "options": {
-              "alertThreshold": true
-            },
-            "percentage": false,
-            "pluginVersion": "8.5.0",
-            "pointradius": 5,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": true,
-            "steppedLine": false,
-            "targets": [
-              {
-                "exemplar": true,
-                "expr": "sum(\n    node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{cluster=\"\", namespace=\"default\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"\", namespace=\"default\", workload=\"reefer-rest\", workload_type=\"deployment\"}\n) by (pod)\n",
-                "format": "time_series",
-                "interval": "",
-                "intervalFactor": 2,
-                "legendFormat": "{{pod}}",
-                "refId": "A",
-                "step": 10
-              }
-            ],
-            "thresholds": [],
-            "timeRegions": [],
-            "title": "Reefer REST Pod CPU Usage",
-            "tooltip": {
-              "shared": false,
-              "sort": 0,
-              "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-              "mode": "time",
-              "show": true,
-              "values": []
-            },
-            "yaxes": [
-              {
-                "$$hashKey": "object:13323",
-                "format": "short",
-                "logBase": 1,
-                "min": 0,
-                "show": true
-              },
-              {
-                "$$hashKey": "object:13324",
-                "format": "short",
-                "logBase": 1,
-                "show": false
-              }
-            ],
-            "yaxis": {
-              "align": false
-            }
-          },
-          {
-            "aliasColors": {},
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
-            "datasource": {
-              "uid": "$datasource"
-            },
-            "fill": 10,
-            "fillGradient": 0,
-            "gridPos": {
-              "h": 9,
-              "w": 8,
-              "x": 0,
-              "y": 9
-            },
-            "hiddenSeries": false,
-            "id": 6,
-            "legend": {
-              "avg": false,
-              "current": false,
-              "max": false,
-              "min": false,
-              "show": true,
-              "total": false,
-              "values": false
-            },
-            "lines": true,
-            "linewidth": 0,
-            "links": [],
-            "nullPointMode": "null as zero",
-            "options": {
-              "alertThreshold": true
-            },
-            "percentage": false,
-            "pluginVersion": "8.5.0",
-            "pointradius": 5,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": true,
-            "steppedLine": false,
-            "targets": [
-              {
-                "exemplar": true,
-                "expr": "sum(\n    container_memory_working_set_bytes{cluster=\"\", namespace=\"default\", container!=\"\", image!=\"\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"\", namespace=\"default\", workload=\"reefer-singletons\", workload_type=\"deployment\"}\n) by (pod)\n",
-                "format": "time_series",
-                "interval": "",
-                "intervalFactor": 2,
-                "legendFormat": "{{pod}}",
-                "refId": "A",
-                "step": 10
-              }
-            ],
-            "thresholds": [],
-            "timeRegions": [],
-            "title": "Reefer Singletons Memory Usage",
-            "tooltip": {
-              "shared": false,
-              "sort": 0,
-              "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-              "mode": "time",
-              "show": true,
-              "values": []
-            },
-            "yaxes": [
-              {
-                "$$hashKey": "object:241",
-                "format": "bytes",
-                "logBase": 1,
-                "min": 0,
-                "show": true
-              },
-              {
-                "$$hashKey": "object:242",
-                "format": "short",
-                "logBase": 1,
-                "show": false
-              }
-            ],
-            "yaxis": {
-              "align": false
-            }
-          },
-          {
-            "aliasColors": {},
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
-            "datasource": {
-              "uid": "$datasource"
-            },
-            "fill": 10,
-            "fillGradient": 0,
-            "gridPos": {
-              "h": 9,
-              "w": 8,
-              "x": 8,
-              "y": 9
-            },
-            "hiddenSeries": false,
-            "id": 12,
-            "legend": {
-              "avg": false,
-              "current": false,
-              "max": false,
-              "min": false,
-              "show": true,
-              "total": false,
-              "values": false
-            },
-            "lines": true,
-            "linewidth": 0,
-            "links": [],
-            "nullPointMode": "null as zero",
-            "options": {
-              "alertThreshold": true
-            },
-            "percentage": false,
-            "pluginVersion": "8.5.0",
-            "pointradius": 5,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": true,
-            "steppedLine": false,
-            "targets": [
-              {
-                "exemplar": true,
-                "expr": "sum(\n    container_memory_working_set_bytes{cluster=\"\", namespace=\"default\", container!=\"\", image!=\"\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"\", namespace=\"default\", workload=\"reefer-actors\", workload_type=\"deployment\"}\n) by (pod)\n",
-                "format": "time_series",
-                "interval": "",
-                "intervalFactor": 2,
-                "legendFormat": "{{pod}}",
-                "refId": "A",
-                "step": 10
-              }
-            ],
-            "thresholds": [],
-            "timeRegions": [],
-            "title": "Reefer Actors Memory Usage",
-            "tooltip": {
-              "shared": false,
-              "sort": 0,
-              "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-              "mode": "time",
-              "show": true,
-              "values": []
-            },
-            "yaxes": [
-              {
-                "$$hashKey": "object:241",
-                "format": "bytes",
-                "logBase": 1,
-                "min": 0,
-                "show": true
-              },
-              {
-                "$$hashKey": "object:242",
-                "format": "short",
-                "logBase": 1,
-                "show": false
-              }
-            ],
-            "yaxis": {
-              "align": false
-            }
-          },
-          {
-            "aliasColors": {},
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
-            "datasource": {
-              "uid": "$datasource"
-            },
-            "fill": 10,
-            "fillGradient": 0,
-            "gridPos": {
-              "h": 9,
-              "w": 8,
-              "x": 16,
-              "y": 9
-            },
-            "hiddenSeries": false,
-            "id": 14,
-            "legend": {
-              "avg": false,
-              "current": false,
-              "max": false,
-              "min": false,
-              "show": true,
-              "total": false,
-              "values": false
-            },
-            "lines": true,
-            "linewidth": 0,
-            "links": [],
-            "nullPointMode": "null as zero",
-            "options": {
-              "alertThreshold": true
-            },
-            "percentage": false,
-            "pluginVersion": "8.5.0",
-            "pointradius": 5,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": true,
-            "steppedLine": false,
-            "targets": [
-              {
-                "exemplar": true,
-                "expr": "sum(\n    container_memory_working_set_bytes{cluster=\"\", namespace=\"default\", container!=\"\", image!=\"\"}\n  * on(namespace,pod)\n    group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"\", namespace=\"default\", workload=\"reefer-rest\", workload_type=\"deployment\"}\n) by (pod)\n",
-                "format": "time_series",
-                "interval": "",
-                "intervalFactor": 2,
-                "legendFormat": "{{pod}}",
-                "refId": "A",
-                "step": 10
-              }
-            ],
-            "thresholds": [],
-            "timeRegions": [],
-            "title": "Reefer REST Memory Usage",
-            "tooltip": {
-              "shared": false,
-              "sort": 0,
-              "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-              "mode": "time",
-              "show": true,
-              "values": []
-            },
-            "yaxes": [
-              {
-                "$$hashKey": "object:241",
-                "format": "bytes",
-                "logBase": 1,
-                "min": 0,
-                "show": true
-              },
-              {
-                "$$hashKey": "object:242",
-                "format": "short",
-                "logBase": 1,
-                "show": false
-              }
-            ],
-            "yaxis": {
-              "align": false
-            }
-          },
-          {
-            "aliasColors": {},
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
-            "datasource": {
-              "type": "prometheus",
-              "uid": "prometheus"
-            },
-            "fill": 10,
-            "fillGradient": 0,
-            "gridPos": {
-              "h": 9,
-              "w": 8,
-              "x": 0,
               "y": 18
             },
             "hiddenSeries": false,
@@ -634,7 +103,7 @@ data:
             ],
             "thresholds": [],
             "timeRegions": [],
-            "title": "Reefer Singletons  - sidekar: app CPU Usage",
+            "title": "Reefer Singletons: app CPU Usage",
             "tooltip": {
               "shared": false,
               "sort": 0,
@@ -723,7 +192,7 @@ data:
             ],
             "thresholds": [],
             "timeRegions": [],
-            "title": "Reefer Actors - sidekar: app CPU Usage",
+            "title": "Reefer Actors: app CPU Usage",
             "tooltip": {
               "shared": false,
               "sort": 0,
@@ -812,7 +281,7 @@ data:
             ],
             "thresholds": [],
             "timeRegions": [],
-            "title": "Reefer Rest - sidekar: app CPU Usage",
+            "title": "Reefer Rest: app CPU Usage",
             "tooltip": {
               "shared": false,
               "sort": 0,
@@ -901,7 +370,7 @@ data:
             ],
             "thresholds": [],
             "timeRegions": [],
-            "title": "Reefer Singletons  - sidekar: app Memory Usage (bytes)",
+            "title": "Reefer Singletons: app Memory Usage (bytes)",
             "tooltip": {
               "shared": false,
               "sort": 0,
@@ -990,7 +459,7 @@ data:
             ],
             "thresholds": [],
             "timeRegions": [],
-            "title": "Reefer Actors - sidekar: app Memory Usage (bytes)",
+            "title": "Reefer Actors: app Memory Usage (bytes)",
             "tooltip": {
               "shared": false,
               "sort": 0,
@@ -1079,7 +548,7 @@ data:
             ],
             "thresholds": [],
             "timeRegions": [],
-            "title": "Reefer Rest - sidekar: app Memory Usage (bytes)",
+            "title": "Reefer Rest: app Memory Usage (bytes)",
             "tooltip": {
               "shared": false,
               "sort": 0,
@@ -1136,7 +605,7 @@ data:
                   "lineWidth": 1,
                   "pointSize": 5,
                   "scaleDistribution": {
-                    "type": "linear"
+                    "type": "logarithmic"
                   },
                   "showPoints": "auto",
                   "spanNulls": false,
@@ -1197,7 +666,7 @@ data:
             "type": "timeseries"
           }
         ],
-        "refresh": "10s",
+        "refresh": "30s",
         "schemaVersion": 36,
         "style": "dark",
         "tags": [],

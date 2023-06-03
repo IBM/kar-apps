@@ -605,7 +605,7 @@ data:
                   "lineWidth": 1,
                   "pointSize": 5,
                   "scaleDistribution": {
-                    "type": "logarithmic"
+                    "type": "log"
                   },
                   "showPoints": "auto",
                   "spanNulls": false,

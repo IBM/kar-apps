@@ -45,3 +45,15 @@ This is defined in reefer-dashboard.yaml.
 It defines separate CPU and Memory graphs for each reefer application
 component to be monitored, and for the method latency graph that tracks
 latency for all actor and service methods called in the target components.
+
+
+## Viewing Reefer Dashboard in Grafana
+
+The custom "Reefer Dashboard" for Grafana deployed above are viewed by first exposing
+the Grafana web server on the cluster, attaching a browser to the web server, 
+logging into Grafana, and finally selecting the Reefer Dashboard.
+
+1. kubectl port-forward -n prometheus svc/prometheus-grafana  3000:80"
+2. Point your browser to localhost:3000"
+3. Login to Grafana with default user/password: admin/prom-operator"
+4. Click on "Dashboards" in the Grafana menu at top left, search for reefer and select Reefer Dashboard

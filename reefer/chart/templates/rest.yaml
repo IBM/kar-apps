@@ -57,6 +57,7 @@ spec:
         kar.ibm.com/service: reeferservice
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.rest.port | quote }}
+        kar.ibm.com/sidecarContainer: "false"
 {{- if .Values.global.karargs }}
         kar.ibm.com/extraArgs: {{ .Values.global.karargs }}
 {{- end }}

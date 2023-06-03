@@ -38,6 +38,7 @@ spec:
         kar.ibm.com/actors: order,voyage
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.actors.port | quote }}
+        kar.ibm.com/sidecarContainer: "false"
 {{- if .Values.global.karargs }}
         kar.ibm.com/extraArgs: {{ .Values.global.karargs }}
 {{- end }}

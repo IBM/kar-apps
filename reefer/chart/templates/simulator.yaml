@@ -35,6 +35,7 @@ spec:
         kar.ibm.com/actors: simhelper
         kar.ibm.com/verbose: {{ .Values.kar.verbose }}
         kar.ibm.com/appPort: {{ .Values.reefer.simulator.port | quote }}
+        kar.ibm.com/sidecarContainer: "false"
 {{- if .Values.global.karargs }}
         kar.ibm.com/extraArgs: {{ .Values.global.karargs }}
 {{- end }}

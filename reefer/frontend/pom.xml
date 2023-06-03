@@ -126,7 +126,7 @@
             <id>copyruntime</id>
             <phase>install</phase>
             <configuration>
-              <tasks>
+              <target>
                 <mkdir dir="${project.basedir}/src/main/webapp/WEB-INF"/>
                 <copy todir="${project.basedir}/src/main/webapp">
                   <fileset dir="${project.basedir}/dist/reefer"/>
@@ -138,7 +138,7 @@
     				<isset property="env.REEFER_REST_HOST" />
 				</condition>
                 <replace file="${project.basedir}/src/main/webapp/index.html" token="REEFER_REST_HOST" value="${reeferRestHost}"/-->
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>

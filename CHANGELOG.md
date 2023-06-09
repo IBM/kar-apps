@@ -16,6 +16,14 @@
 
 # KAR-APPS: Applications based on the KAR Runtime
 
+# KAR-APPS 1.3.0 - 2022-06-09
++ Reefer
+   + Document extension of KAR metrics for reefer application
+   + Improve reefer's grafana metrics dashboard
+   + Use latest version of KAR and use its updated versions for Kafka and Zookeeper
+   + Use docker's compose command instead of docker-compose application
+   + Run KAR processes in application containers instead of sidecars
+
 # KAR-APPS 1.2.0 - 2022-05-06
 + Reefer
    + Convert order creation to use async message flow in order to implement a timeout

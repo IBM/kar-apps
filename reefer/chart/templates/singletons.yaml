@@ -19,6 +19,7 @@ kind: Deployment
 metadata:
   name: reefer-singletons
   labels:
+    {{- include "reefer.labels" . | nindent 4 }}
     name: reefer-singletons
 spec:
 {{- if .Values.global.affinity }}
@@ -28,10 +29,12 @@ spec:
 {{- end }}
   selector:
     matchLabels:
+      {{- include "reefer.selectorLabels" . | nindent 6 }}
       name: reefer-singletons
   template:
     metadata:
       labels:
+        {{- include "reefer.selectorLabels" . | nindent 8 }}
         name: reefer-singletons
       annotations:
         kar.ibm.com/app: reefer

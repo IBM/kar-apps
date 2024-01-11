@@ -19,12 +19,14 @@ kind: Service
 metadata:
   name: reefer-frontend
   labels:
+    {{- include "reefer.labels" . | nindent 4 }}
     name: reefer-frontend
 spec:
 {{ if not (or .Values.ingress.pathBased .Values.ingress.hostBased) }}
   type: NodePort
 {{ end }}
   selector:
+    {{- include "reefer.selectorLabels" . | nindent 4 }}
     name: reefer-frontend
   ports:
     - name: app
@@ -38,15 +40,18 @@ kind: Deployment
 metadata:
   name: reefer-frontend
   labels:
+    {{- include "reefer.labels" . | nindent 4 }}
     name: reefer-frontend
 spec:
   replicas: {{ .Values.reefer.frontend.replicas }}
   selector:
     matchLabels:
+      {{- include "reefer.selectorLabels" . | nindent 6 }}
       name: reefer-frontend
   template:
     metadata:
       labels:
+        {{- include "reefer.selectorLabels" . | nindent 8 }}
         name: reefer-frontend
     spec:
 {{- if .Values.global.affinity }}

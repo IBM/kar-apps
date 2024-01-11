@@ -19,6 +19,7 @@ kind: Deployment
 metadata:
   name: reefer-actors
   labels:
+    {{- include "reefer.labels" . | nindent 4 }}
     name: reefer-actors
 spec:
 {{- if .Values.global.affinity }}
@@ -28,10 +29,12 @@ spec:
 {{- end }}
   selector:
     matchLabels:
+      {{- include "reefer.selectorLabels" . | nindent 6 }}
       name: reefer-actors
   template:
     metadata:
       labels:
+        {{- include "reefer.selectorLabels" . | nindent 8 }}
         name: reefer-actors
       annotations:
         kar.ibm.com/app: reefer

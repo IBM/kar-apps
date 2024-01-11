@@ -19,15 +19,18 @@ kind: Deployment
 metadata:
   name: reefer-monitor
   labels:
+    {{- include "reefer.labels" . | nindent 4 }}
     name: reefer-monitor
 spec:
   replicas: {{ .Values.reefer.monitor.replicas }}
   selector:
     matchLabels:
+      {{- include "reefer.selectorLabels" . | nindent 6 }}
       name: reefer-monitor
   template:
     metadata:
       labels:
+        {{- include "reefer.selectorLabels" . | nindent 8 }}
         name: reefer-monitor
       annotations:
         kar.ibm.com/app: reefer

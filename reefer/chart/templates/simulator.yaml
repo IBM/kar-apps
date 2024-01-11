@@ -19,15 +19,18 @@ kind: Deployment
 metadata:
   name: reefer-simulators
   labels:
+    {{- include "reefer.labels" . | nindent 4 }}
     name: reefer-simulators
 spec:
   replicas: {{ .Values.reefer.simulator.replicas }}
   selector:
     matchLabels:
+      {{- include "reefer.selectorLabels" . | nindent 6 }}
       name: reefer-simulators
   template:
     metadata:
       labels:
+        {{- include "reefer.selectorLabels" . | nindent 8 }}
         name: reefer-simulators
       annotations:
         kar.ibm.com/app: reefer

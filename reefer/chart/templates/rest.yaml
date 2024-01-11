@@ -19,12 +19,14 @@ kind: Service
 metadata:
   name: reefer-rest
   labels:
+    {{- include "reefer.labels" . | nindent 4 }}
     name: reefer-rest
 spec:
 {{ if not (or .Values.ingress.pathBased .Values.ingress.hostBased) }}
   type: NodePort
 {{ end }}
   selector:
+    {{- include "reefer.selectorLabels" . | nindent 4 }}
     name: reefer-rest
   ports:
     - name: app
@@ -38,6 +40,7 @@ kind: Deployment
 metadata:
   name: reefer-rest
   labels:
+    {{- include "reefer.labels" . | nindent 4 }}
     name: reefer-rest
 spec:
 {{- if .Values.global.affinity }}
@@ -47,10 +50,12 @@ spec:
 {{- end }}
   selector:
     matchLabels:
+      {{- include "reefer.selectorLabels" . | nindent 6 }}
       name: reefer-rest
   template:
     metadata:
       labels:
+        {{- include "reefer.selectorLabels" . | nindent 8 }}
         name: reefer-rest
       annotations:
         kar.ibm.com/app: reefer
